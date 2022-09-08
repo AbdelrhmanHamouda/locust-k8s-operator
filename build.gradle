@@ -5,7 +5,11 @@ plugins {
     id "idea"
 }
 
-version = "0.1"
+// Version constructors
+def gitHash = 'git rev-parse --verify --short HEAD'.execute().text.trim()
+def baseLineVersion = "0.1"
+
+version = baseLineVersion + "-" + gitHash
 group = "com.locust.operator"
 
 repositories {
@@ -35,3 +39,4 @@ micronaut {
 apply from: "${rootDir}/gradle/dependencies.gradle"
 apply from: "${rootDir}/gradle/testing.gradle"
 apply from: "${rootDir}/gradle/spotless.gradle"
+apply from: "${rootDir}/gradle/jib.gradle"
