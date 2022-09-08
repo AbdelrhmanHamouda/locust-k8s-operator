@@ -1,0 +1,30 @@
+# https://pre-commit.com
+default_stages: [commit, manual]
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
+      - id: check-toml
+      - id: check-vcs-permalinks
+      - id: detect-private-key
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+        exclude: .*\.md # Markdown
+
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v2.21.2
+    hooks:
+      - id: commitizen
+        stages: [ commit-msg ]
+
+  - repo: https://github.com/jguttman94/pre-commit-gradle
+    rev: v0.3.0
+    hooks:
+      - id: gradle-check
+        args: [--wrapper, --output]
+      - id: gradle-spotless
+        args: [--wrapper, --output]
