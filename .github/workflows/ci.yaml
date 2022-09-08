@@ -35,6 +35,8 @@ jobs:
   Publish-image:
     name: Publish image
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
     needs:
       - Build
     env:
