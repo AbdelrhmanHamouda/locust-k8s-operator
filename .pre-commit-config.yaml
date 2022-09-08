@@ -16,10 +16,10 @@ repos:
         exclude: .*\.md # Markdown
 
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v2.21.2
+    rev: v2.32.4
     hooks:
       - id: commitizen
-        stages: [ commit-msg ]
+        stages: [commit-msg]
 
   - repo: https://github.com/jguttman94/pre-commit-gradle
     rev: v0.3.0
