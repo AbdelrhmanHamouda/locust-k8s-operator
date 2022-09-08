@@ -5,7 +5,7 @@ on: [push, pull_request]
 permissions:
   contents: read
 jobs:
-  build:
+  Build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -22,7 +22,7 @@ jobs:
       - name: Build
         uses: gradle/gradle-build-action@v2.3.0
         with:
-          arguments: build
+          arguments: build -i
 
       - uses: actions/upload-artifact@v3.1.0
         with:
