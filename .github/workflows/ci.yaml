@@ -62,4 +62,4 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Push image to repository
-        run: docker push $DOCKER_IMAGE
+        run: docker push --all-tags $DOCKER_IMAGE
