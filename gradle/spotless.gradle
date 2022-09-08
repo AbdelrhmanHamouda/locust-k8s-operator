@@ -1,0 +1,22 @@
+ext {
+    DISABLE_SPOTLESS = System.getenv("DISABLE_SPOTLESS") ?: "false"
+}
+
+// We only want to run it on local dev env
+if (DISABLE_SPOTLESS == "false") {
+    spotless {
+        java {
+            removeUnusedImports()
+            endWithNewline()
+            indentWithSpaces(4)
+        }
+        format "misc", {
+            target "**/*.gradle", "**/*.md", "**/.gitignore"
+
+            trimTrailingWhitespace()
+            indentWithSpaces()
+            endWithNewline()
+        }
+        compileJava.dependsOn "spotlessApply"
+    }
+}

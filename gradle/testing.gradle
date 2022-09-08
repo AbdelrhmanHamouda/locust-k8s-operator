@@ -1,0 +1,33 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+
+    testLogging {
+        events TestLogEvent.FAILED, TestLogEvent.SKIPPED, TestLogEvent.STANDARD_ERROR
+        exceptionFormat TestExceptionFormat.FULL
+        showExceptions true
+        showCauses true
+        showStackTraces true
+    }
+
+    jvmArgs "-XX:TieredStopAtLevel=1"
+
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: {}.{}", descriptor.className, descriptor.name)
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+
+
+test.classpath += configurations.developmentOnly
+
+tasks.withType(JavaExec) {
+    classpath += configurations.developmentOnly
+    jvmArgs( '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
+}

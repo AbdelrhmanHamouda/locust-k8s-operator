@@ -1,0 +1,34 @@
+ext {
+    // Logging
+    logbackVersion = '1.2.11'
+
+    // Metrics
+    micrometerPrometheusVersion = '4.2.1'
+
+    //  Testing
+    mockitoVersion = "4.6.1"
+    assertjVersion = '3.23.1'
+}
+
+dependencies {
+    annotationProcessor("org.projectlombok:lombok")
+    annotationProcessor("io.micronaut:micronaut-http-validation")
+
+    implementation ("io.micronaut:micronaut-http-client")
+    implementation ("io.micronaut:micronaut-jackson-databind")
+    implementation ("io.micronaut:micronaut-management")
+    implementation ("io.micronaut.micrometer:micronaut-micrometer-core")
+    implementation ("io.micronaut.micrometer:micronaut-micrometer-registry-prometheus:$micrometerPrometheusVersion")
+    implementation ("jakarta.annotation:jakarta.annotation-api")
+
+    compileOnly ("org.projectlombok:lombok")
+    runtimeOnly ("ch.qos.logback:logback-classic:$logbackVersion")
+    implementation ("io.micronaut:micronaut-validation")
+
+    testAnnotationProcessor ("org.projectlombok:lombok")
+
+    testImplementation ("org.mockito:mockito-core:$mockitoVersion")
+    testImplementation ("org.assertj:assertj-core:$assertjVersion")
+
+    testCompileOnly ("org.projectlombok:lombok")
+}

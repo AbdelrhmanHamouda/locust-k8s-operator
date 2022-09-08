@@ -1,0 +1,16 @@
+micronaut:
+  application:
+    name: locustK8sOperator
+  server:
+    port: ${APP_SERVER_PORT:8081}
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        descriptions: true
+        step: PT1M
+    enabled: true
+netty:
+  default:
+    allocator:
+      max-order: 3

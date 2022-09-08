@@ -1,0 +1,37 @@
+plugins {
+    id 'com.google.cloud.tools.jib' version '3.3.0'
+    id("io.micronaut.application") version "3.5.3"
+    id "com.diffplug.spotless" version "6.10.0"
+    id "idea"
+}
+
+version = "0.1"
+group = "com.locust.operator"
+
+repositories {
+    mavenCentral()
+}
+
+
+application {
+    mainClass.set("com.locust.Application")
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+graalvmNative.toolchainDetection = false
+micronaut {
+    runtime("netty")
+    testRuntime("junit5")
+    processing {
+        incremental(true)
+    }
+}
+
+// don"t change apply ordering
+apply from: "${rootDir}/gradle/dependencies.gradle"
+apply from: "${rootDir}/gradle/testing.gradle"
+apply from: "${rootDir}/gradle/spotless.gradle"
