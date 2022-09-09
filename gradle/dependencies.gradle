@@ -6,13 +6,17 @@ ext {
     micrometerPrometheusVersion = '4.2.1'
 
     //  Testing
-    mockitoVersion = "4.6.1"
+    mockitoVersion = '4.6.1'
     assertjVersion = '3.23.1'
+
+    // Operator SDK
+    javaOperatorVersion = '3.2.0'
 }
 
 dependencies {
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("io.micronaut:micronaut-http-validation")
+    annotationProcessor ("io.javaoperatorsdk:operator-framework:$javaOperatorVersion")
 
     implementation ("io.micronaut:micronaut-http-client")
     implementation ("io.micronaut:micronaut-jackson-databind")
@@ -20,6 +24,7 @@ dependencies {
     implementation ("io.micronaut.micrometer:micronaut-micrometer-core")
     implementation ("io.micronaut.micrometer:micronaut-micrometer-registry-prometheus:$micrometerPrometheusVersion")
     implementation ("jakarta.annotation:jakarta.annotation-api")
+    implementation ("io.javaoperatorsdk:operator-framework:$javaOperatorVersion")
 
     compileOnly ("org.projectlombok:lombok")
     runtimeOnly ("ch.qos.logback:logback-classic:$logbackVersion")
