@@ -1,0 +1,10 @@
+def allTestCoverageFile = "$buildDir/jacoco/merged/test.exec"
+
+jacocoTestReport {
+    executionData file(allTestCoverageFile)
+
+    reports {
+        xml.enabled(true)
+        html.enabled(true)
+    }
+}

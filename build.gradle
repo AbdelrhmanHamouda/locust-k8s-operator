@@ -2,6 +2,7 @@ plugins {
     id 'com.google.cloud.tools.jib' version '3.3.0'
     id("io.micronaut.application") version "3.5.3"
     id "com.diffplug.spotless" version "6.10.0"
+    id "jacoco"
     id "idea"
 }
 
@@ -40,3 +41,4 @@ apply from: "${rootDir}/gradle/dependencies.gradle"
 apply from: "${rootDir}/gradle/testing.gradle"
 apply from: "${rootDir}/gradle/spotless.gradle"
 apply from: "${rootDir}/gradle/jib.gradle"
+apply from: "${rootDir}/gradle/jacoco.gradle"
