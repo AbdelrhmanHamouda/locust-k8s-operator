@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   Build:
-    name: Build & Test
+    name: Build & Validate
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -24,7 +24,14 @@ jobs:
       - name: Build
         uses: gradle/gradle-build-action@v2.3.0
         with:
-          arguments: build -i
+          arguments: build jacocoTestReport -i
+
+      - name: Report coverage
+        uses: codecov/codecov-action@v3
+        with:
+          name: branch-${{ github.ref }}
+          verbose: true
+          fail_ci_if_error: true
 
       - uses: actions/upload-artifact@v3.1.0
         with:
