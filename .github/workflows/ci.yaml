@@ -47,7 +47,7 @@ jobs:
     needs:
       - Build
     env:
-      DOCKER_IMAGE: aahamouda/${{ github.event.repository.name }}
+      DOCKER_IMAGE: lotest/${{ github.event.repository.name }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3

@@ -1,0 +1,9 @@
+apiVersion: locust.io/v1
+kind: LocustTest
+metadata:
+  name: demo.test
+spec:
+  image: locustio/locust:latest
+  masterCommandSeed: --locustfile /src/demo.py
+  workerCommandSeed: --locustfile /src/demo.py
+  workerReplicas: 20
