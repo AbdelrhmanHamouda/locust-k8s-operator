@@ -1,6 +1,6 @@
 package com.locust;
 
-import com.locust.operator.customresource.controller.CustomServiceReconciler;
+import com.locust.operator.controller.LocustTestReconciler;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import io.javaoperatorsdk.operator.Operator;
@@ -13,7 +13,7 @@ public class Application {
     public static void main(String[] args) {
         KubernetesClient client = new KubernetesClientBuilder().build();
         Operator operator = new Operator(client);
-        operator.register(new CustomServiceReconciler());
+        operator.register(new LocustTestReconciler());
         operator.start();
 
         Micronaut.run(Application.class, args);
