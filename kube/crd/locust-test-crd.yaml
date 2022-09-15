@@ -61,7 +61,7 @@ spec:
           type: date
           jsonPath: .metadata.creationTimestamp
   # Either Namespaced or Cluster
-  scope: Cluster
+  scope: Namespaced
   names:
     # Plural name to be used in the URL: /apis/<group>/<version>/<plural>
     plural: locusttests
