@@ -33,6 +33,7 @@ micronaut {
     testRuntime("junit5")
     processing {
         incremental(true)
+        annotations("com.*")
     }
 }
 

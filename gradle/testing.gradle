@@ -12,7 +12,8 @@ tasks.withType(Test) {
         showStackTraces true
     }
 
-    jvmArgs "-XX:TieredStopAtLevel=1"
+    // --add-opens needed to get around JDK 17 restrictions with system-lambda
+    jvmArgs "-XX:TieredStopAtLevel=1", "--add-opens=java.base/java.util=ALL-UNNAMED"
 
     beforeTest { descriptor ->
         logger.lifecycle("Running test: {}.{}", descriptor.className, descriptor.name)
