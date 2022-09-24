@@ -58,7 +58,7 @@ public class Constants {
     public static final String DEFAULT_RESTART_POLICY = "Never";
     public static final int BACKOFF_LIMIT = 0;
     public static final String DEFAULT_MOUNT_PATH = "/lotest/src/";
-    public static final String CONTAINER_ARGS_SEPARATOR = "\s";
+    public static final String CONTAINER_ARGS_SEPARATOR = " ";
 
     // Metrics
     public static final String PROMETHEUS_IO_SCRAPE = "prometheus.io/scrape";
