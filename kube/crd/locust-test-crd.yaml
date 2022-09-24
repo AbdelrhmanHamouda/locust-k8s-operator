@@ -42,6 +42,9 @@ spec:
                 image: # Child field 'image'
                   description: Locust image
                   type: string
+                configMap: # Child field 'configMap'
+                  description: Configuration map name containing the test
+                  type: string
               required: ["masterCommandSeed", "workerCommandSeed", "workerReplicas", "image"]
       # Enables to add new column when listing instances `kubectl get lotest`
       additionalPrinterColumns:

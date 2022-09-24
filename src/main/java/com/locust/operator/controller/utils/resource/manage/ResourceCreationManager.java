@@ -27,7 +27,7 @@ public class ResourceCreationManager {
 
             Job job = creationHelper.prepareJob(nodeConfig, testName);
 
-            job = client.batch().v1().jobs().inNamespace(namespace).createOrReplace(job);
+            job = client.batch().v1().jobs().inNamespace(namespace).resource(job).createOrReplace();
             log.info("Created job with name: {}", job.getMetadata().getName());
             log.debug("Created job details: {}", job);
         } catch (Exception e) {
@@ -45,7 +45,7 @@ public class ResourceCreationManager {
 
             Service service = creationHelper.prepareService(nodeConfig);
 
-            service = client.services().inNamespace(namespace).create(service);
+            service = client.services().inNamespace(namespace).resource(service).create();
             log.info("Created service with name: {}", service.getMetadata().getName());
             log.debug("Created service {}", service);
 

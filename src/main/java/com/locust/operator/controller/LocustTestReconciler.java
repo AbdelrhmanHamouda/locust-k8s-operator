@@ -46,13 +46,14 @@ public class LocustTestReconciler implements Reconciler<LocustTest>, Cleaner<Loc
         log.info("LocustTest created: '{}'", resource.getMetadata().getName());
 
         log.debug(
-            "Custom resource information: \nNamespace: '{}'  CR name: '{}' \nImage: '{}' \nMaster command seed: '{}' \nWorker command seed: '{}' \nWorker replica count:'{}'",
+            "Custom resource information: \nNamespace: '{}'  CR name: '{}' \nImage: '{}' \nMaster command: '{}' \nWorker command: '{}' \nWorker replica count:'{}' \nconfigMap:'{}'.",
             resource.getMetadata().getNamespace(),
             resource.getMetadata().getName(),
             resource.getSpec().getImage(),
             resource.getSpec().getMasterCommandSeed(),
             resource.getSpec().getWorkerCommandSeed(),
-            resource.getSpec().getWorkerReplicas());
+            resource.getSpec().getWorkerReplicas(),
+            resource.getSpec().getConfigMap());
 
         // * Construct node commands & map to internal dto
         // Generate `master` node object
@@ -79,18 +80,21 @@ public class LocustTestReconciler implements Reconciler<LocustTest>, Cleaner<Loc
 
     @Override
     public DeleteControl cleanup(LocustTest resource, Context<LocustTest> context) {
-        log.info(
-            "Deleted in namespace: {}, \nCR with name: {}, and generation: {}, \nimage: {}, \nmaster command: {}, \nworker command: {}, \nreplicas: {},",
+
+        // * Log custom resource
+        log.info("LocustTest deleted: {}", resource.getMetadata().getName());
+
+        log.debug(
+            "Deleted in namespace: {}, \nCR with name: {}, and generation: {}, \nimage: {}, \nmaster command: {}, \nworker command: {}, \nreplicas: {} \nconfigMap:'{}'.",
             resource.getMetadata().getNamespace(),
             resource.getMetadata().getName(),
             resource.getMetadata().getGeneration(),
             resource.getSpec().getImage(),
             resource.getSpec().getMasterCommandSeed(),
             resource.getSpec().getWorkerCommandSeed(),
-            resource.getSpec().getWorkerReplicas());
+            resource.getSpec().getWorkerReplicas(),
+            resource.getSpec().getConfigMap());
 
-        // * Log custom resource
-        log.debug("LocustTest deleted: {}", resource.getMetadata().getName());
 
         // * Delete load generation resource
         // Delete Master node service

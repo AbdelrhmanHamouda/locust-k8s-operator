@@ -26,7 +26,9 @@ public class Constants {
         // Number of workers to wait for before starting the test
         + "--expect-workers=%d "
         // Auto start the test while keeping the UI available
-        + "--autostart --autoquit 15 "
+        + "--autostart --autoquit 60 "
+        // Allow to automatically rebalance users if new workers are added or removed during a test run.
+        + "--enable-rebalancing "
         // Log only the summary
         + "--only-summary ";
 
@@ -55,6 +57,8 @@ public class Constants {
     // Job constants
     public static final String DEFAULT_RESTART_POLICY = "Never";
     public static final int BACKOFF_LIMIT = 0;
+    public static final String DEFAULT_MOUNT_PATH = "/lotest/src/";
+    public static final String CONTAINER_ARGS_SEPARATOR = "\s";
 
     // Metrics
     public static final String PROMETHEUS_IO_SCRAPE = "prometheus.io/scrape";

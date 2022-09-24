@@ -4,6 +4,7 @@ metadata:
   name: demo.test
 spec:
   image: locustio/locust:latest
-  masterCommandSeed: --locustfile /src/demo.py
-  workerCommandSeed: --locustfile /src/demo.py
+  masterCommandSeed: --locustfile /lotest/src/locust_project_demo.py
+  workerCommandSeed: --locustfile /lotest/src/locust_project_demo.py
   workerReplicas: 3
+  configMap: test-map

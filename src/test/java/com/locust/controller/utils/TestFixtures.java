@@ -17,6 +17,7 @@ import java.util.Map;
 
 import static com.github.stefanbirkner.systemlambda.SystemLambda.withEnvironmentVariable;
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
+import static com.locust.operator.controller.utils.Constants.CONTAINER_ARGS_SEPARATOR;
 import static com.locust.operator.controller.utils.Constants.KAFKA_BOOTSTRAP_SERVERS;
 import static com.locust.operator.controller.utils.Constants.KAFKA_PASSWORD;
 import static com.locust.operator.controller.utils.Constants.KAFKA_SASL_JAAS_CONFIG;
@@ -103,7 +104,7 @@ public class TestFixtures {
     public static LoadGenerationNode prepareNodeConfig(String nodeName, OperationalMode mode) {
         var nodeConfig = LoadGenerationNode.builder()
             .name(nodeName)
-            .command(DEFAULT_SEED_COMMAND)
+            .command(List.of(DEFAULT_SEED_COMMAND.split(CONTAINER_ARGS_SEPARATOR)))
             .operationalMode(mode)
             .image(DEFAULT_TEST_IMAGE)
             .replicas(mode.equals(MASTER) ? MASTER_REPLICA_COUNT : REPLICAS)

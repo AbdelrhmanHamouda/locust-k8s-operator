@@ -2,6 +2,8 @@ package com.locust.operator.controller.utils.resource.manage;
 
 import com.locust.operator.controller.dto.LoadGenerationNode;
 import com.locust.operator.controller.utils.LoadGenHelpers;
+import io.fabric8.kubernetes.api.model.ConfigMapVolumeSource;
+import io.fabric8.kubernetes.api.model.ConfigMapVolumeSourceBuilder;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.ContainerPort;
@@ -16,6 +18,10 @@ import io.fabric8.kubernetes.api.model.PodTemplateSpec;
 import io.fabric8.kubernetes.api.model.PodTemplateSpecBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.api.model.batch.v1.Job;
 import io.fabric8.kubernetes.api.model.batch.v1.JobBuilder;
 import io.fabric8.kubernetes.api.model.batch.v1.JobSpec;
@@ -34,6 +40,7 @@ import java.util.stream.Collectors;
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
 import static com.locust.operator.controller.utils.Constants.APP_DEFAULT_LABEL;
 import static com.locust.operator.controller.utils.Constants.BACKOFF_LIMIT;
+import static com.locust.operator.controller.utils.Constants.DEFAULT_MOUNT_PATH;
 import static com.locust.operator.controller.utils.Constants.DEFAULT_RESTART_POLICY;
 import static com.locust.operator.controller.utils.Constants.DEFAULT_WEB_UI_PORT;
 import static com.locust.operator.controller.utils.Constants.EXPORTER_CONTAINER_NAME;
@@ -194,6 +201,7 @@ public class ResourceCreationHelpers {
 
             // Containers
             .withContainers(prepareContainerList(nodeConfig))
+            .withVolumes(prepareVolumesList(nodeConfig))
             .withRestartPolicy(DEFAULT_RESTART_POLICY)
             .build();
 
@@ -201,6 +209,31 @@ public class ResourceCreationHelpers {
 
         return templateSpec;
 
+    }
+
+    private List<Volume> prepareVolumesList(LoadGenerationNode nodeConfig) {
+
+        List<Volume> volumeList = new ArrayList<>();
+
+        if (nodeConfig.getConfigMap() != null) {
+            volumeList.add(prepareVolume(nodeConfig));
+        }
+
+        return volumeList;
+
+    }
+
+    private static Volume prepareVolume(LoadGenerationNode nodeConfig) {
+        return new VolumeBuilder()
+            .withName(nodeConfig.getName())
+            .withConfigMap(prepareConfigMapSource(nodeConfig))
+            .build();
+    }
+
+    private static ConfigMapVolumeSource prepareConfigMapSource(LoadGenerationNode nodeConfig) {
+        return new ConfigMapVolumeSourceBuilder()
+            .withName(nodeConfig.getConfigMap())
+            .build();
     }
 
     private List<Container> prepareContainerList(LoadGenerationNode nodeConfig) {
@@ -281,13 +314,33 @@ public class ResourceCreationHelpers {
             .withEnv(prepareContainerEnvironmentVariables(loadGenHelpers.generateContainerEnvironmentMap()))
 
             // Container command
-            .withCommand(nodeConfig.getCommand())
+            .withArgs(nodeConfig.getCommand())
+
+            // Mount configMap as volume
+            .withVolumeMounts(prepareVolumeMounts(nodeConfig))
 
             .build();
 
         log.debug("Prepared Kubernetes load generator container: {}", container);
 
         return container;
+    }
+
+    private List<VolumeMount> prepareVolumeMounts(LoadGenerationNode nodeConfig) {
+
+        List<VolumeMount> mounts = new ArrayList<>();
+        if (nodeConfig.getConfigMap() != null) {
+
+            // Prepare configMap mont
+            mounts.add(new VolumeMountBuilder()
+                .withName(nodeConfig.getName())
+                .withMountPath(DEFAULT_MOUNT_PATH)
+                .withReadOnly()
+                .build());
+
+        }
+        return mounts;
+
     }
 
     /**

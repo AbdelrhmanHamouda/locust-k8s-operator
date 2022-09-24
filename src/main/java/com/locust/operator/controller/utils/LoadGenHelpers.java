@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
+import static com.locust.operator.controller.utils.Constants.CONTAINER_ARGS_SEPARATOR;
 import static com.locust.operator.controller.utils.Constants.KAFKA_BOOTSTRAP_SERVERS;
 import static com.locust.operator.controller.utils.Constants.KAFKA_PASSWORD;
 import static com.locust.operator.controller.utils.Constants.KAFKA_SASL_JAAS_CONFIG;
@@ -45,19 +46,20 @@ public class LoadGenHelpers {
      * Parse an LocustTest resource and convert it a LoadGenerationNode object after: - Constructing the node operational command based on
      * the `mode` parameter - Set the replica count based on the `mode` parameter
      *
-     * @param customResource Custom resource object
-     * @param mode           Operational mode
+     * @param resource Custom resource object
+     * @param mode     Operational mode
      * @return Load generation node configuration
      */
-    public LoadGenerationNode generateLoadGenNodeObject(LocustTest customResource, OperationalMode mode) {
+    public LoadGenerationNode generateLoadGenNodeObject(LocustTest resource, OperationalMode mode) {
 
         return new LoadGenerationNode(
-            constructNodeName(customResource, mode),
-            constructNodeCommand(customResource, mode),
+            constructNodeName(resource, mode),
+            constructNodeCommand(resource, mode),
             mode,
-            customResource.getSpec().getImage(),
-            getReplicaCount(customResource, mode),
-            getNodePorts(customResource, mode));
+            resource.getSpec().getImage(),
+            getReplicaCount(resource, mode),
+            getNodePorts(resource, mode),
+            resource.getSpec().getConfigMap());
 
     }
 
@@ -76,7 +78,7 @@ public class LoadGenHelpers {
      * @param mode           Operational mode
      * @return Node command
      */
-    private String constructNodeCommand(LocustTest customResource, OperationalMode mode) {
+    private List<String> constructNodeCommand(LocustTest customResource, OperationalMode mode) {
 
         String cmd;
 
@@ -95,7 +97,8 @@ public class LoadGenHelpers {
         }
 
         log.debug("Constructed command: {}", cmd);
-        return cmd;
+        // Split the command on <\s> to match expected container args
+        return List.of(cmd.split(CONTAINER_ARGS_SEPARATOR));
     }
 
     /**
