@@ -24,7 +24,6 @@ import static com.locust.operator.controller.utils.Constants.KAFKA_SASL_MECHANIS
 import static com.locust.operator.controller.utils.Constants.KAFKA_SECURITY_ENABLED;
 import static com.locust.operator.controller.utils.Constants.KAFKA_SECURITY_PROTOCOL_CONFIG;
 import static com.locust.operator.controller.utils.Constants.KAFKA_USERNAME;
-import static com.locust.operator.controller.utils.Constants.LOCUST_COMMAND_ENV_VAR;
 import static com.locust.operator.customresource.LocustTest.GROUP;
 import static com.locust.operator.customresource.LocustTest.VERSION;
 import static lombok.AccessLevel.PRIVATE;
@@ -46,7 +45,6 @@ public class TestFixtures {
     public static final String DEFAULT_TEST_IMAGE = "xlocust:latest";
     public static final int EXPECTED_JOB_COUNT = 1;
     public static final String K8S_SERVER_URL_ENV_VAR = "KUBERNETES_MASTER";
-    public static final String MOCKED_LOCUST_COMMAND = "--locustfile test.py --users 1000 ";
     public static final String MOCK_KAFKA_BOOTSTRAP_VALUE = "localhost:9092";
     public static final boolean MOCK_SECURITY_VALUE = true;
     public static final String MOCK_SECURITY_PROTOCOL_VALUE = "SASL_PLAINTEXT";
@@ -144,7 +142,6 @@ public class TestFixtures {
     public static Map<String, String> containerEnvironmentMap() {
         HashMap<String, String> environmentMap = new HashMap<>();
 
-        environmentMap.put(LOCUST_COMMAND_ENV_VAR, MOCKED_LOCUST_COMMAND);
         environmentMap.put(KAFKA_BOOTSTRAP_SERVERS, MOCK_KAFKA_BOOTSTRAP_VALUE);
         environmentMap.put(KAFKA_SECURITY_ENABLED, String.valueOf(MOCK_SECURITY_VALUE));
         environmentMap.put(KAFKA_SECURITY_PROTOCOL_CONFIG, MOCK_SECURITY_PROTOCOL_VALUE);

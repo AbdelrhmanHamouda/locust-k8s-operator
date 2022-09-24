@@ -84,18 +84,18 @@ public class ResourceDeletionManagerTests {
     }
 
     @Test
-    @DisplayName("Functional: Check that when Job deletion fails, the return is empty")
-    void DeleteJobFailureReturnFalseTest() {
+    @DisplayName("Functional: Check that when Job deletion fails, an empty list is returned.")
+    void DeleteJobFailureReturnEmptyListTest() {
 
         // * Setup
         val resourceName = "mnt.demo-test";
         val locustTest = prepareLocustTest(resourceName);
 
         // * Act
-        val isDeleted = deletionManager.deleteJob(locustTest, MASTER).isPresent();
+        val deletedJobStatus = deletionManager.deleteJob(locustTest, MASTER).orElseThrow();
 
         // * Assert
-        assertThat(isDeleted).isFalse();
+        assertThat(deletedJobStatus.isEmpty()).isTrue();
 
     }
 
@@ -124,18 +124,18 @@ public class ResourceDeletionManagerTests {
     }
 
     @Test
-    @DisplayName("Functional: Check that when Service deletion fails, false is returned")
-    void DeleteServiceFailureReturnFalseTest() {
+    @DisplayName("Functional: Check that when Service deletion fails, empty list is returned")
+    void DeleteServiceFailureReturnEmptyListTest() {
 
         // * Setup
         val resourceName = "mnt.demo-test";
         val locustTest = prepareLocustTest(resourceName);
 
         // * Act
-        val isDeleted = deletionManager.deleteService(locustTest, MASTER).isPresent();
+        val deletedServiceStatus = deletionManager.deleteService(locustTest, MASTER).orElseThrow();
 
         // * Assert
-        assertThat(isDeleted).isFalse();
+        assertThat(deletedServiceStatus.isEmpty()).isTrue();
 
     }
 

@@ -24,15 +24,12 @@ import static com.locust.operator.controller.utils.Constants.KAFKA_SASL_MECHANIS
 import static com.locust.operator.controller.utils.Constants.KAFKA_SECURITY_ENABLED;
 import static com.locust.operator.controller.utils.Constants.KAFKA_SECURITY_PROTOCOL_CONFIG;
 import static com.locust.operator.controller.utils.Constants.KAFKA_USERNAME;
-import static com.locust.operator.controller.utils.Constants.LOCUST_COMMAND_ENV_VAR;
 import static com.locust.operator.controller.utils.Constants.MASTER_CMD_TEMPLATE;
 import static com.locust.operator.controller.utils.Constants.MASTER_NODE_PORTS;
 import static com.locust.operator.controller.utils.Constants.MASTER_NODE_REPLICA_COUNT;
 import static com.locust.operator.controller.utils.Constants.NODE_NAME_TEMPLATE;
-import static com.locust.operator.controller.utils.Constants.TEST_REPORT;
 import static com.locust.operator.controller.utils.Constants.WORKER_CMD_TEMPLATE;
 import static com.locust.operator.controller.utils.Constants.WORKER_NODE_PORT;
-import static com.locust.operator.controller.utils.DateUtils.getDate;
 
 @Slf4j
 @Singleton
@@ -87,9 +84,7 @@ public class LoadGenHelpers {
             cmd = String.format(MASTER_CMD_TEMPLATE,
                 customResource.getSpec().getMasterCommandSeed(),
                 MASTER_NODE_PORTS.get(0),
-                customResource.getSpec().getWorkerReplicas(),
-                TEST_REPORT,
-                getDate());
+                customResource.getSpec().getWorkerReplicas());
         } else {
             // worker
             cmd = String.format(WORKER_CMD_TEMPLATE,
@@ -143,7 +138,6 @@ public class LoadGenHelpers {
     public Map<String, String> generateContainerEnvironmentMap() {
         HashMap<String, String> environmentMap = new HashMap<>();
 
-        environmentMap.put(LOCUST_COMMAND_ENV_VAR, "PLACEHOLDER");
         environmentMap.put(KAFKA_BOOTSTRAP_SERVERS, config.getKafkaBootstrapServers());
         environmentMap.put(KAFKA_SECURITY_ENABLED, String.valueOf(config.isKafkaSecurityEnabled()));
         environmentMap.put(KAFKA_SECURITY_PROTOCOL_CONFIG, config.getKafkaSecurityProtocol());

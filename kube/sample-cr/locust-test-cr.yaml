@@ -6,4 +6,4 @@ spec:
   image: locustio/locust:latest
   masterCommandSeed: --locustfile /src/demo.py
   workerCommandSeed: --locustfile /src/demo.py
-  workerReplicas: 20
+  workerReplicas: 3

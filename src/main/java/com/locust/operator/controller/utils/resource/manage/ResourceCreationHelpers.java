@@ -42,7 +42,6 @@ import static com.locust.operator.controller.utils.Constants.EXPORTER_PORT_ENV_V
 import static com.locust.operator.controller.utils.Constants.EXPORTER_PORT_ENV_VAR_VALUE;
 import static com.locust.operator.controller.utils.Constants.EXPORTER_URI_ENV_VAR;
 import static com.locust.operator.controller.utils.Constants.EXPORTER_URI_ENV_VAR_VALUE;
-import static com.locust.operator.controller.utils.Constants.LOCUST_COMMAND_ENV_VAR;
 import static com.locust.operator.controller.utils.Constants.LOCUST_EXPORTER_PORT;
 import static com.locust.operator.controller.utils.Constants.METRICS_PORT_NAME;
 import static com.locust.operator.controller.utils.Constants.PORT_DEFAULT_NAME;
@@ -213,7 +212,7 @@ public class ResourceCreationHelpers {
 
         // Inject metrics container only if `master`
         if (nodeConfig.getOperationalMode().equals(MASTER)) {
-            constantsList.add(prepareMetricsExporterContainer(nodeConfig));
+            constantsList.add(prepareMetricsExporterContainer());
         }
 
         return constantsList;
@@ -225,10 +224,9 @@ public class ResourceCreationHelpers {
      * <p>
      * Reference: <a href="https://github.com/ContainerSolutions/locust_exporter">locust exporter docs</a>
      *
-     * @param nodeConfig Load generation configuration
      * @return Container
      */
-    private Container prepareMetricsExporterContainer(LoadGenerationNode nodeConfig) {
+    private Container prepareMetricsExporterContainer() {
 
         HashMap<String, String> envMap = new HashMap<>();
 
@@ -247,7 +245,7 @@ public class ResourceCreationHelpers {
             .withPorts(new ContainerPortBuilder().withContainerPort(LOCUST_EXPORTER_PORT).build())
 
             // Environment
-            .withEnv(prepareContainerEnvironmentVariables(envMap, nodeConfig))
+            .withEnv(prepareContainerEnvironmentVariables(envMap))
 
             .build();
 
@@ -280,7 +278,10 @@ public class ResourceCreationHelpers {
             .withPorts(prepareContainerPorts(nodeConfig.getPorts()))
 
             // Environment
-            .withEnv(prepareContainerEnvironmentVariables(loadGenHelpers.generateContainerEnvironmentMap(), nodeConfig))
+            .withEnv(prepareContainerEnvironmentVariables(loadGenHelpers.generateContainerEnvironmentMap()))
+
+            // Container command
+            .withCommand(nodeConfig.getCommand())
 
             .build();
 
@@ -297,10 +298,7 @@ public class ResourceCreationHelpers {
      * @param envMap Environment variable map
      * @return ContainerPort
      */
-    private List<EnvVar> prepareContainerEnvironmentVariables(Map<String, String> envMap, LoadGenerationNode nodeConfig) {
-
-        // Update LOCUST_COMMAND with runtime config
-        envMap.replace(LOCUST_COMMAND_ENV_VAR, nodeConfig.getCommand());
+    private List<EnvVar> prepareContainerEnvironmentVariables(Map<String, String> envMap) {
 
         List<EnvVar> containerEnvVars = envMap
             .entrySet()
