@@ -15,10 +15,11 @@ import java.util.List;
 public class LoadGenerationNode {
 
     private String name;
-    private String command;
+    private List<String> command;
     private OperationalMode operationalMode;
     private String image;
     private Integer replicas;
     private List<Integer> ports;
+    private String configMap;
 
 }

@@ -19,7 +19,6 @@ public class Constants {
     public static final List<Integer> MASTER_NODE_PORTS = List.of(5557, 5558, DEFAULT_WEB_UI_PORT);
 
     public static final Integer WORKER_NODE_PORT = 8080;
-    public static final String TEST_REPORT = "/reports/test_report_";
     // Master node command template: %s -> Team test configuration
     public static final String MASTER_CMD_TEMPLATE = "%s "
         // Declare `master` operation mode & availability port
@@ -27,11 +26,11 @@ public class Constants {
         // Number of workers to wait for before starting the test
         + "--expect-workers=%d "
         // Auto start the test while keeping the UI available
-        + "--autostart --autoquit 15 "
+        + "--autostart --autoquit 60 "
+        // Allow to automatically rebalance users if new workers are added or removed during a test run.
+        + "--enable-rebalancing "
         // Log only the summary
-        + "--only-summary "
-        // Path to HTML report
-        + "--html=%s%s.html";
+        + "--only-summary ";
 
     // Worker node constants
     // When used, output will be: "<team test config>  --worker --master-port=<port> --master-host=<host cluster url>"
@@ -42,7 +41,6 @@ public class Constants {
     public static final String SERVICE_SELECTOR_LABEL = "performance-test-pod-name";
 
     // Environment variables names
-    public static final String LOCUST_COMMAND_ENV_VAR = "LOCUST_COMMAND";
     public static final String KAFKA_BOOTSTRAP_SERVERS = "KAFKA_BOOTSTRAP_SERVERS";
     public static final String KAFKA_SECURITY_ENABLED = "KAFKA_SECURITY_ENABLED";
     public static final String KAFKA_SECURITY_PROTOCOL_CONFIG = "KAFKA_SECURITY_PROTOCOL_CONFIG";
@@ -59,6 +57,8 @@ public class Constants {
     // Job constants
     public static final String DEFAULT_RESTART_POLICY = "Never";
     public static final int BACKOFF_LIMIT = 0;
+    public static final String DEFAULT_MOUNT_PATH = "/lotest/src/";
+    public static final String CONTAINER_ARGS_SEPARATOR = " ";
 
     // Metrics
     public static final String PROMETHEUS_IO_SCRAPE = "prometheus.io/scrape";

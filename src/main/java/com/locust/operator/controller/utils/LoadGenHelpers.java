@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
+import static com.locust.operator.controller.utils.Constants.CONTAINER_ARGS_SEPARATOR;
 import static com.locust.operator.controller.utils.Constants.KAFKA_BOOTSTRAP_SERVERS;
 import static com.locust.operator.controller.utils.Constants.KAFKA_PASSWORD;
 import static com.locust.operator.controller.utils.Constants.KAFKA_SASL_JAAS_CONFIG;
@@ -24,15 +25,12 @@ import static com.locust.operator.controller.utils.Constants.KAFKA_SASL_MECHANIS
 import static com.locust.operator.controller.utils.Constants.KAFKA_SECURITY_ENABLED;
 import static com.locust.operator.controller.utils.Constants.KAFKA_SECURITY_PROTOCOL_CONFIG;
 import static com.locust.operator.controller.utils.Constants.KAFKA_USERNAME;
-import static com.locust.operator.controller.utils.Constants.LOCUST_COMMAND_ENV_VAR;
 import static com.locust.operator.controller.utils.Constants.MASTER_CMD_TEMPLATE;
 import static com.locust.operator.controller.utils.Constants.MASTER_NODE_PORTS;
 import static com.locust.operator.controller.utils.Constants.MASTER_NODE_REPLICA_COUNT;
 import static com.locust.operator.controller.utils.Constants.NODE_NAME_TEMPLATE;
-import static com.locust.operator.controller.utils.Constants.TEST_REPORT;
 import static com.locust.operator.controller.utils.Constants.WORKER_CMD_TEMPLATE;
 import static com.locust.operator.controller.utils.Constants.WORKER_NODE_PORT;
-import static com.locust.operator.controller.utils.DateUtils.getDate;
 
 @Slf4j
 @Singleton
@@ -48,19 +46,20 @@ public class LoadGenHelpers {
      * Parse an LocustTest resource and convert it a LoadGenerationNode object after: - Constructing the node operational command based on
      * the `mode` parameter - Set the replica count based on the `mode` parameter
      *
-     * @param customResource Custom resource object
-     * @param mode           Operational mode
+     * @param resource Custom resource object
+     * @param mode     Operational mode
      * @return Load generation node configuration
      */
-    public LoadGenerationNode generateLoadGenNodeObject(LocustTest customResource, OperationalMode mode) {
+    public LoadGenerationNode generateLoadGenNodeObject(LocustTest resource, OperationalMode mode) {
 
         return new LoadGenerationNode(
-            constructNodeName(customResource, mode),
-            constructNodeCommand(customResource, mode),
+            constructNodeName(resource, mode),
+            constructNodeCommand(resource, mode),
             mode,
-            customResource.getSpec().getImage(),
-            getReplicaCount(customResource, mode),
-            getNodePorts(customResource, mode));
+            resource.getSpec().getImage(),
+            getReplicaCount(resource, mode),
+            getNodePorts(resource, mode),
+            resource.getSpec().getConfigMap());
 
     }
 
@@ -79,7 +78,7 @@ public class LoadGenHelpers {
      * @param mode           Operational mode
      * @return Node command
      */
-    private String constructNodeCommand(LocustTest customResource, OperationalMode mode) {
+    private List<String> constructNodeCommand(LocustTest customResource, OperationalMode mode) {
 
         String cmd;
 
@@ -87,9 +86,7 @@ public class LoadGenHelpers {
             cmd = String.format(MASTER_CMD_TEMPLATE,
                 customResource.getSpec().getMasterCommandSeed(),
                 MASTER_NODE_PORTS.get(0),
-                customResource.getSpec().getWorkerReplicas(),
-                TEST_REPORT,
-                getDate());
+                customResource.getSpec().getWorkerReplicas());
         } else {
             // worker
             cmd = String.format(WORKER_CMD_TEMPLATE,
@@ -100,7 +97,8 @@ public class LoadGenHelpers {
         }
 
         log.debug("Constructed command: {}", cmd);
-        return cmd;
+        // Split the command on <\s> to match expected container args
+        return List.of(cmd.split(CONTAINER_ARGS_SEPARATOR));
     }
 
     /**
@@ -143,7 +141,6 @@ public class LoadGenHelpers {
     public Map<String, String> generateContainerEnvironmentMap() {
         HashMap<String, String> environmentMap = new HashMap<>();
 
-        environmentMap.put(LOCUST_COMMAND_ENV_VAR, "PLACEHOLDER");
         environmentMap.put(KAFKA_BOOTSTRAP_SERVERS, config.getKafkaBootstrapServers());
         environmentMap.put(KAFKA_SECURITY_ENABLED, String.valueOf(config.isKafkaSecurityEnabled()));
         environmentMap.put(KAFKA_SECURITY_PROTOCOL_CONFIG, config.getKafkaSecurityProtocol());
