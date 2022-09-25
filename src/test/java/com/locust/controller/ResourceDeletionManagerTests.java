@@ -63,7 +63,7 @@ public class ResourceDeletionManagerTests {
 
     @Test
     @DisplayName("Functional: Delete a kubernetes Job")
-    void DeleteJobTest() {
+    void deleteJobTest() {
 
         // * Setup
         val namespace = "default";
@@ -87,7 +87,7 @@ public class ResourceDeletionManagerTests {
 
     @Test
     @DisplayName("Functional: Check that when Job deletion fails, an empty list is returned.")
-    void DeleteJobFailureReturnEmptyListTest() {
+    void deleteJobFailureReturnEmptyListTest() {
 
         // * Setup
         val resourceName = "mnt.demo-test";
@@ -103,7 +103,7 @@ public class ResourceDeletionManagerTests {
 
     @Test
     @DisplayName("Functional: Delete a kubernetes Service")
-    void DeleteServiceTest() {
+    void deleteServiceTest() {
 
         // * Setup
         val namespace = "default";
@@ -127,7 +127,7 @@ public class ResourceDeletionManagerTests {
 
     @Test
     @DisplayName("Functional: Check that when Service deletion fails, empty list is returned")
-    void DeleteServiceFailureReturnEmptyListTest() {
+    void deleteServiceFailureReturnEmptyListTest() {
 
         // * Setup
         val resourceName = "mnt.demo-test";
