@@ -19,6 +19,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Collections;
+
 import static com.locust.controller.utils.TestFixtures.executeWithK8sMockServer;
 import static com.locust.controller.utils.TestFixtures.prepareLocustTest;
 import static com.locust.controller.utils.TestFixtures.prepareNodeConfig;
@@ -61,7 +63,7 @@ public class ResourceDeletionManagerTests {
 
     @Test
     @DisplayName("Functional: Delete a kubernetes Job")
-    void DeleteJobTest() {
+    void deleteJobTest() {
 
         // * Setup
         val namespace = "default";
@@ -84,24 +86,24 @@ public class ResourceDeletionManagerTests {
     }
 
     @Test
-    @DisplayName("Functional: Check that when Job deletion fails, the return is empty")
-    void DeleteJobFailureReturnFalseTest() {
+    @DisplayName("Functional: Check that when Job deletion fails, an empty list is returned.")
+    void deleteJobFailureReturnEmptyListTest() {
 
         // * Setup
         val resourceName = "mnt.demo-test";
         val locustTest = prepareLocustTest(resourceName);
 
         // * Act
-        val isDeleted = deletionManager.deleteJob(locustTest, MASTER).isPresent();
+        val deletedJobStatus = deletionManager.deleteJob(locustTest, MASTER).orElse(Collections.emptyList());
 
         // * Assert
-        assertThat(isDeleted).isFalse();
+        assertThat(deletedJobStatus.isEmpty()).isTrue();
 
     }
 
     @Test
     @DisplayName("Functional: Delete a kubernetes Service")
-    void DeleteServiceTest() {
+    void deleteServiceTest() {
 
         // * Setup
         val namespace = "default";
@@ -124,18 +126,18 @@ public class ResourceDeletionManagerTests {
     }
 
     @Test
-    @DisplayName("Functional: Check that when Service deletion fails, false is returned")
-    void DeleteServiceFailureReturnFalseTest() {
+    @DisplayName("Functional: Check that when Service deletion fails, empty list is returned")
+    void deleteServiceFailureReturnEmptyListTest() {
 
         // * Setup
         val resourceName = "mnt.demo-test";
         val locustTest = prepareLocustTest(resourceName);
 
         // * Act
-        val isDeleted = deletionManager.deleteService(locustTest, MASTER).isPresent();
+        val deletedServiceStatus = deletionManager.deleteService(locustTest, MASTER).orElse(Collections.emptyList());
 
         // * Assert
-        assertThat(isDeleted).isFalse();
+        assertThat(deletedServiceStatus.isEmpty()).isTrue();
 
     }
 
