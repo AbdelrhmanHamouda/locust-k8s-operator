@@ -23,8 +23,23 @@ about the system is its ability to **horizontally scale** to meet any required p
 Fundamentally, the _Operator_ provide the following as part of its core offerings; **cloud native**, **automation & CI**, **governance**,
 **Observability**.
 
+**Distributed cloud performance testing**: _[Locust](https://github.com/locustio/locust)_ is a great and very powerful load testing tool. It
+is capable of generating a significant amount of load specially when configured correctly. That being said, there is only so much a single
+instance and vertical scaling can do. Luckily, _Locust_ has a native out of the box support for distributed mode. This _Locust Kubernetes
+Operator_ project leverage this feature and adds systems and functionalities to address challenges and situations that are exclusive to the
+cloud context.
+
+**Low barrier of entry**: Utilizing the power of the _Operator_ lowers significantly the barrier of entry to run in the cloud. From an
+end-user perspective, running a performance test in the cloud becomes a **single command** operation.
+
+**Test isolation** and **Parallel tests**: By default, the _Operator_ is able to support any number of Parallel test executions with an
+absolute guarantee that each test is fully protected from being polluted by the existence of any number of other tests.
+
 **Automation & CI**: By having automation as a core focus point, teams and organizations can build performance testing directly into CI/CD
 pipelines. Meaning that every new service, feature or system can be potentially tested and validated for performance SLOs / SLAs.
+
+**Separation of concerns**: By using the _Operator_, _engineering teams_ can focus on building a robust performance test/s and SREs
+DevOps teams can focus on managing the resources.
 
 **Governance**: Enable organizations to have governance over what / how resources are deployed and run on the cloud.
 
@@ -35,13 +50,6 @@ pipelines. Meaning that every new service, feature or system can be potentially 
 dashboards in order to analyse test results during test runtime or retroactively (interesting for teams) and infrastructure usage and
 resource monitoring ( interesting for
 cloud admins, SREs, etc...).
-
-**Separation of concerns**: By utilizing the _Operator_, _engineering teams_ can focus on building a robust performance test/s and SREs
-DevOps teams can focus on managing the resources. This makes it so the barrier of entry is significantly lowered from an end-user
-perspective.
-
-**Test isolation** and **Parallel tests**: By default, the _Operator_ is able to support any number of Parallel test executions with an
-absolute guarantee that each test is fully protected from being polluted by the existence of any number of other tests.
 
 ![Operator feature set](docs/resources/operator-feature-set.png "Operator feature set")
 
