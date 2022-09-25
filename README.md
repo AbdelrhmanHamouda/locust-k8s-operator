@@ -1,6 +1,6 @@
 # Locust Kubernetes Operator
 
-Enable performance testing for the modern era!
+Enable performance testing for the modern era!  
 Utilize the full power of _[Locust](https://github.com/locustio/locust)_ in the cloud.
 
 -----------------------------
@@ -25,16 +25,21 @@ Fundamentally, the _Operator_ provide the following as part of its core offering
 
 **Automation & CI**: By having automation as a core focus point, teams and organizations can build performance testing directly into CI/CD
 pipelines. Meaning that every new service, feature or system can be potentially tested and validated for performance SLOs / SLAs.
+
 **Governance**: Enable organizations to have governance over what / how resources are deployed and run on the cloud.
+
 **Cloud cost optimization**: Using the _Operator_ enables for a more effective control over the **_cloud cost_**. Since resources are
 **only** deployed when needed and **only** for as long as needed, the cost of performance testing is kept to a minimum.
+
 **Observability**: For both engineering teams and cloud admins, the _Operator_ unlocks the ability to build observability & monitoring
 dashboards in order to analyse test results during test runtime or retroactively (interesting for teams) and infrastructure usage and
 resource monitoring ( interesting for
 cloud admins, SREs, etc...).
+
 **Separation of concerns**: By utilizing the _Operator_, _engineering teams_ can focus on building a robust performance test/s and SREs
 DevOps teams can focus on managing the resources. This makes it so the barrier of entry is significantly lowered from an end-user
 perspective.
+
 **Test isolation** and **Parallel tests**: By default, the _Operator_ is able to support any number of Parallel test executions with an
 absolute guarantee that each test is fully protected from being polluted by the existence of any number of other tests.
 
@@ -61,6 +66,7 @@ performance testing.
 To run a performance test, basic configuration is provided through a simple and intuitive kubernetes custom resource. Once deployed the
 _Operator_ does all the heavy work of creating and scheduling the resources while making sure that all created load generation pods can
 effectively communicate with each other.
+
 To handle the challenge of delivering test script/s from local environment to the cluster and in turn to the deployed _locust_ pods,
 the _Operator_ support dynamic volume mounting from a configMaps source. This is indicated by a simple optional configuration. Meaning, if
 the configuration is present, the volume is mounted, and if it is not, no volume is mounted.
