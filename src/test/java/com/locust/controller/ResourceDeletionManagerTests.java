@@ -19,6 +19,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Collections;
+
 import static com.locust.controller.utils.TestFixtures.executeWithK8sMockServer;
 import static com.locust.controller.utils.TestFixtures.prepareLocustTest;
 import static com.locust.controller.utils.TestFixtures.prepareNodeConfig;
@@ -92,7 +94,7 @@ public class ResourceDeletionManagerTests {
         val locustTest = prepareLocustTest(resourceName);
 
         // * Act
-        val deletedJobStatus = deletionManager.deleteJob(locustTest, MASTER).orElseThrow();
+        val deletedJobStatus = deletionManager.deleteJob(locustTest, MASTER).orElse(Collections.emptyList());
 
         // * Assert
         assertThat(deletedJobStatus.isEmpty()).isTrue();
@@ -132,7 +134,7 @@ public class ResourceDeletionManagerTests {
         val locustTest = prepareLocustTest(resourceName);
 
         // * Act
-        val deletedServiceStatus = deletionManager.deleteService(locustTest, MASTER).orElseThrow();
+        val deletedServiceStatus = deletionManager.deleteService(locustTest, MASTER).orElse(Collections.emptyList());
 
         // * Assert
         assertThat(deletedServiceStatus.isEmpty()).isTrue();
