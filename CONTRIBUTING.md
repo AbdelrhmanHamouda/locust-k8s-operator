@@ -54,3 +54,7 @@ Please note that we have a code of conduct and thus you are kindly asked to foll
    Pull Request would represent.
 
 4. You may merge the Pull Request in once you have the sign-off of the maintainer.
+
+### Releasing
+
+[//]: # (TODO resolves in #18)

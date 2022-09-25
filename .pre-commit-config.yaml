@@ -25,6 +25,8 @@ repos:
     rev: v0.3.0
     hooks:
       - id: gradle-check
-        args: [--wrapper, --output]
+        args: [ --wrapper, --output ]
+        exclude: .*\.md # Markdown
       - id: gradle-spotless
-        args: [--wrapper, --output]
+        args: [ --wrapper, --output ]
+        exclude: .*\.md # Markdown
