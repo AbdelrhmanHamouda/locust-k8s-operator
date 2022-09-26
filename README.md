@@ -1,6 +1,7 @@
 # Locust Kubernetes Operator
 
-Enable performance testing for the modern era!  
+Enable performance testing for the modern era!
+
 Utilize the full power of _[Locust](https://github.com/locustio/locust)_ in the cloud.
 
 -----------------------------
