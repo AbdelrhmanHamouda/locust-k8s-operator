@@ -209,7 +209,11 @@ public class LoadGenHelpers {
 
         resourceOverrideMap.put("cpu", new Quantity(cpuOverride));
 
-        resourceOverrideMap.put("ephemeral-storage", new Quantity(ephemeralOverride));
+        // This conditional is to enable the operator to run on older kubernetes versions that doesn't support "ephemeral-storage" requests
+        if (!config.getPodEphemeralStorageRequest().isBlank()) {
+            resourceOverrideMap.put("ephemeral-storage", new Quantity(ephemeralOverride));
+
+        }
 
         return resourceOverrideMap;
     }

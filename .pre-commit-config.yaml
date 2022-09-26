@@ -5,6 +5,8 @@ repos:
     rev: v4.1.0
     hooks:
       - id: check-added-large-files
+        args:
+          - '--maxkb=2000'
       - id: check-json
       - id: check-merge-conflict
       - id: check-shebang-scripts-are-executable
@@ -25,6 +27,8 @@ repos:
     rev: v0.3.0
     hooks:
       - id: gradle-check
-        args: [--wrapper, --output]
+        args: [ --wrapper, --output ]
+        exclude: .*\.md # Markdown
       - id: gradle-spotless
-        args: [--wrapper, --output]
+        args: [ --wrapper, --output ]
+        exclude: .*\.md # Markdown
