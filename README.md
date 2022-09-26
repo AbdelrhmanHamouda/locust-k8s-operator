@@ -81,26 +81,35 @@ the _Operator_ support dynamic volume mounting from a configMaps source. This is
 the configuration is present, the volume is mounted, and if it is not, no volume is mounted.
 
 Since a "_Picture Is Worth a Thousand Words_", here is a gif!
+![Short demo for how the operator works](docs/resources/operatorDemo.gif "Operator Demo")
 
-[//]: # (TODO: GIF here)
+#### Steps performed in demo
 
-- demo steps
-    - prepare a simple test
-    - prepare a simple cr
-- demo steps
-    - cat test.py
-    - cat cr.yaml
-    - deploy configmap
-    - deploy cr
-    - open k9s and show test resources running
+- Test configmap created in cluster.
+- LocustTest CR deployed into the cluster.
+- The _Operator_ creating, configuring and scheduling test resources on CR creation event.
+- The _Operator_ cleaning up test resources after test CR has been removed event.
 
 ## Getting started
 
 [//]: # ( TODO: Solved in issue #17)
+_Coming soon!_
 
 ## Roadmap
 
-[//]: # ( TODO: List planned features)
+Not in a particular order:
+
+- Support HELM
+- In depth "getting started" documentation
+- Add traceability labels to generated resources
+- Support for deploying test resources with node affinity / node taints
+- Dashboard examples (Grafana + prometheus configuration)
+- Enable event driven actions
+  - Integration with MSTeams: Push notification on test run completion / termination events
+- _**UNDER_INVESTIGATION**_ Benchmarking and collection of non-test generated metrics
+  - Investigation is on going to study the feasibility of supplying _Locust_ pods with external metrics that are collected from service /
+    system under-test. Test pods can then use this information to assess pass / fail criteria. This is especially useful in non-REST based
+    services e.g. assess kafka(streams) microservice based on its _consumer lag_ performance coming from the kafka broker.
 
 ## project status
 
