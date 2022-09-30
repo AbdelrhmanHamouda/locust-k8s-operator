@@ -92,8 +92,18 @@ Since a "_Picture Is Worth a Thousand Words_", here is a gif!
 
 ## Getting started
 
-[//]: # ( TODO: Solved in issue #17)
-_Coming soon!_
+Only 4 simple steps are needed to get a test up and running in the cluster:
+
+- Valid _Locust_ test script.
+- Valid custom resource for _[LocustTest](kube/crd/locust-test-crd.yaml)_ CRD:  ([example](kube/sample-cr/locust-test-cr.yaml)).
+  > To streamline this step, _intensive-brew_ should be used. It is a simple cli tool that converts a declarative yaml into a compatible
+  LocustTest kubernetes custom resource. (_Coming soon!_)
+- Deploy test as a configMap
+  - `kubectl create configmap <configMap-name> --from-file <your_test.py>`
+- Start the test by deploying the _LocustTest_ custom resource.
+  - `kubectl apply -f <valid_cr>.yaml`
+- Remove all performance test resources by removing the _LocustTest_ custom resource.
+  - `kubectl delete -f <valid_cr>.yaml`
 
 ## Roadmap
 
