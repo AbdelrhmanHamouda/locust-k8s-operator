@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "locust-k8s-operator.fullname" . }}
+  labels:
+    {{- include "locust-k8s-operator.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "locust-k8s-operator.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "locust-k8s-operator.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "locust-k8s-operator.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: micronaut-port
+              containerPort: {{ .Values.appPort }}
+          livenessProbe:
+{{ toYaml .Values.livenessProbe | indent 12 }}
+          readinessProbe:
+{{ toYaml .Values.readinessProbe | indent 12 }}
+          resources:
+{{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: APP_SERVER_PORT
+              value: {{ .Values.appPort | quote}}
+            # K8s config
+            - name: K8S_NAMESPACE
+              value: {{ .Release.Namespace | quote }}
+            # Kafka config
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{ .Values.config.loadGenerationPods.kafka.bootstrapServers | quote }}
+            - name: KAFKA_SECURITY_ENABLED
+              value: {{ .Values.config.loadGenerationPods.kafka.acl.enabled | quote }}
+            {{- if .Values.config.loadGenerationPods.kafka.acl.enabled }}
+            - name: KAFKA_SECURITY_PROTOCOL_CONFIG
+              value: {{ .Values.config.loadGenerationPods.kafka.acl.protocol | quote }}
+            - name: KAFKA_SASL_MECHANISM
+              value: {{ .Values.config.loadGenerationPods.kafka.sasl.mechanism | quote }}
+            - name: KAFKA_SASL_JAAS_CONFIG
+              value: {{ .Values.config.loadGenerationPods.kafka.sasl.jaas.config | quote }}
+            - name: KAFKA_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.loadGenerationPods.kafka.locustK8sKafkaUser.userName }}
+                  key: {{ .Values.config.loadGenerationPods.kafka.acl.secret.userKey }}
+            - name: KAFKA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.loadGenerationPods.kafka.locustK8sKafkaUser.userName }}
+                  key: {{ .Values.config.loadGenerationPods.kafka.acl.secret.passwordKey }}
+            {{- end }}
+
+            # Load generation resource config
+            - name: POD_CPU_REQUEST
+              value: {{ .Values.config.loadGenerationPods.resource.cpuRequest | quote }}
+            - name: POD_MEM_REQUEST
+              value: {{ .Values.config.loadGenerationPods.resource.memRequest | quote }}
+            - name: POD_EPHEMERAL_REQUEST
+              value: {{ .Values.config.loadGenerationPods.resource.ephemeralRequest | quote }}
+            - name: POD_CPU_LIMIT
+              value: {{ .Values.config.loadGenerationPods.resource.cpuLimit | quote }}
+            - name: POD_MEM_LIMIT
+              value: {{ .Values.config.loadGenerationPods.resource.memLimit | quote }}
+            - name: POD_EPHEMERAL_LIMIT
+              value: {{ .Values.config.loadGenerationPods.resource.ephemeralLimit | quote }}
+            # Metric config
+            - name: METRICS_ENABLE
+              value: {{ .Values.micronaut.metrics.enabled | quote }}
+            {{- if .Values.micronaut.metrics.enabled | quote }}
+            - name: METRICS_WEB_ENABLE
+              value: {{ .Values.micronaut.metrics.web.enabled | quote }}
+            - name: METRICS_JVM_ENABLE
+              value: {{ .Values.micronaut.metrics.jvm.enabled | quote }}
+            - name: METRICS_UPTIME_ENABLE
+              value: {{ .Values.micronaut.metrics.uptime.enabled | quote }}
+            - name: METRICS_PROCESSOR_ENABLE
+              value: {{ .Values.micronaut.metrics.processor.enabled | quote }}
+            - name: METRICS_FILES_ENABLE
+              value: {{ .Values.micronaut.metrics.files.enabled | quote }}
+            - name: METRICS_LOGBACK_ENABLE
+              value: {{ .Values.micronaut.metrics.logback.enabled | quote }}
+            - name: METRICS_EXECUTOR_ENABLE
+              value: {{ .Values.micronaut.metrics.executor.enabled | quote }}
+            - name: METRICS_PROMETHEUS_STEP
+              value: {{ .Values.micronaut.metrics.export.prometheus.step | quote }}
+
+            {{- end }}
+            {{- if .Values.environmentVariables }}
+            {{- range $key, $value := .Values.environmentVariables }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
