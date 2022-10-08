@@ -1,0 +1,119 @@
+# Default values for locust-k8s-operator.
+
+# Geneal
+appPort: 8080
+
+# Deployment
+replicaCount: 1
+
+image:
+  repository: lotest/locust-k8s-operator
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  # TODO, change to match release tag
+  tag: latest
+
+# Liveness/Readiness probes
+livenessProbe:
+  httpGet:
+    scheme: HTTP
+    path: /health
+    port: micronaut-port
+  initialDelaySeconds: 10
+  periodSeconds: 20
+  timeoutSeconds: 10
+  failureThreshold: 1
+readinessProbe:
+  httpGet:
+    scheme: HTTP
+    path: /health
+    port: micronaut-port
+  initialDelaySeconds: 30
+  periodSeconds: 20
+  timeoutSeconds: 10
+  failureThreshold: 1
+
+# K8s config
+k8s:
+  customResourceDefinition:
+    deploy: true
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+# requests:
+#   cpu: 100m
+#   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+config:
+  loadGenerationPods:
+    resource:
+      cpuRequest: 250m
+      memRequest: 128Mi
+      ephemeralRequest: 30M
+      cpuLimit: 1000m
+      memLimit: 1024Mi
+      ephemeralLimit: 50M
+    kafka:
+      bootstrapServers: localhost:9092
+      locustK8sKafkaUser:
+        userName: locust-k8s-kafka-user-msk-credentials
+        deployUser: true
+        cluster:
+          name: cluster-name
+          patternType: literal
+
+      acl:
+        enabled: false
+        protocol: SASL_PLAINTEXT
+        secret:
+          userKey: username
+          passwordKey: password
+
+      sasl:
+        mechanism: SCRAM-SHA-512
+        jaas:
+          config: org.apache.kafka.common.security.scram.ScramLoginModule required username="${KAFKA_USERNAME}" password="${KAFKA_PASSWORD}";
+
+micronaut:
+  metrics:
+    enabled: true
+    web:
+      enabled: true
+    jvm:
+      enabled: true
+    uptime:
+      enabled: true
+    processor:
+      enabled: true
+    files:
+      enabled: false
+    logback:
+      enabled: false
+    executor:
+      enabled: false
+    export:
+      prometheus:
+        step: 'PT30S'

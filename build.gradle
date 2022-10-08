@@ -6,11 +6,8 @@ plugins {
     id "idea"
 }
 
-// Version constructors
-def gitHash = 'git rev-parse --verify --short HEAD'.execute().text.trim()
-def baseLineVersion = "0.1"
-
-version = baseLineVersion + "-" + gitHash
+// Automatically managed by commitizen (.cz.yaml)
+version = "0.1.0"
 group = "com.locust"
 
 repositories {

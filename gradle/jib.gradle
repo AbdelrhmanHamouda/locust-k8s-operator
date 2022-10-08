@@ -1,7 +1,22 @@
+def matchedTags = project.version =~ /(\d+)\.(\d+)\.(\d+)/
+def fullVersion = project.version
+def majorVersion = matchedTags[0][1]
+def majorMinorVersion = majorVersion + "." + matchedTags[0][2]
+
 jib {
 
     to {
         image = project.name
-        tags = [project.version, 'latest']
+        // Tag image with
+        // - Full version
+        // - Major Version
+        // - Major.Minor version
+        // - "latest"
+        tags = [fullVersion, majorVersion, majorMinorVersion, 'latest']
+    }
+
+    // User current time for image creation
+    container {
+        creationTime = "USE_CURRENT_TIMESTAMP"
     }
 }
