@@ -1,7 +1,7 @@
 def matchedTags = project.version =~ /(\d+)\.(\d+)\.(\d+)/
 def fullVersion = project.version
 def majorVersion = matchedTags[0][1]
-def majorMinorVersion = majorVersion + matchedTags[0][2]
+def majorMinorVersion = majorVersion + "." + matchedTags[0][2]
 
 jib {
 
