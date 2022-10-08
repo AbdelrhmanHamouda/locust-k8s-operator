@@ -7,7 +7,7 @@ plugins {
 }
 
 // Automatically managed by commitizen (.cz.yaml)
-version = "0.0.1"
+version = "0.1.0"
 group = "com.locust"
 
 repositories {
