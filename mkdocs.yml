@@ -1,16 +1,26 @@
 # yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
 
+# Project information
 site_name: Locust Kubernetes Operator
+site_author: Abdelrhman hamouda
+site_description: Locust kubernetes operator documentation.
 
-repo_url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
+# Repository
 repo_name: locust-k8s-operator
+repo_url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
 
+# Copyright
+copyright: >
+  Copyright &copy; 2022 Abdelrhman Hamouda –
+  <a href="#__consent">Change cookie settings</a>
 
+# Plugins
 plugins:
   - social
   - search
   - git-revision-date-localized
 
+# Configuration
 theme:
   name: material
 
@@ -53,6 +63,7 @@ theme:
         icon: material/weather-night
         name: Switch to dark mode
 
+# Customization
 extra:
   consent:
     title: Cookie consent
@@ -91,6 +102,7 @@ extra:
       link: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues
       name: Report a bug!
 
+# Extensions
 markdown_extensions:
 
   # Python Markdown
@@ -127,8 +139,7 @@ markdown_extensions:
       custom_checkbox: true
   - pymdownx.tilde
 
-
-
-copyright: >
-  Copyright &copy; 2022 Abdelrhman Hamouda –
-  <a href="#__consent">Change cookie settings</a>
+# Page tree
+nav:
+  - Home: landing-page.md
+  - Example: index.md
