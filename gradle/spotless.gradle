@@ -11,7 +11,7 @@ if (DISABLE_SPOTLESS == "false") {
             indentWithSpaces(4)
         }
         format "misc", {
-            target "**/*.gradle", "**/*.md", "**/.gitignore"
+            target "**/*.gradle", "**/.gitignore"
 
             trimTrailingWhitespace()
             indentWithSpaces()

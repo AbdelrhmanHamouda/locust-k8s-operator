@@ -87,3 +87,22 @@ jobs:
       - name: Run chart-testing (install)
         run: ct install
 
+  # todo: move to release after testing
+  docs-release:
+    name: Publish documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - run: pip install \
+          mkdocs-material \
+          pillow cairosvg \
+          mkdocs-git-revision-date-localized-plugin
+      - run: mkdocs gh-deploy --verbose
+
