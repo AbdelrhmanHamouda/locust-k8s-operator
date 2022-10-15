@@ -140,5 +140,5 @@ markdown_extensions:
 
 # Page tree
 nav:
-  - Home: landing-page.md
-  - Example: index.md
+  - Home: index.md
+  - Example: example.md
