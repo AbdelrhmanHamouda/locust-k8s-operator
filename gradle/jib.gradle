@@ -1,7 +1,0 @@
-jib {
-
-    to {
-        image = project.name
-        tags = [project.version, 'latest']
-    }
-}
