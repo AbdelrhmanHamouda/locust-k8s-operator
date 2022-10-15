@@ -13,3 +13,7 @@ out/
 .settings
 .classpath
 .factorypath
+
+# mkdocs
+.docs-venv
+.cache

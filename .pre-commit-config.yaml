@@ -15,7 +15,7 @@ repos:
       - id: detect-private-key
       - id: mixed-line-ending
       - id: trailing-whitespace
-        exclude: .*\.md # Markdown
+        exclude: .*.md # Markdown
 
   - repo: https://github.com/commitizen-tools/commitizen
     rev: v2.32.4

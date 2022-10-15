@@ -1,0 +1,134 @@
+# yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
+
+site_name: Locust Kubernetes Operator
+
+repo_url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
+repo_name: locust-k8s-operator
+
+
+plugins:
+  - social
+  - search
+  - git-revision-date-localized
+
+theme:
+  name: material
+
+  icon:
+    logo: material/kubernetes
+    repo: material/github
+
+
+  features:
+    # Search
+    - search.highlight
+    - search.share
+
+    # Navigation
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+
+    # Table of content
+    - toc.follow
+
+  palette:
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: green
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: default
+      primary: green
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+
+extra:
+  consent:
+    title: Cookie consent
+    actions:
+      - manage
+      - accept
+      - reject
+    description: >-
+      We use cookies to recognize your repeated visits and preferences, as well
+      as to measure the effectiveness of our documentation and whether users
+      find what they're searching for. With your consent, you're helping us to
+      make our documentation better.
+
+
+
+  social:
+
+    # DockerHub
+    - icon: fontawesome/brands/docker
+      link: https://hub.docker.com/r/lotest/locust-k8s-operator
+      name: Locust operator on DockerHub
+
+    # LinkedIn
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/abdelrhman-ahmed91/
+      name: Abdelrhman Hamouda on LinkedIn
+
+    # GitHub
+    - icon: fontawesome/brands/github
+      link: https://github.com/AbdelrhmanHamouda
+      name: Abdelrhman Hamouda on GitHub
+
+
+    # Bug
+    - icon: fontawesome/solid/bug
+      link: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues
+      name: Report a bug!
+
+markdown_extensions:
+
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: ⚓
+      permalink_title: Anchor link to this section for reference
+
+  # Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.highlight
+  - pymdownx.critic
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+
+
+copyright: >
+  Copyright &copy; 2022 Abdelrhman Hamouda –
+  <a href="#__consent">Change cookie settings</a>
