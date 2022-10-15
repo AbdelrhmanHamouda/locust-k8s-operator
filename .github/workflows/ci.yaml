@@ -1,9 +1,11 @@
 name: CI Pipeline
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 permissions:
-  contents: read
+  # todo change back to read when moving docs flow to release
+  contents: write
+
 jobs:
   Build:
     name: Build & Validate
@@ -94,15 +96,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.x
 
-      - run: pip install \
+      - name: Install Python dependencies
+        run: pip install \
           mkdocs-material \
-          pillow cairosvg \
           mkdocs-git-revision-date-localized-plugin
-      - run: mkdocs gh-deploy --verbose
 
+      - name: Deploy documentation
+        run: mkdocs gh-deploy --force
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}

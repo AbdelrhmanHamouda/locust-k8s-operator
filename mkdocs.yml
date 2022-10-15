@@ -16,7 +16,6 @@ copyright: >
 
 # Plugins
 plugins:
-  - social
   - search
   - git-revision-date-localized
 
@@ -141,5 +140,5 @@ markdown_extensions:
 
 # Page tree
 nav:
-  - Home: landing-page.md
-  - Example: index.md
+  - Home: index.md
+  - Example: example.md

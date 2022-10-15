@@ -10,6 +10,7 @@ Utilize the full power of _[Locust](https://github.com/locustio/locust)_ in the 
 [![CI Pipeline][pipeline-status]][pipeline-status-url]
 [![Codacy Badge][code-coverage]][code-coverage-url]
 [![Codacy Badge][code-quality]][code-quality-url]
+[![Documentation][docs]][docs-url]
 
 ![](docs/assets/images/run-anywhere.png)
 
@@ -147,3 +148,7 @@ Open source licensed under Apache-2.0 license (see LICENSE file for details).
 [//]: # (Code quality badge)
 [code-quality]: https://app.codacy.com/project/badge/Coverage/70b76e69dbde4a9ebfd36ad5ccf6de78
 [code-quality-url]: https://www.codacy.com/gh/AbdelrhmanHamouda/locust-k8s-operator/dashboard?utm_source=github.com&utm_medium=referral&utm_content=AbdelrhmanHamouda/locust-k8s-operator&utm_campaign=Badge_Coverage
+
+[//]: # (Documentation badge)
+[docs]: https://img.shields.io/badge/Documentation-gh--pages-green
+[docs-url]:https://abdelrhmanhamouda.github.io/locust-k8s-operator/
