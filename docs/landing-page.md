@@ -1,3 +1,8 @@
+---
+title: Locust Kubernetes Operator
+description: Entry point to the _operator_ documentation site.
+---
+
 # Locust Kubernetes Operator
 
 Enable performance testing for the modern era!
@@ -10,9 +15,8 @@ Utilize the full power of _[Locust](https://github.com/locustio/locust)_ in the 
 [![CI Pipeline][pipeline-status]][pipeline-status-url]
 [![Codacy Badge][code-coverage]][code-coverage-url]
 [![Codacy Badge][code-quality]][code-quality-url]
-[![Documentation][docs]][docs-url]
 
-![](docs/assets/images/run-anywhere.png)
+![](assets/images/undraw_real_time_analytics.svg)
 
 ## At a glance
 
@@ -53,13 +57,13 @@ dashboards in order to analyse test results during test runtime or retroactively
 resource monitoring ( interesting for
 cloud admins, SREs, etc...).
 
-![Operator feature set](docs/assets/images/operator-feature-set.png "Operator feature set")
+![Operator feature set](assets/images/operator-feature-set.png "Operator feature set")
 
 ### Whom is it for
 
 It is built for...
 
-![Whom is the operator built for](docs/assets/images/built-for.png "Built for")
+![Whom is the operator built for](assets/images/built-for.png "Built for")
 
 ### Where can it run
 
@@ -82,7 +86,7 @@ the _Operator_ support dynamic volume mounting from a configMaps source. This is
 the configuration is present, the volume is mounted, and if it is not, no volume is mounted.
 
 Since a "_Picture Is Worth a Thousand Words_", here is a gif!
-![Short demo for how the operator works](docs/assets/images/operatorDemo.gif "Operator Demo")
+![Short demo for how the operator works](assets/images/operatorDemo.gif "Operator Demo")
 
 #### Steps performed in demo
 
@@ -96,15 +100,15 @@ Since a "_Picture Is Worth a Thousand Words_", here is a gif!
 Only 4 simple steps are needed to get a test up and running in the cluster:
 
 - Valid _Locust_ test script.
-- Valid custom resource for _[LocustTest](kube/crd/locust-test-crd.yaml)_ CRD:  ([example](kube/sample-cr/locust-test-cr.yaml)).
+- Valid custom resource for _[LocustTest](../kube/crd/locust-test-crd.yaml)_ CRD:  ([example](../kube/sample-cr/locust-test-cr.yaml)).
   > To streamline this step, _intensive-brew_ should be used. It is a simple cli tool that converts a declarative yaml into a compatible
   LocustTest kubernetes custom resource. (_Coming soon!_)
 - Deploy test as a configMap
-  - `kubectl create configmap <configMap-name> --from-file <your_test.py>`
+    - `kubectl create configmap <configMap-name> --from-file <your_test.py>`
 - Start the test by deploying the _LocustTest_ custom resource.
-  - `kubectl apply -f <valid_cr>.yaml`
+    - `kubectl apply -f <valid_cr>.yaml`
 - Remove all performance test resources by removing the _LocustTest_ custom resource.
-  - `kubectl delete -f <valid_cr>.yaml`
+    - `kubectl delete -f <valid_cr>.yaml`
 
 ## Roadmap
 
@@ -116,11 +120,11 @@ Not in a particular order:
 - Support for deploying test resources with node affinity / node taints
 - Dashboard examples (Grafana + prometheus configuration)
 - Enable event driven actions
-  - Integration with MSTeams: Push notification on test run completion / termination events
+    - Integration with MSTeams: Push notification on test run completion / termination events
 - _**UNDER_INVESTIGATION**_ Benchmarking and collection of non-test generated metrics
-  - Investigation is on going to study the feasibility of supplying _Locust_ pods with external metrics that are collected from service /
-    system under-test. Test pods can then use this information to assess pass / fail criteria. This is especially useful in non-REST based
-    services e.g. assess kafka(streams) microservice based on its _consumer lag_ performance coming from the kafka broker.
+    - Investigation is on going to study the feasibility of supplying _Locust_ pods with external metrics that are collected from service /
+      system under-test. Test pods can then use this information to assess pass / fail criteria. This is especially useful in non-REST based
+      services e.g. assess kafka(streams) microservice based on its _consumer lag_ performance coming from the kafka broker.
 
 ## project status
 
@@ -131,7 +135,7 @@ open a ticket. If you wish to contribute code and / or ideas, kindly check the c
 
 There's plenty to do, come say hi in [the issues](https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues)! 👋
 
-Also check out the [CONTRIBUTING.MD](CONTRIBUTING.md) 🤓
+Also check out the [CONTRIBUTING.MD](../CONTRIBUTING.md) 🤓
 
 ## License
 
@@ -148,7 +152,3 @@ Open source licensed under Apache-2.0 license (see LICENSE file for details).
 [//]: # (Code quality badge)
 [code-quality]: https://app.codacy.com/project/badge/Coverage/70b76e69dbde4a9ebfd36ad5ccf6de78
 [code-quality-url]: https://www.codacy.com/gh/AbdelrhmanHamouda/locust-k8s-operator/dashboard?utm_source=github.com&utm_medium=referral&utm_content=AbdelrhmanHamouda/locust-k8s-operator&utm_campaign=Badge_Coverage
-
-[//]: # (Documentation badge)
-[docs]: https://img.shields.io/badge/Documentation-gh--pages-green
-[docs-url]:https://abdelrhmanhamouda.github.io/locust-k8s-operator/
