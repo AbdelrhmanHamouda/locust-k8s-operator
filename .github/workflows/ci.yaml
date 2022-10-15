@@ -1,9 +1,11 @@
 name: CI Pipeline
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 permissions:
-  contents: read
+  # todo change back to read when moving docs flow to release
+  contents: write
+
 jobs:
   Build:
     name: Build & Validate
@@ -95,20 +97,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-#      - name: Setup python
-#        uses: actions/setup-python@v2
-#        with:
-#          python-version: 3.x
-#
-#      - run: pip install \
-#          mkdocs-material \
-#          pillow cairosvg \
-#          mkdocs-git-revision-date-localized-plugin
-#      - run: mkdocs gh-deploy --verbose
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
 
-      - uses: mhausenblas/mkdocs-deploy-gh-pages@master
+      - name: Set up build cache
+        uses: actions/cache@v3
+        id: cache
+        with:
+          key: ${{ runner.os }}-${{ hashFiles('.cache/**') }}
+          path: .cache
+
+      - name: Install Python dependencies
+        run: pip install \
+          mkdocs-material \
+          pillow cairosvg \
+          mkdocs-git-revision-date-localized-plugin
+
+      - name: Deploy documentation
+        run: mkdocs gh-deploy --verbose --remote-branch master
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          EXTRA_PACKAGES: build-base
-          REQUIREMENTS: docs/mkdocs-requirements.txt
-
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
