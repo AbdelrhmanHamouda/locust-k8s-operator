@@ -16,7 +16,9 @@ Utilize the full power of _[Locust](https://github.com/locustio/locust)_ in the 
 [![Codacy Badge][code-coverage]][code-coverage-url]
 [![Codacy Badge][code-quality]][code-quality-url]
 
-![](assets/images/undraw_real_time_analytics_cropped.svg)
+<div style="text-align: center;">
+<img  src="assets/images/undraw_real_time_analytics_cropped.svg" height="500" width="500" alt=""/>
+</div>
 
 ## At a glance
 
