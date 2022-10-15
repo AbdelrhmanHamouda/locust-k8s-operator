@@ -104,17 +104,9 @@ jobs:
         with:
           python-version: 3.x
 
-      - name: Set up build cache
-        uses: actions/cache@v3
-        id: cache
-        with:
-          key: ${{ runner.os }}-${{ hashFiles('.cache/**') }}
-          path: .cache
-
       - name: Install Python dependencies
         run: pip install \
           mkdocs-material \
-          pillow cairosvg \
           mkdocs-git-revision-date-localized-plugin
 
       - name: Deploy documentation

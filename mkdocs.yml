@@ -16,7 +16,6 @@ copyright: >
 
 # Plugins
 plugins:
-  - social
   - search
   - git-revision-date-localized
 
