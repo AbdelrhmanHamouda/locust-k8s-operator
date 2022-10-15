@@ -110,6 +110,6 @@ jobs:
           mkdocs-git-revision-date-localized-plugin
 
       - name: Deploy documentation
-        run: mkdocs gh-deploy --verbose
+        run: mkdocs gh-deploy --force
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
