@@ -77,71 +77,7 @@ performance testing system anywhere in a matter of seconds.
 The only real limit to this approach is the amount of cluster resources a given team or an organization is willing to dedicate to
 performance testing.
 
-## How does it work
 
-To run a performance test, basic configuration is provided through a simple and intuitive kubernetes custom resource. Once deployed the
-_Operator_ does all the heavy work of creating and scheduling the resources while making sure that all created load generation pods can
-effectively communicate with each other.
-
-To handle the challenge of delivering test script/s from local environment to the cluster and in turn to the deployed _locust_ pods,
-the _Operator_ support dynamic volume mounting from a configMaps source. This is indicated by a simple optional configuration. Meaning, if
-the configuration is present, the volume is mounted, and if it is not, no volume is mounted.
-
-Since a "_Picture Is Worth a Thousand Words_", here is a gif!
-![Short demo for how the operator works](assets/images/operatorDemo.gif "Operator Demo")
-
-#### Steps performed in demo
-
-- Test configmap created in cluster.
-- LocustTest CR deployed into the cluster.
-- The _Operator_ creating, configuring and scheduling test resources on CR creation event.
-- The _Operator_ cleaning up test resources after test CR has been removed event.
-
-## Getting started
-
-Only 4 simple steps are needed to get a test up and running in the cluster:
-
-- Valid _Locust_ test script.
-- Valid custom resource for _[LocustTest]_ CRD:  ([example] [cr-example]).
-  > To streamline this step, _intensive-brew_ should be used. It is a simple cli tool that converts a declarative yaml into a compatible
-  LocustTest kubernetes custom resource. (_Coming soon!_)
-- Deploy test as a configMap
-    - `kubectl create configmap <configMap-name> --from-file <your_test.py>`
-- Start the test by deploying the _LocustTest_ custom resource.
-    - `kubectl apply -f <valid_cr>.yaml`
-- Remove all performance test resources by removing the _LocustTest_ custom resource.
-    - `kubectl delete -f <valid_cr>.yaml`
-
-## Roadmap
-
-Not in a particular order:
-
-- Support HELM
-- In depth "getting started" documentation
-- Add traceability labels to generated resources
-- Support for deploying test resources with node affinity / node taints
-- Dashboard examples (Grafana + prometheus configuration)
-- Enable event driven actions
-    - Integration with MSTeams: Push notification on test run completion / termination events
-- _**UNDER_INVESTIGATION**_ Benchmarking and collection of non-test generated metrics
-    - Investigation is on going to study the feasibility of supplying _Locust_ pods with external metrics that are collected from service /
-      system under-test. Test pods can then use this information to assess pass / fail criteria. This is especially useful in non-REST based
-      services e.g. assess kafka(streams) microservice based on its _consumer lag_ performance coming from the kafka broker.
-
-## project status
-
-The project is **_actively_** maintained and is under continues development and improvement. If you have any request or want to chat, kindly
-open a ticket. If you wish to contribute code and / or ideas, kindly check the contribution section.
-
-## Contribute
-
-There's plenty to do, come say hi in [the issues][issues-url]! 👋
-
-Also check out the [CONTRIBUTING.MD][contributing-url] 🤓
-
-## License
-
-Open source licensed under Apache-2.0 license (see LICENSE file for details).
 
 [//]: # (Pipeline status badge)
 [pipeline-status]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/actions/workflows/ci.yaml/badge.svg?branch=master
