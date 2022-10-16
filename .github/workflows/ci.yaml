@@ -99,42 +99,24 @@ jobs:
         with:
           fetch-depth: 0
 
-#      - name: Setup python
-#        uses: actions/setup-python@v4
-#        with:
-#          python-version: 3.x
-#
-#      - name: Install Python dependencies
-#        run: pip install \
-#          mkdocs-material \
-#          mkdocs-git-revision-date-localized-plugin
-#
-#      - name: Deploy documentation
-#        run: mkdocs gh-deploy -x OPERATOR_DOCS --force
-#        env:
-#          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
-
-
       - name: Setup python
         uses: actions/setup-python@v4
         with:
           python-version: 3.x
 
       - name: Install dependencies
-          #python -m pip install -U mkdocs mkdocs-material
         run: |
           pip install \
           mkdocs-material \
           mkdocs-git-revision-date-localized-plugin
 
-      - name: Build docs
+      - name: Build documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python -m mkdocs build
 
-      - name: Push doc to Github Page
+      - name: Deploy documentation
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

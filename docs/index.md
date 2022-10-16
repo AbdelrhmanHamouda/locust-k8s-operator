@@ -1,6 +1,6 @@
 ---
 title: Locust Kubernetes Operator
-description: Entry point to the _operator_ documentation site.
+description: Enable performance testing for the modern era! Utilize the full power of Locust in the cloud.
 ---
 
 # Locust Kubernetes Operator
