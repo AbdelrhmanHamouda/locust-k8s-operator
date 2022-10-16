@@ -102,7 +102,7 @@ Since a "_Picture Is Worth a Thousand Words_", here is a gif!
 Only 4 simple steps are needed to get a test up and running in the cluster:
 
 - Valid _Locust_ test script.
-- Valid custom resource for _[LocustTest](../kube/crd/locust-test-crd.yaml)_ CRD:  ([example](../kube/sample-cr/locust-test-cr.yaml)).
+- Valid custom resource for _[LocustTest]_ CRD:  ([example] [cr-example]).
   > To streamline this step, _intensive-brew_ should be used. It is a simple cli tool that converts a declarative yaml into a compatible
   LocustTest kubernetes custom resource. (_Coming soon!_)
 - Deploy test as a configMap
@@ -135,9 +135,9 @@ open a ticket. If you wish to contribute code and / or ideas, kindly check the c
 
 ## Contribute
 
-There's plenty to do, come say hi in [the issues](https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues)! 👋
+There's plenty to do, come say hi in [the issues][issues-url]! 👋
 
-Also check out the [CONTRIBUTING.MD](../CONTRIBUTING.md) 🤓
+Also check out the [CONTRIBUTING.MD][contributing-url] 🤓
 
 ## License
 
@@ -154,3 +154,9 @@ Open source licensed under Apache-2.0 license (see LICENSE file for details).
 [//]: # (Code quality badge)
 [code-quality]: https://app.codacy.com/project/badge/Coverage/70b76e69dbde4a9ebfd36ad5ccf6de78
 [code-quality-url]: https://www.codacy.com/gh/AbdelrhmanHamouda/locust-k8s-operator/dashboard?utm_source=github.com&utm_medium=referral&utm_content=AbdelrhmanHamouda/locust-k8s-operator&utm_campaign=Badge_Coverage
+
+[//]: # (common urls)
+[contributing-url]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/CONTRIBUTING.md
+[issues-url]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues
+[LocustTest]:https://github.com/AbdelrhmanHamouda/locust-k8s-operator/tree/master/kube/crd/locust-test-crd.yaml
+[cr-example]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/tree/master/kube/sample-cr/locust-test-cr.yaml
