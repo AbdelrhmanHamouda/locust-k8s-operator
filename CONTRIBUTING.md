@@ -62,7 +62,5 @@ During development, the **_CI_** workflow will build the documentation as part o
    the content of the CHANGELOG.md and the version increase.
 
 [//]: # (Documentation framework urls)
-
 [MkDocs]: https://www.mkdocs.org/
-
 [Material for MkDocs]: https://squidfunk.github.io/mkdocs-material/
