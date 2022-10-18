@@ -414,14 +414,52 @@
 
 
 <h1 id="helm-deployment">HELM deployment<a class="headerlink" href="#helm-deployment" title="Anchor link to this section for reference">⚓</a></h1>
-<p><em>Full instructions Coming soon!</em></p>
+<p>In order to deploy using helm, follow the below steps:</p>
+<ol>
+<li>
+<p>Add the <em>Operator´s</em> HELM repo</p>
+<ul>
+<li><code>helm repo add locust-k8s-operator https://abdelrhmanhamouda.github.io/locust-k8s-operator/</code></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the repo has been added before, run <code>helm repo update</code> in order to pull the latest available release! </p>
+</div>
+</li>
+<li>
+<p>Install the <em>Operator</em></p>
+<ul>
+<li><code class="highlight">helm install locust-operatr locust-k8s-operator/locust-k8s-operator</code><ul>
+<li>The <em>Operator</em> will ready up in around 40-60 seconds</li>
+</ul>
+</li>
+<li>This will cause the bellow resources to be deployed in the currently active <em>k8s</em> context &amp; namespace.<ul>
+<li><a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/charts/locust-k8s-operator/templates/crd-locusttest.yaml">crd-locusttest.yaml</a><ul>
+<li>This <em>CRD</em> is the first part of the <em>Operator</em> pattern. It is needed in order to enable <em>Kubernetes</em> to understand the <em>LocustTest</em>
+  custom resource and allow its deployment.</li>
+</ul>
+</li>
+<li><a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/charts/locust-k8s-operator/templates/serviceaccount-and-roles.yaml">serviceaccount-and-roles.yaml</a><ul>
+<li>ServiceAccount and Role bindings that enable the <em>Controller</em> to have the needed privilege inside the cluster to watch and
+  manage the related resources.</li>
+</ul>
+</li>
+<li><a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/charts/locust-k8s-operator/templates/deployment.yaml">deployment.yaml</a><ul>
+<li>The <em>Controller</em> responsible for managing and reacting to the cluster resources.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
 
   <hr>
 <div class="md-source-file">
   <small>
     
       Last update:
-      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">October 16, 2022</span>
+      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">October 18, 2022</span>
       
     
   </small>
