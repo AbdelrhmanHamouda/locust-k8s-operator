@@ -60,7 +60,14 @@ During development, the **_CI_** workflow will build the documentation as part o
    the tool maintainer / contributor(s).
 3. Make sure that the commit messages are aligned with the used standard. This is very important since the commit message directly influence
    the content of the CHANGELOG.md and the version increase.
+4. **Tests**
+    1. Clean and well written tests are very important.
+    2. Changes must not cause any type of regression.
+    3. All changes / additions (within reason) must be covered by tests.
+    4. If the additions represent a breaking change, existing tests must be updated.
 
 [//]: # (Documentation framework urls)
+
 [MkDocs]: https://www.mkdocs.org/
+
 [Material for MkDocs]: https://squidfunk.github.io/mkdocs-material/
