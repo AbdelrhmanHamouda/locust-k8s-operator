@@ -89,9 +89,8 @@ jobs:
       - name: Run chart-testing (install)
         run: ct install
 
-  # todo: move to release after testing
-  docs-release:
-    name: Publish documentation
+  docs-test:
+    name: Test documentation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -104,12 +103,14 @@ jobs:
         with:
           python-version: 3.x
 
-      - name: Install Python dependencies
-        run: pip install \
+      - name: Install dependencies
+        run: |
+          pip install \
           mkdocs-material \
           mkdocs-git-revision-date-localized-plugin
 
-      - name: Deploy documentation
-        run: mkdocs gh-deploy --force
+      - name: Build documentation
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python -m mkdocs build

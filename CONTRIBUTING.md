@@ -31,8 +31,8 @@ Please note that we have a code of conduct and thus you are kindly asked to foll
 
 1. Clone this repository.
 2. Install  [pre-commit](https://pre-commit.com/) and run the below commands to add and register needed git hooks
-   1. Run `pre-commit install --install-hooks`
-   2. Run `pre-commit install --hook-type commit-msg`
+    1. Run `pre-commit install --install-hooks`
+    2. Run `pre-commit install --hook-type commit-msg`
 
 </details>
 
@@ -45,16 +45,22 @@ Please note that we have a code of conduct and thus you are kindly asked to foll
 
 </details>
 
+### Writing documentation
+
+All documentation is located under the `docs/` directory. The documentation is hosted
+on [gh-pages](https://abdelrhmanhamouda.github.io/locust-k8s-operator/) and updated automatically with each release. To manage and build the
+documentation, the project uses [MkDocs] & [Material for MkDocs] framework to manage and build the documentation.
+
+During development, the **_CI_** workflow will build the documentation as part of the validation.
+
 ### Pull Request Process
 
-1. Ensure any install or build dependencies are removed before the end of the layer when doing a build.
-2. Update the README.md with details of changes to the interface, this includes new environment variables, exposed ports, useful file
-   locations and container parameters.
-3. Increase the version numbers in any examples files and the README.md to the new version that this
-   Pull Request would represent.
+1. Ensure any install or build dependencies are removed before the end layer when doing a build.
+2. Update the documentation when needed with the details of the proposed change, this includes any useful information for the end user of
+   the tool maintainer / contributor(s).
+3. Make sure that the commit messages are aligned with the used standard. This is very important since the commit message directly influence
+   the content of the CHANGELOG.md and the version increase.
 
-4. You may merge the Pull Request in once you have the sign-off of the maintainer.
-
-### Releasing
-
-[//]: # (TODO resolves in #18)
+[//]: # (Documentation framework urls)
+[MkDocs]: https://www.mkdocs.org/
+[Material for MkDocs]: https://squidfunk.github.io/mkdocs-material/
