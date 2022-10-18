@@ -89,9 +89,8 @@ jobs:
       - name: Run chart-testing (install)
         run: ct install
 
-  # todo: move to release after testing
-  docs-release:
-    name: Publish documentation
+  docs-test:
+    name: Test documentation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -115,12 +114,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python -m mkdocs build
-
-      - name: Deploy documentation
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
-          keep_files: true
-          user_name: ${{ github.actor }}
-          user_email: ${{ github.actor }}@users.noreply.github.com
