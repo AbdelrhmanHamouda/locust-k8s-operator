@@ -1,4 +1,4 @@
-package com.locust.controller;
+package com.locust.operator.controller;
 
 import com.locust.operator.controller.config.SysConfig;
 import com.locust.operator.controller.utils.LoadGenHelpers;
@@ -21,11 +21,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
 
-import static com.locust.controller.utils.TestFixtures.executeWithK8sMockServer;
-import static com.locust.controller.utils.TestFixtures.prepareLocustTest;
-import static com.locust.controller.utils.TestFixtures.prepareNodeConfig;
-import static com.locust.controller.utils.TestFixtures.setupSysconfigMock;
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
+import static com.locust.operator.controller.utils.TestFixtures.executeWithK8sMockServer;
+import static com.locust.operator.controller.utils.TestFixtures.prepareLocustTest;
+import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfig;
+import static com.locust.operator.controller.utils.TestFixtures.setupSysconfigMock;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @Slf4j

@@ -1,4 +1,4 @@
-package com.locust.controller;
+package com.locust.operator.controller;
 
 import com.locust.operator.controller.utils.LoadGenHelpers;
 import com.locust.operator.controller.utils.resource.manage.ResourceCreationHelpers;
@@ -15,11 +15,11 @@ import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static com.locust.controller.utils.TestFixtures.assertK8sResourceCreation;
-import static com.locust.controller.utils.TestFixtures.containerEnvironmentMap;
-import static com.locust.controller.utils.TestFixtures.executeWithK8sMockServer;
-import static com.locust.controller.utils.TestFixtures.prepareNodeConfig;
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
+import static com.locust.operator.controller.utils.TestFixtures.assertK8sResourceCreation;
+import static com.locust.operator.controller.utils.TestFixtures.containerEnvironmentMap;
+import static com.locust.operator.controller.utils.TestFixtures.executeWithK8sMockServer;
+import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfig;
 import static org.mockito.Mockito.when;
 
 @Slf4j
