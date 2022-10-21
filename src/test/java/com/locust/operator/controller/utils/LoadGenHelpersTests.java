@@ -1,7 +1,6 @@
-package com.locust.operator.controller;
+package com.locust.operator.controller.utils;
 
 import com.locust.operator.controller.config.SysConfig;
-import com.locust.operator.controller.utils.LoadGenHelpers;
 import lombok.val;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,10 +9,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static com.locust.operator.controller.TestFixtures.assertNodeConfig;
+import static com.locust.operator.controller.TestFixtures.prepareLocustTest;
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
 import static com.locust.operator.controller.dto.OperationalMode.WORKER;
-import static com.locust.operator.controller.utils.TestFixtures.assertNodeConfig;
-import static com.locust.operator.controller.utils.TestFixtures.prepareLocustTest;
 
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

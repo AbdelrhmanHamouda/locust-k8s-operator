@@ -1,4 +1,4 @@
-package com.locust.operator.controller.utils;
+package com.locust.operator.controller;
 
 import com.locust.operator.controller.config.SysConfig;
 import com.locust.operator.controller.dto.LoadGenerationNode;

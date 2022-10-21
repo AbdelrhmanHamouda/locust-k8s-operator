@@ -1,10 +1,7 @@
-package com.locust.operator.controller;
+package com.locust.operator.controller.utils.resource.manage;
 
 import com.locust.operator.controller.config.SysConfig;
 import com.locust.operator.controller.utils.LoadGenHelpers;
-import com.locust.operator.controller.utils.resource.manage.ResourceCreationHelpers;
-import com.locust.operator.controller.utils.resource.manage.ResourceCreationManager;
-import com.locust.operator.controller.utils.resource.manage.ResourceDeletionManager;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.server.mock.EnableKubernetesMockClient;
 import lombok.extern.slf4j.Slf4j;
@@ -22,10 +19,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Collections;
 
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
-import static com.locust.operator.controller.utils.TestFixtures.executeWithK8sMockServer;
-import static com.locust.operator.controller.utils.TestFixtures.prepareLocustTest;
-import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfig;
-import static com.locust.operator.controller.utils.TestFixtures.setupSysconfigMock;
+import static com.locust.operator.controller.TestFixtures.executeWithK8sMockServer;
+import static com.locust.operator.controller.TestFixtures.prepareLocustTest;
+import static com.locust.operator.controller.TestFixtures.prepareNodeConfig;
+import static com.locust.operator.controller.TestFixtures.setupSysconfigMock;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @Slf4j
