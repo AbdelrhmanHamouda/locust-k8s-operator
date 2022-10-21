@@ -10,7 +10,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static com.locust.operator.controller.TestFixtures.executeWithK8sMockServer;
+import static com.locust.operator.controller.utils.TestFixtures.executeWithK8sMockServer;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableKubernetesMockClient(https = false, crud = true)

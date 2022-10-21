@@ -9,10 +9,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static com.locust.operator.controller.TestFixtures.assertNodeConfig;
 import static com.locust.operator.controller.TestFixtures.prepareLocustTest;
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
 import static com.locust.operator.controller.dto.OperationalMode.WORKER;
+import static com.locust.operator.controller.utils.TestFixtures.assertNodeConfig;
 
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

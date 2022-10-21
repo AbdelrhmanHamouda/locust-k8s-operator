@@ -13,11 +13,11 @@ import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static com.locust.operator.controller.TestFixtures.assertK8sResourceCreation;
-import static com.locust.operator.controller.TestFixtures.containerEnvironmentMap;
-import static com.locust.operator.controller.TestFixtures.executeWithK8sMockServer;
-import static com.locust.operator.controller.TestFixtures.prepareNodeConfig;
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
+import static com.locust.operator.controller.utils.TestFixtures.assertK8sResourceCreation;
+import static com.locust.operator.controller.utils.TestFixtures.containerEnvironmentMap;
+import static com.locust.operator.controller.utils.TestFixtures.executeWithK8sMockServer;
+import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfig;
 import static org.mockito.Mockito.when;
 
 @Slf4j
@@ -27,7 +27,6 @@ public class ResourceCreationManagerTests {
 
     @Mock
     private LoadGenHelpers loadGenHelpers;
-    private ResourceCreationHelpers creationHelper;
     private ResourceCreationManager CreationManager;
 
     String k8sServerUrl;
@@ -37,7 +36,7 @@ public class ResourceCreationManagerTests {
     void setupMethodMock() {
 
         MockitoAnnotations.openMocks(this);
-        creationHelper = new ResourceCreationHelpers(loadGenHelpers);
+        var creationHelper = new ResourceCreationHelpers(loadGenHelpers);
         CreationManager = new ResourceCreationManager(creationHelper);
         when(loadGenHelpers.generateContainerEnvironmentMap())
             .thenReturn(containerEnvironmentMap());
@@ -83,9 +82,9 @@ public class ResourceCreationManagerTests {
         // * Act
         executeWithK8sMockServer(k8sServerUrl, () -> CreationManager.createMasterService(nodeConfig, namespace));
 
-        // Get All Jobs created by the method
+        // Get All Services created by the method
         val serviceList = testClient.services().inNamespace(namespace).list();
-        log.debug("Acquired Deployment list: {}", serviceList);
+        log.debug("Acquired Service list: {}", serviceList);
 
         // * Assert
         assertK8sResourceCreation(nodeName, serviceList);
