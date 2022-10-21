@@ -1,12 +1,10 @@
-package com.locust.controller.utils;
+package com.locust.operator.controller.utils;
 
 import com.locust.operator.controller.config.SysConfig;
 import com.locust.operator.controller.dto.LoadGenerationNode;
 import com.locust.operator.controller.dto.OperationalMode;
 import com.locust.operator.customresource.LocustTest;
-import com.locust.operator.customresource.LocustTestSpec;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
-import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.github.stefanbirkner.systemlambda.SystemLambda.withEnvironmentVariable;
+import static com.locust.operator.controller.TestFixtures.REPLICAS;
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
 import static com.locust.operator.controller.utils.Constants.CONTAINER_ARGS_SEPARATOR;
 import static com.locust.operator.controller.utils.Constants.KAFKA_BOOTSTRAP_SERVERS;
@@ -25,8 +24,6 @@ import static com.locust.operator.controller.utils.Constants.KAFKA_SASL_MECHANIS
 import static com.locust.operator.controller.utils.Constants.KAFKA_SECURITY_ENABLED;
 import static com.locust.operator.controller.utils.Constants.KAFKA_SECURITY_PROTOCOL_CONFIG;
 import static com.locust.operator.controller.utils.Constants.KAFKA_USERNAME;
-import static com.locust.operator.customresource.LocustTest.GROUP;
-import static com.locust.operator.customresource.LocustTest.VERSION;
 import static lombok.AccessLevel.PRIVATE;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.mockito.Mockito.when;
@@ -38,13 +35,9 @@ public class TestFixtures {
     public static final List<Integer> DEFAULT_MASTER_PORT_LIST = List.of(5557, 5558, 8089);
     public static final List<Integer> DEFAULT_WORKER_PORT_LIST = List.of(8080);
     public static final Integer MASTER_REPLICA_COUNT = 1;
-    public static final String DEFAULT_API_VERSION = GROUP + "/" + VERSION;
-    public static final String DEFAULT_NAMESPACE = "default";
-    public static final String KIND = "LocustTest";
     public static final String DEFAULT_SEED_COMMAND = "--locustfile src/GQ/src/demo.py";
-    public static final int REPLICAS = 50;
     public static final String DEFAULT_TEST_IMAGE = "xlocust:latest";
-    public static final int EXPECTED_JOB_COUNT = 1;
+    public static final int EXPECTED_RESOURCE_COUNT = 1;
     public static final String K8S_SERVER_URL_ENV_VAR = "KUBERNETES_MASTER";
     public static final String MOCK_KAFKA_BOOTSTRAP_VALUE = "localhost:9092";
     public static final boolean MOCK_SECURITY_VALUE = true;
@@ -53,36 +46,9 @@ public class TestFixtures {
     public static final String MOCK_SASL_JAAS_CONFIG_VALUE = "placeholder";
     public static final String MOCK_USERNAME = "localKafkaUser";
     public static final String MOCK_PASSWORD = "localKafkaPassword";
-
-    public static LocustTest prepareLocustTest(String resourceName) {
-
-        var locustTest = new LocustTest();
-
-        // API version
-        locustTest.setApiVersion(DEFAULT_API_VERSION);
-
-        // Kind
-        locustTest.setKind(KIND);
-
-        // Metadata
-        locustTest.setMetadata(new ObjectMetaBuilder()
-            .withName(resourceName)
-            .withNamespace(DEFAULT_NAMESPACE)
-            .build());
-
-        // Spec
-        var spec = new LocustTestSpec();
-        spec.setMasterCommandSeed(DEFAULT_SEED_COMMAND);
-        spec.setWorkerCommandSeed(DEFAULT_SEED_COMMAND);
-        spec.setWorkerReplicas(REPLICAS);
-        spec.setImage(DEFAULT_TEST_IMAGE);
-
-        locustTest.setSpec(spec);
-        log.debug("Created resource object:\n{}", locustTest);
-
-        return locustTest;
-
-    }
+    public static final String MOCK_POD_MEM = "1024Mi";
+    public static final String MOCK_POD_CPU = "1000m";
+    public static final String MOCK_POD_EPHEMERAL_STORAGE = "50M";
 
     public static void assertNodeConfig(LocustTest customResource, LoadGenerationNode generatedNodeConfig,
         OperationalMode mode) {
@@ -118,7 +84,7 @@ public class TestFixtures {
     public static <T extends KubernetesResourceList<?>> void assertK8sResourceCreation(String nodeName, T resourceList) {
 
         assertSoftly(softly -> {
-            softly.assertThat(resourceList.getItems().size()).isEqualTo(EXPECTED_JOB_COUNT);
+            softly.assertThat(resourceList.getItems().size()).isEqualTo(EXPECTED_RESOURCE_COUNT);
             softly.assertThat(resourceList.getItems().get(0).getMetadata().getName()).isEqualTo(nodeName);
         });
 
@@ -157,6 +123,7 @@ public class TestFixtures {
 
     public static void setupSysconfigMock(SysConfig mockedConfInstance) {
 
+        // Kafla
         when(mockedConfInstance.getKafkaBootstrapServers())
             .thenReturn(MOCK_KAFKA_BOOTSTRAP_VALUE);
         when(mockedConfInstance.isKafkaSecurityEnabled())
@@ -171,6 +138,22 @@ public class TestFixtures {
             .thenReturn(MOCK_SASL_MECHANISM_VALUE);
         when(mockedConfInstance.getKafkaSaslJaasConfig())
             .thenReturn(MOCK_SASL_JAAS_CONFIG_VALUE);
+
+        // Resource request
+        when(mockedConfInstance.getPodMemRequest())
+            .thenReturn(MOCK_POD_MEM);
+        when(mockedConfInstance.getPodCpuRequest())
+            .thenReturn(MOCK_POD_CPU);
+        when(mockedConfInstance.getPodEphemeralStorageRequest())
+            .thenReturn(MOCK_POD_EPHEMERAL_STORAGE);
+
+        // Resource limit
+        when(mockedConfInstance.getPodMemLimit())
+            .thenReturn(MOCK_POD_MEM);
+        when(mockedConfInstance.getPodCpuLimit())
+            .thenReturn(MOCK_POD_CPU);
+        when(mockedConfInstance.getPodEphemeralStorageLimit())
+            .thenReturn(MOCK_POD_EPHEMERAL_STORAGE);
 
     }
 

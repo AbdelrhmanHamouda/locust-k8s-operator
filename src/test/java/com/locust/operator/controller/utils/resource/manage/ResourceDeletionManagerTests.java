@@ -1,10 +1,7 @@
-package com.locust.controller;
+package com.locust.operator.controller.utils.resource.manage;
 
 import com.locust.operator.controller.config.SysConfig;
 import com.locust.operator.controller.utils.LoadGenHelpers;
-import com.locust.operator.controller.utils.resource.manage.ResourceCreationHelpers;
-import com.locust.operator.controller.utils.resource.manage.ResourceCreationManager;
-import com.locust.operator.controller.utils.resource.manage.ResourceDeletionManager;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.server.mock.EnableKubernetesMockClient;
 import lombok.extern.slf4j.Slf4j;
@@ -21,11 +18,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
 
-import static com.locust.controller.utils.TestFixtures.executeWithK8sMockServer;
-import static com.locust.controller.utils.TestFixtures.prepareLocustTest;
-import static com.locust.controller.utils.TestFixtures.prepareNodeConfig;
-import static com.locust.controller.utils.TestFixtures.setupSysconfigMock;
+import static com.locust.operator.controller.TestFixtures.prepareLocustTest;
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
+import static com.locust.operator.controller.utils.TestFixtures.executeWithK8sMockServer;
+import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfig;
+import static com.locust.operator.controller.utils.TestFixtures.setupSysconfigMock;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @Slf4j
@@ -36,8 +33,6 @@ public class ResourceDeletionManagerTests {
 
     @Mock
     private SysConfig sysConfig;
-    private LoadGenHelpers loadGenHelpers;
-    private ResourceCreationHelpers creationHelper;
     private ResourceCreationManager creationManager;
     private ResourceDeletionManager deletionManager;
 
@@ -48,8 +43,8 @@ public class ResourceDeletionManagerTests {
     void setupMethodMock() {
 
         MockitoAnnotations.openMocks(this);
-        loadGenHelpers = new LoadGenHelpers(sysConfig);
-        creationHelper = new ResourceCreationHelpers(loadGenHelpers);
+        var loadGenHelpers = new LoadGenHelpers(sysConfig);
+        var creationHelper = new ResourceCreationHelpers(loadGenHelpers);
         creationManager = new ResourceCreationManager(creationHelper);
         deletionManager = new ResourceDeletionManager(loadGenHelpers);
         setupSysconfigMock(sysConfig);
