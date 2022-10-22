@@ -12,7 +12,7 @@ ext {
     k8sClient = '6.1.1' // Matching version from JOSDK
 
     // Operator SDK
-    javaOperatorVersion = '3.2.0'
+    javaOperatorVersion = '4.0.2'
 }
 
 dependencies {
