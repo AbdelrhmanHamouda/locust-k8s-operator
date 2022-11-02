@@ -68,6 +68,34 @@ spec:
 7. The amount of _worker_ nodes to spawn in the cluster.
 8. [Optional] Name of _configMap_ to mount into the pod
 
+Note that other options are available. In particular, you can add labels and annotations as well. For example:
+
+```yaml title="locusttest-cr.yaml"
+apiVersion: locust.io/v1
+...
+spec:
+  image: locustio/locust:latest
+  labels: #(1)!
+    master:
+      locust.io/role: "master"
+      myapp.com/testId: "abc-123"
+      myapp.com/tenantId: "xyz-789"
+    worker:
+      locust.io/role: "worker"
+  annotations: #(2)!
+    master:
+      myapp.com/threads: "1000"
+      myapp.com/version: "2.1.0"
+    worker:
+      myapp.com/version: "2.1.0"
+  ...
+```
+
+1. [Optional] Labels are attached to both master and worker pods. They can later be used to identify pods belonging to a particular execution context. This is useful, for example, when tests are deployed programmatically. A launcher application can query the Kubernetes API for specific resources.
+2. [Optional] Annotations too are attached to master and worker pods. They can be used to include additional context about a test. For example, configuration parameters of the software system being tested.
+
+Both labels and annotations can be added to the Prometheus configuration, so that metrics are associated with the appropriate information, such as the test and tenant ids. You can read more about this in the [Prometheus documentation](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#kubernetes_sd_config) site.
+
 ### Step 3: Deploy _Locust k8s Operator_ in the cluster.
 
 The recommended way to install the _Operator_ is by using the official HELM chart. Documentation on how to perform that
@@ -99,7 +127,7 @@ To do that, deploy the custom resource following this template `kubectl apply -f
 At this point, it is possible to check the cluster and all required resources will be running based on the passed configuration in the
 custom resource.
 
-The Operator will create the following resources in teh cluster for each valid custom resource:
+The Operator will create the following resources in the cluster for each valid custom resource:
 
 - A kubernetes _service_ for the _master_ node so it is reachable by other _worker_ nodes.
 - A kubernetes _Job_ to manage the _master_ node.
@@ -112,4 +140,3 @@ cleaning the cluster of all **related** resources.
 To delete a resource, run the below command following this template `kubectl delete -f <valid_cr>.yaml`:
 
 - `kubectl delete -f locusttest-cr.yaml`
-

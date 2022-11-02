@@ -28,6 +28,34 @@ spec:
             spec: # Root field 'spec'
               type: object  # It is an object
               properties: # And has the following fields
+                labels:
+                  description: Labels attached to deployed pods
+                  type: object
+                  properties:
+                    master:
+                      description: Labels attached to the master pod
+                      type: object
+                      additionalProperties:
+                        type: string
+                    worker:
+                      description: Labels attached to worker pods
+                      type: object
+                      additionalProperties:
+                        type: string
+                annotations:
+                  description: Annotations attached to deployed pods
+                  type: object
+                  properties:
+                    master:
+                      description: Annotations attached to the master pod
+                      type: object
+                      additionalProperties:
+                        type: string
+                    worker:
+                      description: Annotations attached to worker pods
+                      type: object
+                      additionalProperties:
+                        type: string
                 masterCommandSeed: # Child field 'masterCommandSeed'
                   description: Master pod command seed
                   type: string

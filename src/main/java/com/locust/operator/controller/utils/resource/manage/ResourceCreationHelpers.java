@@ -148,7 +148,7 @@ public class ResourceCreationHelpers {
     private PodTemplateSpec prepareSpecTemplate(LoadGenerationNode nodeConfig, String testName) {
 
         PodTemplateSpec specTemplate = new PodTemplateSpecBuilder()
-            .withMetadata(prepareTemplateMetadata(nodeConfig.getName(), testName))
+            .withMetadata(prepareTemplateMetadata(nodeConfig, testName))
             .withSpec(prepareTemplateSpec(nodeConfig))
             .build();
 
@@ -163,21 +163,24 @@ public class ResourceCreationHelpers {
      * <p>
      * Reference: <a href="https://kubernetes.io/docs/concepts/workloads/controllers/job/">Kubernetes Job Docs</a>
      *
-     * @param testName Performance Test name
+     * @param nodeConfig The node configuration object
+     * @param nodeName The node name
      * @return PodTemplateSpec
      */
-    private ObjectMeta prepareTemplateMetadata(String nodeName, String testName) {
+    private ObjectMeta prepareTemplateMetadata(LoadGenerationNode nodeConfig, String nodeName) {
 
         ObjectMeta templateMeta = new ObjectMetaBuilder()
             // Labels
-            .addToLabels(APP_DEFAULT_LABEL, testName)
+            .addToLabels(APP_DEFAULT_LABEL, nodeConfig.getName())
             .addToLabels(SERVICE_SELECTOR_LABEL, nodeName)
+            .addToLabels(nodeConfig.getLabels())
 
             // Annotations
             // Enable Prometheus endpoint discovery by Prometheus server
             .addToAnnotations(PROMETHEUS_IO_SCRAPE, "true")
             .addToAnnotations(PROMETHEUS_IO_PATH, PROMETHEUS_IO_ENDPOINT)
             .addToAnnotations(PROMETHEUS_IO_PORT, String.valueOf(LOCUST_EXPORTER_PORT))
+            .addToAnnotations(nodeConfig.getAnnotations())
 
             .build();
 

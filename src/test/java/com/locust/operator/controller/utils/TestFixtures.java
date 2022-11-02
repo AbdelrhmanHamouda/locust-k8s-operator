@@ -49,11 +49,19 @@ public class TestFixtures {
     public static final String MOCK_POD_MEM = "1024Mi";
     public static final String MOCK_POD_CPU = "1000m";
     public static final String MOCK_POD_EPHEMERAL_STORAGE = "50M";
+    public static final Map<String, String> DEFAULT_MASTER_LABELS = Map.of("role", "master");
+    public static final Map<String, String> DEFAULT_WORKER_LABELS = Map.of("role", "worker");
+    public static final Map<String, String> DEFAULT_MASTER_ANNOTATIONS = Map.of("locust.io/role", "master");
+    public static final Map<String, String> DEFAULT_WORKER_ANNOTATIONS = new HashMap<>();
 
     public static void assertNodeConfig(LocustTest customResource, LoadGenerationNode generatedNodeConfig,
         OperationalMode mode) {
 
         String expectedConfigName = customResource.getMetadata().getName().replace('.', '-');
+
+        Map<String, String> expectedLabels = mode.equals(MASTER) ? DEFAULT_MASTER_LABELS : DEFAULT_WORKER_LABELS;
+
+        Map<String, String> expectedAnnotations = mode.equals(MASTER) ? DEFAULT_MASTER_ANNOTATIONS : DEFAULT_WORKER_ANNOTATIONS;
 
         Integer expectedReplicas = mode.equals(MASTER) ? MASTER_REPLICA_COUNT : customResource.getSpec().getWorkerReplicas();
 
@@ -61,6 +69,8 @@ public class TestFixtures {
 
         assertSoftly(softly -> {
             softly.assertThat(generatedNodeConfig.getName()).contains(expectedConfigName);
+            softly.assertThat(generatedNodeConfig.getLabels()).isEqualTo(expectedLabels);
+            softly.assertThat(generatedNodeConfig.getAnnotations()).isEqualTo(expectedAnnotations);
             softly.assertThat(generatedNodeConfig.getOperationalMode()).isEqualTo(mode);
             softly.assertThat(generatedNodeConfig.getPorts()).isEqualTo(expectedPortList);
             softly.assertThat(generatedNodeConfig.getReplicas()).isEqualTo(expectedReplicas);
@@ -70,6 +80,8 @@ public class TestFixtures {
     public static LoadGenerationNode prepareNodeConfig(String nodeName, OperationalMode mode) {
         var nodeConfig = LoadGenerationNode.builder()
             .name(nodeName)
+            .labels(mode.equals(MASTER) ? DEFAULT_MASTER_LABELS : DEFAULT_WORKER_LABELS)
+            .annotations(mode.equals(MASTER) ? DEFAULT_MASTER_ANNOTATIONS : DEFAULT_WORKER_ANNOTATIONS)
             .command(List.of(DEFAULT_SEED_COMMAND.split(CONTAINER_ARGS_SEPARATOR)))
             .operationalMode(mode)
             .image(DEFAULT_TEST_IMAGE)

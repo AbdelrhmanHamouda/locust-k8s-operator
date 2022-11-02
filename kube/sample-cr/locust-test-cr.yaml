@@ -4,7 +4,26 @@ metadata:
   name: demo.test
 spec:
   image: locustio/locust:latest
-  masterCommandSeed: --locustfile /lotest/src/locust_project_demo.py
+  # Labels and annotations are optional, and apply to both master and worker pods
+  labels:
+    master:
+      locust.io/role: "master"
+      myapp.com/testId: "abc-123"
+      myapp.com/tenantId: "xyz-789"
+    worker:
+      locust.io/role: "worker"
+  annotations:
+    master:
+      myapp.com/threads: "1000"
+      myapp.com/version: "2.1.0"
+    worker:
+      myapp.com/version: "2.1.0"
+  masterCommandSeed:
+    --locustfile /lotest/src/locust_project_demo.py
+    --host https://docs.locust.io
+    --users 100
+    --spawn-rate 10
+    --run-time 3m
   workerCommandSeed: --locustfile /lotest/src/locust_project_demo.py
   workerReplicas: 3
   configMap: test-map
