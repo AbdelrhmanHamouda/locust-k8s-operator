@@ -1,3 +1,9 @@
+## 0.2.1 (2022-11-03)
+
+### Fix
+
+- **#53**: Restore release workflow permissions
+
 ## 0.2.0 (2022-11-03)
 
 ### Feat
