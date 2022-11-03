@@ -8,6 +8,7 @@ import io.fabric8.kubernetes.api.model.KubernetesResource;
 import lombok.Data;
 
 import java.io.Serial;
+import java.util.Map;
 
 // This @JsonDeserialize overrides the deserializer used in KubernetesResource,
 // in order to be able to deserialize correctly the fields in the 'spec' field of the json
@@ -22,6 +23,8 @@ public class LocustTestSpec implements KubernetesResource {
     @Serial
     private static final long serialVersionUID = 1;
 
+    private Map<String, Map<String, String>> labels;
+    private Map<String, Map<String, String>> annotations;
     private String masterCommandSeed;
     private String workerCommandSeed;
     private Integer workerReplicas;

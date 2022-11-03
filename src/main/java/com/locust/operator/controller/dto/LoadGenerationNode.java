@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -15,6 +16,8 @@ import java.util.List;
 public class LoadGenerationNode {
 
     private String name;
+    private Map<String, String> labels;
+    private Map<String, String> annotations;
     private List<String> command;
     private OperationalMode operationalMode;
     private String image;

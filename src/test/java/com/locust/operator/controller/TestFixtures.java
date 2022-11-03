@@ -16,8 +16,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import static com.locust.operator.controller.dto.OperationalMode.MASTER;
+import static com.locust.operator.controller.dto.OperationalMode.WORKER;
 import static com.locust.operator.customresource.LocustTest.GROUP;
 import static com.locust.operator.customresource.LocustTest.VERSION;
 import static lombok.AccessLevel.PRIVATE;
@@ -37,6 +41,10 @@ public class TestFixtures {
     public static final String DEFAULT_NAMESPACE = "default";
     public static final int REPLICAS = 50;
     public static final long DEFAULT_CR_GENERATION = 1L;
+    public static final Map<String, String> DEFAULT_MASTER_LABELS = Map.of("role", "master");
+    public static final Map<String, String> DEFAULT_WORKER_LABELS = Map.of("role", "worker");
+    public static final Map<String, String> DEFAULT_MASTER_ANNOTATIONS = Map.of("locust.io/role", "master");
+    public static final Map<String, String> DEFAULT_WORKER_ANNOTATIONS = new HashMap<>();
 
     @SneakyThrows
     public static CustomResourceDefinition prepareCustomResourceDefinition(KubernetesClient k8sClient) {
@@ -113,6 +121,16 @@ public class TestFixtures {
         spec.setConfigMap(DEFAULT_TEST_CONFIGMAP);
         spec.setImage(DEFAULT_TEST_IMAGE);
         spec.setWorkerReplicas(replicas);
+
+        var labels = new HashMap<String, Map<String, String>>();
+        labels.put(MASTER.getMode(), DEFAULT_MASTER_LABELS);
+        labels.put(WORKER.getMode(), DEFAULT_WORKER_LABELS);
+        spec.setLabels(labels);
+
+        var annotations = new HashMap<String, Map<String, String>>();
+        annotations.put(MASTER.getMode(), DEFAULT_MASTER_ANNOTATIONS);
+        annotations.put(WORKER.getMode(), DEFAULT_WORKER_ANNOTATIONS);
+        spec.setAnnotations(annotations);
 
         locustTest.setSpec(spec);
         log.debug("Created resource object:\n{}", locustTest);

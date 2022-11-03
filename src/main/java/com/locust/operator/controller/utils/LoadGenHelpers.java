@@ -10,13 +10,14 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.validation.constraints.NotNull;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
+import static com.locust.operator.controller.dto.OperationalMode.WORKER;
 import static com.locust.operator.controller.utils.Constants.CONTAINER_ARGS_SEPARATOR;
 import static com.locust.operator.controller.utils.Constants.KAFKA_BOOTSTRAP_SERVERS;
 import static com.locust.operator.controller.utils.Constants.KAFKA_PASSWORD;
@@ -54,6 +55,8 @@ public class LoadGenHelpers {
 
         return new LoadGenerationNode(
             constructNodeName(resource, mode),
+            constructNodeLabels(resource, mode),
+            constructNodeAnnotations(resource, mode),
             constructNodeCommand(resource, mode),
             mode,
             resource.getSpec().getImage(),
@@ -69,6 +72,46 @@ public class LoadGenHelpers {
             .format(NODE_NAME_TEMPLATE, customResource.getMetadata().getName(), mode.getMode())
             .replace(".", "-");
 
+    }
+
+    /**
+     * Constructs the labels to attach to the master and worker pods.
+     * @param customResource The custom resource object
+     * @param mode The operational mode
+     * @return A non-null, possibly empty map of labels
+     */
+    public Map<String, String> constructNodeLabels(final LocustTest customResource, final OperationalMode mode) {
+        final Map<String, Map<String, String>> labels = Optional.ofNullable(customResource.getSpec().getLabels())
+            .orElse(new HashMap<>());
+        final Map<String, String> result;
+        if (mode.equals(MASTER)) {
+            result = labels.getOrDefault(MASTER.getMode(), new HashMap<>());
+        } else {
+            // Worker
+            result = labels.getOrDefault(WORKER.getMode(), new HashMap<>());
+        }
+        log.debug("Labels attached to {} pod are {}", mode.getMode(), result);
+        return result;
+    }
+
+    /**
+     * Constructs the annotations to attach to the master and worker pods.
+     * @param customResource The custom resource object
+     * @param mode The operational mode
+     * @return A non-null, possibly empty map of annotations
+     */
+    public Map<String, String> constructNodeAnnotations(final LocustTest customResource, final OperationalMode mode) {
+        final Map<String, Map<String, String>> annotations = Optional.ofNullable(customResource.getSpec().getAnnotations())
+            .orElse(new HashMap<>());
+        final Map<String, String> result;
+        if (mode.equals(MASTER)) {
+            result = annotations.getOrDefault(MASTER.getMode(), new HashMap<>());
+        } else {
+            // Worker
+            result = annotations.getOrDefault(WORKER.getMode(), new HashMap<>());
+        }
+        log.debug("Annotations attached to {} pod are {}", mode.getMode(), result);
+        return result;
     }
 
     /**
