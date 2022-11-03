@@ -2,6 +2,16 @@ apiVersion: v1
 entries:
   locust-k8s-operator:
   - apiVersion: v2
+    appVersion: 0.2.1
+    created: "2022-11-03T15:48:01.55894282Z"
+    description: Locust Kubernetes Operator
+    digest: 1856c2f83dd2441a88c2153a65f390e87d0916c79a6c57cc67b55ad5efa88816
+    name: locust-k8s-operator
+    type: application
+    urls:
+    - https://github.com/AbdelrhmanHamouda/locust-k8s-operator/releases/download/locust-k8s-operator-0.2.1/locust-k8s-operator-0.2.1.tgz
+    version: 0.2.1
+  - apiVersion: v2
     appVersion: 0.1.0
     created: "2022-10-08T18:20:52.248163427Z"
     description: Locust Kubernetes Operator
@@ -11,4 +21,4 @@ entries:
     urls:
     - https://github.com/AbdelrhmanHamouda/locust-k8s-operator/releases/download/locust-k8s-operator-0.1.0/locust-k8s-operator-0.1.0.tgz
     version: 0.1.0
-generated: "2022-10-08T18:20:52.248170228Z"
+generated: "2022-11-03T15:48:01.55895472Z"
