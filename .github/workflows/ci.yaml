@@ -31,7 +31,7 @@ jobs:
         with:
           name: branch-${{ github.ref }}
           verbose: true
-          fail_ci_if_error: true
+          fail_ci_if_error: false
 
       - name: Run codacy coverage reporter
         uses: codacy/codacy-coverage-reporter-action@v1
