@@ -16,7 +16,7 @@ In order to deploy using helm, follow the below steps:
 
 2. Install the _Operator_
 
-    - `#!bash helm install locust-operatr locust-k8s-operator/locust-k8s-operator`
+    - `#!bash helm install locust-operator locust-k8s-operator/locust-k8s-operator`
           - The _Operator_ will ready up in around 40-60 seconds
     - This will cause the bellow resources to be deployed in the currently active _k8s_ context & namespace.
         - [crd-locusttest.yaml]
