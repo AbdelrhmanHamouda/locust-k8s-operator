@@ -1,3 +1,10 @@
+## 0.2.2 (2022-11-29)
+
+### Fix
+
+- **58**: update the chart image tag to not override the app version (#62)
+- **60**: update containersol/locust_exporter version to v0.5.0 (#61)
+
 ## 0.2.1 (2022-11-03)
 
 ### Fix
