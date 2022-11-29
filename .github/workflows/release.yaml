@@ -66,6 +66,7 @@ jobs:
 
       - name: Run chart-releaser
         # switch back to helm/chart-releaser-action when https://github.com/helm/chart-releaser-action/pull/109 is merged
+        # Waiting for a new release to include changes coming from https://github.com/helm/chart-releaser-action/commit/38cfeacdbbd62d13ec773fcdee1435ff5846c554
         uses: askcloudarchitech/chart-releaser-action@skip-packaging-option
         with:
           skip_packaging: true
