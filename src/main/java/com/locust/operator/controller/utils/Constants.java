@@ -68,7 +68,7 @@ public class Constants {
 
     // Metrics container
     public static final String EXPORTER_CONTAINER_NAME = "locust-metrics-exporter";
-    public static final String EXPORTER_IMAGE_VERSION = "v0.4.3";
+    public static final String EXPORTER_IMAGE_VERSION = "v0.5.0";
     public static final String EXPORTER_IMAGE = "containersol/locust_exporter:" + EXPORTER_IMAGE_VERSION;
     public static final int LOCUST_EXPORTER_PORT = 9646;
 
