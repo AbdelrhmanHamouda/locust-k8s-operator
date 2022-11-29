@@ -10,8 +10,7 @@ image:
   repository: lotest/locust-k8s-operator
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  # TODO, change to match release tag
-  tag: latest
+  tag: ""
 
 # Liveness/Readiness probes
 livenessProbe:
