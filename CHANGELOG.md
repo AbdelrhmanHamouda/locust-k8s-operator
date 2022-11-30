@@ -1,3 +1,9 @@
+## 0.3.0 (2022-11-30)
+
+### Feat
+
+- **65**: Allow for "-" to be part of the metadata name (#66)
+
 ## 0.2.3 (2022-11-30)
 
 ### Fix
