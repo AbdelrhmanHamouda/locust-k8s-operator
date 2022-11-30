@@ -1,3 +1,10 @@
+## 0.2.3 (2022-11-30)
+
+### Fix
+
+- **63**: Correctly apply k8s service selector (#64)
+- **63**: Correctly apply k8s service selector
+
 ## 0.2.2 (2022-11-29)
 
 ### Fix
