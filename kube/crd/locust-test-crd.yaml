@@ -23,7 +23,7 @@ spec:
               properties: # With the following field 'name'
                 name:
                   type: string # Of type 'string'
-                  pattern: '^[a-z]+[a-z0-9]*\.[-a-z0-9]+$' # allows only 'word.word' names. Usage example (<teamName>.<testName>)
+                  pattern: '^[a-z]+[-a-z0-9]*\.[-a-z0-9]+$' # allows only 'word.word' names. Usage example (<teamName>.<testName>)
             spec:  # Root field 'spec'
               type: object  # It is an object
               properties: # And has the following fields
