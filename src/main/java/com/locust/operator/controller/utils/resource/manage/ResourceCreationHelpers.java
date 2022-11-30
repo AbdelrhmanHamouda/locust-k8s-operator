@@ -164,15 +164,15 @@ public class ResourceCreationHelpers {
      * Reference: <a href="https://kubernetes.io/docs/concepts/workloads/controllers/job/">Kubernetes Job Docs</a>
      *
      * @param nodeConfig The node configuration object
-     * @param nodeName The node name
+     * @param testName   The node name
      * @return PodTemplateSpec
      */
-    private ObjectMeta prepareTemplateMetadata(LoadGenerationNode nodeConfig, String nodeName) {
+    private ObjectMeta prepareTemplateMetadata(LoadGenerationNode nodeConfig, String testName) {
 
         ObjectMeta templateMeta = new ObjectMetaBuilder()
             // Labels
-            .addToLabels(APP_DEFAULT_LABEL, nodeConfig.getName())
-            .addToLabels(SERVICE_SELECTOR_LABEL, nodeName)
+            .addToLabels(APP_DEFAULT_LABEL, testName)
+            .addToLabels(SERVICE_SELECTOR_LABEL, nodeConfig.getName())
             .addToLabels(nodeConfig.getLabels())
 
             // Annotations
