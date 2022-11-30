@@ -163,9 +163,9 @@ public class ResourceCreationHelpers {
      * <p>
      * Reference: <a href="https://kubernetes.io/docs/concepts/workloads/controllers/job/">Kubernetes Job Docs</a>
      *
-     * @param nodeConfig The node configuration object
-     * @param testName   The node name
-     * @return PodTemplateSpec
+     * @param nodeConfig The node configuration object.
+     * @param testName   The node name.
+     * @return PodTemplateSpec.
      */
     private ObjectMeta prepareTemplateMetadata(LoadGenerationNode nodeConfig, String testName) {
 
