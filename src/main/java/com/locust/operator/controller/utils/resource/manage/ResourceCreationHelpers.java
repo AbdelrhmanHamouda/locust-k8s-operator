@@ -338,7 +338,7 @@ public class ResourceCreationHelpers {
             mounts.add(new VolumeMountBuilder()
                 .withName(nodeConfig.getName())
                 .withMountPath(DEFAULT_MOUNT_PATH)
-                .withReadOnly()
+                .withReadOnly(false)
                 .build());
 
         }
