@@ -1,3 +1,9 @@
+## 0.4.0 (2022-12-02)
+
+### Feat
+
+- **69**: Allow configmap volume mounts to be writable (#70)
+
 ## 0.3.0 (2022-11-30)
 
 ### Feat
