@@ -35,8 +35,7 @@ class User(HttpUser): # (1)!
 
 A simple _custom resource_ for the previous test can be something like the following example;
 
-> To streamline this step, _intensive-brew_ should be used. It is a simple cli tool that converts a declarative yaml into a compatible
-> LocustTest kubernetes custom resource. (_Coming soon!_)
+> To streamline this step, [_intensive-brew_](https://abdelrhmanhamouda.github.io/intensive-brew/) should be used. It is a simple cli tool that converts a declarative yaml into a compatible LocustTest kubernetes custom resource.
 
 ```yaml title="locusttest-cr.yaml"
 apiVersion: locust.io/v1 #(1)!
