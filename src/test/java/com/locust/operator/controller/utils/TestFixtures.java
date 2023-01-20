@@ -4,10 +4,14 @@ import com.locust.operator.controller.config.SysConfig;
 import com.locust.operator.controller.dto.LoadGenerationNode;
 import com.locust.operator.controller.dto.OperationalMode;
 import com.locust.operator.customresource.LocustTest;
+import com.locust.operator.customresource.internaldto.LocustTestAffinity;
+import com.locust.operator.customresource.internaldto.LocustTestNodeAffinity;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
+import io.fabric8.kubernetes.api.model.batch.v1.JobList;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 import java.util.HashMap;
 import java.util.List;
@@ -93,11 +97,53 @@ public class TestFixtures {
         return nodeConfig;
     }
 
+    public static LoadGenerationNode prepareNodeConfigWithNodeAffinity(String nodeName, OperationalMode mode, String affinityKey,
+        String affinityValue) {
+
+        // Init instances
+        val nodeAffinity = new LocustTestNodeAffinity();
+        val affinity = new LocustTestAffinity();
+        val nodeConfig = prepareNodeConfig(nodeName, mode);
+
+        // Set affinity
+        nodeAffinity.setRequiredDuringSchedulingIgnoredDuringExecution(Map.of(affinityKey, affinityValue));
+        affinity.setNodeAffinity(nodeAffinity);
+
+        // Push affinity config to object
+        nodeConfig.setAffinity(affinity);
+        log.debug("Created node configuration with nodeAffinity: {}", nodeConfig);
+
+        return nodeConfig;
+
+    }
+
     public static <T extends KubernetesResourceList<?>> void assertK8sResourceCreation(String nodeName, T resourceList) {
 
         assertSoftly(softly -> {
             softly.assertThat(resourceList.getItems().size()).isEqualTo(EXPECTED_RESOURCE_COUNT);
             softly.assertThat(resourceList.getItems().get(0).getMetadata().getName()).isEqualTo(nodeName);
+        });
+
+    }
+
+    public static void assertK8sNodeAffinity(LoadGenerationNode nodeConfig, JobList jobList, String k8sNodeLabelKey) {
+
+        jobList.getItems().forEach(job -> {
+            val nodeSelectorTerms = job.getSpec().getTemplate().getSpec().getAffinity().getNodeAffinity()
+                .getRequiredDuringSchedulingIgnoredDuringExecution().getNodeSelectorTerms();
+
+            nodeSelectorTerms.forEach(selectorTerm -> {
+                val actualSelectorKey = selectorTerm.getMatchExpressions().get(0).getKey();
+                val actualSelectorValue = selectorTerm.getMatchExpressions().get(0).getValues().get(0);
+                val desiredSelectorValue = nodeConfig.getAffinity().getNodeAffinity().getRequiredDuringSchedulingIgnoredDuringExecution()
+                    .get(k8sNodeLabelKey);
+
+                assertSoftly(softly -> {
+                    softly.assertThat(actualSelectorKey).isEqualTo(k8sNodeLabelKey);
+                    softly.assertThat(actualSelectorValue).isEqualTo(desiredSelectorValue);
+                });
+            });
+
         });
 
     }
