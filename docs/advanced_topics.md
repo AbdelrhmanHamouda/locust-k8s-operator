@@ -39,7 +39,7 @@ This allows generated resources to have specific _Affinity_ options.
 
 #### Affinity Options
 
-The specification fot affinity is defined as follows
+The specification for affinity is defined as follows
 
 === ":octicons-file-code-16: `affinity-spec.yaml`"
 
