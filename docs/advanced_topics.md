@@ -22,6 +22,75 @@ To enable performance testing with _MSK_, a central/global Kafka user can be cre
 | `KAFKA_USERNAME`                 | The username used to authenticate Kafka clients with the Kafka server            |
 | `KAFKA_PASSWORD`                 | The password used to authenticate Kafka clients with the Kafka server            |
 
+--------
+
+## Dedicated Kubernetes Nodes
+
+To run test resources on dedicated _Kubernetes_ node(s), the _Operator_ support deploying resources with **_Affinity_** and *
+*_Taint Tolerations_**.
+
+### Affinity
+
+This allows generated resources to have specific _Affinity_ options.
+
+!!! Note
+
+    The _Custom Resource Definition Spec_ is designed with modularity and expandability in mind. This means that although a specific set of _Kubernetes Affinity_ options are supported today, extending this support based on need is a streamlined and easy processes. If additonal support is needed, don't hesitate to open a [feature request](https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues). 
+
+#### Affinity Options
+
+The specification for affinity is defined as follows
+
+=== ":octicons-file-code-16: `affinity-spec.yaml`"
+
+    ```yaml
+    apiVersion: locust.io/v1
+    ...
+    spec:
+    ...
+    affinity:
+        nodeAffinity:
+            <label-key>: <label-value>
+            ...
+    ...
+    ```
+
+##### Node Affinity
+
+This section causes generated pods to declare specific _Node Affinity_ so _Kubernetes scheduler_ becomes aware of this requirement.
+
+The implementation from the _Custom Resource_ perspective is strongly influenced by Kubernetes native definition
+of [node affinity](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity). However, the implementation is
+on purpose slightly simplified in order to allow users to have easier time working with affinity.
+
+The `nodeAffinity` section supports declaring node affinity under `requiredDuringSchedulingIgnoredDuringExecution`. Meaning that any
+declared affinity labels **must** be present in nodes in order for resources to be deployed on them.
+
+**Example**:
+
+In the below example, generated pods will declare 3 **required** labels (keys and values) to be present on nodes before they are scheduled.
+
+=== ":octicons-file-code-16: `node-affinity-example.yaml`"
+
+    ```yaml
+    apiVersion: locust.io/v1
+    ...
+    spec:
+        ...
+        affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeAffinityLabel1: locust-cloud-tests
+                nodeAffinityLabel2: performance-nodes
+                nodeAffinityLabel3: high-memory
+                ...
+        ...
+    ```
+
+### Taint Tolerations
+
+> Coming soon!
+
 
 
 

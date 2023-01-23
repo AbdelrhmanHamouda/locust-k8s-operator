@@ -60,6 +60,9 @@ public class Constants {
     public static final String DEFAULT_MOUNT_PATH = "/lotest/src/";
     public static final String CONTAINER_ARGS_SEPARATOR = " ";
 
+    // Node Affinity constants
+    public static final String DEFAULT_NODE_MATCH_EXPRESSION_OPERATOR = "In";
+
     // Metrics
     public static final String PROMETHEUS_IO_SCRAPE = "prometheus.io/scrape";
     public static final String PROMETHEUS_IO_PATH = "prometheus.io/path";

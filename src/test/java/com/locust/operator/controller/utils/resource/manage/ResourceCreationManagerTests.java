@@ -14,10 +14,12 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
+import static com.locust.operator.controller.utils.TestFixtures.assertK8sNodeAffinity;
 import static com.locust.operator.controller.utils.TestFixtures.assertK8sResourceCreation;
 import static com.locust.operator.controller.utils.TestFixtures.containerEnvironmentMap;
 import static com.locust.operator.controller.utils.TestFixtures.executeWithK8sMockServer;
 import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfig;
+import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfigWithNodeAffinity;
 import static org.mockito.Mockito.when;
 
 @Slf4j
@@ -88,6 +90,31 @@ public class ResourceCreationManagerTests {
 
         // * Assert
         assertK8sResourceCreation(nodeName, serviceList);
+
+    }
+
+    @Test
+    @DisplayName("Functional: Create a kubernetes Job with Node Affinity")
+    void createJobWithNodeAffinityTest() {
+
+        // * Setup
+        val namespace = "node-affinity";
+        val nodeName = "locust-demo-test";
+        val resourceName = "locust.demo-test";
+        val k8sNodeLabelKey = "organisation.com/nodeLabel";
+        val k8sNodeLabelValue = "performance-nodes";
+        val nodeConfig = prepareNodeConfigWithNodeAffinity(nodeName, MASTER, k8sNodeLabelKey, k8sNodeLabelValue);
+
+        // * Act
+        executeWithK8sMockServer(k8sServerUrl, () -> CreationManager.createJob(nodeConfig, namespace, resourceName));
+
+        // Get All Jobs created by the method
+        val jobList = testClient.batch().v1().jobs().inNamespace(namespace).list();
+        log.debug("Acquired Job list: {}", jobList);
+
+        // * Assert
+        assertK8sResourceCreation(nodeName, jobList);
+        assertK8sNodeAffinity(nodeConfig, jobList, k8sNodeLabelKey);
 
     }
 
