@@ -64,7 +64,7 @@ of [node affinity](https://kubernetes.io/docs/concepts/scheduling-eviction/assig
 on purpose slightly simplified in order to allow users to have easier time working with affinity.
 
 The `nodeAffinity` section supports declaring node affinity under `requiredDuringSchedulingIgnoredDuringExecution`. Meaning that any
-declared affinity labels **must** be present in nodes inorder for resources to be deployed on them.
+declared affinity labels **must** be present in nodes in order for resources to be deployed on them.
 
 **Example**:
 
