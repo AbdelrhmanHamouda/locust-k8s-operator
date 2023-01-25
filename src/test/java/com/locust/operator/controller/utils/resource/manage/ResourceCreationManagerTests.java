@@ -120,7 +120,7 @@ public class ResourceCreationManagerTests {
         assertK8sNodeAffinity(nodeConfig, jobList, k8sNodeLabelKey);
 
     }
-
+    
     @Test
     @DisplayName("Functional: Create a kubernetes Job with Tolerations and Toleration Operator set to Equal")
     void createJobWithTolerationsAndOperatorEqualTest() {
@@ -179,5 +179,4 @@ public class ResourceCreationManagerTests {
         assertK8sTolerations(jobList, toleration);
 
     }
-
 }

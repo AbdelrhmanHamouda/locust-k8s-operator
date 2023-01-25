@@ -30,6 +30,7 @@ public class LocustTestSpec implements KubernetesResource {
     private Map<String, Map<String, String>> annotations;
     private LocustTestAffinity affinity;
     private List<LocustTestToleration> tolerations;
+
     private String masterCommandSeed;
     private String workerCommandSeed;
     private Integer workerReplicas;

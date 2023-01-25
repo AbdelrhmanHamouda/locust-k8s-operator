@@ -22,6 +22,7 @@ spec:
     worker:
       myapp.com/version: "2.1.0"
 
+
   # [Optional-Section] Affinity
   affinity:
     nodeAffinity:
