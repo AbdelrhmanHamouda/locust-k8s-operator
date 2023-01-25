@@ -27,6 +27,8 @@ import io.fabric8.kubernetes.api.model.PodTemplateSpec;
 import io.fabric8.kubernetes.api.model.PodTemplateSpecBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.kubernetes.api.model.Toleration;
+import io.fabric8.kubernetes.api.model.TolerationBuilder;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMount;
@@ -48,6 +50,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
+import static com.locust.operator.controller.dto.OperatorType.EQUAL;
 import static com.locust.operator.controller.utils.Constants.APP_DEFAULT_LABEL;
 import static com.locust.operator.controller.utils.Constants.BACKOFF_LIMIT;
 import static com.locust.operator.controller.utils.Constants.DEFAULT_MOUNT_PATH;
@@ -217,6 +220,7 @@ public class ResourceCreationHelpers {
             .withContainers(prepareContainerList(nodeConfig))
             .withVolumes(prepareVolumesList(nodeConfig))
             .withAffinity(prepareAffinity(nodeConfig))
+            .withTolerations(prepareTolerations(nodeConfig))
             .withRestartPolicy(DEFAULT_RESTART_POLICY)
             .build();
 
@@ -284,6 +288,33 @@ public class ResourceCreationHelpers {
         var nodeSelectorTerms = new NodeSelectorTermBuilder().withMatchExpressions(matchExpressions).build();
 
         return new NodeSelectorBuilder().withNodeSelectorTerms(nodeSelectorTerms).build();
+    }
+
+    private List<Toleration> prepareTolerations(LoadGenerationNode nodeConfig) {
+
+        List<Toleration> tolerations = new ArrayList<>();
+
+        if (nodeConfig.getTolerations() != null) {
+
+            // For each configured node toleration from the Custom Resource, build a toleration object and add it to list
+            nodeConfig.getTolerations().forEach(nodeToleration -> {
+                var tolerationBuilder = new TolerationBuilder();
+                tolerationBuilder
+                    .withKey(nodeToleration.getKey())
+                    .withOperator(nodeToleration.getOperator())
+                    .withEffect(nodeToleration.getEffect());
+
+                if (nodeToleration.getOperator().equals(EQUAL.getType())) {
+                    tolerationBuilder.withValue(nodeToleration.getValue());
+                }
+
+                tolerations.add(tolerationBuilder.build());
+            });
+        }
+
+        log.debug("Prepared pod tolerations: '{}'", tolerations);
+        return tolerations;
+
     }
 
     private static Volume prepareVolume(LoadGenerationNode nodeConfig) {
