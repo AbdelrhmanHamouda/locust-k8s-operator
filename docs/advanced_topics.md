@@ -39,7 +39,7 @@ This allows generated resources to have specific _Affinity_ options.
 
 #### Affinity Options
 
-The specification fot affinity is defined as follows
+The specification for affinity is defined as follows
 
 === ":octicons-file-code-16: `affinity-spec.yaml`"
 
@@ -61,10 +61,10 @@ This section causes generated pods to declare specific _Node Affinity_ so _Kuber
 
 The implementation from the _Custom Resource_ perspective is strongly influenced by Kubernetes native definition
 of [node affinity](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity). However, the implementation is
-on purpose slightly simplified inorder to allow users to have easier time working with affinity.
+on purpose slightly simplified in order to allow users to have easier time working with affinity.
 
 The `nodeAffinity` section supports declaring node affinity under `requiredDuringSchedulingIgnoredDuringExecution`. Meaning that any
-declared affinity labels **must** be present in nodes inorder for resources to be deployed on them.
+declared affinity labels **must** be present in nodes in order for resources to be deployed on them.
 
 **Example**:
 
