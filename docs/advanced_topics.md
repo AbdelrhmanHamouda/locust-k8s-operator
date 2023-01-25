@@ -26,8 +26,7 @@ To enable performance testing with _MSK_, a central/global Kafka user can be cre
 
 ## Dedicated Kubernetes Nodes
 
-To run test resources on dedicated _Kubernetes_ node(s), the _Operator_ support deploying resources with **_Affinity_** and *
-*_Taint Tolerations_**.
+To run test resources on dedicated _Kubernetes_ node(s), the _Operator_ support deploying resources with **_Affinity_** and **_Taint Tolerations_**.
 
 ### Affinity
 
@@ -57,7 +56,7 @@ The specification for affinity is defined as follows
 
 ##### Node Affinity
 
-This section causes generated pods to declare specific _Node Affinity_ so _Kubernetes scheduler_ becomes aware of this requirement.
+This optional section causes generated pods to declare specific _Node Affinity_ so _Kubernetes scheduler_ becomes aware of this requirement.
 
 The implementation from the _Custom Resource_ perspective is strongly influenced by Kubernetes native definition
 of [node affinity](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity). However, the implementation is
@@ -89,7 +88,47 @@ In the below example, generated pods will declare 3 **required** labels (keys an
 
 ### Taint Tolerations
 
-> Coming soon!
+This optional sections allows deployed pods to have specific taint(s) tolerations. The features is also modeled to follow
+closely [Kubernetes native definition](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/).
+
+#### Spec breakdown & example
+
+=== ":octicons-file-code-16: `taint-tolerations-spec.yaml`"
+
+    ```yaml
+    apiVersion: locust.io/v1
+    ...
+    spec:
+    ...
+    tolerations:
+        - key: <string value>
+          operator: <"Exists", "Equal">
+          value: <string value> #(1)!
+          effect: <"NoSchedule", "PreferNoSchedule", "NoExecute">
+        ...
+    ```
+
+    1. Optional when `operator` value is set to `Exists`.
+
+=== ":octicons-file-code-16: `taint-tolerations-example.yaml`"
+
+    ```yaml
+    apiVersion: locust.io/v1
+    ...
+    spec:
+        ...
+        tolerations:
+            - key: taint-A
+              operator: Equal
+              value: ssd
+              effect: NoSchedule
+
+            - key: taint-B
+              operator: Exists
+              effect: NoExecute
+            ...
+        ...
+    ```
 
 
 
