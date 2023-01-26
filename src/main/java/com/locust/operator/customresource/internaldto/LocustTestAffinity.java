@@ -6,11 +6,14 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 
+import java.io.Serializable;
+
 @JsonDeserialize(using = JsonDeserializer.None.class)
 @JsonInclude(Include.NON_NULL)
 @Data
-public class LocustTestAffinity {
+public class LocustTestAffinity implements Serializable {
 
+    private static final long serialVersionUID = 1;
     private LocustTestNodeAffinity nodeAffinity;
 
 }

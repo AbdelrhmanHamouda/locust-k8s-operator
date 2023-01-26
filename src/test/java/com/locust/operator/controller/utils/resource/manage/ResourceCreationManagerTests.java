@@ -1,6 +1,7 @@
 package com.locust.operator.controller.utils.resource.manage;
 
 import com.locust.operator.controller.utils.LoadGenHelpers;
+import com.locust.operator.customresource.internaldto.LocustTestToleration;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.server.mock.EnableKubernetesMockClient;
 import lombok.extern.slf4j.Slf4j;
@@ -16,10 +17,12 @@ import org.mockito.MockitoAnnotations;
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
 import static com.locust.operator.controller.utils.TestFixtures.assertK8sNodeAffinity;
 import static com.locust.operator.controller.utils.TestFixtures.assertK8sResourceCreation;
+import static com.locust.operator.controller.utils.TestFixtures.assertK8sTolerations;
 import static com.locust.operator.controller.utils.TestFixtures.containerEnvironmentMap;
 import static com.locust.operator.controller.utils.TestFixtures.executeWithK8sMockServer;
 import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfig;
 import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfigWithNodeAffinity;
+import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfigWithTolerations;
 import static org.mockito.Mockito.when;
 
 @Slf4j
@@ -117,5 +120,63 @@ public class ResourceCreationManagerTests {
         assertK8sNodeAffinity(nodeConfig, jobList, k8sNodeLabelKey);
 
     }
+    
+    @Test
+    @DisplayName("Functional: Create a kubernetes Job with Tolerations and Toleration Operator set to Equal")
+    void createJobWithTolerationsAndOperatorEqualTest() {
+        // * Setup
+        val namespace = "node-affinity";
+        val nodeName = "locust-demo-test";
+        val resourceName = "locust.demo-test";
 
+        // Toleration
+        val tolerationKey = "taintA";
+        val tolerationEffect = "NoSchedule";
+        val tolerationEqualOperator = "Equal";
+        val tolerationValue = "dedicatedToPerformance";
+
+        val toleration = new LocustTestToleration(tolerationKey, tolerationEqualOperator, tolerationValue, tolerationEffect);
+        val nodeConfig = prepareNodeConfigWithTolerations(nodeName, MASTER, toleration);
+
+        // * Act
+        executeWithK8sMockServer(k8sServerUrl, () -> CreationManager.createJob(nodeConfig, namespace, resourceName));
+
+        // Get All Jobs created by the method
+        val jobList = testClient.batch().v1().jobs().inNamespace(namespace).list();
+        log.debug("Acquired Job list: {}", jobList);
+
+        // * Assert
+        assertK8sResourceCreation(nodeName, jobList);
+        assertK8sTolerations(jobList, toleration);
+
+    }
+
+    @Test
+    @DisplayName("Functional: Create a kubernetes Job with Tolerations and Toleration Operator set to Exists")
+    void createJobWithTolerationsAndOperatorExistsTest() {
+        // * Setup
+        val namespace = "node-affinity";
+        val nodeName = "locust-demo-test";
+        val resourceName = "locust.demo-test";
+
+        // Toleration
+        val tolerationKey = "taintA";
+        val tolerationEffect = "NoSchedule";
+        val tolerationEqualOperator = "Exists";
+
+        val toleration = new LocustTestToleration(tolerationKey, tolerationEqualOperator, null, tolerationEffect);
+        val nodeConfig = prepareNodeConfigWithTolerations(nodeName, MASTER, toleration);
+
+        // * Act
+        executeWithK8sMockServer(k8sServerUrl, () -> CreationManager.createJob(nodeConfig, namespace, resourceName));
+
+        // Get All Jobs created by the method
+        val jobList = testClient.batch().v1().jobs().inNamespace(namespace).list();
+        log.debug("Acquired Job list: {}", jobList);
+
+        // * Assert
+        assertK8sResourceCreation(nodeName, jobList);
+        assertK8sTolerations(jobList, toleration);
+
+    }
 }

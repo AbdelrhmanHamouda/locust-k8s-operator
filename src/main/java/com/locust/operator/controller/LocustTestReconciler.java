@@ -56,6 +56,7 @@ public class LocustTestReconciler implements Reconciler<LocustTest>, Cleaner<Loc
                 Annotations: '{}'\s
                 Labels: '{}'\s
                 Affinity: '{}'\s
+                Tolerations: '{}'\s
                 configMap:'{}'.""",
             resource.getMetadata().getNamespace(),
             resource.getMetadata().getName(),
@@ -66,6 +67,7 @@ public class LocustTestReconciler implements Reconciler<LocustTest>, Cleaner<Loc
             resource.getSpec().getAnnotations(),
             resource.getSpec().getLabels(),
             resource.getSpec().getAffinity(),
+            resource.getSpec().getTolerations(),
             resource.getSpec().getConfigMap());
 
         // * Construct node commands & map to internal dto

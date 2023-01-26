@@ -6,6 +6,7 @@ import com.locust.operator.controller.dto.OperationalMode;
 import com.locust.operator.customresource.LocustTest;
 import com.locust.operator.customresource.internaldto.LocustTestAffinity;
 import com.locust.operator.customresource.internaldto.LocustTestNodeAffinity;
+import com.locust.operator.customresource.internaldto.LocustTestToleration;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.batch.v1.JobList;
 import lombok.NoArgsConstructor;
@@ -13,6 +14,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +22,7 @@ import java.util.Map;
 import static com.github.stefanbirkner.systemlambda.SystemLambda.withEnvironmentVariable;
 import static com.locust.operator.controller.TestFixtures.REPLICAS;
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
+import static com.locust.operator.controller.dto.OperatorType.EQUAL;
 import static com.locust.operator.controller.utils.Constants.CONTAINER_ARGS_SEPARATOR;
 import static com.locust.operator.controller.utils.Constants.KAFKA_BOOTSTRAP_SERVERS;
 import static com.locust.operator.controller.utils.Constants.KAFKA_PASSWORD;
@@ -117,6 +120,16 @@ public class TestFixtures {
 
     }
 
+    public static LoadGenerationNode prepareNodeConfigWithTolerations(String nodeName, OperationalMode mode,
+        LocustTestToleration toleration) {
+
+        val nodeConfig = prepareNodeConfig(nodeName, mode);
+        nodeConfig.setTolerations(Collections.singletonList(toleration));
+
+        return nodeConfig;
+
+    }
+
     public static <T extends KubernetesResourceList<?>> void assertK8sResourceCreation(String nodeName, T resourceList) {
 
         assertSoftly(softly -> {
@@ -142,6 +155,25 @@ public class TestFixtures {
                     softly.assertThat(actualSelectorKey).isEqualTo(k8sNodeLabelKey);
                     softly.assertThat(actualSelectorValue).isEqualTo(desiredSelectorValue);
                 });
+            });
+
+        });
+
+    }
+
+    public static void assertK8sTolerations(JobList jobList, LocustTestToleration expectedToleration) {
+
+        jobList.getItems().forEach(job -> {
+            val actualTolerations = job.getSpec().getTemplate().getSpec().getTolerations();
+
+            assertSoftly(softly -> {
+                softly.assertThat(actualTolerations.get(0).getKey()).isEqualTo(expectedToleration.getKey());
+                softly.assertThat(actualTolerations.get(0).getEffect()).isEqualTo(expectedToleration.getEffect());
+                softly.assertThat(actualTolerations.get(0).getOperator()).isEqualTo(expectedToleration.getOperator());
+
+                if (expectedToleration.getOperator().equals(EQUAL.getType())) {
+                    softly.assertThat(actualTolerations.get(0).getValue()).isEqualTo(expectedToleration.getValue());
+                }
             });
 
         });

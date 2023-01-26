@@ -5,6 +5,7 @@ import com.locust.operator.controller.dto.LoadGenerationNode;
 import com.locust.operator.controller.dto.OperationalMode;
 import com.locust.operator.customresource.LocustTest;
 import com.locust.operator.customresource.internaldto.LocustTestAffinity;
+import com.locust.operator.customresource.internaldto.LocustTestToleration;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import jakarta.inject.Singleton;
@@ -60,12 +61,19 @@ public class LoadGenHelpers {
             constructNodeLabels(resource, mode),
             constructNodeAnnotations(resource, mode),
             getNodeAffinity(resource),
+            getPodToleration(resource),
             constructNodeCommand(resource, mode),
             mode,
             getNodeImage(resource),
             getReplicaCount(resource, mode),
             getNodePorts(resource, mode),
             getConfigMap(resource));
+
+    }
+
+    private List<LocustTestToleration> getPodToleration(LocustTest resource) {
+
+        return resource.getSpec().getTolerations();
 
     }
 

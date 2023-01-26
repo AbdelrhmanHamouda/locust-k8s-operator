@@ -68,6 +68,32 @@ spec:
                           type: object
                           additionalProperties:
                             type: string
+                tolerations: # Child field 'tolerations'
+                  description: Taint toleration information to be attached to pods
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      key:
+                        description: Toleration key
+                        type: string
+                      operator:
+                        description: Toleration evaluation operator
+                        type: string
+                        enum:
+                          - "Exists"
+                          - "Equal"
+                      value:
+                        description: Toleration value
+                        type: string
+                      effect:
+                        description: Toleration effect
+                        type: string
+                        enum:
+                          - "NoSchedule"
+                          - "PreferNoSchedule"
+                          - "NoExecute"
+                    required: [ "key", "operator", "effect" ]
                 masterCommandSeed: # Child field 'masterCommandSeed'
                   description: Master pod command seed
                   type: string

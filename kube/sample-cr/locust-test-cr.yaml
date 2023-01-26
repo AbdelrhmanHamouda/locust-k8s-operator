@@ -4,7 +4,8 @@ metadata:
   name: demo.test
 spec:
   image: locustio/locust:latest
-  # Labels and annotations are optional, and apply to both master and worker pods
+
+  # [Optional-Section] Labels
   labels:
     master:
       locust.io/role: "master"
@@ -12,18 +13,33 @@ spec:
       myapp.com/tenantId: "xyz-789"
     worker:
       locust.io/role: "worker"
+
+  # [Optional-Section] Annotations
   annotations:
     master:
       myapp.com/threads: "1000"
       myapp.com/version: "2.1.0"
     worker:
       myapp.com/version: "2.1.0"
+
+
+  # [Optional-Section] Affinity
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         organisation.com/nodeAffinityLabel1: locust-cloud-tests
         organisation.com/nodeAffinityLabel2: performance-nodes
         organisation.com/nodeAffinityLabel3: high-memory
+
+  # [Optional-Section] Taint tolerations
+  tolerations:
+    - key: taint-A
+      operator: Equal
+      value: ssd
+      effect: NoSchedule
+    - key: taint-B
+      operator: Exists
+      effect: NoExecute
 
   masterCommandSeed:
     --locustfile /lotest/src/locust_project_demo.py
