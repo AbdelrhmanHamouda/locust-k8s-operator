@@ -12,8 +12,14 @@
         <meta name="author" content="Abdelrhman hamouda">
       
       
+      
+        <link rel="prev" href="../features/">
+      
+      
+        <link rel="next" href="../helm_deploy/">
+      
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.5.10">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.6">
     
     
       
@@ -21,11 +27,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.975780f9.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.558e4712.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.2505c338.min.css">
-        
       
       
 
@@ -113,8 +118,6 @@
       <form class="md-header__option" data-md-component="palette">
         
           
-          
-          
           <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="green" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
           
             <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
@@ -122,8 +125,6 @@
             </label>
           
         
-          
-          
           
           <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
           
@@ -166,7 +167,7 @@
           <div class="md-search-result__meta">
             Initializing search
           </div>
-          <ol class="md-search-result__list"></ol>
+          <ol class="md-search-result__list" role="presentation"></ol>
         </div>
       </div>
     </div>
@@ -488,10 +489,9 @@
                 
                   
 
-  <a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/edit/master/docs/getting_started.md" title="Edit this page" class="md-content__button md-icon">
-    
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
-  </a>
+  
+  
+
 
 
 <h1 id="getting-started">Getting started<a class="headerlink" href="#getting-started" title="Anchor link to this section for reference">⚓</a></h1>
@@ -503,7 +503,7 @@
 <span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">HttpUser</span><span class="p">):</span> <span class="c1"># (1)!</span>
     <span class="nd">@task</span> <span class="c1">#(2)!</span>
     <span class="k">def</span> <span class="nf">get_employees</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Get a list of employees.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a list of employees.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/api/v1/employees&quot;</span><span class="p">)</span> <span class="c1">#(3)!</span>
 </code></pre></div>
 <ol>
@@ -519,24 +519,23 @@
 <h3 id="step-2-write-a-valid-custom-resource-for-locusttest-crd">Step 2: Write a valid  custom resource for <em>LocustTest</em> CRD<a class="headerlink" href="#step-2-write-a-valid-custom-resource-for-locusttest-crd" title="Anchor link to this section for reference">⚓</a></h3>
 <p>A simple <em>custom resource</em> for the previous test can be something like the following example;</p>
 <blockquote>
-<p>To streamline this step, <em>intensive-brew</em> should be used. It is a simple cli tool that converts a declarative yaml into a compatible
-LocustTest kubernetes custom resource. (<em>Coming soon!</em>)</p>
+<p>To streamline this step, <a href="https://abdelrhmanhamouda.github.io/intensive-brew/"><em>intensive-brew</em></a> should be used. It is a simple cli tool that converts a declarative yaml into a compatible LocustTest kubernetes custom resource.</p>
 </blockquote>
-<div class="highlight"><span class="filename">locusttest-cr.yaml</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust.io/v1</span><span class="w"> </span><span class="c1">#(1)!</span><span class="w"></span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LocustTest</span><span class="w"> </span><span class="c1">#(2)!</span><span class="w"></span>
-<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">demo.test</span><span class="w"> </span><span class="c1">#(3)!</span><span class="w"></span>
-<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locustio/locust:latest</span><span class="w"> </span><span class="c1">#(4)!</span><span class="w"></span>
-<span class="w">  </span><span class="nt">masterCommandSeed</span><span class="p">:</span><span class="w"> </span><span class="c1">#(5)!</span><span class="w"></span>
-<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">--locustfile /lotest/src/demo_test.py</span><span class="w"></span>
-<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">--host https://dummy.restapiexample.com</span><span class="w"></span>
-<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">--users 100</span><span class="w"></span>
-<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">--spawn-rate 3</span><span class="w"></span>
-<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">--run-time 3m</span><span class="w"></span>
-<span class="w">  </span><span class="nt">workerCommandSeed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--locustfile /lotest/src/demo_test.py</span><span class="w"> </span><span class="c1">#(6)!</span><span class="w"></span>
-<span class="w">  </span><span class="nt">workerReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w"> </span><span class="c1">#(7)!</span><span class="w"></span>
-<span class="w">  </span><span class="nt">configMap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">demo-test-map</span><span class="w"> </span><span class="c1">#(8)!</span><span class="w"></span>
+<div class="highlight"><span class="filename">locusttest-cr.yaml</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust.io/v1</span><span class="w"> </span><span class="c1">#(1)!</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LocustTest</span><span class="w"> </span><span class="c1">#(2)!</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">demo.test</span><span class="w"> </span><span class="c1">#(3)!</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locustio/locust:latest</span><span class="w"> </span><span class="c1">#(4)!</span>
+<span class="w">  </span><span class="nt">masterCommandSeed</span><span class="p">:</span><span class="w"> </span><span class="c1">#(5)!</span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">--locustfile /lotest/src/demo_test.py</span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">--host https://dummy.restapiexample.com</span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">--users 100</span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">--spawn-rate 3</span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">--run-time 3m</span>
+<span class="w">  </span><span class="nt">workerCommandSeed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--locustfile /lotest/src/demo_test.py</span><span class="w"> </span><span class="c1">#(6)!</span>
+<span class="w">  </span><span class="nt">workerReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w"> </span><span class="c1">#(7)!</span>
+<span class="w">  </span><span class="nt">configMap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">demo-test-map</span><span class="w"> </span><span class="c1">#(8)!</span>
 </code></pre></div>
 <ol>
 <li>API version based on the deployed <em>LocustTest</em> CRD.</li>
@@ -552,24 +551,24 @@ LocustTest kubernetes custom resource. (<em>Coming soon!</em>)</p>
 <li>[Optional] Name of <em>configMap</em> to mount into the pod</li>
 </ol>
 <p>Note that other options are available. In particular, you can add labels and annotations as well. For example:</p>
-<div class="highlight"><span class="filename">locusttest-cr.yaml</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust.io/v1</span><span class="w"></span>
-<span class="nn">...</span><span class="w"></span>
-<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locustio/locust:latest</span><span class="w"></span>
-<span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="c1">#(1)!</span><span class="w"></span>
-<span class="w">    </span><span class="nt">master</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">locust.io/role</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;master&quot;</span><span class="w"></span>
-<span class="w">      </span><span class="nt">myapp.com/testId</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;abc-123&quot;</span><span class="w"></span>
-<span class="w">      </span><span class="nt">myapp.com/tenantId</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;xyz-789&quot;</span><span class="w"></span>
-<span class="w">    </span><span class="nt">worker</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">locust.io/role</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;worker&quot;</span><span class="w"></span>
-<span class="w">  </span><span class="nt">annotations</span><span class="p">:</span><span class="w"> </span><span class="c1">#(2)!</span><span class="w"></span>
-<span class="w">    </span><span class="nt">master</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">myapp.com/threads</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1000&quot;</span><span class="w"></span>
-<span class="w">      </span><span class="nt">myapp.com/version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2.1.0&quot;</span><span class="w"></span>
-<span class="w">    </span><span class="nt">worker</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">myapp.com/version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2.1.0&quot;</span><span class="w"></span>
-<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span><span class="w"></span>
+<div class="highlight"><span class="filename">locusttest-cr.yaml</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust.io/v1</span>
+<span class="nn">...</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locustio/locust:latest</span>
+<span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="c1">#(1)!</span>
+<span class="w">    </span><span class="nt">master</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">locust.io/role</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;master&quot;</span>
+<span class="w">      </span><span class="nt">myapp.com/testId</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;abc-123&quot;</span>
+<span class="w">      </span><span class="nt">myapp.com/tenantId</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;xyz-789&quot;</span>
+<span class="w">    </span><span class="nt">worker</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">locust.io/role</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;worker&quot;</span>
+<span class="w">  </span><span class="nt">annotations</span><span class="p">:</span><span class="w"> </span><span class="c1">#(2)!</span>
+<span class="w">    </span><span class="nt">master</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">myapp.com/threads</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1000&quot;</span>
+<span class="w">      </span><span class="nt">myapp.com/version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2.1.0&quot;</span>
+<span class="w">    </span><span class="nt">worker</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">myapp.com/version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2.1.0&quot;</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
 </code></pre></div>
 <ol>
 <li>[Optional] Labels are attached to both master and worker pods. They can later be used to identify pods belonging to a particular execution context. This is useful, for example, when tests are deployed programmatically. A launcher application can query the Kubernetes API for specific resources.</li>
@@ -620,7 +619,7 @@ To delete a resource, run the below command following this template <code>kubect
   <small>
     
       Last update:
-      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">November 3, 2022</span>
+      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">January 10, 2023</span>
       
     
   </small>
@@ -645,42 +644,6 @@ To delete a resource, run the below command following this template <code>kubect
       </main>
       
         <footer class="md-footer">
-  
-    
-    <nav class="md-footer__inner md-grid" aria-label="Footer" >
-      
-        
-        <a href="../features/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Features" rel="prev">
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
-          </div>
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              Features
-            </div>
-          </div>
-        </a>
-      
-      
-        
-        <a href="../helm_deploy/" class="md-footer__link md-footer__link--next" aria-label="Next: Deploy Operator with HELM" rel="next">
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              Deploy Operator with HELM
-            </div>
-          </div>
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
-          </div>
-        </a>
-      
-    </nav>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -797,12 +760,11 @@ To delete a resource, run the below command following this template <code>kubect
       </div>
       <script>var consent=__md_get("__consent");if(consent)for(var input of document.forms.consent.elements)input.name&&(input.checked=consent[input.name]||!1);else"file:"!==location.protocol&&setTimeout(function(){document.querySelector("[data-md-component=consent]").hidden=!1},250);var action,form=document.forms.consent;for(action of["submit","reset"])form.addEventListener(action,function(e){if(e.preventDefault(),"reset"===e.type)for(var n of document.forms.consent.elements)n.name&&(n.checked=!1);__md_set("__consent",Object.fromEntries(Array.from(new FormData(form).keys()).map(function(e){return[e,!0]}))),location.hash="",location.reload()})</script>
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["search.highlight", "search.share", "navigation.tracking", "navigation.top", "toc.follow", "toc.integrate", "content.code.annotate"], "search": "../assets/javascripts/workers/search.16e2a7d4.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["search.highlight", "search.share", "navigation.tracking", "navigation.top", "toc.follow", "toc.integrate", "content.code.annotate"], "search": "../assets/javascripts/workers/search.e5c33ebb.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.5a2dcb6a.min.js"></script>
+      <script src="../assets/javascripts/bundle.51d95adb.min.js"></script>
       
-    
     
   </body>
 </html>
