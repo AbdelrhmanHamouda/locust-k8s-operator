@@ -21,4 +21,4 @@ Since a "_Picture Is Worth a Thousand Words_", here is a gif!
 - Test configmap created in cluster.
 - LocustTest CR deployed into the cluster.
 - The _Operator_ creating, configuring and scheduling test resources on CR creation event.
-- The _Operator_ cleaning up test resources after test CR has been removed event. contribution section.
+- The _Operator_ cleaning up test resources after test CR has been removed event.

@@ -73,7 +73,7 @@ public class LoadGenHelpers {
 
     private List<LocustTestToleration> getPodToleration(LocustTest resource) {
 
-        return resource.getSpec().getTolerations();
+        return config.isTolerationsCrInjectionEnabled() ? resource.getSpec().getTolerations() : null;
 
     }
 
@@ -91,7 +91,7 @@ public class LoadGenHelpers {
 
     public LocustTestAffinity getNodeAffinity(LocustTest resource) {
 
-        return resource.getSpec().getAffinity();
+        return config.isAffinityCrInjectionEnabled() ? resource.getSpec().getAffinity() : null;
 
     }
 
