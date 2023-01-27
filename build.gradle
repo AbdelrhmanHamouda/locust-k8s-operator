@@ -1,6 +1,6 @@
 plugins {
     id 'com.google.cloud.tools.jib' version '3.3.1'
-    id("io.micronaut.application") version "3.6.6"
+    id("io.micronaut.application") version "3.6.7"
     id "com.diffplug.spotless" version "6.12.1"
     id "jacoco"
     id "idea"
