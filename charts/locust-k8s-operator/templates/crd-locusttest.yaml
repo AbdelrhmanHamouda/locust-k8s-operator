@@ -28,7 +28,7 @@ spec:
             spec: # Root field 'spec'
               type: object  # It is an object
               properties: # And has the following fields
-                labels:
+                labels: # Child field 'labels'
                   description: Labels attached to deployed pods
                   type: object
                   properties:
@@ -42,7 +42,7 @@ spec:
                       type: object
                       additionalProperties:
                         type: string
-                annotations:
+                annotations: # Child field 'annotations'
                   description: Annotations attached to deployed pods
                   type: object
                   properties:
@@ -56,6 +56,45 @@ spec:
                       type: object
                       additionalProperties:
                         type: string
+                affinity: # Child field 'affinity'
+                  description: Affinity information to be attached to pods
+                  type: object
+                  properties:
+                    nodeAffinity:
+                      description: Kubernetes node affinity to be attached to pods
+                      type: object
+                      properties:
+                        requiredDuringSchedulingIgnoredDuringExecution:
+                          description: Kubernetes node affinity to be attached to pods
+                          type: object
+                          additionalProperties:
+                            type: string
+                tolerations: # Child field 'tolerations'
+                  description: Taint toleration information to be attached to pods
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      key:
+                        description: Toleration key
+                        type: string
+                      operator:
+                        description: Toleration evaluation operator
+                        type: string
+                        enum:
+                          - "Exists"
+                          - "Equal"
+                      value:
+                        description: Toleration value
+                        type: string
+                      effect:
+                        description: Toleration effect
+                        type: string
+                        enum:
+                          - "NoSchedule"
+                          - "PreferNoSchedule"
+                          - "NoExecute"
+                    required: [ "key", "operator", "effect" ]
                 masterCommandSeed: # Child field 'masterCommandSeed'
                   description: Master pod command seed
                   type: string

@@ -4,10 +4,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.locust.operator.customresource.internaldto.LocustTestAffinity;
+import com.locust.operator.customresource.internaldto.LocustTestToleration;
 import io.fabric8.kubernetes.api.model.KubernetesResource;
 import lombok.Data;
 
 import java.io.Serial;
+import java.util.List;
 import java.util.Map;
 
 // This @JsonDeserialize overrides the deserializer used in KubernetesResource,
@@ -25,6 +28,9 @@ public class LocustTestSpec implements KubernetesResource {
 
     private Map<String, Map<String, String>> labels;
     private Map<String, Map<String, String>> annotations;
+    private LocustTestAffinity affinity;
+    private List<LocustTestToleration> tolerations;
+
     private String masterCommandSeed;
     private String workerCommandSeed;
     private Integer workerReplicas;

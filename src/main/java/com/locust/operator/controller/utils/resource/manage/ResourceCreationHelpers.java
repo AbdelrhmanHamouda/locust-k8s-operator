@@ -2,6 +2,8 @@ package com.locust.operator.controller.utils.resource.manage;
 
 import com.locust.operator.controller.dto.LoadGenerationNode;
 import com.locust.operator.controller.utils.LoadGenHelpers;
+import io.fabric8.kubernetes.api.model.Affinity;
+import io.fabric8.kubernetes.api.model.AffinityBuilder;
 import io.fabric8.kubernetes.api.model.ConfigMapVolumeSource;
 import io.fabric8.kubernetes.api.model.ConfigMapVolumeSourceBuilder;
 import io.fabric8.kubernetes.api.model.Container;
@@ -10,6 +12,13 @@ import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
+import io.fabric8.kubernetes.api.model.NodeAffinity;
+import io.fabric8.kubernetes.api.model.NodeAffinityBuilder;
+import io.fabric8.kubernetes.api.model.NodeSelector;
+import io.fabric8.kubernetes.api.model.NodeSelectorBuilder;
+import io.fabric8.kubernetes.api.model.NodeSelectorRequirement;
+import io.fabric8.kubernetes.api.model.NodeSelectorRequirementBuilder;
+import io.fabric8.kubernetes.api.model.NodeSelectorTermBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.PodSpec;
@@ -18,6 +27,8 @@ import io.fabric8.kubernetes.api.model.PodTemplateSpec;
 import io.fabric8.kubernetes.api.model.PodTemplateSpecBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.kubernetes.api.model.Toleration;
+import io.fabric8.kubernetes.api.model.TolerationBuilder;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMount;
@@ -35,12 +46,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
+import static com.locust.operator.controller.dto.OperatorType.EQUAL;
 import static com.locust.operator.controller.utils.Constants.APP_DEFAULT_LABEL;
 import static com.locust.operator.controller.utils.Constants.BACKOFF_LIMIT;
 import static com.locust.operator.controller.utils.Constants.DEFAULT_MOUNT_PATH;
+import static com.locust.operator.controller.utils.Constants.DEFAULT_NODE_MATCH_EXPRESSION_OPERATOR;
 import static com.locust.operator.controller.utils.Constants.DEFAULT_RESTART_POLICY;
 import static com.locust.operator.controller.utils.Constants.DEFAULT_WEB_UI_PORT;
 import static com.locust.operator.controller.utils.Constants.EXPORTER_CONTAINER_NAME;
@@ -205,6 +219,8 @@ public class ResourceCreationHelpers {
             // Containers
             .withContainers(prepareContainerList(nodeConfig))
             .withVolumes(prepareVolumesList(nodeConfig))
+            .withAffinity(prepareAffinity(nodeConfig))
+            .withTolerations(prepareTolerations(nodeConfig))
             .withRestartPolicy(DEFAULT_RESTART_POLICY)
             .build();
 
@@ -223,6 +239,81 @@ public class ResourceCreationHelpers {
         }
 
         return volumeList;
+
+    }
+
+    private Affinity prepareAffinity(LoadGenerationNode nodeConfig) {
+
+        // Construct Affinity
+        var affinityBuilder = new AffinityBuilder();
+
+        //! Note for future feature extensions:
+        //! When adding support for more "Affinity" options, the evaluation inside the `if` condition is to be split into several checks.
+        if (nodeConfig.getAffinity() != null && nodeConfig.getAffinity().getNodeAffinity() != null) {
+            affinityBuilder.withNodeAffinity(prepareNodeAffinity(nodeConfig));
+        }
+
+        var affinity = affinityBuilder.build();
+        log.debug("Prepared pod affinity: '{}'", affinity);
+
+        return affinity;
+
+    }
+
+    private NodeAffinity prepareNodeAffinity(LoadGenerationNode nodeConfig) {
+
+        var nodeAffinityBuilder = new NodeAffinityBuilder();
+
+        // Prepare Required during scheduling node selector
+        var requiredDuringSchedulingNodeSelector = prepareRequiredDuringSchedulingNodeSelector(nodeConfig);
+
+        nodeAffinityBuilder.withRequiredDuringSchedulingIgnoredDuringExecution(requiredDuringSchedulingNodeSelector);
+
+        return nodeAffinityBuilder.build();
+
+    }
+
+    private NodeSelector prepareRequiredDuringSchedulingNodeSelector(LoadGenerationNode nodeConfig) {
+
+        // Required during scheduling
+        List<NodeSelectorRequirement> matchExpressions = new ArrayList<>();
+
+        final var requiredDuringScheduling = Optional.ofNullable(
+            nodeConfig.getAffinity().getNodeAffinity().getRequiredDuringSchedulingIgnoredDuringExecution()).orElse(new HashMap<>());
+
+        requiredDuringScheduling.forEach((requiredAffinityKey, requiredAffinityValue) -> matchExpressions
+            .add(new NodeSelectorRequirementBuilder().withKey(requiredAffinityKey).withOperator(DEFAULT_NODE_MATCH_EXPRESSION_OPERATOR)
+                .withValues(requiredAffinityValue).build()));
+
+        var nodeSelectorTerms = new NodeSelectorTermBuilder().withMatchExpressions(matchExpressions).build();
+
+        return new NodeSelectorBuilder().withNodeSelectorTerms(nodeSelectorTerms).build();
+    }
+
+    private List<Toleration> prepareTolerations(LoadGenerationNode nodeConfig) {
+
+        List<Toleration> tolerations = new ArrayList<>();
+
+        if (nodeConfig.getTolerations() != null) {
+
+            // For each configured node toleration from the Custom Resource, build a toleration object and add it to list
+            nodeConfig.getTolerations().forEach(nodeToleration -> {
+                var tolerationBuilder = new TolerationBuilder();
+                tolerationBuilder
+                    .withKey(nodeToleration.getKey())
+                    .withOperator(nodeToleration.getOperator())
+                    .withEffect(nodeToleration.getEffect());
+
+                if (nodeToleration.getOperator().equals(EQUAL.getType())) {
+                    tolerationBuilder.withValue(nodeToleration.getValue());
+                }
+
+                tolerations.add(tolerationBuilder.build());
+            });
+        }
+
+        log.debug("Prepared pod tolerations: '{}'", tolerations);
+        return tolerations;
 
     }
 

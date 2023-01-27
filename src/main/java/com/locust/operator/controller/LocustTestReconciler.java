@@ -46,13 +46,28 @@ public class LocustTestReconciler implements Reconciler<LocustTest>, Cleaner<Loc
         log.info("LocustTest created: '{}'", resource.getMetadata().getName());
 
         log.debug(
-            "Custom resource information: \nNamespace: '{}'  CR name: '{}' \nImage: '{}' \nMaster command: '{}' \nWorker command: '{}' \nWorker replica count:'{}' \nconfigMap:'{}'.",
+            """
+                Custom resource information:\s
+                Namespace: '{}'  CR name: '{}'\s
+                Image: '{}'\s
+                Master command: '{}'\s
+                Worker command: '{}'\s
+                Worker replica count:'{}'\s
+                Annotations: '{}'\s
+                Labels: '{}'\s
+                Affinity: '{}'\s
+                Tolerations: '{}'\s
+                configMap:'{}'.""",
             resource.getMetadata().getNamespace(),
             resource.getMetadata().getName(),
             resource.getSpec().getImage(),
             resource.getSpec().getMasterCommandSeed(),
             resource.getSpec().getWorkerCommandSeed(),
             resource.getSpec().getWorkerReplicas(),
+            resource.getSpec().getAnnotations(),
+            resource.getSpec().getLabels(),
+            resource.getSpec().getAffinity(),
+            resource.getSpec().getTolerations(),
             resource.getSpec().getConfigMap());
 
         // * Construct node commands & map to internal dto

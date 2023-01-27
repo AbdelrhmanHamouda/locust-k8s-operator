@@ -4,12 +4,15 @@ import com.locust.operator.controller.config.SysConfig;
 import com.locust.operator.controller.dto.LoadGenerationNode;
 import com.locust.operator.controller.dto.OperationalMode;
 import com.locust.operator.customresource.LocustTest;
+import com.locust.operator.customresource.internaldto.LocustTestAffinity;
+import com.locust.operator.customresource.internaldto.LocustTestToleration;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.validation.constraints.NotNull;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -57,12 +60,38 @@ public class LoadGenHelpers {
             constructNodeName(resource, mode),
             constructNodeLabels(resource, mode),
             constructNodeAnnotations(resource, mode),
+            getNodeAffinity(resource),
+            getPodToleration(resource),
             constructNodeCommand(resource, mode),
             mode,
-            resource.getSpec().getImage(),
+            getNodeImage(resource),
             getReplicaCount(resource, mode),
             getNodePorts(resource, mode),
-            resource.getSpec().getConfigMap());
+            getConfigMap(resource));
+
+    }
+
+    private List<LocustTestToleration> getPodToleration(LocustTest resource) {
+
+        return config.isTolerationsCrInjectionEnabled() ? resource.getSpec().getTolerations() : null;
+
+    }
+
+    public String getConfigMap(LocustTest resource) {
+
+        return resource.getSpec().getConfigMap();
+
+    }
+
+    private String getNodeImage(LocustTest resource) {
+
+        return resource.getSpec().getImage();
+
+    }
+
+    public LocustTestAffinity getNodeAffinity(LocustTest resource) {
+
+        return config.isAffinityCrInjectionEnabled() ? resource.getSpec().getAffinity() : null;
 
     }
 
@@ -76,8 +105,9 @@ public class LoadGenHelpers {
 
     /**
      * Constructs the labels to attach to the master and worker pods.
+     *
      * @param customResource The custom resource object
-     * @param mode The operational mode
+     * @param mode           The operational mode
      * @return A non-null, possibly empty map of labels
      */
     public Map<String, String> constructNodeLabels(final LocustTest customResource, final OperationalMode mode) {
@@ -96,8 +126,9 @@ public class LoadGenHelpers {
 
     /**
      * Constructs the annotations to attach to the master and worker pods.
+     *
      * @param customResource The custom resource object
-     * @param mode The operational mode
+     * @param mode           The operational mode
      * @return A non-null, possibly empty map of annotations
      */
     public Map<String, String> constructNodeAnnotations(final LocustTest customResource, final OperationalMode mode) {

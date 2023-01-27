@@ -4,11 +4,17 @@ import com.locust.operator.controller.config.SysConfig;
 import com.locust.operator.controller.dto.LoadGenerationNode;
 import com.locust.operator.controller.dto.OperationalMode;
 import com.locust.operator.customresource.LocustTest;
+import com.locust.operator.customresource.internaldto.LocustTestAffinity;
+import com.locust.operator.customresource.internaldto.LocustTestNodeAffinity;
+import com.locust.operator.customresource.internaldto.LocustTestToleration;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
+import io.fabric8.kubernetes.api.model.batch.v1.JobList;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +22,7 @@ import java.util.Map;
 import static com.github.stefanbirkner.systemlambda.SystemLambda.withEnvironmentVariable;
 import static com.locust.operator.controller.TestFixtures.REPLICAS;
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
+import static com.locust.operator.controller.dto.OperatorType.EQUAL;
 import static com.locust.operator.controller.utils.Constants.CONTAINER_ARGS_SEPARATOR;
 import static com.locust.operator.controller.utils.Constants.KAFKA_BOOTSTRAP_SERVERS;
 import static com.locust.operator.controller.utils.Constants.KAFKA_PASSWORD;
@@ -41,6 +48,8 @@ public class TestFixtures {
     public static final String K8S_SERVER_URL_ENV_VAR = "KUBERNETES_MASTER";
     public static final String MOCK_KAFKA_BOOTSTRAP_VALUE = "localhost:9092";
     public static final boolean MOCK_SECURITY_VALUE = true;
+    public static final boolean MOCK_AFFINITY_INJECTION_VALUE = true;
+    public static final boolean MOCK_TOLERATION_INJECTION_VALUE = true;
     public static final String MOCK_SECURITY_PROTOCOL_VALUE = "SASL_PLAINTEXT";
     public static final String MOCK_SASL_MECHANISM_VALUE = "SCRAM-SHA-512";
     public static final String MOCK_SASL_JAAS_CONFIG_VALUE = "placeholder";
@@ -93,11 +102,82 @@ public class TestFixtures {
         return nodeConfig;
     }
 
+    public static LoadGenerationNode prepareNodeConfigWithNodeAffinity(String nodeName, OperationalMode mode, String affinityKey,
+        String affinityValue) {
+
+        // Init instances
+        val nodeAffinity = new LocustTestNodeAffinity();
+        val affinity = new LocustTestAffinity();
+        val nodeConfig = prepareNodeConfig(nodeName, mode);
+
+        // Set affinity
+        nodeAffinity.setRequiredDuringSchedulingIgnoredDuringExecution(Map.of(affinityKey, affinityValue));
+        affinity.setNodeAffinity(nodeAffinity);
+
+        // Push affinity config to object
+        nodeConfig.setAffinity(affinity);
+        log.debug("Created node configuration with nodeAffinity: {}", nodeConfig);
+
+        return nodeConfig;
+
+    }
+
+    public static LoadGenerationNode prepareNodeConfigWithTolerations(String nodeName, OperationalMode mode,
+        LocustTestToleration toleration) {
+
+        val nodeConfig = prepareNodeConfig(nodeName, mode);
+        nodeConfig.setTolerations(Collections.singletonList(toleration));
+
+        return nodeConfig;
+
+    }
+
     public static <T extends KubernetesResourceList<?>> void assertK8sResourceCreation(String nodeName, T resourceList) {
 
         assertSoftly(softly -> {
             softly.assertThat(resourceList.getItems().size()).isEqualTo(EXPECTED_RESOURCE_COUNT);
             softly.assertThat(resourceList.getItems().get(0).getMetadata().getName()).isEqualTo(nodeName);
+        });
+
+    }
+
+    public static void assertK8sNodeAffinity(LoadGenerationNode nodeConfig, JobList jobList, String k8sNodeLabelKey) {
+
+        jobList.getItems().forEach(job -> {
+            val nodeSelectorTerms = job.getSpec().getTemplate().getSpec().getAffinity().getNodeAffinity()
+                .getRequiredDuringSchedulingIgnoredDuringExecution().getNodeSelectorTerms();
+
+            nodeSelectorTerms.forEach(selectorTerm -> {
+                val actualSelectorKey = selectorTerm.getMatchExpressions().get(0).getKey();
+                val actualSelectorValue = selectorTerm.getMatchExpressions().get(0).getValues().get(0);
+                val desiredSelectorValue = nodeConfig.getAffinity().getNodeAffinity().getRequiredDuringSchedulingIgnoredDuringExecution()
+                    .get(k8sNodeLabelKey);
+
+                assertSoftly(softly -> {
+                    softly.assertThat(actualSelectorKey).isEqualTo(k8sNodeLabelKey);
+                    softly.assertThat(actualSelectorValue).isEqualTo(desiredSelectorValue);
+                });
+            });
+
+        });
+
+    }
+
+    public static void assertK8sTolerations(JobList jobList, LocustTestToleration expectedToleration) {
+
+        jobList.getItems().forEach(job -> {
+            val actualTolerations = job.getSpec().getTemplate().getSpec().getTolerations();
+
+            assertSoftly(softly -> {
+                softly.assertThat(actualTolerations.get(0).getKey()).isEqualTo(expectedToleration.getKey());
+                softly.assertThat(actualTolerations.get(0).getEffect()).isEqualTo(expectedToleration.getEffect());
+                softly.assertThat(actualTolerations.get(0).getOperator()).isEqualTo(expectedToleration.getOperator());
+
+                if (expectedToleration.getOperator().equals(EQUAL.getType())) {
+                    softly.assertThat(actualTolerations.get(0).getValue()).isEqualTo(expectedToleration.getValue());
+                }
+            });
+
         });
 
     }
@@ -167,6 +247,13 @@ public class TestFixtures {
         when(mockedConfInstance.getPodEphemeralStorageLimit())
             .thenReturn(MOCK_POD_EPHEMERAL_STORAGE);
 
+        // Affinity
+        when(mockedConfInstance.isAffinityCrInjectionEnabled())
+            .thenReturn(MOCK_AFFINITY_INJECTION_VALUE);
+
+        // Taints Toleration
+        when(mockedConfInstance.isTolerationsCrInjectionEnabled())
+            .thenReturn(MOCK_TOLERATION_INJECTION_VALUE);
     }
 
 }
