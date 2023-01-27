@@ -75,6 +75,10 @@ config:
       cpuLimit: 1000m
       memLimit: 1024Mi
       ephemeralLimit: 50M
+    affinity:
+      enableCrInjection: true
+    taintTolerations:
+      enableCrInjection: true
     kafka:
       bootstrapServers: localhost:9092
       locustK8sKafkaUser:

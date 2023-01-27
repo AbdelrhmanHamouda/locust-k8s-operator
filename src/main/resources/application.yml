@@ -41,6 +41,10 @@ config:
   k8s:
     namespace: ${K8S_NAMESPACE:default}
   load-generation-pods:
+    affinity:
+      enableCrInjection: ${ENABLE_AFFINITY_CR_INJECTION:false}
+    taintTolerations:
+      enableCrInjection: ${ENABLE_TAINT_TOLERATIONS_CR_INJECTION:false}
     resource:
       cpu-request: ${POD_CPU_REQUEST:`250m`}
       mem-request: ${POD_MEM_REQUEST:`128Mi`}

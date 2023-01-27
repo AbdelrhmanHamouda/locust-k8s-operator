@@ -48,6 +48,8 @@ public class TestFixtures {
     public static final String K8S_SERVER_URL_ENV_VAR = "KUBERNETES_MASTER";
     public static final String MOCK_KAFKA_BOOTSTRAP_VALUE = "localhost:9092";
     public static final boolean MOCK_SECURITY_VALUE = true;
+    public static final boolean MOCK_AFFINITY_INJECTION_VALUE = true;
+    public static final boolean MOCK_TOLERATION_INJECTION_VALUE = true;
     public static final String MOCK_SECURITY_PROTOCOL_VALUE = "SASL_PLAINTEXT";
     public static final String MOCK_SASL_MECHANISM_VALUE = "SCRAM-SHA-512";
     public static final String MOCK_SASL_JAAS_CONFIG_VALUE = "placeholder";
@@ -245,6 +247,13 @@ public class TestFixtures {
         when(mockedConfInstance.getPodEphemeralStorageLimit())
             .thenReturn(MOCK_POD_EPHEMERAL_STORAGE);
 
+        // Affinity
+        when(mockedConfInstance.isAffinityCrInjectionEnabled())
+            .thenReturn(MOCK_AFFINITY_INJECTION_VALUE);
+
+        // Taints Toleration
+        when(mockedConfInstance.isTolerationsCrInjectionEnabled())
+            .thenReturn(MOCK_TOLERATION_INJECTION_VALUE);
     }
 
 }

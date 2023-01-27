@@ -27,7 +27,7 @@ public class SysConfig {
     @Property(name = "config.load-generation-pods.kafka.sasl.jaas.config")
     private String kafkaSaslJaasConfig;
 
-    // * Generated pod resources
+    // * Generated pod characteristics
     @Property(name = "config.load-generation-pods.resource.cpu-request")
     private String podCpuRequest;
     @Property(name = "config.load-generation-pods.resource.mem-request")
@@ -40,5 +40,10 @@ public class SysConfig {
     private String podMemLimit;
     @Property(name = "config.load-generation-pods.resource.ephemeralStorage-limit")
     private String podEphemeralStorageLimit;
+
+    @Property(name = "config.load-generation-pods.affinity.enableCrInjection")
+    private boolean affinityCrInjectionEnabled;
+    @Property(name = "config.load-generation-pods.taintTolerations.enableCrInjection")
+    private boolean tolerationsCrInjectionEnabled;
 
 }
