@@ -25,7 +25,7 @@ jobs:
         uses: gradle/wrapper-validation-action@v1.0.5
 
       - name: Build
-        uses: gradle/gradle-build-action@v2.3.3
+        uses: gradle/gradle-build-action@v2.4.0
         with:
           arguments: build jacocoTestReport -i
 
