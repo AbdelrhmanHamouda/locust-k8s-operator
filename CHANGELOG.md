@@ -1,3 +1,11 @@
+## 0.5.0 (2023-01-27)
+
+### Feat
+
+- **#78**: Support HELM control to enable/disable injecting Affinity & Taint tolerations information from Custom Resources (#84)
+- **#78**: Support adding taint tolerations to pods (#83)
+- **#78**: Support adding node affinity through the custom resource (#81)
+
 ## 0.4.0 (2022-12-02)
 
 ### Feat

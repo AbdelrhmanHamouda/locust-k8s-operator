@@ -1,5 +1,7 @@
 package com.locust.operator.controller.dto;
 
+import com.locust.operator.customresource.internaldto.LocustTestAffinity;
+import com.locust.operator.customresource.internaldto.LocustTestToleration;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,6 +20,8 @@ public class LoadGenerationNode {
     private String name;
     private Map<String, String> labels;
     private Map<String, String> annotations;
+    private LocustTestAffinity affinity;
+    private List<LocustTestToleration> tolerations;
     private List<String> command;
     private OperationalMode operationalMode;
     private String image;

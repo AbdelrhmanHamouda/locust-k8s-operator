@@ -75,6 +75,10 @@ spec:
               value: {{ .Values.config.loadGenerationPods.resource.memLimit | quote }}
             - name: POD_EPHEMERAL_LIMIT
               value: {{ .Values.config.loadGenerationPods.resource.ephemeralLimit | quote }}
+            - name: ENABLE_AFFINITY_CR_INJECTION
+              value: {{ .Values.config.loadGenerationPods.affinity.enableCrInjection | quote }}
+            - name: ENABLE_TAINT_TOLERATIONS_CR_INJECTION
+              value: {{ .Values.config.loadGenerationPods.taintTolerations.enableCrInjection | quote }}
             # Metric config
             - name: METRICS_ENABLE
               value: {{ .Values.micronaut.metrics.enabled | quote }}
