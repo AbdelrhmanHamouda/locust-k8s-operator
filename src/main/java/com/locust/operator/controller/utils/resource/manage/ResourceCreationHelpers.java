@@ -131,6 +131,7 @@ public class ResourceCreationHelpers {
 
         // * Job Spec configuration
         JobSpec jobSpec = new JobSpecBuilder()
+            .withTtlSecondsAfterFinished(nodeConfig.getTtlSecondsAfterFinished())
 
             // Pods count
             // Setting the `Parallelism` attribute will result in k8s deploying pods to match the requested value

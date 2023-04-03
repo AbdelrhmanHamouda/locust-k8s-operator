@@ -22,6 +22,7 @@ public class LoadGenerationNode {
     private Map<String, String> annotations;
     private LocustTestAffinity affinity;
     private List<LocustTestToleration> tolerations;
+    private Integer ttlSecondsAfterFinished;
     private List<String> command;
     private OperationalMode operationalMode;
     private String image;

@@ -32,7 +32,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @NoArgsConstructor(access = PRIVATE)
 public class TestFixtures {
 
-    public static final String CRD_FILE_PATH = "charts/locust-k8s-operator/templates/crd-locusttest.yaml";
+    public static final String CRD_FILE_PATH = "charts/locust-k8s-operator/crds/locust-test-crd.yaml";
     public static final String DEFAULT_API_VERSION = GROUP + "/" + VERSION;
     public static final String KIND = "LocustTest";
     public static final String DEFAULT_SEED_COMMAND = "--locustfile src/demo.py";
