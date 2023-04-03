@@ -14,7 +14,10 @@ import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.List;
+
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
+import static com.locust.operator.controller.utils.TestFixtures.assertImagePullData;
 import static com.locust.operator.controller.utils.TestFixtures.assertK8sNodeAffinity;
 import static com.locust.operator.controller.utils.TestFixtures.assertK8sResourceCreation;
 import static com.locust.operator.controller.utils.TestFixtures.assertK8sTolerations;
@@ -22,6 +25,7 @@ import static com.locust.operator.controller.utils.TestFixtures.containerEnviron
 import static com.locust.operator.controller.utils.TestFixtures.executeWithK8sMockServer;
 import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfig;
 import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfigWithNodeAffinity;
+import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfigWithPullPolicyAndSecrets;
 import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfigWithTolerations;
 import static org.mockito.Mockito.when;
 
@@ -120,7 +124,7 @@ public class ResourceCreationManagerTests {
         assertK8sNodeAffinity(nodeConfig, jobList, k8sNodeLabelKey);
 
     }
-    
+
     @Test
     @DisplayName("Functional: Create a kubernetes Job with Tolerations and Toleration Operator set to Equal")
     void createJobWithTolerationsAndOperatorEqualTest() {
@@ -179,4 +183,29 @@ public class ResourceCreationManagerTests {
         assertK8sTolerations(jobList, toleration);
 
     }
+
+    @Test
+    @DisplayName("Functional: Create a kubernetes Job with Pod image pull policy and secrets")
+    void createJobWithPodImagePullPolicyAndSecrets() {
+
+        // * Setup
+        val namespace = "default";
+        val nodeName = "mnt-demo-test";
+        val resourceName = "mnt.demo-test";
+        val nodeConfig = prepareNodeConfigWithPullPolicyAndSecrets(
+            nodeName, MASTER, "Always", List.of("my-private-registry-secret", "gcr-cred-secret")
+        );
+
+        // * Act
+        executeWithK8sMockServer(k8sServerUrl, () -> CreationManager.createJob(nodeConfig, namespace, resourceName));
+
+        // Get All Pods created by the method
+        val podList = testClient.pods().inNamespace(namespace).list();
+        log.debug("Acquired Pod list: {}", podList);
+
+        // * Assert
+        assertImagePullData(nodeConfig, podList);
+
+    }
+
 }

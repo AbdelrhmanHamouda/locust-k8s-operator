@@ -67,7 +67,11 @@ spec:
 7. The amount of _worker_ nodes to spawn in the cluster.
 8. [Optional] Name of _configMap_ to mount into the pod
 
-Note that other options are available. In particular, you can add labels and annotations as well. For example:
+#### Other options
+
+##### Labels and annotations
+
+You can add labels and annotations to generated Pods. For example:
 
 ```yaml title="locusttest-cr.yaml"
 apiVersion: locust.io/v1

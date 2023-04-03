@@ -109,6 +109,18 @@ spec:
                 image: # Child field 'image'
                   description: Locust image
                   type: string
+                imagePullPolicy:
+                  description: Image pull policy
+                  type: string
+                  enum:
+                    - "Always"
+                    - "IfNotPresent"
+                    - "Never"
+                imagePullSecrets:
+                  description: Secrets for pulling images from private registries
+                  type: array
+                  items:
+                    type: string
                 configMap: # Child field 'configMap'
                   description: Configuration map name containing the test
                   type: string

@@ -132,5 +132,35 @@ closely [Kubernetes native definition](https://kubernetes.io/docs/concepts/sched
     ```
 
 
+## Usage of a private image registry
 
+Images from a private image registry can be used through various methods as described in the [kubernetes documentation](https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry), one of those methods depends on setting `imagePullSecrets` for pods. This is supported in the operator by simply setting the `imagePullSecrets` option in the deployed custom resource. For example:
 
+```yaml title="locusttest-pull-secret-cr.yaml"
+apiVersion: locust.io/v1
+...
+spec:
+  image: ghcr.io/mycompany/locust:latest #(1)!
+  imagePullSecrets: #(2)!
+    - gcr-secret
+  ...
+```
+
+1. Specify which Locust image to use for both master and worker containers.
+2. [Optional] Specify an existing pull secret to use for master and worker pods.
+
+### Image pull policy
+
+Kubernetes uses the image tag and pull policy to control when kubelet attempts to download (pull) a container image. The image pull policy can be defined through the `imagePullPolicy` option, as explained in the [kubernetes documentation](https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy). When using the operator, the `imagePullPolicy` option can be directly configured in the custom resource. For example:
+
+```yaml title="locusttest-pull-policy-cr.yaml"
+apiVersion: locust.io/v1
+...
+spec:
+  image: ghcr.io/mycompany/locust:latest #(1)!
+  imagePullPolicy: Always #(2)!
+  ...
+```
+
+1. Specify which Locust image to use for both master and worker containers.
+2. [Optional] Specify the pull policy to use for containers defined within master and worker containers. Supported options include `Always`, `IfNotPresent` and `Never`.

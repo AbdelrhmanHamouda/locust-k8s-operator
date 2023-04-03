@@ -8,6 +8,8 @@ import com.locust.operator.customresource.internaldto.LocustTestAffinity;
 import com.locust.operator.customresource.internaldto.LocustTestNodeAffinity;
 import com.locust.operator.customresource.internaldto.LocustTestToleration;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
+import io.fabric8.kubernetes.api.model.LocalObjectReference;
+import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.batch.v1.JobList;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -132,11 +134,46 @@ public class TestFixtures {
 
     }
 
+    public static LoadGenerationNode prepareNodeConfigWithPullPolicyAndSecrets(
+        String nodeName, OperationalMode mode, String pullPolicy, List<String> pullSecrets) {
+
+        val nodeConfig = prepareNodeConfig(nodeName, mode);
+        nodeConfig.setImagePullPolicy(pullPolicy);
+        nodeConfig.setImagePullSecrets(pullSecrets);
+
+        return nodeConfig;
+
+    }
+
     public static <T extends KubernetesResourceList<?>> void assertK8sResourceCreation(String nodeName, T resourceList) {
 
         assertSoftly(softly -> {
             softly.assertThat(resourceList.getItems().size()).isEqualTo(EXPECTED_RESOURCE_COUNT);
             softly.assertThat(resourceList.getItems().get(0).getMetadata().getName()).isEqualTo(nodeName);
+        });
+
+    }
+
+    public static void assertImagePullData(LoadGenerationNode nodeConfig, PodList podList) {
+
+        podList.getItems().forEach(pod -> {
+            final List<String> references = pod.getSpec()
+                .getImagePullSecrets()
+                .stream()
+                .map(LocalObjectReference::getName)
+                .toList();
+
+            assertSoftly(softly -> {
+                softly.assertThat(references).isEqualTo(nodeConfig.getImagePullSecrets());
+            });
+
+            pod.getSpec()
+                .getContainers()
+                .forEach(container -> {
+                    assertSoftly(softly -> {
+                        softly.assertThat(container.getImagePullPolicy()).isEqualTo(nodeConfig.getImagePullPolicy());
+                    });
+                });
         });
 
     }

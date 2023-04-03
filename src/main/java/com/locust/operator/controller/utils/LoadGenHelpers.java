@@ -65,6 +65,8 @@ public class LoadGenHelpers {
             constructNodeCommand(resource, mode),
             mode,
             getNodeImage(resource),
+            getNodeImagePullPolicy(resource),
+            getNodeImagePullSecrets(resource),
             getReplicaCount(resource, mode),
             getNodePorts(resource, mode),
             getConfigMap(resource));
@@ -87,6 +89,14 @@ public class LoadGenHelpers {
 
         return resource.getSpec().getImage();
 
+    }
+
+    private String getNodeImagePullPolicy(LocustTest resource) {
+        return resource.getSpec().getImagePullPolicy();
+    }
+
+    private List<String> getNodeImagePullSecrets(LocustTest resource) {
+        return resource.getSpec().getImagePullSecrets();
     }
 
     public LocustTestAffinity getNodeAffinity(LocustTest resource) {

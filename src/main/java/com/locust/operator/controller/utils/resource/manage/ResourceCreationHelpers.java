@@ -12,6 +12,8 @@ import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
+import io.fabric8.kubernetes.api.model.LocalObjectReference;
+import io.fabric8.kubernetes.api.model.LocalObjectReferenceBuilder;
 import io.fabric8.kubernetes.api.model.NodeAffinity;
 import io.fabric8.kubernetes.api.model.NodeAffinityBuilder;
 import io.fabric8.kubernetes.api.model.NodeSelector;
@@ -215,6 +217,8 @@ public class ResourceCreationHelpers {
     private PodSpec prepareTemplateSpec(LoadGenerationNode nodeConfig) {
 
         PodSpec templateSpec = new PodSpecBuilder()
+            // images
+            .withImagePullSecrets(prepareImagePullSecrets(nodeConfig))
 
             // Containers
             .withContainers(prepareContainerList(nodeConfig))
@@ -228,6 +232,23 @@ public class ResourceCreationHelpers {
 
         return templateSpec;
 
+    }
+
+    private List<LocalObjectReference> prepareImagePullSecrets(LoadGenerationNode nodeConfig) {
+        final List<LocalObjectReference> references = new ArrayList<>();
+
+        if (nodeConfig.getImagePullSecrets() != null) {
+            references.addAll(
+                nodeConfig.getImagePullSecrets()
+                    .stream()
+                    .map(secretName -> new LocalObjectReferenceBuilder().withName(secretName).build())
+                    .toList()
+            );
+        }
+
+        log.debug("Prepared image pull secrets: {}", references);
+
+        return references;
     }
 
     private List<Volume> prepareVolumesList(LoadGenerationNode nodeConfig) {
@@ -339,7 +360,7 @@ public class ResourceCreationHelpers {
 
         // Inject metrics container only if `master`
         if (nodeConfig.getOperationalMode().equals(MASTER)) {
-            constantsList.add(prepareMetricsExporterContainer());
+            constantsList.add(prepareMetricsExporterContainer(nodeConfig.getImagePullPolicy()));
         }
 
         return constantsList;
@@ -351,9 +372,10 @@ public class ResourceCreationHelpers {
      * <p>
      * Reference: <a href="https://github.com/ContainerSolutions/locust_exporter">locust exporter docs</a>
      *
+     * @param pullPolicy The image pull policy
      * @return Container
      */
-    private Container prepareMetricsExporterContainer() {
+    private Container prepareMetricsExporterContainer(final String pullPolicy) {
 
         HashMap<String, String> envMap = new HashMap<>();
 
@@ -367,6 +389,7 @@ public class ResourceCreationHelpers {
 
             // Image
             .withImage(EXPORTER_IMAGE)
+            .withImagePullPolicy(pullPolicy)
 
             // Ports
             .withPorts(new ContainerPortBuilder().withContainerPort(LOCUST_EXPORTER_PORT).build())
@@ -400,6 +423,7 @@ public class ResourceCreationHelpers {
 
             // Image
             .withImage(nodeConfig.getImage())
+            .withImagePullPolicy(nodeConfig.getImagePullPolicy())
 
             // Ports
             .withPorts(prepareContainerPorts(nodeConfig.getPorts()))

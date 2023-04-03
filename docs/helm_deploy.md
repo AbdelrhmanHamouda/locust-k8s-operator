@@ -30,7 +30,7 @@ In order to deploy using helm, follow the below steps:
 
 [//]: # (Resources urls)
 
-[crd-locusttest.yaml]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/charts/locust-k8s-operator/templates/crd-locusttest.yaml
+[crd-locusttest.yaml]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/kube/crd/locust-test-crd.yaml
 
 [serviceaccount-and-roles.yaml]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/charts/locust-k8s-operator/templates/serviceaccount-and-roles.yaml
 

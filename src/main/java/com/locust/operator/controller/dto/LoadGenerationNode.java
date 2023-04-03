@@ -25,6 +25,8 @@ public class LoadGenerationNode {
     private List<String> command;
     private OperationalMode operationalMode;
     private String image;
+    private String imagePullPolicy;
+    private List<String> imagePullSecrets;
     private Integer replicas;
     private List<Integer> ports;
     private String configMap;
