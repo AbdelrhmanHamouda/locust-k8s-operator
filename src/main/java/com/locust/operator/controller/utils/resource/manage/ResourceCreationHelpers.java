@@ -66,6 +66,8 @@ import static com.locust.operator.controller.utils.Constants.EXPORTER_PORT_ENV_V
 import static com.locust.operator.controller.utils.Constants.EXPORTER_URI_ENV_VAR;
 import static com.locust.operator.controller.utils.Constants.EXPORTER_URI_ENV_VAR_VALUE;
 import static com.locust.operator.controller.utils.Constants.LOCUST_EXPORTER_PORT;
+import static com.locust.operator.controller.utils.Constants.MANAGED_BY_LABEL_KEY;
+import static com.locust.operator.controller.utils.Constants.MANAGED_BY_LABEL_VALUE;
 import static com.locust.operator.controller.utils.Constants.METRICS_PORT_NAME;
 import static com.locust.operator.controller.utils.Constants.PORT_DEFAULT_NAME;
 import static com.locust.operator.controller.utils.Constants.PROMETHEUS_IO_ENDPOINT;
@@ -133,6 +135,7 @@ public class ResourceCreationHelpers {
 
         // * Job Spec configuration
         JobSpec jobSpec = new JobSpecBuilder()
+            .withTtlSecondsAfterFinished(nodeConfig.getTtlSecondsAfterFinished())
 
             // Pods count
             // Setting the `Parallelism` attribute will result in k8s deploying pods to match the requested value
@@ -189,6 +192,7 @@ public class ResourceCreationHelpers {
             // Labels
             .addToLabels(APP_DEFAULT_LABEL, testName)
             .addToLabels(SERVICE_SELECTOR_LABEL, nodeConfig.getName())
+            .addToLabels(MANAGED_BY_LABEL_KEY, MANAGED_BY_LABEL_VALUE)
             .addToLabels(nodeConfig.getLabels())
 
             // Annotations

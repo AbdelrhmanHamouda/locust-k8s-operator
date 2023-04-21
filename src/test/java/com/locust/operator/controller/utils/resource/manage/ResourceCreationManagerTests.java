@@ -21,12 +21,14 @@ import static com.locust.operator.controller.utils.TestFixtures.assertImagePullD
 import static com.locust.operator.controller.utils.TestFixtures.assertK8sNodeAffinity;
 import static com.locust.operator.controller.utils.TestFixtures.assertK8sResourceCreation;
 import static com.locust.operator.controller.utils.TestFixtures.assertK8sTolerations;
+import static com.locust.operator.controller.utils.TestFixtures.assertK8sTtlSecondsAfterFinished;
 import static com.locust.operator.controller.utils.TestFixtures.containerEnvironmentMap;
 import static com.locust.operator.controller.utils.TestFixtures.executeWithK8sMockServer;
 import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfig;
 import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfigWithNodeAffinity;
 import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfigWithPullPolicyAndSecrets;
 import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfigWithTolerations;
+import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfigWithTtlSecondsAfterFinished;
 import static org.mockito.Mockito.when;
 
 @Slf4j
@@ -97,6 +99,52 @@ public class ResourceCreationManagerTests {
 
         // * Assert
         assertK8sResourceCreation(nodeName, serviceList);
+
+    }
+
+    @Test
+    @DisplayName("Functional: Create a kubernetes Job with Default TTL Seconds After Finished")
+    void createJobWithDefaultTtlSecondsAfterFinishedTest() {
+
+        // * Setup
+        val namespace = "ttl-ns";
+        val nodeName = "ttl-demo-test";
+        val resourceName = "ttl.demo-test";
+        final Integer defaultTtlSecondsAfterFinished = null;
+        val nodeConfig = prepareNodeConfigWithTtlSecondsAfterFinished(nodeName, MASTER, defaultTtlSecondsAfterFinished);
+
+        // * Act
+        executeWithK8sMockServer(k8sServerUrl, () -> CreationManager.createJob(nodeConfig, namespace, resourceName));
+
+        // Get All Jobs created by the method
+        val jobList = testClient.batch().v1().jobs().inNamespace(namespace).list();
+        log.debug("Acquired Job list: {}", jobList);
+
+        // * Assert
+        assertK8sTtlSecondsAfterFinished(jobList, defaultTtlSecondsAfterFinished);
+
+    }
+
+    @Test
+    @DisplayName("Functional: Create a kubernetes Job with TTL Seconds After Finished")
+    void createJobWithTtlSecondsAfterFinishedTest() {
+
+        // * Setup
+        val namespace = "ttl-ns";
+        val nodeName = "ttl-demo-test";
+        val resourceName = "ttl.demo-test";
+        val ttlSecondsAfterFinished = Integer.valueOf(120);
+        val nodeConfig = prepareNodeConfigWithTtlSecondsAfterFinished(nodeName, MASTER, ttlSecondsAfterFinished);
+
+        // * Act
+        executeWithK8sMockServer(k8sServerUrl, () -> CreationManager.createJob(nodeConfig, namespace, resourceName));
+
+        // Get All Jobs created by the method
+        val jobList = testClient.batch().v1().jobs().inNamespace(namespace).list();
+        log.debug("Acquired Job list: {}", jobList);
+
+        // * Assert
+        assertK8sTtlSecondsAfterFinished(jobList, ttlSecondsAfterFinished);
 
     }
 

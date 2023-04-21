@@ -60,6 +60,7 @@ public class TestFixtures {
     public static final String MOCK_POD_MEM = "1024Mi";
     public static final String MOCK_POD_CPU = "1000m";
     public static final String MOCK_POD_EPHEMERAL_STORAGE = "50M";
+    public static final Integer MOCK_TTL_SECONDS_AFTER_FINISHED = 60;
     public static final Map<String, String> DEFAULT_MASTER_LABELS = Map.of("role", "master");
     public static final Map<String, String> DEFAULT_WORKER_LABELS = Map.of("role", "worker");
     public static final Map<String, String> DEFAULT_MASTER_ANNOTATIONS = Map.of("locust.io/role", "master");
@@ -78,10 +79,13 @@ public class TestFixtures {
 
         List<Integer> expectedPortList = mode.equals(MASTER) ? DEFAULT_MASTER_PORT_LIST : DEFAULT_WORKER_PORT_LIST;
 
+        Integer expectedTtlSecondsAfterFinished = MOCK_TTL_SECONDS_AFTER_FINISHED;
+
         assertSoftly(softly -> {
             softly.assertThat(generatedNodeConfig.getName()).contains(expectedConfigName);
             softly.assertThat(generatedNodeConfig.getLabels()).isEqualTo(expectedLabels);
             softly.assertThat(generatedNodeConfig.getAnnotations()).isEqualTo(expectedAnnotations);
+            softly.assertThat(generatedNodeConfig.getTtlSecondsAfterFinished()).isEqualTo(expectedTtlSecondsAfterFinished);
             softly.assertThat(generatedNodeConfig.getOperationalMode()).isEqualTo(mode);
             softly.assertThat(generatedNodeConfig.getPorts()).isEqualTo(expectedPortList);
             softly.assertThat(generatedNodeConfig.getReplicas()).isEqualTo(expectedReplicas);
@@ -99,6 +103,24 @@ public class TestFixtures {
             .replicas(mode.equals(MASTER) ? MASTER_REPLICA_COUNT : REPLICAS)
             .ports(mode.equals(MASTER) ? DEFAULT_MASTER_PORT_LIST : DEFAULT_WORKER_PORT_LIST)
             .build();
+
+        log.debug("Created node configuration: {}", nodeConfig);
+        return nodeConfig;
+    }
+
+    public static LoadGenerationNode prepareNodeConfigWithTtlSecondsAfterFinished(
+        String nodeName, OperationalMode mode, Integer ttlSecondsAfterFinished) {
+        var nodeConfig = LoadGenerationNode.builder()
+                .name(nodeName)
+                .labels(mode.equals(MASTER) ? DEFAULT_MASTER_LABELS : DEFAULT_WORKER_LABELS)
+                .annotations(mode.equals(MASTER) ? DEFAULT_MASTER_ANNOTATIONS : DEFAULT_WORKER_ANNOTATIONS)
+                .ttlSecondsAfterFinished(ttlSecondsAfterFinished)
+                .command(List.of(DEFAULT_SEED_COMMAND.split(CONTAINER_ARGS_SEPARATOR)))
+                .operationalMode(mode)
+                .image(DEFAULT_TEST_IMAGE)
+                .replicas(mode.equals(MASTER) ? MASTER_REPLICA_COUNT : REPLICAS)
+                .ports(mode.equals(MASTER) ? DEFAULT_MASTER_PORT_LIST : DEFAULT_WORKER_PORT_LIST)
+                .build();
 
         log.debug("Created node configuration: {}", nodeConfig);
         return nodeConfig;
@@ -175,7 +197,15 @@ public class TestFixtures {
                     });
                 });
         });
+    }
 
+    public static void assertK8sTtlSecondsAfterFinished(JobList jobList, Integer ttlSecondsAfterFinished) {
+        jobList.getItems().forEach(job -> {
+            val actualTtlSecondsAfterFinished = job.getSpec().getTtlSecondsAfterFinished();
+            assertSoftly(softly -> {
+                softly.assertThat(actualTtlSecondsAfterFinished).isEqualTo(ttlSecondsAfterFinished);
+            });
+        });
     }
 
     public static void assertK8sNodeAffinity(LoadGenerationNode nodeConfig, JobList jobList, String k8sNodeLabelKey) {
@@ -275,6 +305,10 @@ public class TestFixtures {
             .thenReturn(MOCK_POD_CPU);
         when(mockedConfInstance.getPodEphemeralStorageRequest())
             .thenReturn(MOCK_POD_EPHEMERAL_STORAGE);
+
+        // Job characteristics
+        when(mockedConfInstance.getTtlSecondsAfterFinished())
+            .thenReturn(MOCK_TTL_SECONDS_AFTER_FINISHED);
 
         // Resource limit
         when(mockedConfInstance.getPodMemLimit())

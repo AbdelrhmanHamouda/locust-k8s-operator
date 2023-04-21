@@ -4,17 +4,17 @@ title: Advanced topics
 
 # Advanced topics
 
-Basic configuration is not always enough to satisfy the performance test needs, for example when needing to work with Kafka and MSK. Below is a  collection of topics of an advanced nature. This list will be keep growing as the tool matures more and more. 
+Basic configuration is not always enough to satisfy the performance test needs, for example when needing to work with Kafka and MSK. Below is a collection of topics of an advanced nature. This list will be keep growing as the tool matures more and more.
 
 ## Kafka & AWS MSK configuration
 
 Generally speaking, the usage of Kafka in a _locustfile_ is identical to how it would be used anywhere else within the cloud context. Thus, no special setup is needed for the purposes of performance testing with the _Operator_.  
-That being said, if an organization is using kafka in production, chances are that authenticated kafka is being used. One of the main providers of such managed service is _AWS_ in the form of _MSK_.  For that end, the _Operator_ have an _out-of-the-box_ support for MSK. 
+That being said, if an organization is using kafka in production, chances are that authenticated kafka is being used. One of the main providers of such managed service is _AWS_ in the form of _MSK_. For that end, the _Operator_ have an _out-of-the-box_ support for MSK.
 
 To enable performance testing with _MSK_, a central/global Kafka user can be created by the "cloud admin" or "the team" responsible for the _Operator_ deployment within the organization. The _Operator_ can then be easily configured to inject the configuration of that user as environment variables in all generated resources. Those variables can be used by the test to establish authentication with the kafka broker.
 
 | Variable Name                    | Description                                                                      |
-|:---------------------------------|:---------------------------------------------------------------------------------|
+| :------------------------------- | :------------------------------------------------------------------------------- |
 | `KAFKA_BOOTSTRAP_SERVERS`        | Kafka bootstrap servers                                                          |
 | `KAFKA_SECURITY_ENABLED`         | -                                                                                |
 | `KAFKA_SECURITY_PROTOCOL_CONFIG` | Security protocol. Options: `PLAINTEXT`, `SASL_PLAINTEXT`, `SASL_SSL`, `SSL`     |
@@ -22,7 +22,7 @@ To enable performance testing with _MSK_, a central/global Kafka user can be cre
 | `KAFKA_USERNAME`                 | The username used to authenticate Kafka clients with the Kafka server            |
 | `KAFKA_PASSWORD`                 | The password used to authenticate Kafka clients with the Kafka server            |
 
---------
+---
 
 ## Dedicated Kubernetes Nodes
 
@@ -34,7 +34,7 @@ This allows generated resources to have specific _Affinity_ options.
 
 !!! Note
 
-    The _Custom Resource Definition Spec_ is designed with modularity and expandability in mind. This means that although a specific set of _Kubernetes Affinity_ options are supported today, extending this support based on need is a streamlined and easy processes. If additonal support is needed, don't hesitate to open a [feature request](https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues). 
+    The _Custom Resource Definition Spec_ is designed with modularity and expandability in mind. This means that although a specific set of _Kubernetes Affinity_ options are supported today, extending this support based on need is a streamlined and easy processes. If additonal support is needed, don't hesitate to open a [feature request](https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues).
 
 #### Affinity Options
 
@@ -131,7 +131,6 @@ closely [Kubernetes native definition](https://kubernetes.io/docs/concepts/sched
         ...
     ```
 
-
 ## Usage of a private image registry
 
 Images from a private image registry can be used through various methods as described in the [kubernetes documentation](https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry), one of those methods depends on setting `imagePullSecrets` for pods. This is supported in the operator by simply setting the `imagePullSecrets` option in the deployed custom resource. For example:
@@ -164,3 +163,36 @@ spec:
 
 1. Specify which Locust image to use for both master and worker containers.
 2. [Optional] Specify the pull policy to use for containers defined within master and worker containers. Supported options include `Always`, `IfNotPresent` and `Never`.
+
+## Automatic Cleanup for Finished Master and Worker Jobs
+
+Once load tests finish, master and worker jobs remain available in Kubernetes.
+You can set up a time-to-live (TTL) value in the operator's Helm chart, so that
+kubernetes jobs are eligible for cascading removal once the TTL expires. This means
+that Master and Worker jobs and their dependent objects (e.g., pods) will be deleted.
+
+Note that setting up a TTL will not delete `LocustTest` or `ConfigMap` resources.
+
+To set a TTL value, override the key `ttlSecondsAfterFinished` in `values.yaml`:
+
+=== ":octicons-file-code-16: `values.yaml`"
+
+    ```yaml
+    ...
+    config:
+      loadGenerationJobs:
+        # Either leave empty or use an empty string to avoid setting this option
+        ttlSecondsAfterFinished: 3600
+    ...
+    ```
+
+You can also use Helm's CLI arguments: `helm install ... --set config.loadGenerationJobs.ttlSecondsAfterFinished=0`.
+
+Read more about the `ttlSecondsAfterFinished` parameter in Kubernetes's [official documentation](https://kubernetes.io/docs/concepts/workloads/controllers/ttlafterfinished/).
+
+### Kubernetes Support for `ttlSecondsAfterFinished`
+
+Support for parameter `ttlSecondsAfterFinished` was added in Kubernetes v1.12.
+In case you're deploying the locust operator to a Kubernetes cluster that does not
+support `ttlSecondsAfterFinished`, you may leave the Helm key empty or use an empty
+string. In this case, job definitions will not include the parameter.

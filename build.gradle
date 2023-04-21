@@ -1,13 +1,13 @@
 plugins {
     id 'com.google.cloud.tools.jib' version '3.3.1'
     id("io.micronaut.application") version "3.7.0"
-    id "com.diffplug.spotless" version "6.15.0"
+    id "com.diffplug.spotless" version "6.18.0"
     id "jacoco"
     id "idea"
 }
 
 // Automatically managed by commitizen (.cz.yaml)
-version = "0.5.0"
+version = "0.6.0"
 group = "com.locust"
 
 repositories {

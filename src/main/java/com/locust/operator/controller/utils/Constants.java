@@ -39,6 +39,8 @@ public class Constants {
     // Generic k8s constants
     public static final String APP_DEFAULT_LABEL = "performance-test-name";
     public static final String SERVICE_SELECTOR_LABEL = "performance-test-pod-name";
+    public static final String MANAGED_BY_LABEL_KEY = "managed-by";
+    public static final String MANAGED_BY_LABEL_VALUE = "locust-k8s-operator";
 
     // Environment variables names
     public static final String KAFKA_BOOTSTRAP_SERVERS = "KAFKA_BOOTSTRAP_SERVERS";

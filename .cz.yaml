@@ -1,9 +1,10 @@
+---
 commitizen:
   annotated_tag: true
   bump_message: "bump(release): v$current_version \u2192 v$new_version"
   name: cz_conventional_commits
   tag_format: $major.$minor.$patch$prerelease
   update_changelog_on_bump: true
-  version: 0.5.0
+  version: 0.6.0
   version_files:
   - build.gradle:version

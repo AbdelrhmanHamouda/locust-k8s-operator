@@ -1,6 +1,6 @@
 # Default values for locust-k8s-operator.
 
-# Geneal
+# General
 appPort: 8080
 
 # Deployment
@@ -67,6 +67,10 @@ tolerations: []
 affinity: {}
 
 config:
+  loadGenerationJobs:
+    # Either leave empty or use an empty string to avoid setting this option
+    ttlSecondsAfterFinished: ""
+
   loadGenerationPods:
     resource:
       cpuRequest: 250m
