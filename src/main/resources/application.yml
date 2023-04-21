@@ -41,7 +41,7 @@ config:
   k8s:
     namespace: ${K8S_NAMESPACE:default}
   load-generation-jobs:
-    ttl-seconds-after-finished: ${JOB_TTL_SECONDS_AFTER_FINISHED}
+    ttl-seconds-after-finished: ${JOB_TTL_SECONDS_AFTER_FINISHED:}
   load-generation-pods:
     affinity:
       enableCrInjection: ${ENABLE_AFFINITY_CR_INJECTION:false}
