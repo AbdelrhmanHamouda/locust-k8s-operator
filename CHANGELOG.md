@@ -1,3 +1,10 @@
+## 0.6.0 (2023-04-21)
+
+### Feat
+
+- **#13**: Add `managed-by` label to generated resources (#104)
+- **#52**: add a TTL period to deployed jobs (#97) by @jachinte
+
 ## 0.5.0 (2023-01-27)
 
 ### Feat
