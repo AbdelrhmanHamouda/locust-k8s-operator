@@ -131,6 +131,35 @@ closely [Kubernetes native definition](https://kubernetes.io/docs/concepts/sched
         ...
     ```
 
+## Automatic Cleanup for Finished Master and Worker Jobs
 
+Once load tests finish, master and worker jobs remain available in Kubernetes. 
+You can set up a time-to-live (TTL) value in the operator's Helm chart, so that 
+kubernetes jobs are eligible for cascading removal once the TTL expires. This means 
+that Master and Worker jobs and their dependent objects (e.g., pods) will be deleted.
 
+Note that setting up a TTL will not delete `LocustTest` or `ConfigMap` resources.
 
+To set a TTL value, override the key `ttlSecondsAfterFinished` in `values.yaml`:
+
+=== ":octicons-file-code-16: `values.yaml`"
+
+    ```yaml
+    ...
+    config:
+      loadGenerationJobs:
+        # Either leave empty or use an empty string to avoid setting this option
+        ttlSecondsAfterFinished: 3600
+    ...
+    ```
+
+You can also use Helm's CLI arguments: `helm install ... --set config.loadGenerationJobs.ttlSecondsAfterFinished=0`.
+
+Read more about the `ttlSecondsAfterFinished` parameter in Kubernetes's [official documentation](https://kubernetes.io/docs/concepts/workloads/controllers/ttlafterfinished/).
+
+### Kubernetes Support for `ttlSecondsAfterFinished`
+
+Support for parameter `ttlSecondsAfterFinished` was added in Kubernetes v1.12. 
+In case you're deploying the locust operator to a Kubernetes cluster that does not 
+support `ttlSecondsAfterFinished`, you may leave the Helm key empty or use an empty 
+string. In this case, job definitions will not include the parameter. 

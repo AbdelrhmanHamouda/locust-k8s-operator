@@ -12,7 +12,6 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.validation.constraints.NotNull;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -62,6 +61,7 @@ public class LoadGenHelpers {
             constructNodeAnnotations(resource, mode),
             getNodeAffinity(resource),
             getPodToleration(resource),
+            getTtlSecondsAfterFinished(),
             constructNodeCommand(resource, mode),
             mode,
             getNodeImage(resource),
@@ -69,6 +69,10 @@ public class LoadGenHelpers {
             getNodePorts(resource, mode),
             getConfigMap(resource));
 
+    }
+
+    private Integer getTtlSecondsAfterFinished() {
+        return this.config.getTtlSecondsAfterFinished();
     }
 
     private List<LocustTestToleration> getPodToleration(LocustTest resource) {

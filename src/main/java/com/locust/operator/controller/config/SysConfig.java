@@ -4,6 +4,7 @@ import io.micronaut.context.annotation.Property;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 import lombok.ToString;
+import org.apache.commons.lang3.math.NumberUtils;
 
 @Getter
 @ToString
@@ -27,6 +28,16 @@ public class SysConfig {
     @Property(name = "config.load-generation-pods.kafka.sasl.jaas.config")
     private String kafkaSaslJaasConfig;
 
+    // * Generated job characteristics
+    /**
+     * We use Object here to prevent automatic conversion from null to 0.
+     * <p>
+     * See {@link #getTtlSecondsAfterFinished()} for understanding how the
+     * value is converted to an integer.
+     */
+    @Property(name = "config.load-generation-jobs.ttl-seconds-after-finished")
+    private Object ttlSecondsAfterFinished;
+
     // * Generated pod characteristics
     @Property(name = "config.load-generation-pods.resource.cpu-request")
     private String podCpuRequest;
@@ -46,4 +57,27 @@ public class SysConfig {
     @Property(name = "config.load-generation-pods.taintTolerations.enableCrInjection")
     private boolean tolerationsCrInjectionEnabled;
 
+    /**
+     * Value configured for setting Kubernetes Jobs' ttlSecondsAfterFinished property.
+     * This method will try to convert the value to an integer or fail and report invalid values.
+     * {@code null} or empty strings will result in a {@code null} return.
+     *
+     * @return either {@code null} or an integer value greater than or equal to 0
+     */
+    public Integer getTtlSecondsAfterFinished() {
+        final String stringValue = String.valueOf(this.ttlSecondsAfterFinished);
+
+        if (NumberUtils.isDigits(stringValue)) {
+            return Integer.parseInt(stringValue);
+        } else if (stringValue.isEmpty()) {
+            return null;
+        } else {
+            throw new IllegalArgumentException(
+                String.format(
+                    "Invalid value '%s' for property ttl-seconds-after-finished",
+                    stringValue
+                )
+            );
+        }
+    }
 }

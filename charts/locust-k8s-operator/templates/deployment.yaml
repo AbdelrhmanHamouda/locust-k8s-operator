@@ -62,6 +62,10 @@ spec:
                   key: {{ .Values.config.loadGenerationPods.kafka.acl.secret.passwordKey }}
             {{- end }}
 
+            # Load generation job config
+            - name: JOB_TTL_SECONDS_AFTER_FINISHED
+              value: {{ .Values.config.loadGenerationJobs.ttlSecondsAfterFinished | quote }}
+
             # Load generation resource config
             - name: POD_CPU_REQUEST
               value: {{ .Values.config.loadGenerationPods.resource.cpuRequest | quote }}

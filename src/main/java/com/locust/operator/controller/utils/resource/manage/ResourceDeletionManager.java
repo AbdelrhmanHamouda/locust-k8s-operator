@@ -30,7 +30,6 @@ public class ResourceDeletionManager {
 
             val namespace = crdInstance.getMetadata().getNamespace();
             val resourceName = loadGenHelpers.constructNodeName(crdInstance, mode);
-
             log.info("Deleting Job for: {} in namespace: {}", crdInstance.getMetadata().getName(), namespace);
             return Optional.ofNullable(client.batch().v1().jobs().inNamespace(namespace).withName(resourceName).delete());
 
