@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,8 @@ public class TestFixtures {
     public static final String KIND = "LocustTest";
     public static final String DEFAULT_SEED_COMMAND = "--locustfile src/demo.py";
     public static final String DEFAULT_TEST_IMAGE = "xlocust:latest";
+    public static final String DEFAULT_IMAGE_PULL_POLICY = "IfNotPresent";
+    public static final List<String> DEFAULT_IMAGE_PULL_SECRETS = Collections.emptyList();
     public static final String DEFAULT_TEST_CONFIGMAP = "demo-test-configmap";
     public static final String DEFAULT_NAMESPACE = "default";
     public static final int REPLICAS = 50;
@@ -120,6 +123,8 @@ public class TestFixtures {
         spec.setWorkerCommandSeed(DEFAULT_SEED_COMMAND);
         spec.setConfigMap(DEFAULT_TEST_CONFIGMAP);
         spec.setImage(DEFAULT_TEST_IMAGE);
+        spec.setImagePullPolicy(DEFAULT_IMAGE_PULL_POLICY);
+        spec.setImagePullSecrets(DEFAULT_IMAGE_PULL_SECRETS);
         spec.setWorkerReplicas(replicas);
 
         var labels = new HashMap<String, Map<String, String>>();

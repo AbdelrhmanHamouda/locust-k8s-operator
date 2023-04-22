@@ -4,6 +4,10 @@ metadata:
   name: demo.test
 spec:
   image: locustio/locust:latest
+  # [Optional-Section] Image pull policy and secrets
+  imagePullPolicy: Always
+  imagePullSecrets:
+    - "my-private-registry-secret"
 
   # [Optional-Section] Labels
   labels:
