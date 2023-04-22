@@ -19,7 +19,7 @@
         <link rel="next" href="../metrics_and_dashboards/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.6">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.7">
     
     
       
@@ -120,6 +120,8 @@
       <form class="md-header__option" data-md-component="palette">
         
           
+          
+          
           <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="green" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
           
             <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
@@ -127,6 +129,8 @@
             </label>
           
         
+          
+          
           
           <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
           
@@ -428,6 +432,26 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#usage-of-a-private-image-registry" class="md-nav__link">
+    Usage of a private image registry
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage of a private image registry">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#image-pull-policy" class="md-nav__link">
+    Image pull policy
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#automatic-cleanup-for-finished-master-and-worker-jobs" class="md-nav__link">
     Automatic Cleanup for Finished Master and Worker Jobs
   </a>
@@ -534,10 +558,10 @@
 
 
 <h1 id="advanced-topics">Advanced topics<a class="headerlink" href="#advanced-topics" title="Anchor link to this section for reference">⚓</a></h1>
-<p>Basic configuration is not always enough to satisfy the performance test needs, for example when needing to work with Kafka and MSK. Below is a  collection of topics of an advanced nature. This list will be keep growing as the tool matures more and more. </p>
+<p>Basic configuration is not always enough to satisfy the performance test needs, for example when needing to work with Kafka and MSK. Below is a collection of topics of an advanced nature. This list will be keep growing as the tool matures more and more.</p>
 <h2 id="kafka-aws-msk-configuration">Kafka &amp; AWS MSK configuration<a class="headerlink" href="#kafka-aws-msk-configuration" title="Anchor link to this section for reference">⚓</a></h2>
 <p>Generally speaking, the usage of Kafka in a <em>locustfile</em> is identical to how it would be used anywhere else within the cloud context. Thus, no special setup is needed for the purposes of performance testing with the <em>Operator</em>.<br />
-That being said, if an organization is using kafka in production, chances are that authenticated kafka is being used. One of the main providers of such managed service is <em>AWS</em> in the form of <em>MSK</em>.  For that end, the <em>Operator</em> have an <em>out-of-the-box</em> support for MSK. </p>
+That being said, if an organization is using kafka in production, chances are that authenticated kafka is being used. One of the main providers of such managed service is <em>AWS</em> in the form of <em>MSK</em>. For that end, the <em>Operator</em> have an <em>out-of-the-box</em> support for MSK.</p>
 <p>To enable performance testing with <em>MSK</em>, a central/global Kafka user can be created by the "cloud admin" or "the team" responsible for the <em>Operator</em> deployment within the organization. The <em>Operator</em> can then be easily configured to inject the configuration of that user as environment variables in all generated resources. Those variables can be used by the test to establish authentication with the kafka broker.</p>
 <table>
 <thead>
@@ -580,7 +604,7 @@ That being said, if an organization is using kafka in production, chances are th
 <p>This allows generated resources to have specific <em>Affinity</em> options.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The <em>Custom Resource Definition Spec</em> is designed with modularity and expandability in mind. This means that although a specific set of <em>Kubernetes Affinity</em> options are supported today, extending this support based on need is a streamlined and easy processes. If additonal support is needed, don't hesitate to open a <a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues">feature request</a>. </p>
+<p>The <em>Custom Resource Definition Spec</em> is designed with modularity and expandability in mind. This means that although a specific set of <em>Kubernetes Affinity</em> options are supported today, extending this support based on need is a streamlined and easy processes. If additonal support is needed, don't hesitate to open a <a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues">feature request</a>.</p>
 </div>
 <h4 id="affinity-options">Affinity Options<a class="headerlink" href="#affinity-options" title="Anchor link to this section for reference">⚓</a></h4>
 <p>The specification for affinity is defined as follows</p>
@@ -671,10 +695,37 @@ closely <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/taint-a
 </div>
 </div>
 </div>
+<h2 id="usage-of-a-private-image-registry">Usage of a private image registry<a class="headerlink" href="#usage-of-a-private-image-registry" title="Anchor link to this section for reference">⚓</a></h2>
+<p>Images from a private image registry can be used through various methods as described in the <a href="https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry">kubernetes documentation</a>, one of those methods depends on setting <code>imagePullSecrets</code> for pods. This is supported in the operator by simply setting the <code>imagePullSecrets</code> option in the deployed custom resource. For example:</p>
+<div class="highlight"><span class="filename">locusttest-pull-secret-cr.yaml</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust.io/v1</span>
+<span class="nn">...</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ghcr.io/mycompany/locust:latest</span><span class="w"> </span><span class="c1">#(1)!</span>
+<span class="w">  </span><span class="nt">imagePullSecrets</span><span class="p">:</span><span class="w"> </span><span class="c1">#(2)!</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gcr-secret</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+</code></pre></div>
+<ol>
+<li>Specify which Locust image to use for both master and worker containers.</li>
+<li>[Optional] Specify an existing pull secret to use for master and worker pods.</li>
+</ol>
+<h3 id="image-pull-policy">Image pull policy<a class="headerlink" href="#image-pull-policy" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Kubernetes uses the image tag and pull policy to control when kubelet attempts to download (pull) a container image. The image pull policy can be defined through the <code>imagePullPolicy</code> option, as explained in the <a href="https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy">kubernetes documentation</a>. When using the operator, the <code>imagePullPolicy</code> option can be directly configured in the custom resource. For example:</p>
+<div class="highlight"><span class="filename">locusttest-pull-policy-cr.yaml</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust.io/v1</span>
+<span class="nn">...</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ghcr.io/mycompany/locust:latest</span><span class="w"> </span><span class="c1">#(1)!</span>
+<span class="w">  </span><span class="nt">imagePullPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Always</span><span class="w"> </span><span class="c1">#(2)!</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+</code></pre></div>
+<ol>
+<li>Specify which Locust image to use for both master and worker containers.</li>
+<li>[Optional] Specify the pull policy to use for containers defined within master and worker containers. Supported options include <code>Always</code>, <code>IfNotPresent</code> and <code>Never</code>.</li>
+</ol>
 <h2 id="automatic-cleanup-for-finished-master-and-worker-jobs">Automatic Cleanup for Finished Master and Worker Jobs<a class="headerlink" href="#automatic-cleanup-for-finished-master-and-worker-jobs" title="Anchor link to this section for reference">⚓</a></h2>
-<p>Once load tests finish, master and worker jobs remain available in Kubernetes. 
-You can set up a time-to-live (TTL) value in the operator's Helm chart, so that 
-kubernetes jobs are eligible for cascading removal once the TTL expires. This means 
+<p>Once load tests finish, master and worker jobs remain available in Kubernetes.
+You can set up a time-to-live (TTL) value in the operator's Helm chart, so that
+kubernetes jobs are eligible for cascading removal once the TTL expires. This means
 that Master and Worker jobs and their dependent objects (e.g., pods) will be deleted.</p>
 <p>Note that setting up a TTL will not delete <code>LocustTest</code> or <code>ConfigMap</code> resources.</p>
 <p>To set a TTL value, override the key <code>ttlSecondsAfterFinished</code> in <code>values.yaml</code>:</p>
@@ -694,17 +745,17 @@ that Master and Worker jobs and their dependent objects (e.g., pods) will be del
 <p>You can also use Helm's CLI arguments: <code>helm install ... --set config.loadGenerationJobs.ttlSecondsAfterFinished=0</code>.</p>
 <p>Read more about the <code>ttlSecondsAfterFinished</code> parameter in Kubernetes's <a href="https://kubernetes.io/docs/concepts/workloads/controllers/ttlafterfinished/">official documentation</a>.</p>
 <h3 id="kubernetes-support-for-ttlsecondsafterfinished">Kubernetes Support for <code>ttlSecondsAfterFinished</code><a class="headerlink" href="#kubernetes-support-for-ttlsecondsafterfinished" title="Anchor link to this section for reference">⚓</a></h3>
-<p>Support for parameter <code>ttlSecondsAfterFinished</code> was added in Kubernetes v1.12. 
-In case you're deploying the locust operator to a Kubernetes cluster that does not 
-support <code>ttlSecondsAfterFinished</code>, you may leave the Helm key empty or use an empty 
-string. In this case, job definitions will not include the parameter. </p>
+<p>Support for parameter <code>ttlSecondsAfterFinished</code> was added in Kubernetes v1.12.
+In case you're deploying the locust operator to a Kubernetes cluster that does not
+support <code>ttlSecondsAfterFinished</code>, you may leave the Helm key empty or use an empty
+string. In this case, job definitions will not include the parameter.</p>
 
   <hr>
 <div class="md-source-file">
   <small>
     
       Last update:
-      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">April 21, 2023</span>
+      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">April 22, 2023</span>
       
     
   </small>

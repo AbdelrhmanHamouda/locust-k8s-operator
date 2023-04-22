@@ -19,7 +19,7 @@
         <link rel="next" href="../advanced_topics/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.6">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.7">
     
     
       
@@ -120,6 +120,8 @@
       <form class="md-header__option" data-md-component="palette">
         
           
+          
+          
           <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="green" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
           
             <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
@@ -127,6 +129,8 @@
             </label>
           
         
+          
+          
           
           <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
           
@@ -426,18 +430,15 @@
 </ul>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>If the repo has been added before, run <code>helm repo update</code> in order to pull the latest available release! </p>
+<p>If the repo has been added before, run <code>helm repo update</code> in order to pull the latest available release!</p>
 </div>
 </li>
 <li>
 <p>Install the <em>Operator</em></p>
 <ul>
-<li><code class="highlight">helm<span class="w"> </span>install<span class="w"> </span>locust-operator<span class="w"> </span>locust-k8s-operator/locust-k8s-operator</code><ul>
-<li>The <em>Operator</em> will ready up in around 40-60 seconds</li>
-</ul>
-</li>
-<li>This will cause the bellow resources to be deployed in the currently active <em>k8s</em> context &amp; namespace.<ul>
-<li><a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/charts/locust-k8s-operator/crds/locust-test-crd.yaml">crd-locusttest.yaml</a><ul>
+<li><code class="highlight">helm<span class="w"> </span>install<span class="w"> </span>locust-operator<span class="w"> </span>locust-k8s-operator/locust-k8s-operator</code> - The <em>Operator</em> will ready up in around 40-60 seconds</li>
+<li>This will cause the bellow resources to be deployed in the currently active <em>k8s</em> context &amp; namespace.</li>
+<li><a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/kube/crd/locust-test-crd.yaml">crd-locusttest.yaml</a><ul>
 <li>This <em>CRD</em> is the first part of the <em>Operator</em> pattern. It is needed in order to enable <em>Kubernetes</em> to understand the <em>LocustTest</em>
   custom resource and allow its deployment.</li>
 </ul>
@@ -453,8 +454,6 @@
 </li>
 </ul>
 </li>
-</ul>
-</li>
 </ol>
 
   <hr>
@@ -462,7 +461,7 @@
   <small>
     
       Last update:
-      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">April 21, 2023</span>
+      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">April 22, 2023</span>
       
     
   </small>
