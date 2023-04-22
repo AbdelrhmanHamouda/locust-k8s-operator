@@ -1,3 +1,9 @@
+## 0.7.0 (2023-04-22)
+
+### Feat
+
+- **#89**: add support for pulling the Locust image from private registries (#98) by @jachinte
+
 ## 0.6.0 (2023-04-21)
 
 ### Feat
