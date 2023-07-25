@@ -6,7 +6,9 @@ ext {
 if (DISABLE_SPOTLESS == "false") {
     spotless {
         java {
-            removeUnusedImports()
+            // Disable as it is causing failure with JDK 17 due to access of internal APIs
+            // more info: https://github.com/google/google-java-format/issues/612
+            //removeUnusedImports()
             endWithNewline()
             indentWithSpaces(4)
         }
