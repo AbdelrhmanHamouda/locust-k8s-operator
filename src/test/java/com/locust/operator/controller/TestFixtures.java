@@ -25,9 +25,8 @@ import static com.locust.operator.controller.dto.OperationalMode.MASTER;
 import static com.locust.operator.controller.dto.OperationalMode.WORKER;
 import static com.locust.operator.customresource.LocustTest.GROUP;
 import static com.locust.operator.customresource.LocustTest.VERSION;
-import static lombok.AccessLevel.PRIVATE;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static lombok.AccessLevel.PRIVATE;
 
 @Slf4j
 @NoArgsConstructor(access = PRIVATE)
