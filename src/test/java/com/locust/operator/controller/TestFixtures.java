@@ -64,7 +64,7 @@ public class TestFixtures {
         return k8sClient.apiextensions().v1()
             .customResourceDefinitions()
             .load(inputStream)
-            .get();
+            .item();
     }
 
     /**

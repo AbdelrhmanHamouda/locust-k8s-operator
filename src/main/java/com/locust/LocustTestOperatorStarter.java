@@ -24,7 +24,7 @@ public class LocustTestOperatorStarter implements ApplicationEventListener<Serve
         log.info("Starting Kubernetes reconciler!");
 
         KubernetesClient client = new KubernetesClientBuilder().build();
-        Operator operator = new Operator(client);
+        Operator operator = new Operator(overrider -> overrider.withKubernetesClient(client));
         operator.register(reconciler);
         operator.start();
     }

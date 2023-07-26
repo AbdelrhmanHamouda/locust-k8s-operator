@@ -9,10 +9,10 @@ ext {
     mockitoVersion = '4.8.0'
     assertjVersion = '3.23.1'
     systemLambdaVersion = '1.2.1'
-    k8sClient = '6.1.1' // Matching version from JOSDK
+    k8sClient = '6.7.1' // Matching version from JOSDK
 
     // Operator SDK
-    javaOperatorVersion = '4.0.2'
+    javaOperatorVersion = '4.4.1'
 }
 
 dependencies {
