@@ -4,7 +4,7 @@ jacocoTestReport {
     executionData file(allTestCoverageFile)
 
     reports {
-        xml.required
-        html.required
+        xml.required = true
+        html.required = true
     }
 }
