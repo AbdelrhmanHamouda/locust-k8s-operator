@@ -22,10 +22,10 @@ jobs:
           distribution: temurin
 
       - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v1.0.6
+        uses: gradle/wrapper-validation-action@v1.1.0
 
       - name: Build
-        uses: gradle/gradle-build-action@v2.5.1
+        uses: gradle/gradle-build-action@v2.6.1
         with:
           arguments: build jacocoTestReport -i
 
