@@ -27,6 +27,8 @@ public class ResourceCreationManager {
 
             Job job = creationHelper.prepareJob(nodeConfig, testName);
 
+            // TODO; Replace `createOrReplace()` with `serverSideApply()` when the below issue is solved:
+            // https://github.com/fabric8io/kubernetes-client/issues/5337
             job = client.batch().v1().jobs().inNamespace(namespace).resource(job).createOrReplace();
             log.info("Created job with name: {}", job.getMetadata().getName());
             log.debug("Created job details: {}", job);

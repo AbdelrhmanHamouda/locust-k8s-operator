@@ -11,7 +11,6 @@ import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -56,20 +55,20 @@ public class LoadGenHelpers {
     public LoadGenerationNode generateLoadGenNodeObject(LocustTest resource, OperationalMode mode) {
 
         return new LoadGenerationNode(
-            constructNodeName(resource, mode),
-            constructNodeLabels(resource, mode),
-            constructNodeAnnotations(resource, mode),
-            getNodeAffinity(resource),
-            getPodToleration(resource),
-            getTtlSecondsAfterFinished(),
-            constructNodeCommand(resource, mode),
-            mode,
-            getNodeImage(resource),
-            getNodeImagePullPolicy(resource),
-            getNodeImagePullSecrets(resource),
-            getReplicaCount(resource, mode),
-            getNodePorts(resource, mode),
-            getConfigMap(resource));
+                constructNodeName(resource, mode),
+                constructNodeLabels(resource, mode),
+                constructNodeAnnotations(resource, mode),
+                getNodeAffinity(resource),
+                getPodToleration(resource),
+                getTtlSecondsAfterFinished(),
+                constructNodeCommand(resource, mode),
+                mode,
+                getNodeImage(resource),
+                getNodeImagePullPolicy(resource),
+                getNodeImagePullSecrets(resource),
+                getReplicaCount(resource, mode),
+                getNodePorts(resource, mode),
+                getConfigMap(resource));
 
     }
 
@@ -112,8 +111,8 @@ public class LoadGenHelpers {
     public String constructNodeName(LocustTest customResource, OperationalMode mode) {
 
         return String
-            .format(NODE_NAME_TEMPLATE, customResource.getMetadata().getName(), mode.getMode())
-            .replace(".", "-");
+                .format(NODE_NAME_TEMPLATE, customResource.getMetadata().getName(), mode.getMode())
+                .replace(".", "-");
 
     }
 
@@ -126,7 +125,7 @@ public class LoadGenHelpers {
      */
     public Map<String, String> constructNodeLabels(final LocustTest customResource, final OperationalMode mode) {
         final Map<String, Map<String, String>> labels = Optional.ofNullable(customResource.getSpec().getLabels())
-            .orElse(new HashMap<>());
+                .orElse(new HashMap<>());
         final Map<String, String> result;
         if (mode.equals(MASTER)) {
             result = labels.getOrDefault(MASTER.getMode(), new HashMap<>());
@@ -147,7 +146,7 @@ public class LoadGenHelpers {
      */
     public Map<String, String> constructNodeAnnotations(final LocustTest customResource, final OperationalMode mode) {
         final Map<String, Map<String, String>> annotations = Optional.ofNullable(customResource.getSpec().getAnnotations())
-            .orElse(new HashMap<>());
+                .orElse(new HashMap<>());
         final Map<String, String> result;
         if (mode.equals(MASTER)) {
             result = annotations.getOrDefault(MASTER.getMode(), new HashMap<>());
@@ -172,15 +171,15 @@ public class LoadGenHelpers {
 
         if (mode.equals(MASTER)) {
             cmd = String.format(MASTER_CMD_TEMPLATE,
-                customResource.getSpec().getMasterCommandSeed(),
-                MASTER_NODE_PORTS.get(0),
-                customResource.getSpec().getWorkerReplicas());
+                    customResource.getSpec().getMasterCommandSeed(),
+                    MASTER_NODE_PORTS.get(0),
+                    customResource.getSpec().getWorkerReplicas());
         } else {
             // worker
             cmd = String.format(WORKER_CMD_TEMPLATE,
-                customResource.getSpec().getWorkerCommandSeed(),
-                MASTER_NODE_PORTS.get(0),
-                constructNodeName(customResource, MASTER)
+                    customResource.getSpec().getWorkerCommandSeed(),
+                    MASTER_NODE_PORTS.get(0),
+                    constructNodeName(customResource, MASTER)
             );
         }
 
@@ -289,7 +288,6 @@ public class LoadGenHelpers {
         return generateResourceOverrideMap(memOverride, cpuOverride, ephemeralOverride);
     }
 
-    @NotNull
     private Map<String, Quantity> generateResourceOverrideMap(String memOverride, String cpuOverride, String ephemeralOverride) {
         Map<String, Quantity> resourceOverrideMap = new HashMap<>();
 
