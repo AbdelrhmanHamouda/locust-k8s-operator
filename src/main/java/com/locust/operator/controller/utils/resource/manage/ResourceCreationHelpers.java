@@ -391,6 +391,9 @@ public class ResourceCreationHelpers {
             // Name
             .withName(EXPORTER_CONTAINER_NAME)
 
+            // Resource config
+            .withResources(loadGenHelpers.getResourceRequirements())
+
             // Image
             .withImage(EXPORTER_IMAGE)
             .withImagePullPolicy(pullPolicy)
