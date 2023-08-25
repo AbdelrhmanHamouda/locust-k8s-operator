@@ -52,6 +52,26 @@ public class SysConfig {
     @Property(name = "config.load-generation-pods.resource.ephemeralStorage-limit")
     private String podEphemeralStorageLimit;
 
+    // * Metrics exporter container characteristics
+    @Property(name = "config.load-generation-pods.metricsExporter.image")
+    private String metricsExporterImage;
+    @Property(name = "config.load-generation-pods.metricsExporter.port")
+    private Integer metricsExporterPort;
+    @Property(name = "config.load-generation-pods.metricsExporter.pullPolicy")
+    private String metricsExporterPullPolicy;
+    @Property(name = "config.load-generation-pods.metricsExporter.resource.cpu-request")
+    private String metricsExporterCpuRequest;
+    @Property(name = "config.load-generation-pods.metricsExporter.resource.mem-request")
+    private String metricsExporterMemRequest;
+    @Property(name = "config.load-generation-pods.metricsExporter.resource.ephemeralStorage-request")
+    private String metricsExporterEphemeralStorageRequest;
+    @Property(name = "config.load-generation-pods.metricsExporter.resource.cpu-limit")
+    private String metricsExporterCpuLimit;
+    @Property(name = "config.load-generation-pods.metricsExporter.resource.mem-limit")
+    private String metricsExporterMemLimit;
+    @Property(name = "config.load-generation-pods.metricsExporter.resource.ephemeralStorage-limit")
+    private String metricsExporterEphemeralStorageLimit;
+
     @Property(name = "config.load-generation-pods.affinity.enableCrInjection")
     private boolean affinityCrInjectionEnabled;
     @Property(name = "config.load-generation-pods.taintTolerations.enableCrInjection")

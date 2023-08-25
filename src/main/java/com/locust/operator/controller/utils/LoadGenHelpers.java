@@ -2,6 +2,7 @@ package com.locust.operator.controller.utils;
 
 import com.locust.operator.controller.config.SysConfig;
 import com.locust.operator.controller.dto.LoadGenerationNode;
+import com.locust.operator.controller.dto.MetricsExporterContainer;
 import com.locust.operator.controller.dto.OperationalMode;
 import com.locust.operator.customresource.LocustTest;
 import com.locust.operator.customresource.internaldto.LocustTestAffinity;
@@ -20,6 +21,8 @@ import java.util.Optional;
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
 import static com.locust.operator.controller.dto.OperationalMode.WORKER;
 import static com.locust.operator.controller.utils.Constants.CONTAINER_ARGS_SEPARATOR;
+import static com.locust.operator.controller.utils.Constants.DEFAULT_RESOURCE_TARGET;
+import static com.locust.operator.controller.utils.Constants.EXPORTER_CONTAINER_NAME;
 import static com.locust.operator.controller.utils.Constants.KAFKA_BOOTSTRAP_SERVERS;
 import static com.locust.operator.controller.utils.Constants.KAFKA_PASSWORD;
 import static com.locust.operator.controller.utils.Constants.KAFKA_SASL_JAAS_CONFIG;
@@ -30,6 +33,7 @@ import static com.locust.operator.controller.utils.Constants.KAFKA_USERNAME;
 import static com.locust.operator.controller.utils.Constants.MASTER_CMD_TEMPLATE;
 import static com.locust.operator.controller.utils.Constants.MASTER_NODE_PORTS;
 import static com.locust.operator.controller.utils.Constants.MASTER_NODE_REPLICA_COUNT;
+import static com.locust.operator.controller.utils.Constants.METRICS_EXPORTER_RESOURCE_TARGET;
 import static com.locust.operator.controller.utils.Constants.NODE_NAME_TEMPLATE;
 import static com.locust.operator.controller.utils.Constants.WORKER_CMD_TEMPLATE;
 import static com.locust.operator.controller.utils.Constants.WORKER_NODE_PORT;
@@ -55,20 +59,20 @@ public class LoadGenHelpers {
     public LoadGenerationNode generateLoadGenNodeObject(LocustTest resource, OperationalMode mode) {
 
         return new LoadGenerationNode(
-                constructNodeName(resource, mode),
-                constructNodeLabels(resource, mode),
-                constructNodeAnnotations(resource, mode),
-                getNodeAffinity(resource),
-                getPodToleration(resource),
-                getTtlSecondsAfterFinished(),
-                constructNodeCommand(resource, mode),
-                mode,
-                getNodeImage(resource),
-                getNodeImagePullPolicy(resource),
-                getNodeImagePullSecrets(resource),
-                getReplicaCount(resource, mode),
-                getNodePorts(resource, mode),
-                getConfigMap(resource));
+            constructNodeName(resource, mode),
+            constructNodeLabels(resource, mode),
+            constructNodeAnnotations(resource, mode),
+            getNodeAffinity(resource),
+            getPodToleration(resource),
+            getTtlSecondsAfterFinished(),
+            constructNodeCommand(resource, mode),
+            mode,
+            getNodeImage(resource),
+            getNodeImagePullPolicy(resource),
+            getNodeImagePullSecrets(resource),
+            getReplicaCount(resource, mode),
+            getNodePorts(resource, mode),
+            getConfigMap(resource));
 
     }
 
@@ -111,8 +115,8 @@ public class LoadGenHelpers {
     public String constructNodeName(LocustTest customResource, OperationalMode mode) {
 
         return String
-                .format(NODE_NAME_TEMPLATE, customResource.getMetadata().getName(), mode.getMode())
-                .replace(".", "-");
+            .format(NODE_NAME_TEMPLATE, customResource.getMetadata().getName(), mode.getMode())
+            .replace(".", "-");
 
     }
 
@@ -125,7 +129,7 @@ public class LoadGenHelpers {
      */
     public Map<String, String> constructNodeLabels(final LocustTest customResource, final OperationalMode mode) {
         final Map<String, Map<String, String>> labels = Optional.ofNullable(customResource.getSpec().getLabels())
-                .orElse(new HashMap<>());
+            .orElse(new HashMap<>());
         final Map<String, String> result;
         if (mode.equals(MASTER)) {
             result = labels.getOrDefault(MASTER.getMode(), new HashMap<>());
@@ -146,7 +150,7 @@ public class LoadGenHelpers {
      */
     public Map<String, String> constructNodeAnnotations(final LocustTest customResource, final OperationalMode mode) {
         final Map<String, Map<String, String>> annotations = Optional.ofNullable(customResource.getSpec().getAnnotations())
-                .orElse(new HashMap<>());
+            .orElse(new HashMap<>());
         final Map<String, String> result;
         if (mode.equals(MASTER)) {
             result = annotations.getOrDefault(MASTER.getMode(), new HashMap<>());
@@ -171,15 +175,15 @@ public class LoadGenHelpers {
 
         if (mode.equals(MASTER)) {
             cmd = String.format(MASTER_CMD_TEMPLATE,
-                    customResource.getSpec().getMasterCommandSeed(),
-                    MASTER_NODE_PORTS.get(0),
-                    customResource.getSpec().getWorkerReplicas());
+                customResource.getSpec().getMasterCommandSeed(),
+                MASTER_NODE_PORTS.get(0),
+                customResource.getSpec().getWorkerReplicas());
         } else {
             // worker
             cmd = String.format(WORKER_CMD_TEMPLATE,
-                    customResource.getSpec().getWorkerCommandSeed(),
-                    MASTER_NODE_PORTS.get(0),
-                    constructNodeName(customResource, MASTER)
+                customResource.getSpec().getWorkerCommandSeed(),
+                MASTER_NODE_PORTS.get(0),
+                constructNodeName(customResource, MASTER)
             );
         }
 
@@ -240,28 +244,64 @@ public class LoadGenHelpers {
     }
 
     /**
-     * Get resource request and limit for pods
+     * Constructs a MetricsExporterContainer using the configuration settings and resource requirements.
+     *
+     * @return A MetricsExporterContainer instance configured with the specified settings and resource requirements.
+     */
+    public MetricsExporterContainer constructMetricsExporterContainer() {
+        return new MetricsExporterContainer(
+            EXPORTER_CONTAINER_NAME,
+            config.getMetricsExporterImage(),
+            config.getMetricsExporterPullPolicy(),
+            config.getMetricsExporterPort(),
+            this.getResourceRequirements(METRICS_EXPORTER_RESOURCE_TARGET)
+
+        );
+    }
+
+    /**
+     * Get resource request and limit for containers
      *
      * @return resource requirements
      */
-    public ResourceRequirements getResourceRequirements() {
+    public ResourceRequirements getResourceRequirements(String target) {
+
+        Map<String, Quantity> resourceRequests;
+        Map<String, Quantity> resourceLimits;
+
+        // Default target
+        if (target.equals(DEFAULT_RESOURCE_TARGET)) {
+
+            resourceRequests = this.getResourceRequests();
+            resourceLimits = this.getResourceLimits();
+
+        // If not default target, then the assumed target is a "Metrics Exporter" container!
+        // + No need for "else if" in order to avoid unneeded checks and increased complexity
+        // + in a future implementation if another "target" is introduced,
+        // + the method should be updated and this comment removed.
+        } else {
+
+            resourceRequests = this.getMetricsExporterResourceRequests();
+            resourceLimits = this.getMetricsExporterResourceLimits();
+
+        }
 
         final var resourceRequest = new ResourceRequirements();
 
         // Add memory and cpu resource requests
-        resourceRequest.setRequests(this.getResourceRequests());
+        resourceRequest.setRequests(resourceRequests);
 
         // Add memory and cpu resource limits
-        resourceRequest.setLimits(this.getResourceLimits());
+        resourceRequest.setLimits(resourceLimits);
 
         return resourceRequest;
 
     }
 
-    /*
-     * Resource requests are guaranteed by the Kubernetesruntime.
+    /**
+     * Get requested resources based on configuration (defaults or HELM).
      *
-     * @return the resource requests to use
+     * @return the resources request to use
      */
     private Map<String, Quantity> getResourceRequests() {
         String memOverride = config.getPodMemRequest();
@@ -273,10 +313,10 @@ public class LoadGenHelpers {
         return generateResourceOverrideMap(memOverride, cpuOverride, ephemeralOverride);
     }
 
-    /*
-     * Resource limits for pods.
+    /**
+     * Get resource limits based on configuration (defaults or HELM).
      *
-     * @return the resource requests to use
+     * @return the resource limits to use
      */
     private Map<String, Quantity> getResourceLimits() {
         String memOverride = config.getPodMemLimit();
@@ -288,6 +328,46 @@ public class LoadGenHelpers {
         return generateResourceOverrideMap(memOverride, cpuOverride, ephemeralOverride);
     }
 
+    /**
+     * Get resources request for Metrics Exporter container.
+     *
+     * @return the resource requests to use
+     */
+    private Map<String, Quantity> getMetricsExporterResourceRequests() {
+        String memOverride = config.getMetricsExporterMemRequest();
+        String cpuOverride = config.getMetricsExporterCpuRequest();
+        String ephemeralOverride = config.getMetricsExporterEphemeralStorageRequest();
+
+        log.debug("Using resource requests for metrics exporter - cpu: {}, mem: {}, ephemeral: {}", cpuOverride, memOverride,
+            ephemeralOverride);
+
+        return generateResourceOverrideMap(memOverride, cpuOverride, ephemeralOverride);
+    }
+
+    /**
+     * Get resource limits for Metrics Exporter container.
+     *
+     * @return the resource requests to use
+     */
+    private Map<String, Quantity> getMetricsExporterResourceLimits() {
+        String memOverride = config.getMetricsExporterMemLimit();
+        String cpuOverride = config.getMetricsExporterCpuLimit();
+        String ephemeralOverride = config.getMetricsExporterEphemeralStorageLimit();
+
+        log.debug("Using resource limits - cpu: {}, mem: {}, ephemeral: {}", cpuOverride, memOverride, ephemeralOverride);
+
+        return generateResourceOverrideMap(memOverride, cpuOverride, ephemeralOverride);
+    }
+
+    /**
+     * Generates a resource override map based on the provided memory, CPU, and ephemeral storage overrides.
+     *
+     * @param memOverride The memory override value to be used for the "memory" resource.
+     * @param cpuOverride The CPU override value to be used for the "cpu" resource.
+     * @param ephemeralOverride The ephemeral storage override value to be used for the "ephemeral-storage" resource.
+     *                         This value will be applied only if the Kubernetes version supports "ephemeral-storage" requests.
+     * @return A Map containing resource overrides for memory, CPU, and ephemeral storage.
+     */
     private Map<String, Quantity> generateResourceOverrideMap(String memOverride, String cpuOverride, String ephemeralOverride) {
         Map<String, Quantity> resourceOverrideMap = new HashMap<>();
 

@@ -24,6 +24,7 @@ import static com.locust.operator.controller.utils.TestFixtures.assertK8sTolerat
 import static com.locust.operator.controller.utils.TestFixtures.assertK8sTtlSecondsAfterFinished;
 import static com.locust.operator.controller.utils.TestFixtures.containerEnvironmentMap;
 import static com.locust.operator.controller.utils.TestFixtures.executeWithK8sMockServer;
+import static com.locust.operator.controller.utils.TestFixtures.mockMetricsExporterContainer;
 import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfig;
 import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfigWithNodeAffinity;
 import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfigWithPullPolicyAndSecrets;
@@ -51,6 +52,8 @@ public class ResourceCreationManagerTests {
         CreationManager = new ResourceCreationManager(creationHelper);
         when(loadGenHelpers.generateContainerEnvironmentMap())
             .thenReturn(containerEnvironmentMap());
+        when(loadGenHelpers.constructMetricsExporterContainer())
+            .thenReturn(mockMetricsExporterContainer());
 
     }
 
