@@ -1,5 +1,7 @@
 # Locust Kubernetes Operator
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f8f4bfb06ff44ac4917c34e1bb6e7cba)](https://app.codacy.com/gh/AbdelrhmanHamouda/locust-k8s-operator?utm_source=github.com&utm_medium=referral&utm_content=AbdelrhmanHamouda/locust-k8s-operator&utm_campaign=Badge_Grade)
+
 Enable performance testing for the modern era!
 
 Utilize the full power of _[Locust](https://github.com/locustio/locust)_ in the cloud.
