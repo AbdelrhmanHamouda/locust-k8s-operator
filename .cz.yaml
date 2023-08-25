@@ -8,3 +8,5 @@ commitizen:
   version: 0.7.0
   version_files:
   - build.gradle:version
+  - charts/locust-k8s-operator/Chart.yaml:appVersion
+  - charts/locust-k8s-operator/Chart.yaml:version
