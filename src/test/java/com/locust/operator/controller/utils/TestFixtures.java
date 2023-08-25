@@ -2,6 +2,7 @@ package com.locust.operator.controller.utils;
 
 import com.locust.operator.controller.config.SysConfig;
 import com.locust.operator.controller.dto.LoadGenerationNode;
+import com.locust.operator.controller.dto.MetricsExporterContainer;
 import com.locust.operator.controller.dto.OperationalMode;
 import com.locust.operator.customresource.LocustTest;
 import com.locust.operator.customresource.internaldto.LocustTestAffinity;
@@ -10,6 +11,8 @@ import com.locust.operator.customresource.internaldto.LocustTestToleration;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.PodList;
+import io.fabric8.kubernetes.api.model.Quantity;
+import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.batch.v1.JobList;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -26,6 +29,7 @@ import static com.locust.operator.controller.TestFixtures.REPLICAS;
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
 import static com.locust.operator.controller.dto.OperatorType.EQUAL;
 import static com.locust.operator.controller.utils.Constants.CONTAINER_ARGS_SEPARATOR;
+import static com.locust.operator.controller.utils.Constants.EXPORTER_CONTAINER_NAME;
 import static com.locust.operator.controller.utils.Constants.KAFKA_BOOTSTRAP_SERVERS;
 import static com.locust.operator.controller.utils.Constants.KAFKA_PASSWORD;
 import static com.locust.operator.controller.utils.Constants.KAFKA_SASL_JAAS_CONFIG;
@@ -79,13 +83,11 @@ public class TestFixtures {
 
         List<Integer> expectedPortList = mode.equals(MASTER) ? DEFAULT_MASTER_PORT_LIST : DEFAULT_WORKER_PORT_LIST;
 
-        Integer expectedTtlSecondsAfterFinished = MOCK_TTL_SECONDS_AFTER_FINISHED;
-
         assertSoftly(softly -> {
             softly.assertThat(generatedNodeConfig.getName()).contains(expectedConfigName);
             softly.assertThat(generatedNodeConfig.getLabels()).isEqualTo(expectedLabels);
             softly.assertThat(generatedNodeConfig.getAnnotations()).isEqualTo(expectedAnnotations);
-            softly.assertThat(generatedNodeConfig.getTtlSecondsAfterFinished()).isEqualTo(expectedTtlSecondsAfterFinished);
+            softly.assertThat(generatedNodeConfig.getTtlSecondsAfterFinished()).isEqualTo(MOCK_TTL_SECONDS_AFTER_FINISHED);
             softly.assertThat(generatedNodeConfig.getOperationalMode()).isEqualTo(mode);
             softly.assertThat(generatedNodeConfig.getPorts()).isEqualTo(expectedPortList);
             softly.assertThat(generatedNodeConfig.getReplicas()).isEqualTo(expectedReplicas);
@@ -185,26 +187,18 @@ public class TestFixtures {
                 .map(LocalObjectReference::getName)
                 .toList();
 
-            assertSoftly(softly -> {
-                softly.assertThat(references).isEqualTo(nodeConfig.getImagePullSecrets());
-            });
+            assertSoftly(softly -> softly.assertThat(references).isEqualTo(nodeConfig.getImagePullSecrets()));
 
             pod.getSpec()
                 .getContainers()
-                .forEach(container -> {
-                    assertSoftly(softly -> {
-                        softly.assertThat(container.getImagePullPolicy()).isEqualTo(nodeConfig.getImagePullPolicy());
-                    });
-                });
+                .forEach(container -> assertSoftly(softly -> softly.assertThat(container.getImagePullPolicy()).isEqualTo(nodeConfig.getImagePullPolicy())));
         });
     }
 
     public static void assertK8sTtlSecondsAfterFinished(JobList jobList, Integer ttlSecondsAfterFinished) {
         jobList.getItems().forEach(job -> {
             val actualTtlSecondsAfterFinished = job.getSpec().getTtlSecondsAfterFinished();
-            assertSoftly(softly -> {
-                softly.assertThat(actualTtlSecondsAfterFinished).isEqualTo(ttlSecondsAfterFinished);
-            });
+            assertSoftly(softly -> softly.assertThat(actualTtlSecondsAfterFinished).isEqualTo(ttlSecondsAfterFinished));
         });
     }
 
@@ -279,10 +273,34 @@ public class TestFixtures {
         return environmentMap;
 
     }
+    public static MetricsExporterContainer mockMetricsExporterContainer(){
+
+        // Set Resource overrides
+        Map<String, Quantity> resourceOverrideMap = new HashMap<>();
+
+        resourceOverrideMap.put("memory", new Quantity(MOCK_POD_MEM));
+        resourceOverrideMap.put("cpu", new Quantity(MOCK_POD_CPU));
+        resourceOverrideMap.put("ephemeral-storage", new Quantity(MOCK_POD_EPHEMERAL_STORAGE));
+
+        // Construct resource request
+        final var mockResourceRequest = new ResourceRequirements();
+
+        mockResourceRequest.setRequests(resourceOverrideMap);
+        mockResourceRequest.setLimits(resourceOverrideMap);
+
+        return new MetricsExporterContainer(
+            EXPORTER_CONTAINER_NAME,
+            "containersol/locust_exporter:v0.5.0",
+            "Always",
+            9646,
+            mockResourceRequest
+
+        );
+    }
 
     public static void setupSysconfigMock(SysConfig mockedConfInstance) {
 
-        // Kafla
+        // Kafka
         when(mockedConfInstance.getKafkaBootstrapServers())
             .thenReturn(MOCK_KAFKA_BOOTSTRAP_VALUE);
         when(mockedConfInstance.isKafkaSecurityEnabled())
@@ -298,7 +316,7 @@ public class TestFixtures {
         when(mockedConfInstance.getKafkaSaslJaasConfig())
             .thenReturn(MOCK_SASL_JAAS_CONFIG_VALUE);
 
-        // Resource request
+        // Resource request :: Load generation node
         when(mockedConfInstance.getPodMemRequest())
             .thenReturn(MOCK_POD_MEM);
         when(mockedConfInstance.getPodCpuRequest())
@@ -306,16 +324,32 @@ public class TestFixtures {
         when(mockedConfInstance.getPodEphemeralStorageRequest())
             .thenReturn(MOCK_POD_EPHEMERAL_STORAGE);
 
+        // Resource request :: Metrics exporter
+        when(mockedConfInstance.getMetricsExporterMemRequest())
+            .thenReturn(MOCK_POD_MEM);
+        when(mockedConfInstance.getMetricsExporterCpuRequest())
+            .thenReturn(MOCK_POD_CPU);
+        when(mockedConfInstance.getMetricsExporterEphemeralStorageRequest())
+            .thenReturn(MOCK_POD_EPHEMERAL_STORAGE);
+
         // Job characteristics
         when(mockedConfInstance.getTtlSecondsAfterFinished())
             .thenReturn(MOCK_TTL_SECONDS_AFTER_FINISHED);
 
-        // Resource limit
+        // Resource limit :: Load generation node
         when(mockedConfInstance.getPodMemLimit())
             .thenReturn(MOCK_POD_MEM);
         when(mockedConfInstance.getPodCpuLimit())
             .thenReturn(MOCK_POD_CPU);
         when(mockedConfInstance.getPodEphemeralStorageLimit())
+            .thenReturn(MOCK_POD_EPHEMERAL_STORAGE);
+
+        // Resource limit :: Metrics exporter
+        when(mockedConfInstance.getMetricsExporterMemLimit())
+            .thenReturn(MOCK_POD_MEM);
+        when(mockedConfInstance.getMetricsExporterCpuLimit())
+            .thenReturn(MOCK_POD_CPU);
+        when(mockedConfInstance.getMetricsExporterEphemeralStorageLimit())
             .thenReturn(MOCK_POD_EPHEMERAL_STORAGE);
 
         // Affinity

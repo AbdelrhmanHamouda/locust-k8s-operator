@@ -83,6 +83,27 @@ spec:
               value: {{ .Values.config.loadGenerationPods.affinity.enableCrInjection | quote }}
             - name: ENABLE_TAINT_TOLERATIONS_CR_INJECTION
               value: {{ .Values.config.loadGenerationPods.taintTolerations.enableCrInjection | quote }}
+
+            # Metrics Exporter config
+            - name: METRICS_EXPORTER_IMAGE
+              value: {{ .Values.config.loadGenerationPods.metricsExporter.image | quote }}
+            - name: METRICS_EXPORTER_PORT
+              value: {{ .Values.config.loadGenerationPods.metricsExporter.port | quote }}
+            - name: METRICS_EXPORTER_IMAGE_PULL_POLICY
+              value: "{{ .Values.config.loadGenerationPods.metricsExporter.pullPolicy | default .Values.image.pullPolicy }}"
+            - name: METRICS_EXPORTER_CPU_REQUEST
+              value: {{ .Values.config.loadGenerationPods.metricsExporter.resource.cpuRequest | quote }}
+            - name: METRICS_EXPORTER_MEM_REQUEST
+              value: {{ .Values.config.loadGenerationPods.metricsExporter.resource.memRequest | quote }}
+            - name: METRICS_EXPORTER_EPHEMERAL_REQUEST
+              value: {{ .Values.config.loadGenerationPods.metricsExporter.resource.ephemeralRequest | quote }}
+            - name: METRICS_EXPORTER_CPU_LIMIT
+              value: {{ .Values.config.loadGenerationPods.metricsExporter.resource.cpuLimit | quote }}
+            - name: METRICS_EXPORTER_MEM_LIMIT
+              value: {{ .Values.config.loadGenerationPods.metricsExporter.resource.memLimit | quote }}
+            - name: METRICS_EXPORTER_EPHEMERAL_LIMIT
+              value: {{ .Values.config.loadGenerationPods.metricsExporter.resource.ephemeralLimit | quote }}
+
             # Metric config
             - name: METRICS_ENABLE
               value: {{ .Values.micronaut.metrics.enabled | quote }}

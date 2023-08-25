@@ -1,6 +1,7 @@
 package com.locust.operator.controller.utils.resource.manage;
 
 import com.locust.operator.controller.dto.LoadGenerationNode;
+import com.locust.operator.controller.dto.MetricsExporterContainer;
 import com.locust.operator.controller.utils.LoadGenHelpers;
 import io.fabric8.kubernetes.api.model.Affinity;
 import io.fabric8.kubernetes.api.model.AffinityBuilder;
@@ -57,15 +58,12 @@ import static com.locust.operator.controller.utils.Constants.APP_DEFAULT_LABEL;
 import static com.locust.operator.controller.utils.Constants.BACKOFF_LIMIT;
 import static com.locust.operator.controller.utils.Constants.DEFAULT_MOUNT_PATH;
 import static com.locust.operator.controller.utils.Constants.DEFAULT_NODE_MATCH_EXPRESSION_OPERATOR;
+import static com.locust.operator.controller.utils.Constants.DEFAULT_RESOURCE_TARGET;
 import static com.locust.operator.controller.utils.Constants.DEFAULT_RESTART_POLICY;
 import static com.locust.operator.controller.utils.Constants.DEFAULT_WEB_UI_PORT;
-import static com.locust.operator.controller.utils.Constants.EXPORTER_CONTAINER_NAME;
-import static com.locust.operator.controller.utils.Constants.EXPORTER_IMAGE;
 import static com.locust.operator.controller.utils.Constants.EXPORTER_PORT_ENV_VAR;
-import static com.locust.operator.controller.utils.Constants.EXPORTER_PORT_ENV_VAR_VALUE;
 import static com.locust.operator.controller.utils.Constants.EXPORTER_URI_ENV_VAR;
 import static com.locust.operator.controller.utils.Constants.EXPORTER_URI_ENV_VAR_VALUE;
-import static com.locust.operator.controller.utils.Constants.LOCUST_EXPORTER_PORT;
 import static com.locust.operator.controller.utils.Constants.MANAGED_BY_LABEL_KEY;
 import static com.locust.operator.controller.utils.Constants.MANAGED_BY_LABEL_VALUE;
 import static com.locust.operator.controller.utils.Constants.METRICS_PORT_NAME;
@@ -199,7 +197,7 @@ public class ResourceCreationHelpers {
             // Enable Prometheus endpoint discovery by Prometheus server
             .addToAnnotations(PROMETHEUS_IO_SCRAPE, "true")
             .addToAnnotations(PROMETHEUS_IO_PATH, PROMETHEUS_IO_ENDPOINT)
-            .addToAnnotations(PROMETHEUS_IO_PORT, String.valueOf(LOCUST_EXPORTER_PORT))
+            .addToAnnotations(PROMETHEUS_IO_PORT, String.valueOf(loadGenHelpers.constructMetricsExporterContainer().getExporterPort()))
             .addToAnnotations(nodeConfig.getAnnotations())
 
             .build();
@@ -364,7 +362,7 @@ public class ResourceCreationHelpers {
 
         // Inject metrics container only if `master`
         if (nodeConfig.getOperationalMode().equals(MASTER)) {
-            constantsList.add(prepareMetricsExporterContainer(nodeConfig.getImagePullPolicy()));
+            constantsList.add(prepareMetricsExporterContainer(loadGenHelpers.constructMetricsExporterContainer()));
         }
 
         return constantsList;
@@ -374,29 +372,32 @@ public class ResourceCreationHelpers {
     /**
      * Prepare locust prometheus metrics exporter container.
      * <p>
-     * Reference: <a href="https://github.com/ContainerSolutions/locust_exporter">locust exporter docs</a>
+     * Reference for default exporter: <a href="https://github.com/ContainerSolutions/locust_exporter">locust exporter docs</a>
      *
-     * @param pullPolicy The image pull policy
+     * @param exporterContainer The metrics exporter container
      * @return Container
      */
-    private Container prepareMetricsExporterContainer(final String pullPolicy) {
+    private Container prepareMetricsExporterContainer(final MetricsExporterContainer exporterContainer) {
 
         HashMap<String, String> envMap = new HashMap<>();
 
         envMap.put(EXPORTER_URI_ENV_VAR, EXPORTER_URI_ENV_VAR_VALUE);
-        envMap.put(EXPORTER_PORT_ENV_VAR, EXPORTER_PORT_ENV_VAR_VALUE);
+        envMap.put(EXPORTER_PORT_ENV_VAR, String.format(":%s", exporterContainer.getExporterPort()));
 
         Container container = new ContainerBuilder()
 
             // Name
-            .withName(EXPORTER_CONTAINER_NAME)
+            .withName(exporterContainer.getContainerName())
 
             // Image
-            .withImage(EXPORTER_IMAGE)
-            .withImagePullPolicy(pullPolicy)
+            .withImage(exporterContainer.getContainerImage())
+            .withImagePullPolicy(exporterContainer.getPullPolicy())
+
+            // Resources
+            .withResources(exporterContainer.getResourceRequirements())
 
             // Ports
-            .withPorts(new ContainerPortBuilder().withContainerPort(LOCUST_EXPORTER_PORT).build())
+            .withPorts(new ContainerPortBuilder().withContainerPort(exporterContainer.getExporterPort()).build())
 
             // Environment
             .withEnv(prepareContainerEnvironmentVariables(envMap))
@@ -423,7 +424,7 @@ public class ResourceCreationHelpers {
             .withName(nodeConfig.getName())
 
             // Resource config
-            .withResources(loadGenHelpers.getResourceRequirements())
+            .withResources(loadGenHelpers.getResourceRequirements(DEFAULT_RESOURCE_TARGET))
 
             // Image
             .withImage(nodeConfig.getImage())
@@ -546,7 +547,7 @@ public class ResourceCreationHelpers {
             .addNewPort()
             .withName(METRICS_PORT_NAME)
             .withProtocol(TCP_PROTOCOL)
-            .withPort(LOCUST_EXPORTER_PORT)
+            .withPort(loadGenHelpers.constructMetricsExporterContainer().getExporterPort())
             .endPort();
 
         // Finalize building the service object

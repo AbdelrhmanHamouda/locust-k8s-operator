@@ -5,10 +5,11 @@ description: Planned features for Locust Kubernetes Operator.
 
 # Roadmap
 
-Not in a particular order (list wis updated when features are implemented / planned):
+Not in a particular order (list is updated when features are implemented / planned):
 
-- Add traceability labels to generated resources
+- ✅ Add traceability labels to generated resources
 - ✅ Support for deploying test resources with node affinity / node taints
+- ✅ Support to configure a custom "Metrics Exporter" container
 - Dashboard examples (Grafana + prometheus configuration)
 - Enable event driven actions
     - Integration with MSTeams: Push notification on test run completion / termination events
