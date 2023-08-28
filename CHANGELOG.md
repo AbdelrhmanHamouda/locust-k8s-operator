@@ -1,3 +1,13 @@
+## 0.8.0 (2023-08-25)
+
+### Feat
+
+- **#132**: Fully configure the Metrics Exporter based on HELM (or default) configuration (#134)
+
+### Fix
+
+- **#126**: Migrate to JOSDK v4.4.1 (#127)
+
 ## 0.7.0 (2023-04-22)
 
 ### Feat

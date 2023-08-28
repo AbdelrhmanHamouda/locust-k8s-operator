@@ -73,9 +73,6 @@ public class Constants {
 
     // Metrics container
     public static final String EXPORTER_CONTAINER_NAME = "locust-metrics-exporter";
-    public static final String EXPORTER_IMAGE_VERSION = "v0.5.0";
-    public static final String EXPORTER_IMAGE = "containersol/locust_exporter:" + EXPORTER_IMAGE_VERSION;
-    public static final int LOCUST_EXPORTER_PORT = 9646;
 
     public static final String EXPORTER_URI_ENV_VAR = "LOCUST_EXPORTER_URI";
     // localhost is used because the exporter container is in the same pod as the master container.
@@ -83,6 +80,8 @@ public class Constants {
     public static final String EXPORTER_URI_ENV_VAR_VALUE = String.format("http://localhost:%s", DEFAULT_WEB_UI_PORT);
 
     public static final String EXPORTER_PORT_ENV_VAR = "LOCUST_EXPORTER_WEB_LISTEN_ADDRESS";
-    public static final String EXPORTER_PORT_ENV_VAR_VALUE = String.format(":%s", LOCUST_EXPORTER_PORT);
+
+    public static final String DEFAULT_RESOURCE_TARGET = "defaultTarget";
+    public static final String METRICS_EXPORTER_RESOURCE_TARGET = "metricsExporter";
 
 }

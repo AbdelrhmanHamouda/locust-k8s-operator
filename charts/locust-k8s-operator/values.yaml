@@ -83,6 +83,18 @@ config:
       enableCrInjection: true
     taintTolerations:
       enableCrInjection: true
+    metricsExporter:
+      # Default Metrics Exporter config used by the operator
+      image: "containersol/locust_exporter:v0.5.0"
+      port: 9646
+      pullPolicy: IfNotPresent
+      resource:
+        cpuRequest: 250m
+        memRequest: 128Mi
+        ephemeralRequest: 30M
+        cpuLimit: 250m
+        memLimit: 128Mi
+        ephemeralLimit: 50M
     kafka:
       bootstrapServers: localhost:9092
       locustK8sKafkaUser:

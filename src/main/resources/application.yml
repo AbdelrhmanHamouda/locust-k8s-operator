@@ -54,6 +54,17 @@ config:
       cpu-limit: ${POD_CPU_LIMIT:`1000m`}
       mem-limit: ${POD_MEM_LIMIT:`1024Mi`}
       ephemeralStorage-limit: ${POD_EPHEMERAL_LIMIT:`50M`}
+    metricsExporter:
+      image: ${METRICS_EXPORTER_IMAGE:`containersol/locust_exporter:v0.5.0`}
+      port: ${METRICS_EXPORTER_PORT:`9646`}
+      pullPolicy: ${METRICS_EXPORTER_IMAGE_PULL_POLICY:`Always`}
+      resource:
+        cpu-request: ${METRICS_EXPORTER_CPU_REQUEST:`250m`}
+        mem-request: ${METRICS_EXPORTER_MEM_REQUEST:`128Mi`}
+        ephemeralStorage-request: ${METRICS_EXPORTER_EPHEMERAL_REQUEST:`30M`}
+        cpu-limit: ${METRICS_EXPORTER_CPU_LIMIT:`1000m`}
+        mem-limit: ${METRICS_EXPORTER_MEM_LIMIT:`1024Mi`}
+        ephemeralStorage-limit: ${METRICS_EXPORTER_EPHEMERAL_LIMIT:`50M`}
 
     kafka:
       bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:`localhost:9092`}
@@ -66,3 +77,5 @@ config:
         mechanism: ${KAFKA_SASL_MECHANISM:`SCRAM-SHA-512`}
         jaas:
           config: ${KAFKA_SASL_JAAS_CONFIG:`placeholder`}
+
+

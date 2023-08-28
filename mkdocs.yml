@@ -11,7 +11,7 @@ repo_url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
 
 # Copyright
 copyright: >
-  Copyright &copy; 2022 Abdelrhman Hamouda –
+  Copyright &copy; 2023 Abdelrhman Hamouda –
   <a href="#__consent">Change cookie settings</a>
 
 # Plugins
@@ -36,6 +36,7 @@ theme:
     # Navigation
     - navigation.tracking
     - navigation.top
+    - navigation.footer
 
     # Table of content
     - toc.follow
@@ -43,6 +44,7 @@ theme:
 
      # Code
     - content.code.annotate
+    - content.code.copy
 
   palette:
 
