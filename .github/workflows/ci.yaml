@@ -41,7 +41,7 @@ jobs:
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
-      - uses: actions/upload-artifact@v3.1.2
+      - uses: actions/upload-artifact@v3.1.3
         with:
           name: Build Artifacts
           path: |
