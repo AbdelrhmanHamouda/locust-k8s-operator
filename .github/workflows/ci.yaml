@@ -2,6 +2,9 @@ name: CI Pipeline
 
 on:
   push:
+    branches:
+      - master
+      - main
   pull_request_target:
     types: [ opened, synchronize, reopened, ready_for_review ]
 
@@ -25,7 +28,7 @@ jobs:
         uses: gradle/wrapper-validation-action@v1.1.0
 
       - name: Build
-        uses: gradle/gradle-build-action@v2.9.0
+        uses: gradle/gradle-build-action@v2.11.1
         with:
           arguments: build jacocoTestReport -i
 
@@ -54,16 +57,16 @@ jobs:
       - build
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 0
 
       - name: Set up Helm
-        uses: azure/setup-helm@v3
+        uses: azure/setup-helm@v3.5
         with:
           version: v3.10.0
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.9'
           check-latest: true
