@@ -50,8 +50,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("com.github.stefanbirkner:system-lambda:$systemLambdaVersion")
     testImplementation("io.fabric8:kubernetes-server-mock:$k8sClient")
-    //testImplementation("io.javaoperatorsdk:jenvtest:$jenvtest")
-    //testImplementation("io.javaoperatorsdk:jenvtest-fabric8-client-support:$jenvtest")
+    testImplementation("io.javaoperatorsdk:jenvtest:$jenvtest")
+    testImplementation("io.javaoperatorsdk:jenvtest-fabric8-client-support:$jenvtest")
 
     testCompileOnly("org.projectlombok:lombok")
 }
