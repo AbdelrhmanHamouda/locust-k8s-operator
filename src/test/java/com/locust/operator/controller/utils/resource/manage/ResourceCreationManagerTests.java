@@ -3,11 +3,11 @@ package com.locust.operator.controller.utils.resource.manage;
 import com.locust.operator.controller.utils.LoadGenHelpers;
 import com.locust.operator.customresource.internaldto.LocustTestToleration;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.server.mock.EnableKubernetesMockClient;
+import io.javaoperatorsdk.jenvtest.junit.EnableKubeAPIServer;
+import io.javaoperatorsdk.jenvtest.junit.KubeConfig;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -16,14 +16,16 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.List;
 
+import static com.locust.operator.controller.TestFixtures.creatKubernetesClient;
 import static com.locust.operator.controller.dto.OperationalMode.MASTER;
 import static com.locust.operator.controller.utils.TestFixtures.assertImagePullData;
 import static com.locust.operator.controller.utils.TestFixtures.assertK8sNodeAffinity;
 import static com.locust.operator.controller.utils.TestFixtures.assertK8sResourceCreation;
+import static com.locust.operator.controller.utils.TestFixtures.assertK8sServiceCreation;
 import static com.locust.operator.controller.utils.TestFixtures.assertK8sTolerations;
 import static com.locust.operator.controller.utils.TestFixtures.assertK8sTtlSecondsAfterFinished;
 import static com.locust.operator.controller.utils.TestFixtures.containerEnvironmentMap;
-import static com.locust.operator.controller.utils.TestFixtures.executeWithK8sMockServer;
+import static com.locust.operator.controller.utils.TestFixtures.createNamespace;
 import static com.locust.operator.controller.utils.TestFixtures.mockMetricsExporterContainer;
 import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfig;
 import static com.locust.operator.controller.utils.TestFixtures.prepareNodeConfigWithNodeAffinity;
@@ -34,14 +36,16 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@EnableKubernetesMockClient(https = false, crud = true)
+@EnableKubeAPIServer(updateKubeConfigFile = true)
 public class ResourceCreationManagerTests {
 
     @Mock
     private LoadGenHelpers loadGenHelpers;
     private ResourceCreationManager CreationManager;
 
-    String k8sServerUrl;
+    @KubeConfig
+    static String configYaml;
+
     KubernetesClient testClient;
 
     @BeforeAll
@@ -55,11 +59,7 @@ public class ResourceCreationManagerTests {
         when(loadGenHelpers.constructMetricsExporterContainer())
             .thenReturn(mockMetricsExporterContainer());
 
-    }
-
-    @BeforeEach
-    void setup() {
-        k8sServerUrl = testClient.getMasterUrl().toString();
+        testClient = creatKubernetesClient(configYaml);
     }
 
     @Test
@@ -73,7 +73,7 @@ public class ResourceCreationManagerTests {
         val nodeConfig = prepareNodeConfig(nodeName, MASTER);
 
         // * Act
-        executeWithK8sMockServer(k8sServerUrl, () -> CreationManager.createJob(nodeConfig, namespace, resourceName));
+        CreationManager.createJob(nodeConfig, namespace, resourceName);
 
         // Get All Jobs created by the method
         val jobList = testClient.batch().v1().jobs().inNamespace(namespace).list();
@@ -94,14 +94,14 @@ public class ResourceCreationManagerTests {
         val nodeConfig = prepareNodeConfig(nodeName, MASTER);
 
         // * Act
-        executeWithK8sMockServer(k8sServerUrl, () -> CreationManager.createMasterService(nodeConfig, namespace));
+        CreationManager.createMasterService(nodeConfig, namespace);
 
         // Get All Services created by the method
         val serviceList = testClient.services().inNamespace(namespace).list();
         log.debug("Acquired Service list: {}", serviceList);
 
         // * Assert
-        assertK8sResourceCreation(nodeName, serviceList);
+        assertK8sServiceCreation(nodeName, serviceList);
 
     }
 
@@ -117,7 +117,7 @@ public class ResourceCreationManagerTests {
         val nodeConfig = prepareNodeConfigWithTtlSecondsAfterFinished(nodeName, MASTER, defaultTtlSecondsAfterFinished);
 
         // * Act
-        executeWithK8sMockServer(k8sServerUrl, () -> CreationManager.createJob(nodeConfig, namespace, resourceName));
+        CreationManager.createJob(nodeConfig, namespace, resourceName);
 
         // Get All Jobs created by the method
         val jobList = testClient.batch().v1().jobs().inNamespace(namespace).list();
@@ -140,7 +140,7 @@ public class ResourceCreationManagerTests {
         val nodeConfig = prepareNodeConfigWithTtlSecondsAfterFinished(nodeName, MASTER, ttlSecondsAfterFinished);
 
         // * Act
-        executeWithK8sMockServer(k8sServerUrl, () -> CreationManager.createJob(nodeConfig, namespace, resourceName));
+        CreationManager.createJob(nodeConfig, namespace, resourceName);
 
         // Get All Jobs created by the method
         val jobList = testClient.batch().v1().jobs().inNamespace(namespace).list();
@@ -163,8 +163,11 @@ public class ResourceCreationManagerTests {
         val k8sNodeLabelValue = "performance-nodes";
         val nodeConfig = prepareNodeConfigWithNodeAffinity(nodeName, MASTER, k8sNodeLabelKey, k8sNodeLabelValue);
 
+        // Create test namespace
+        createNamespace(testClient, namespace);
+
         // * Act
-        executeWithK8sMockServer(k8sServerUrl, () -> CreationManager.createJob(nodeConfig, namespace, resourceName));
+        CreationManager.createJob(nodeConfig, namespace, resourceName);
 
         // Get All Jobs created by the method
         val jobList = testClient.batch().v1().jobs().inNamespace(namespace).list();
@@ -180,7 +183,7 @@ public class ResourceCreationManagerTests {
     @DisplayName("Functional: Create a kubernetes Job with Tolerations and Toleration Operator set to Equal")
     void createJobWithTolerationsAndOperatorEqualTest() {
         // * Setup
-        val namespace = "node-affinity";
+        val namespace = "taint-toleration-equal";
         val nodeName = "locust-demo-test";
         val resourceName = "locust.demo-test";
 
@@ -190,11 +193,14 @@ public class ResourceCreationManagerTests {
         val tolerationEqualOperator = "Equal";
         val tolerationValue = "dedicatedToPerformance";
 
+        // Create test namespace
+        createNamespace(testClient, namespace);
+
         val toleration = new LocustTestToleration(tolerationKey, tolerationEqualOperator, tolerationValue, tolerationEffect);
         val nodeConfig = prepareNodeConfigWithTolerations(nodeName, MASTER, toleration);
 
         // * Act
-        executeWithK8sMockServer(k8sServerUrl, () -> CreationManager.createJob(nodeConfig, namespace, resourceName));
+        CreationManager.createJob(nodeConfig, namespace, resourceName);
 
         // Get All Jobs created by the method
         val jobList = testClient.batch().v1().jobs().inNamespace(namespace).list();
@@ -210,7 +216,7 @@ public class ResourceCreationManagerTests {
     @DisplayName("Functional: Create a kubernetes Job with Tolerations and Toleration Operator set to Exists")
     void createJobWithTolerationsAndOperatorExistsTest() {
         // * Setup
-        val namespace = "node-affinity";
+        val namespace = "taint-toleration-exists";
         val nodeName = "locust-demo-test";
         val resourceName = "locust.demo-test";
 
@@ -222,8 +228,11 @@ public class ResourceCreationManagerTests {
         val toleration = new LocustTestToleration(tolerationKey, tolerationEqualOperator, null, tolerationEffect);
         val nodeConfig = prepareNodeConfigWithTolerations(nodeName, MASTER, toleration);
 
+        // Create test namespace
+        createNamespace(testClient, namespace);
+
         // * Act
-        executeWithK8sMockServer(k8sServerUrl, () -> CreationManager.createJob(nodeConfig, namespace, resourceName));
+        CreationManager.createJob(nodeConfig, namespace, resourceName);
 
         // Get All Jobs created by the method
         val jobList = testClient.batch().v1().jobs().inNamespace(namespace).list();
@@ -248,7 +257,7 @@ public class ResourceCreationManagerTests {
         );
 
         // * Act
-        executeWithK8sMockServer(k8sServerUrl, () -> CreationManager.createJob(nodeConfig, namespace, resourceName));
+        CreationManager.createJob(nodeConfig, namespace, resourceName);
 
         // Get All Pods created by the method
         val podList = testClient.pods().inNamespace(namespace).list();

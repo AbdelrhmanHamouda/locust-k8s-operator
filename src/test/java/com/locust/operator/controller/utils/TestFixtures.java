@@ -10,10 +10,13 @@ import com.locust.operator.customresource.internaldto.LocustTestNodeAffinity;
 import com.locust.operator.customresource.internaldto.LocustTestToleration;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.LocalObjectReference;
+import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
+import io.fabric8.kubernetes.api.model.ServiceList;
 import io.fabric8.kubernetes.api.model.batch.v1.JobList;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +26,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.github.stefanbirkner.systemlambda.SystemLambda.withEnvironmentVariable;
 import static com.locust.operator.controller.TestFixtures.REPLICAS;
@@ -50,7 +54,9 @@ public class TestFixtures {
     public static final Integer MASTER_REPLICA_COUNT = 1;
     public static final String DEFAULT_SEED_COMMAND = "--locustfile src/GQ/src/demo.py";
     public static final String DEFAULT_TEST_IMAGE = "xlocust:latest";
-    public static final int EXPECTED_RESOURCE_COUNT = 1;
+    public static final String DEFAULT_METRICS_IMAGE = "containersol/locust_exporter:v0.5.0";
+    public static final int EXPECTED_GENERIC_RESOURCE_COUNT = 1;
+    public static final int EXPECTED_SERVICE_RESOURCE_COUNT = 2;
     public static final String K8S_SERVER_URL_ENV_VAR = "KUBERNETES_MASTER";
     public static final String MOCK_KAFKA_BOOTSTRAP_VALUE = "localhost:9092";
     public static final boolean MOCK_SECURITY_VALUE = true;
@@ -64,6 +70,7 @@ public class TestFixtures {
     public static final String MOCK_POD_MEM = "1024Mi";
     public static final String MOCK_POD_CPU = "1000m";
     public static final String MOCK_POD_EPHEMERAL_STORAGE = "50M";
+    public static final Integer MOCK_POD_PORT = 9646;
     public static final Integer MOCK_TTL_SECONDS_AFTER_FINISHED = 60;
     public static final Map<String, String> DEFAULT_MASTER_LABELS = Map.of("role", "master");
     public static final Map<String, String> DEFAULT_WORKER_LABELS = Map.of("role", "worker");
@@ -113,16 +120,16 @@ public class TestFixtures {
     public static LoadGenerationNode prepareNodeConfigWithTtlSecondsAfterFinished(
         String nodeName, OperationalMode mode, Integer ttlSecondsAfterFinished) {
         var nodeConfig = LoadGenerationNode.builder()
-                .name(nodeName)
-                .labels(mode.equals(MASTER) ? DEFAULT_MASTER_LABELS : DEFAULT_WORKER_LABELS)
-                .annotations(mode.equals(MASTER) ? DEFAULT_MASTER_ANNOTATIONS : DEFAULT_WORKER_ANNOTATIONS)
-                .ttlSecondsAfterFinished(ttlSecondsAfterFinished)
-                .command(List.of(DEFAULT_SEED_COMMAND.split(CONTAINER_ARGS_SEPARATOR)))
-                .operationalMode(mode)
-                .image(DEFAULT_TEST_IMAGE)
-                .replicas(mode.equals(MASTER) ? MASTER_REPLICA_COUNT : REPLICAS)
-                .ports(mode.equals(MASTER) ? DEFAULT_MASTER_PORT_LIST : DEFAULT_WORKER_PORT_LIST)
-                .build();
+            .name(nodeName)
+            .labels(mode.equals(MASTER) ? DEFAULT_MASTER_LABELS : DEFAULT_WORKER_LABELS)
+            .annotations(mode.equals(MASTER) ? DEFAULT_MASTER_ANNOTATIONS : DEFAULT_WORKER_ANNOTATIONS)
+            .ttlSecondsAfterFinished(ttlSecondsAfterFinished)
+            .command(List.of(DEFAULT_SEED_COMMAND.split(CONTAINER_ARGS_SEPARATOR)))
+            .operationalMode(mode)
+            .image(DEFAULT_TEST_IMAGE)
+            .replicas(mode.equals(MASTER) ? MASTER_REPLICA_COUNT : REPLICAS)
+            .ports(mode.equals(MASTER) ? DEFAULT_MASTER_PORT_LIST : DEFAULT_WORKER_PORT_LIST)
+            .build();
 
         log.debug("Created node configuration: {}", nodeConfig);
         return nodeConfig;
@@ -169,13 +176,40 @@ public class TestFixtures {
 
     }
 
+    public static void assertK8sServiceCreation(String nodeName, ServiceList serviceList) {
+        assertK8sResourceCreation(nodeName, serviceList, EXPECTED_SERVICE_RESOURCE_COUNT);
+    }
+
     public static <T extends KubernetesResourceList<?>> void assertK8sResourceCreation(String nodeName, T resourceList) {
+        assertK8sResourceCreation(nodeName, resourceList, EXPECTED_GENERIC_RESOURCE_COUNT);
+    }
+
+    private static <T extends KubernetesResourceList<?>> void assertK8sResourceCreation(String nodeName, T resourceList,
+        int expectedResourceCount) {
+        val resourceNamesList = extractNames(resourceList);
+        log.debug("Acquired resource list: {}", resourceNamesList);
 
         assertSoftly(softly -> {
-            softly.assertThat(resourceList.getItems().size()).isEqualTo(EXPECTED_RESOURCE_COUNT);
-            softly.assertThat(resourceList.getItems().get(0).getMetadata().getName()).isEqualTo(nodeName);
+            softly.assertThat(resourceList.getItems().size()).isEqualTo(expectedResourceCount);
+            softly.assertThat(resourceNamesList).contains(nodeName);
         });
+    }
 
+    private static <T extends KubernetesResourceList<?>> List<String> extractNames(T resourceList) {
+        return resourceList.getItems().stream()
+            .map(item -> item.getMetadata().getName())
+            .collect(Collectors.toList());
+    }
+
+    public static void createNamespace(KubernetesClient testClient, String namespace) {
+
+        testClient.namespaces()
+            .resource(new NamespaceBuilder()
+                .withNewMetadata()
+                .withName(namespace)
+                .endMetadata()
+                .build())
+            .serverSideApply();
     }
 
     public static void assertImagePullData(LoadGenerationNode nodeConfig, PodList podList) {
@@ -191,7 +225,8 @@ public class TestFixtures {
 
             pod.getSpec()
                 .getContainers()
-                .forEach(container -> assertSoftly(softly -> softly.assertThat(container.getImagePullPolicy()).isEqualTo(nodeConfig.getImagePullPolicy())));
+                .forEach(container -> assertSoftly(
+                    softly -> softly.assertThat(container.getImagePullPolicy()).isEqualTo(nodeConfig.getImagePullPolicy())));
         });
     }
 
@@ -273,7 +308,8 @@ public class TestFixtures {
         return environmentMap;
 
     }
-    public static MetricsExporterContainer mockMetricsExporterContainer(){
+
+    public static MetricsExporterContainer mockMetricsExporterContainer() {
 
         // Set Resource overrides
         Map<String, Quantity> resourceOverrideMap = new HashMap<>();
@@ -331,6 +367,14 @@ public class TestFixtures {
             .thenReturn(MOCK_POD_CPU);
         when(mockedConfInstance.getMetricsExporterEphemeralStorageRequest())
             .thenReturn(MOCK_POD_EPHEMERAL_STORAGE);
+
+        // Port binding :: Metrics exporter
+        when(mockedConfInstance.getMetricsExporterPort())
+            .thenReturn(MOCK_POD_PORT);
+
+        // Image :: Metrics exporter
+        when(mockedConfInstance.getMetricsExporterImage())
+            .thenReturn(DEFAULT_METRICS_IMAGE);
 
         // Job characteristics
         when(mockedConfInstance.getTtlSecondsAfterFinished())

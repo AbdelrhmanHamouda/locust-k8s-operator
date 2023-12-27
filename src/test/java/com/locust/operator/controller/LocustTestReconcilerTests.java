@@ -6,7 +6,8 @@ import com.locust.operator.controller.utils.resource.manage.ResourceCreationHelp
 import com.locust.operator.controller.utils.resource.manage.ResourceCreationManager;
 import com.locust.operator.controller.utils.resource.manage.ResourceDeletionManager;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.server.mock.EnableKubernetesMockClient;
+import io.javaoperatorsdk.jenvtest.junit.EnableKubeAPIServer;
+import io.javaoperatorsdk.jenvtest.junit.KubeConfig;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.junit.jupiter.api.AfterEach;
@@ -21,11 +22,10 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.locust.operator.controller.TestFixtures.DEFAULT_NAMESPACE;
-import static com.locust.operator.controller.TestFixtures.createCrd;
+import static com.locust.operator.controller.TestFixtures.creatKubernetesClient;
 import static com.locust.operator.controller.TestFixtures.deleteLocustTestCrd;
-import static com.locust.operator.controller.TestFixtures.prepareCustomResourceDefinition;
 import static com.locust.operator.controller.TestFixtures.prepareLocustTest;
-import static com.locust.operator.controller.utils.TestFixtures.executeWithK8sMockServer;
+import static com.locust.operator.controller.TestFixtures.setupCustomResourceDefinition;
 import static com.locust.operator.controller.utils.TestFixtures.setupSysconfigMock;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
@@ -33,35 +33,41 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 @Slf4j
 @RunWith(MockitoJUnitRunner.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@EnableKubernetesMockClient(https = false, crud = true)
+@EnableKubeAPIServer(updateKubeConfigFile = true)
 class LocustTestReconcilerTests {
 
     @Mock
     private SysConfig sysConfig;
-    private LocustTestReconciler locustTestReconciler;
 
-    String k8sServerUrl;
-    KubernetesClient k8sTestClient;
+    @KubeConfig
+    static String configYaml;
+
+    private LocustTestReconciler locustTestReconciler;
+    private KubernetesClient k8sTestClient;
 
     @BeforeAll
     void setupMethodMock() {
 
+        // Mock configuration
         MockitoAnnotations.openMocks(this);
         var loadGenHelpers = new LoadGenHelpers(sysConfig);
         var creationHelper = new ResourceCreationHelpers(loadGenHelpers);
         var creationManager = new ResourceCreationManager(creationHelper);
         var deletionManager = new ResourceDeletionManager(loadGenHelpers);
         locustTestReconciler = new LocustTestReconciler(loadGenHelpers, creationManager, deletionManager);
+
+        // Setup SysConfig mock
         setupSysconfigMock(sysConfig);
+
+        // Setup and deploy the CRD
+        k8sTestClient = creatKubernetesClient(configYaml);
 
     }
 
     @BeforeEach
-    void setUp() {
-        k8sServerUrl = k8sTestClient.getMasterUrl().toString();
-        val expectedCrd = prepareCustomResourceDefinition(k8sTestClient);
-        val crd = createCrd(expectedCrd, k8sTestClient);
-        log.debug("Created CRD details: {}", crd);
+    void setup() {
+        // Setup and deploy the CRD
+        setupCustomResourceDefinition(k8sTestClient);
     }
 
     @AfterEach
@@ -75,7 +81,7 @@ class LocustTestReconcilerTests {
     void reconcileOnAddEvent() {
         // * Setup
         val expectedJobCount = 2;
-        val expectedServiceCount = 1;
+        val expectedServiceCount = 2;
         val resourceName = "team.perftest";
         val expectedMasterResourceName = "team-perftest-master"; // Based on the conversion logic
         val expectedWorkerResourceName = "team-perftest-worker"; // Based on the conversion logic
@@ -83,7 +89,7 @@ class LocustTestReconcilerTests {
 
         // * Act
         // Passing "null" to context is safe as it is not used in the "reconcile()" method
-        executeWithK8sMockServer(k8sServerUrl, () -> locustTestReconciler.reconcile(locustTest, null));
+        locustTestReconciler.reconcile(locustTest, null);
 
         // Get All Jobs created
         val jobList = k8sTestClient.batch().v1().jobs().inNamespace(DEFAULT_NAMESPACE).list();
@@ -102,7 +108,8 @@ class LocustTestReconcilerTests {
 
             // Assert master service have been created
             softly.assertThat(serviceList.getItems().size()).isEqualTo(expectedServiceCount);
-            softly.assertThat(serviceList.getItems().get(0).getMetadata().getName()).isEqualTo(expectedMasterResourceName);
+            // checking for the second item as the first service is the default kubernetes service
+            softly.assertThat(serviceList.getItems().get(1).getMetadata().getName()).isEqualTo(expectedMasterResourceName);
         });
 
     }
@@ -118,7 +125,7 @@ class LocustTestReconcilerTests {
 
         // Deploy CR
         // Passing "null" to context is safe as it is not used in the "reconcile()" method
-        executeWithK8sMockServer(k8sServerUrl, () -> locustTestReconciler.reconcile(locustTest, null));
+        locustTestReconciler.reconcile(locustTest, null);
 
         // * Act
         // Increase worker count
@@ -128,7 +135,7 @@ class LocustTestReconcilerTests {
 
         // Update deployed CR
         // Passing "null" to context is safe as it is not used in the "reconcile()" method
-        executeWithK8sMockServer(k8sServerUrl, () -> locustTestReconciler.reconcile(updatedLocustTest, null));
+        locustTestReconciler.reconcile(updatedLocustTest, null);
 
         // Get All Jobs created
         val jobList = k8sTestClient.batch().v1().jobs().inNamespace(DEFAULT_NAMESPACE).list();
@@ -144,18 +151,20 @@ class LocustTestReconcilerTests {
     @DisplayName("Functional: Reconcile - cleanup onDelete event")
     void cleanupOnDeleteEvent() {
         // * Setup
-        val expectedResourceCount = 0;
+        val expectedJobCount = 0;
+        val expectedServiceCount = 1; // 1 Because of the default kubernetes service remaining post deletion
         val resourceName = "team.perftest";
+        val expectedDefaultServiceName = "kubernetes";
         val locustTest = prepareLocustTest(resourceName);
 
         // Deploy CR
         // Passing "null" to context is safe as it is not used in the "reconcile()" method
-        executeWithK8sMockServer(k8sServerUrl, () -> locustTestReconciler.reconcile(locustTest, null));
+        locustTestReconciler.reconcile(locustTest, null);
 
         // * Act
         // Delete CR
         // Passing "null" to context is safe as it is not used in the "cleanup()" method
-        executeWithK8sMockServer(k8sServerUrl, () -> locustTestReconciler.cleanup(locustTest, null));
+        locustTestReconciler.cleanup(locustTest, null);
 
         // Get All Jobs created
         val jobList = k8sTestClient.batch().v1().jobs().inNamespace(DEFAULT_NAMESPACE).list();
@@ -168,10 +177,11 @@ class LocustTestReconcilerTests {
         // * Assert
         assertSoftly(softly -> {
             // Assert master/worker jobs have been deleted
-            softly.assertThat(jobList.getItems().size()).isEqualTo(expectedResourceCount);
+            softly.assertThat(jobList.getItems().size()).isEqualTo(expectedJobCount);
 
             // Assert master service have been deleted
-            softly.assertThat(serviceList.getItems().size()).isEqualTo(expectedResourceCount);
+            softly.assertThat(serviceList.getItems().size()).isEqualTo(expectedServiceCount);
+            softly.assertThat(serviceList.getItems().get(0).getMetadata().getName()).isEqualTo(expectedDefaultServiceName);
 
         });
 

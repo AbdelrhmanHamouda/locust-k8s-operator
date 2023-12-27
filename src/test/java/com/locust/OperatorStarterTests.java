@@ -1,31 +1,32 @@
 package com.locust;
 
 import com.locust.operator.controller.LocustTestReconciler;
-import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.server.mock.EnableKubernetesMockClient;
-import org.junit.jupiter.api.BeforeEach;
+import io.javaoperatorsdk.jenvtest.junit.EnableKubeAPIServer;
+import io.javaoperatorsdk.jenvtest.junit.KubeConfig;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static com.locust.operator.controller.utils.TestFixtures.executeWithK8sMockServer;
+import static com.locust.operator.controller.TestFixtures.creatKubernetesClient;
+import static com.locust.operator.controller.TestFixtures.setupCustomResourceDefinition;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@EnableKubernetesMockClient(https = false, crud = true)
+@EnableKubeAPIServer(updateKubeConfigFile = true)
 public class OperatorStarterTests {
 
-    String k8sServerUrl;
-    KubernetesClient testClient;
+    @KubeConfig
+    static String configYaml;
 
     @Mock
     private LocustTestReconciler reconciler;
 
-    @BeforeEach
+    @BeforeAll
     void setup() {
         MockitoAnnotations.openMocks(this);
-        k8sServerUrl = testClient.getMasterUrl().toString();
+        setupCustomResourceDefinition(creatKubernetesClient(configYaml));
     }
 
     /**
@@ -46,7 +47,8 @@ public class OperatorStarterTests {
 
         // * Act & Assert
         // Passing "null" to onApplicationEvent(ServerStartupEvent event) is safe since the event is not used by the "operatorStarter" logic.
-        executeWithK8sMockServer(k8sServerUrl, () -> operatorStarter.onApplicationEvent(null));
+        //executeWithK8sMockServer(k8sServerUrl, () -> operatorStarter.onApplicationEvent(null));
+        operatorStarter.onApplicationEvent(null);
 
         // * Assert
         // This test doesn't need an explicit assertion statement since the onApplicationEvent() logic

@@ -5,7 +5,9 @@ import com.locust.operator.customresource.LocustTestSpec;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.StatusDetails;
 import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinition;
+import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +27,9 @@ import static com.locust.operator.controller.dto.OperationalMode.MASTER;
 import static com.locust.operator.controller.dto.OperationalMode.WORKER;
 import static com.locust.operator.customresource.LocustTest.GROUP;
 import static com.locust.operator.customresource.LocustTest.VERSION;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static lombok.AccessLevel.PRIVATE;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Slf4j
 @NoArgsConstructor(access = PRIVATE)
@@ -89,7 +92,7 @@ public class TestFixtures {
 
         log.debug("Deleting LocustTest CRD instances");
 
-        val crdClient = k8sClient.resources(LocustTest.class);
+        val crdClient = k8sClient.apiextensions().v1().customResourceDefinitions().withName("locusttests.locust.io");
         return crdClient.delete();
     }
 
@@ -141,6 +144,44 @@ public class TestFixtures {
 
         return locustTest;
 
+    }
+
+    /**
+     * Creates  a new instance of KubernetesClient using the provided YAML configuration.
+     * <p>
+     * This method uses the KubernetesClientBuilder to create a new KubernetesClient. The builder is configured with a Config object, which
+     * is created from the provided YAML configuration using the Config.fromKubeconfig method.
+     *
+     * @param configYaml A string representing the Kubernetes configuration in YAML format.
+     * @return A new instance of KubernetesClient configured according to the provided YAML configuration.
+     */
+    public static KubernetesClient creatKubernetesClient(String configYaml) {
+        // Instantiate a KubernetesClientBuilder, configure it with the provided YAML configuration
+        return new KubernetesClientBuilder().
+            withConfig(Config.fromKubeconfig(configYaml))
+            .build();
+    }
+
+    /**
+     * Prepares and creates a Custom Resource Definition (CRD) in the Kubernetes cluster associated with the provided client.
+     * <p>
+     * This method first prepares a CRD using the prepareCustomResourceDefinition method. It then creates that CRD in the Kubernetes cluster
+     * using the createCrd method. Both of these methods use the provided KubernetesClient to interact with the Kubernetes API.
+     * After the CRD is created, it logs the details of the created CRD and returns it.
+     *
+     * @param testClient The KubernetesClient to use when interacting with the Kubernetes server API.
+     * @return The created CustomResourceDefinition.
+     */
+    public static CustomResourceDefinition setupCustomResourceDefinition(KubernetesClient testClient) {
+        // Prepare and create the Custom Resource Definition
+        val expectedCrd = prepareCustomResourceDefinition(testClient);
+
+        // Create the Custom Resource Definition
+        val crd = createCrd(expectedCrd, testClient);
+
+        // Log and return the created CRD
+        log.debug("Created CRD details: {}", crd);
+        return crd;
     }
 
 }
