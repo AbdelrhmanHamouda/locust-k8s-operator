@@ -92,7 +92,7 @@ public class TestFixtures {
 
         log.debug("Deleting LocustTest CRD instances");
 
-        val crdClient = k8sClient.resources(LocustTest.class);
+        val crdClient = k8sClient.apiextensions().v1().customResourceDefinitions().withName("locusttests.locust.io");
         return crdClient.delete();
     }
 
@@ -163,20 +163,25 @@ public class TestFixtures {
     }
 
     /**
-     * Sets up a Custom Resource Definition (CRD) in the Kubernetes cluster associated with the provided client.
+     * Prepares and creates a Custom Resource Definition (CRD) in the Kubernetes cluster associated with the provided client.
      * <p>
-     * This method prepares a CRD using the prepareCustomResourceDefinition method and then creates it in the Kubernetes cluster using the
-     * createCrd method. Both of these methods use the provided KubernetesClient to interact with the Kubernetes API.
+     * This method first prepares a CRD using the prepareCustomResourceDefinition method. It then creates that CRD in the Kubernetes cluster
+     * using the createCrd method. Both of these methods use the provided KubernetesClient to interact with the Kubernetes API.
+     * After the CRD is created, it logs the details of the created CRD and returns it.
      *
-     * @param testClient The KubernetesClient to use when interacting with the Kubernetes API. This client should be configured to connect
-     *                   to the Kubernetes cluster where the CRD will be created.
+     * @param testClient The KubernetesClient to use when interacting with the Kubernetes server API.
+     * @return The created CustomResourceDefinition.
      */
-    public static void setupCustomResourceDefinition(KubernetesClient testClient) {
+    public static CustomResourceDefinition setupCustomResourceDefinition(KubernetesClient testClient) {
         // Prepare and create the Custom Resource Definition
         val expectedCrd = prepareCustomResourceDefinition(testClient);
 
         // Create the Custom Resource Definition
-        createCrd(expectedCrd, testClient);
+        val crd = createCrd(expectedCrd, testClient);
+
+        // Log and return the created CRD
+        log.debug("Created CRD details: {}", crd);
+        return crd;
     }
 
 }

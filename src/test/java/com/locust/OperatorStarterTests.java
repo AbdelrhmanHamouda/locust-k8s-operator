@@ -10,8 +10,8 @@ import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static com.locust.operator.controller.TestFixtures.setupCustomResourceDefinition;
 import static com.locust.operator.controller.TestFixtures.creatKubernetesClient;
+import static com.locust.operator.controller.TestFixtures.setupCustomResourceDefinition;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableKubeAPIServer(updateKubeConfigFile = true)
