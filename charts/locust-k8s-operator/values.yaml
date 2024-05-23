@@ -9,6 +9,8 @@ replicaCount: 1
 image:
   repository: lotest/locust-k8s-operator
   pullPolicy: IfNotPresent
+  # List of names of secrets within the namespace to use imagePullSecrets. Applies to deployments and serviceAccounts
+  pullSecrets: []
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
