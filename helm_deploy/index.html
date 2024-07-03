@@ -351,6 +351,17 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Deploy Operator with HELM
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -360,6 +371,217 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#defaults-configuration-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      Defaults configuration values
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Defaults configuration values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-to-override" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to override
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-values-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default values overview
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Default values overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      General Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deployment-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deployment Settings
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#liveness-and-readiness-probes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Liveness and Readiness Probes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kubernetes-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Kubernetes Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Kubernetes Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#service-account-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Account Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pod-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pod Annotations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resources-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resources Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#node-selector" class="md-nav__link">
+    <span class="md-ellipsis">
+      Node Selector
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tolerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tolerations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#affinity-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Affinity Rules
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#operator-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Operator Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Operator Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#load-generation-pods-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Load Generation Pods Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics-exporter-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metrics Exporter Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kafka-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Kafka Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#micronaut-application-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Micronaut Application Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -518,6 +740,115 @@
 </ul>
 </li>
 </ol>
+<hr />
+<h2 id="defaults-configuration-values">Defaults configuration values<a class="headerlink" href="#defaults-configuration-values" title="Anchor link to this section for reference">⚓</a></h2>
+<p>The Locust-K8s-Operator comes with a set of sensible default configuration values that are designed to work seamlessly on a wide range of Kubernetes clusters. These defaults are carefully chosen to provide a smooth out-of-the-box experience.</p>
+<h3 id="how-to-override">How to override<a class="headerlink" href="#how-to-override" title="Anchor link to this section for reference">⚓</a></h3>
+<p>While the default configuration covers most scenarios, there might be cases where you need to customize the values to align with your specific requirements. The Locust-K8s-Operator is flexible and allows you to easily override these default values.</p>
+<p>The most straightforward and organized approach to customize configuration values is by using a values file. This involves creating a separate YAML file that contains your desired configuration overrides. You can then apply this file when deploying the Helm chart.</p>
+<p>To learn more about how to use a values file and override configuration settings, refer to <a href="https://helm.sh/docs/chart_template_guide/values_files/">HELM's official documentation</a> on Values Files.</p>
+<p>By following this approach, you can tailor the <em>Locust-K8s-Operator</em>'s behavior to match your specific needs while maintaining a structured and maintainable configuration setup.</p>
+<h3 id="default-values-overview">Default values overview<a class="headerlink" href="#default-values-overview" title="Anchor link to this section for reference">⚓</a></h3>
+<p>This section serves as a comprehensive guide to the configurable options present within the Helm chart. Each subsection details the precise value names applicable for overrides, and when necessary, highlight the underlying rationale behind each configuration.</p>
+<h4 id="general-configuration">General Configuration<a class="headerlink" href="#general-configuration" title="Anchor link to this section for reference">⚓</a></h4>
+<ul>
+<li><code>appPort</code>: Specifies the port that the <em>Operator</em> will listen on.</li>
+</ul>
+<h4 id="deployment-settings">Deployment Settings<a class="headerlink" href="#deployment-settings" title="Anchor link to this section for reference">⚓</a></h4>
+<ul>
+<li><code>replicaCount</code>: Number of replicas for the <em>Operator</em> deployment.</li>
+<li><code>image.repository</code>: The repository of the Docker image.</li>
+<li><code>image.pullPolicy</code>: The image pull policy.</li>
+<li><code>image.tag</code>: Overrides the default image tag (useful for specifying a version).</li>
+</ul>
+<h5 id="liveness-and-readiness-probes">Liveness and Readiness Probes<a class="headerlink" href="#liveness-and-readiness-probes" title="Anchor link to this section for reference">⚓</a></h5>
+<p>Configure liveness and readiness probes for the operator.</p>
+<ul>
+<li><code>[livenessProbe || readinessProbe].httpGet.scheme</code>:  The scheme for the probe (HTTP).</li>
+<li><code>[livenessProbe || readinessProbe].httpGet.path</code>: The path to probe.</li>
+<li><code>[livenessProbe || readinessProbe].httpGet.port</code>: The port to probe.</li>
+<li><code>[livenessProbe || readinessProbe].initialDelaySeconds</code>: Initial delay before starting probes.</li>
+<li><code>[livenessProbe || readinessProbe].periodSeconds</code>: Time between consecutive probes.</li>
+<li><code>[livenessProbe || readinessProbe].timeoutSeconds</code>: Probe timeout.</li>
+<li><code>[livenessProbe || readinessProbe].failureThreshold</code>: Number of consecutive failures before considering the probe failed.</li>
+</ul>
+<h4 id="kubernetes-configuration">Kubernetes Configuration<a class="headerlink" href="#kubernetes-configuration" title="Anchor link to this section for reference">⚓</a></h4>
+<ul>
+<li><code>k8s.customResourceDefinition.deploy</code>: Specifies whether to deploy the <em>LocustTest</em> custom resource definition.</li>
+</ul>
+<h5 id="service-account-configuration">Service Account Configuration<a class="headerlink" href="#service-account-configuration" title="Anchor link to this section for reference">⚓</a></h5>
+<ul>
+<li><code>serviceAccount.create</code>: Specifies whether a service account should be created.</li>
+<li><code>serviceAccount.annotations</code>: Annotations to add to the service account.</li>
+<li><code>serviceAccount.name</code>: The name of the service account to use.</li>
+</ul>
+<h5 id="pod-annotations">Pod Annotations<a class="headerlink" href="#pod-annotations" title="Anchor link to this section for reference">⚓</a></h5>
+<ul>
+<li><code>podAnnotations</code>: Additional annotations to apply to the <em>Operator</em>.</li>
+</ul>
+<h5 id="resources-configuration">Resources Configuration<a class="headerlink" href="#resources-configuration" title="Anchor link to this section for reference">⚓</a></h5>
+<p>Configure resource requests and limits for the <em>Operator</em>.</p>
+<ul>
+<li><code>resources</code>: Resource requests and limits for the <em>Operator</em>.</li>
+</ul>
+<h5 id="node-selector">Node Selector<a class="headerlink" href="#node-selector" title="Anchor link to this section for reference">⚓</a></h5>
+<ul>
+<li><code>nodeSelector</code>: Node selector settings for the <em>Operator</em> pod scheduling.</li>
+</ul>
+<h5 id="tolerations">Tolerations<a class="headerlink" href="#tolerations" title="Anchor link to this section for reference">⚓</a></h5>
+<ul>
+<li><code>tolerations</code>: Tolerations for the <em>Operator</em> pod scheduling.</li>
+</ul>
+<h5 id="affinity-rules">Affinity Rules<a class="headerlink" href="#affinity-rules" title="Anchor link to this section for reference">⚓</a></h5>
+<ul>
+<li><code>affinity</code>: Affinity rules for the <em>Operator</em> pod scheduling.</li>
+</ul>
+<h4 id="operator-configuration">Operator Configuration<a class="headerlink" href="#operator-configuration" title="Anchor link to this section for reference">⚓</a></h4>
+<ul>
+<li><code>config.loadGenerationJobs.ttlSecondsAfterFinished</code>: Time-to-live in seconds for finished load generation jobs.</li>
+</ul>
+<h5 id="load-generation-pods-configuration">Load Generation Pods Configuration<a class="headerlink" href="#load-generation-pods-configuration" title="Anchor link to this section for reference">⚓</a></h5>
+<ul>
+<li><code>config.loadGenerationPods.resource.cpuRequest</code>: CPU resource <em>request</em> for load generation pods.</li>
+<li><code>config.loadGenerationPods.resource.memRequest</code>: Memory resource <em>request</em> for load generation pods.</li>
+<li><code>config.loadGenerationPods.resource.ephemeralRequest</code>: Ephemeral Storage resource <em>request</em> for load generation pods.</li>
+<li><code>config.loadGenerationPods.resource.cpuLimit</code>: CPU resource <em>limit</em> for load generation pods.</li>
+<li><code>config.loadGenerationPods.resource.memLimit</code>: Memory resource <em>limit</em> for load generation pods.</li>
+<li><code>config.loadGenerationPods.resource.ephemeralLimit</code>: Ephemeral Storage resource <em>limit</em> for load generation pods.</li>
+<li><code>config.loadGenerationPods.affinity.enableCrInjection</code>: Enable Custom Resource injection for affinity settings.</li>
+<li><code>config.loadGenerationPods.taintTolerations.enableCrInjection</code>: Enable Custom Resource injection for taint tolerations settings.</li>
+</ul>
+<h5 id="metrics-exporter-configuration">Metrics Exporter Configuration<a class="headerlink" href="#metrics-exporter-configuration" title="Anchor link to this section for reference">⚓</a></h5>
+<ul>
+<li><code>config.loadGenerationPods.metricsExporter.image</code>: Metrics Exporter Docker image.</li>
+<li><code>config.loadGenerationPods.metricsExporter.port</code>: Metrics Exporter port.</li>
+<li><code>config.loadGenerationPods.metricsExporter.pullPolicy</code>: Image pull policy.</li>
+<li><code>config.loadGenerationPods.metricsExporter.resource.cpuRequest</code>: CPU resource <em>request</em> for Metrics Exporter container.</li>
+<li><code>config.loadGenerationPods.metricsExporter.resource.memRequest</code>: Memory resource <em>request</em> for Metrics Exporter container.</li>
+<li><code>config.loadGenerationPods.metricsExporter.resource.ephemeralRequest</code>: Ephemeral Storage resource <em>request</em> for Metrics Exporter container.</li>
+<li><code>config.loadGenerationPods.metricsExporter.resource.cpuLimit</code>: CPU resource <em>limit</em> for Metrics Exporter container.</li>
+<li><code>config.loadGenerationPods.metricsExporter.resource.memLimit</code>: Memory resource <em>limit</em> for Metrics Exporter container.</li>
+<li><code>config.loadGenerationPods.metricsExporter.resource.ephemeralLimit</code>: Ephemeral Storage resource <em>limit</em> for Metrics Exporter container.</li>
+</ul>
+<h5 id="kafka-configuration">Kafka Configuration<a class="headerlink" href="#kafka-configuration" title="Anchor link to this section for reference">⚓</a></h5>
+<ul>
+<li><code>config.loadGenerationPods.kafka.bootstrapServers</code>: Kafka bootstrap servers.</li>
+<li><code>config.loadGenerationPods.kafka.locustK8sKafkaUser</code>: Kafka user for Locust-K8s communication.</li>
+<li><code>config.loadGenerationPods.kafka.acl.enabled</code>: Enable ACL settings.</li>
+<li><code>config.loadGenerationPods.kafka.acl.protocol</code>: ACL protocol.</li>
+<li><code>config.loadGenerationPods.kafka.acl.secret.userKey</code>: Key for the Kafka username secret.</li>
+<li><code>config.loadGenerationPods.kafka.acl.secret.passwordKey</code>: Key for the Kafka password secret.</li>
+<li><code>config.loadGenerationPods.kafka.sasl.mechanism</code>: SASL mechanism.</li>
+<li><code>config.loadGenerationPods.kafka.sasl.jaas.config</code>: JAAS configuration for SASL.</li>
+</ul>
+<h5 id="micronaut-application-configuration">Micronaut Application Configuration<a class="headerlink" href="#micronaut-application-configuration" title="Anchor link to this section for reference">⚓</a></h5>
+<p>Configure Micronaut application metrics.</p>
+<ul>
+<li><code>micronaut.metrics.enabled</code>: Enable/disable metrics.</li>
+<li><code>micronaut.metrics.web.enabled</code>: Enable/disable web metrics.</li>
+<li>`micronaut.metrics.jvm.enabled: Enable/disable JVM metrics.</li>
+<li>... (Continues for other Micronaut metrics options)</li>
+</ul>
 
 
 
@@ -538,7 +869,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">April 22, 2023</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 25, 2023</span>
   </span>
 
     
@@ -569,12 +900,52 @@
       
         <footer class="md-footer">
   
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../getting_started/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Getting Started">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Getting Started
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../advanced_topics/" class="md-footer__link md-footer__link--next" aria-label="Next: Advanced topics">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Advanced topics
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
       <div class="md-copyright">
   
     <div class="md-copyright__highlight">
-      Copyright &copy; 2022 Abdelrhman Hamouda – <a href="#__consent">Change cookie settings</a>
+      Copyright &copy; 2023 Abdelrhman Hamouda – <a href="#__consent">Change cookie settings</a>
 
     </div>
   
@@ -693,7 +1064,7 @@
       </div>
       <script>var consent=__md_get("__consent");if(consent)for(var input of document.forms.consent.elements)input.name&&(input.checked=consent[input.name]||!1);else"file:"!==location.protocol&&setTimeout(function(){document.querySelector("[data-md-component=consent]").hidden=!1},250);var action,form=document.forms.consent;for(action of["submit","reset"])form.addEventListener(action,function(e){if(e.preventDefault(),"reset"===e.type)for(var n of document.forms.consent.elements)n.name&&(n.checked=!1);__md_set("__consent",Object.fromEntries(Array.from(new FormData(form).keys()).map(function(e){return[e,!0]}))),location.hash="",location.reload()})</script>
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["search.highlight", "search.share", "navigation.tracking", "navigation.top", "toc.follow", "toc.integrate", "content.code.annotate"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["search.highlight", "search.share", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "toc.integrate", "content.code.annotate", "content.code.copy"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
       <script src="../assets/javascripts/bundle.fe8b6f2b.min.js"></script>
