@@ -1,8 +1,8 @@
 package com.locust;
 
 import com.locust.operator.controller.LocustTestReconciler;
-import io.javaoperatorsdk.jenvtest.junit.EnableKubeAPIServer;
-import io.javaoperatorsdk.jenvtest.junit.KubeConfig;
+import io.fabric8.kubeapitest.junit.EnableKubeAPIServer;
+import io.fabric8.kubeapitest.junit.KubeConfig;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
