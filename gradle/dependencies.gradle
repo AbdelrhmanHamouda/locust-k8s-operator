@@ -9,8 +9,7 @@ ext {
     mockitoVersion = '4.8.0'
     assertjVersion = '3.23.1'
     systemLambdaVersion = '1.2.1'
-    k8sClient = '6.9.2' // Matching version from JOSDK
-    jenvtest = '0.9.5'
+    k8sClient = '6.13.1' // Matching version from JOSDK
 
     // Operator SDK
     javaOperatorVersion = '4.6.1'
@@ -50,8 +49,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("com.github.stefanbirkner:system-lambda:$systemLambdaVersion")
     testImplementation("io.fabric8:kubernetes-server-mock:$k8sClient")
-    testImplementation("io.javaoperatorsdk:jenvtest:$jenvtest")
-    testImplementation("io.javaoperatorsdk:jenvtest-fabric8-client-support:$jenvtest")
+    testImplementation ("io.fabric8:kube-api-test:$k8sClient")
 
     testCompileOnly("org.projectlombok:lombok")
 }
