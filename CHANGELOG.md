@@ -1,3 +1,17 @@
+## 0.9.0 (2024-07-03)
+
+### Feat
+
+- implement pull secrets in helm chart  (#192)
+- implement pull secrets in helm chart
+
+Co-authored-by: Marcial White <marcial.white+gitlab@wizards.com>
+- migrate resource creation from `createOrReplace` to `serverSideApply` (#165)
+
+### Fix
+
+- Stop Github actions from triggering twice in PRs (#161)
+
 ## 0.8.0 (2023-08-25)
 
 ### Feat
