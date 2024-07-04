@@ -33,7 +33,7 @@ jobs:
           arguments: build jacocoTestReport -i
 
       - name: Report coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           name: branch-${{ github.ref }}
           verbose: true
