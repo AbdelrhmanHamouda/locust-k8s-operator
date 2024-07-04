@@ -5,9 +5,9 @@ import com.locust.operator.controller.utils.LoadGenHelpers;
 import com.locust.operator.controller.utils.resource.manage.ResourceCreationHelpers;
 import com.locust.operator.controller.utils.resource.manage.ResourceCreationManager;
 import com.locust.operator.controller.utils.resource.manage.ResourceDeletionManager;
+import io.fabric8.kubeapitest.junit.EnableKubeAPIServer;
+import io.fabric8.kubeapitest.junit.KubeConfig;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.javaoperatorsdk.jenvtest.junit.EnableKubeAPIServer;
-import io.javaoperatorsdk.jenvtest.junit.KubeConfig;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.junit.jupiter.api.AfterEach;
@@ -71,9 +71,13 @@ class LocustTestReconcilerTests {
     }
 
     @AfterEach
-    void tearDown() {
+    void tearDown() throws InterruptedException {
         // Clean resources from cluster
         deleteLocustTestCrd(k8sTestClient);
+        // Dirty loop until the CRD is deleted to avoid test failures due to the CRD not being deleted
+        while (!k8sTestClient.apiextensions().v1().customResourceDefinitions().list().getItems().isEmpty()) {
+            Thread.sleep(50);
+        }
     }
 
     @Test

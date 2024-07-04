@@ -2,9 +2,9 @@ package com.locust.operator.controller.utils.resource.manage;
 
 import com.locust.operator.controller.utils.LoadGenHelpers;
 import com.locust.operator.customresource.internaldto.LocustTestToleration;
+import io.fabric8.kubeapitest.junit.EnableKubeAPIServer;
+import io.fabric8.kubeapitest.junit.KubeConfig;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.javaoperatorsdk.jenvtest.junit.EnableKubeAPIServer;
-import io.javaoperatorsdk.jenvtest.junit.KubeConfig;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.junit.jupiter.api.BeforeAll;
