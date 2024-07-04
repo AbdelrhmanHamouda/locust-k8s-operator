@@ -1,3 +1,11 @@
+## 0.9.1 (2024-07-04)
+
+### Fix
+
+- Grant job patch permission (#206)
+- revert micronaut version (#205)
+- Github actions failing to build (#204)
+
 ## 0.9.0 (2024-07-03)
 
 ### Feat
