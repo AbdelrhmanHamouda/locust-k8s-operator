@@ -73,6 +73,7 @@ Configure liveness and readiness probes for the operator.
 #### Kubernetes Configuration
   
 - `k8s.customResourceDefinition.deploy`: Specifies whether to deploy the _LocustTest_ custom resource definition.
+- `k8s.clusterRole.enabled`: Specifies whether to deploy the _Operator_ with a cluster wide role or a namespaced role.Default is _namespaced_.
 
 ##### Service Account Configuration
 
