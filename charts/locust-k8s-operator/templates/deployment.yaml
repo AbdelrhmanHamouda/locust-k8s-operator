@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "locust-k8s-operator.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "locust-k8s-operator.labels" . | nindent 4 }}
 spec:
