@@ -1,3 +1,9 @@
+## 0.11.0 (2024-10-26)
+
+### Feat
+
+- add metadata.namespace for deployment (#223)
+
 ## 0.10.0 (2024-09-16)
 
 ### Feat
