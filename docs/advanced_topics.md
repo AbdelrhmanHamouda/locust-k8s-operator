@@ -131,6 +131,39 @@ closely [Kubernetes native definition](https://kubernetes.io/docs/concepts/sched
         ...
     ```
 
+## Resource Management
+
+The operator allows for fine-grained control over the resource requests and limits for the Locust master and worker pods. This is useful for ensuring that your load tests have the resources they need, and for preventing them from consuming too many resources on your cluster.
+
+Configuration is done via the `application.yml` file or through Helm values. The following properties are available:
+
+- `locust.operator.resource.pod-mem-request`
+- `locust.operator.resource.pod-cpu-request`
+- `locust.operator.resource.pod-ephemeral-storage-request`
+- `locust.operator.resource.pod-mem-limit`
+- `locust.operator.resource.pod-cpu-limit`
+- `locust.operator.resource.pod-ephemeral-storage-limit`
+
+### Disabling CPU Limits
+
+In some scenarios, particularly during performance-sensitive tests, you may want to disable CPU limits to prevent throttling. This can be achieved by setting the `pod-cpu-limit` property to a blank string.
+
+**Example**:
+
+=== ":octicons-file-code-16: `application.yml`"
+
+    ```yaml
+    locust:
+      operator:
+        resource:
+          pod-cpu-limit: ""
+    ```
+
+!!! Note
+    When the CPU limit is disabled, the pod is allowed to use as much CPU as is available on the node. This can be useful for maximizing performance, but it can also lead to resource contention if not managed carefully.
+
+---
+
 ## Usage of a private image registry
 
 Images from a private image registry can be used through various methods as described in the [kubernetes documentation](https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry), one of those methods depends on setting `imagePullSecrets` for pods. This is supported in the operator by simply setting the `imagePullSecrets` option in the deployed custom resource. For example:
