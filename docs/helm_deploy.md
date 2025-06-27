@@ -75,7 +75,7 @@ Configure liveness and readiness probes for the operator.
 #### Kubernetes Configuration
   
 - `k8s.customResourceDefinition.deploy`: Specifies whether to deploy the _LocustTest_ custom resource definition.
-- `k8s.clusterRole.enabled`: Specifies whether to deploy the _Operator_ with a cluster wide role or a namespaced role.Default is _namespaced_.
+- `k8s.clusterRole.enabled`: Specifies whether to deploy the _Operator_ with a cluster wide role (`true`) or a namespaced role (`false`). Default is `true`.
 
 ##### Service Account Configuration
 
@@ -114,9 +114,9 @@ Configure resource requests and limits for the _Operator_.
 - `config.loadGenerationPods.resource.cpuRequest`: CPU resource _request_ for load generation pods.
 - `config.loadGenerationPods.resource.memRequest`: Memory resource _request_ for load generation pods.
 - `config.loadGenerationPods.resource.ephemeralRequest`: Ephemeral Storage resource _request_ for load generation pods.
-- `config.loadGenerationPods.resource.cpuLimit`: CPU resource _limit_ for load generation pods.
-- `config.loadGenerationPods.resource.memLimit`: Memory resource _limit_ for load generation pods.
-- `config.loadGenerationPods.resource.ephemeralLimit`: Ephemeral Storage resource _limit_ for load generation pods.
+- `config.loadGenerationPods.resource.cpuLimit`: CPU resource _limit_ for load generation pods. To leave unbound, set to `""`.
+- `config.loadGenerationPods.resource.memLimit`: Memory resource _limit_ for load generation pods. To leave unbound, set to `""`.
+- `config.loadGenerationPods.resource.ephemeralLimit`: Ephemeral Storage resource _limit_ for load generation pods. To leave unbound, set to `""`.
 - `config.loadGenerationPods.affinity.enableCrInjection`: Enable Custom Resource injection for affinity settings.
 - `config.loadGenerationPods.taintTolerations.enableCrInjection`: Enable Custom Resource injection for taint tolerations settings.
 
@@ -128,9 +128,9 @@ Configure resource requests and limits for the _Operator_.
 - `config.loadGenerationPods.metricsExporter.resource.cpuRequest`: CPU resource _request_ for Metrics Exporter container.
 - `config.loadGenerationPods.metricsExporter.resource.memRequest`: Memory resource _request_ for Metrics Exporter container.
 - `config.loadGenerationPods.metricsExporter.resource.ephemeralRequest`: Ephemeral Storage resource _request_ for Metrics Exporter container.
-- `config.loadGenerationPods.metricsExporter.resource.cpuLimit`: CPU resource _limit_ for Metrics Exporter container.
-- `config.loadGenerationPods.metricsExporter.resource.memLimit`: Memory resource _limit_ for Metrics Exporter container.
-- `config.loadGenerationPods.metricsExporter.resource.ephemeralLimit`: Ephemeral Storage resource _limit_ for Metrics Exporter container.
+- `config.loadGenerationPods.metricsExporter.resource.cpuLimit`: CPU resource _limit_ for Metrics Exporter container. To leave unbound, set to `""`.
+- `config.loadGenerationPods.metricsExporter.resource.memLimit`: Memory resource _limit_ for Metrics Exporter container. To leave unbound, set to `""`.
+- `config.loadGenerationPods.metricsExporter.resource.ephemeralLimit`: Ephemeral Storage resource _limit_ for Metrics Exporter container. To leave unbound, set to `""`.
 
 ##### Kafka Configuration
 

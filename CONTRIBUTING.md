@@ -45,6 +45,88 @@ Please note that we have a code of conduct and thus you are kindly asked to foll
 
 </details>
 
+### Local Testing with Minikube and Helm
+
+For local development and testing, you can use Minikube to create a local Kubernetes cluster. This allows you to test the operator and your changes in an environment that closely resembles a production setup.
+
+#### Prerequisites
+
+- [Minikube](https://minikube.sigs.k8s.io/docs/start/)
+- [Helm](https://helm.sh/docs/intro/install/)
+
+#### Steps
+
+1.  **Start Minikube**
+
+    Start a local Kubernetes cluster using Minikube:
+
+    ```bash
+    minikube start
+    ```
+
+2.  **Build and Load the Docker Image**
+
+    If you've made changes to the operator's source code, you'll need to build a new Docker image and load it into your Minikube cluster. This project uses the Jib Gradle plugin to build images directly, so you don't need a `Dockerfile`.
+
+    First, build the image to your local Docker daemon:
+    ```bash
+    ./gradlew jibDockerBuild
+    ```
+
+    Next, load the image into Minikube's internal registry:
+    ```bash
+    minikube image load locust-k8s-operator:latest
+    ```
+
+3.  **Package the Helm Chart**
+
+    Package the Helm chart to create a distributable `.tgz` file.
+
+    ```bash
+    helm package ./charts/locust-k8s-operator
+    ```
+
+4.  **Install the Operator with Helm**
+
+    Install the Helm chart on your Minikube cluster. The command below overrides the default image settings to use the one you just built and loaded.
+
+    You can use a `values.yaml` file to override other settings.
+
+    ```yaml
+    # values.yaml (optional)
+    # Example: Set resource requests and limits for the operator pod
+    config:
+      loadGenerationPods:
+        resource:
+          cpuRequest: 250m
+          memRequest: 128Mi
+          ephemeralRequest: 300M
+          cpuLimit: 1000m
+          memLimit: 1024Mi
+          ephemeralLimit: 50M
+    
+    # To leave a resource unbound, Leave the limit empty
+    # This is useful when you don't want to set a specific limit.
+    # example:
+    # config:
+    #   loadGenerationPods:
+    #     resource:
+    #       cpuLimit: ""
+    #       memLimit: ""
+    #       ephemeralLimit: ""
+    ```
+
+    Install the chart using the following command. The `-f values.yaml` flag is optional.
+
+    ```bash
+    helm install locust-operator locust-k8s-operator-*.tgz -f values.yaml \
+      --set image.repository=locust-k8s-operator \
+      --set image.tag=latest \
+      --set image.pullPolicy=IfNotPresent
+    ```
+
+    This will deploy the operator to your Minikube cluster using the settings defined in your `values.yaml` file.
+
 ### Writing documentation
 
 All documentation is located under the `docs/` directory. The documentation is hosted

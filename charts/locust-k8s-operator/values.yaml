@@ -40,7 +40,7 @@ k8s:
     deploy: true
 
   clusterRole:
-    enabled: false
+    enabled: true
 
 serviceAccount:
   # Specifies whether a service account should be created
