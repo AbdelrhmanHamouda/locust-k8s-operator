@@ -381,7 +381,7 @@ public class LoadGenHelpers {
 
         Optional.ofNullable(ephemeralOverride)
             .filter(s -> !s.isBlank())
-            .ifPresent(override -> resourceOverrideMap.put("ephemeral-storage", new Quantity(ephemeralOverride)));
+            .ifPresent(override -> resourceOverrideMap.put("ephemeral-storage", new Quantity(override)));
 
         return resourceOverrideMap;
     }
