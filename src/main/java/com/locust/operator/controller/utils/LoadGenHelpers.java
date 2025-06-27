@@ -275,10 +275,10 @@ public class LoadGenHelpers {
             resourceRequests = this.getResourceRequests();
             resourceLimits = this.getResourceLimits();
 
-        // If not default target, then the assumed target is a "Metrics Exporter" container!
-        // + No need for "else if" in order to avoid unneeded checks and increased complexity
-        // + in a future implementation if another "target" is introduced,
-        // + the method should be updated and this comment removed.
+            // If not default target, then the assumed target is a "Metrics Exporter" container!
+            // + No need for "else if" in order to avoid unneeded checks and increased complexity
+            // + in a future implementation if another "target" is introduced,
+            // + the method should be updated and this comment removed.
         } else {
 
             resourceRequests = this.getMetricsExporterResourceRequests();
@@ -362,24 +362,26 @@ public class LoadGenHelpers {
     /**
      * Generates a resource override map based on the provided memory, CPU, and ephemeral storage overrides.
      *
-     * @param memOverride The memory override value to be used for the "memory" resource.
-     * @param cpuOverride The CPU override value to be used for the "cpu" resource.
-     * @param ephemeralOverride The ephemeral storage override value to be used for the "ephemeral-storage" resource.
-     *                         This value will be applied only if the Kubernetes version supports "ephemeral-storage" requests.
+     * @param memOverride       The memory override value to be used for the "memory" resource.
+     * @param cpuOverride       The CPU override value to be used for the "cpu" resource.
+     * @param ephemeralOverride The ephemeral storage override value to be used for the "ephemeral-storage" resource. This value will be
+     *                          applied only if the Kubernetes version supports "ephemeral-storage" requests.
      * @return A Map containing resource overrides for memory, CPU, and ephemeral storage.
      */
     private Map<String, Quantity> generateResourceOverrideMap(String memOverride, String cpuOverride, String ephemeralOverride) {
         Map<String, Quantity> resourceOverrideMap = new HashMap<>();
 
-        resourceOverrideMap.put("memory", new Quantity(memOverride));
+        Optional.ofNullable(memOverride)
+            .filter(s -> !s.isBlank())
+            .ifPresent(override -> resourceOverrideMap.put("memory", new Quantity(override)));
 
-        resourceOverrideMap.put("cpu", new Quantity(cpuOverride));
+        Optional.ofNullable(cpuOverride)
+            .filter(s -> !s.isBlank())
+            .ifPresent(override -> resourceOverrideMap.put("cpu", new Quantity(override)));
 
-        // This conditional is to enable the operator to run on older kubernetes versions that doesn't support "ephemeral-storage" requests
-        if (!config.getPodEphemeralStorageRequest().isBlank()) {
-            resourceOverrideMap.put("ephemeral-storage", new Quantity(ephemeralOverride));
-
-        }
+        Optional.ofNullable(ephemeralOverride)
+            .filter(s -> !s.isBlank())
+            .ifPresent(override -> resourceOverrideMap.put("ephemeral-storage", new Quantity(ephemeralOverride)));
 
         return resourceOverrideMap;
     }
