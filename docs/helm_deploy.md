@@ -1,158 +1,209 @@
 ---
-title: HELM deployment
-description: Instructions on how to deploy Locust Kubernetes Operator with HELM
+title: HELM Deployment
+description: Instructions on how to deploy the Locust Kubernetes Operator with HELM.
 ---
 
-# HELM deployment
+# HELM Deployment Guide
 
-In order to deploy using helm, follow the below steps:
+This guide provides comprehensive instructions for deploying the Locust Kubernetes Operator using its official Helm chart.
 
-1.  Add the _Operator´s_ HELM repo
+## Quick Start
 
-    - `helm repo add locust-k8s-operator https://abdelrhmanhamouda.github.io/locust-k8s-operator/`
+For experienced users, here are the essential commands to get the operator running in the `default` namespace:
 
-    !!! note
+```bash
+helm repo add locust-k8s-operator https://abdelrhmanhamouda.github.io/locust-k8s-operator/
+helm repo update
+helm install locust-operator locust-k8s-operator/locust-k8s-operator
+```
 
-        If the repo has been added before, run `helm repo update` in order to pull the latest available release!
+## Installation
 
-2.  Install the _Operator_
+### Prerequisites
 
-    - `#!bash helm install locust-operator locust-k8s-operator/locust-k8s-operator` - The _Operator_ will ready up in around 40-60 seconds
-    - This will cause the bellow resources to be deployed in the currently active _k8s_ context & namespace.
-      - [crd-locusttest.yaml]
-        - This _CRD_ is the first part of the _Operator_ pattern. It is needed in order to enable _Kubernetes_ to understand the _LocustTest_
-          custom resource and allow its deployment.
-      - [serviceaccount-and-roles.yaml]
-        - ServiceAccount and Role bindings that enable the _Controller_ to have the needed privilege inside the cluster to watch and
-          manage the related resources.
-      - [deployment.yaml]
-        - The _Controller_ responsible for managing and reacting to the cluster resources.
+*   A running Kubernetes cluster (e.g., Minikube, GKE, EKS, AKS).
+*   [Helm 3](https://helm.sh/docs/intro/install/) installed on your local machine.
 
----------
+### Step 1: Add the Helm Repository
 
-## Defaults configuration values
+First, add the Locust Kubernetes Operator Helm repository to your local Helm client:
 
-The Locust-K8s-Operator comes with a set of sensible default configuration values that are designed to work seamlessly on a wide range of Kubernetes clusters. These defaults are carefully chosen to provide a smooth out-of-the-box experience.
+```bash
+helm repo add locust-k8s-operator https://abdelrhmanhamouda.github.io/locust-k8s-operator/
+```
 
-### How to override
+Next, update your local chart repository cache to ensure you have the latest version:
 
-While the default configuration covers most scenarios, there might be cases where you need to customize the values to align with your specific requirements. The Locust-K8s-Operator is flexible and allows you to easily override these default values.
+```bash
+helm repo update
+```
 
-The most straightforward and organized approach to customize configuration values is by using a values file. This involves creating a separate YAML file that contains your desired configuration overrides. You can then apply this file when deploying the Helm chart.
+### Step 2: Install the Chart
 
-To learn more about how to use a values file and override configuration settings, refer to [HELM's official documentation] on Values Files.
+You can install the chart with a release name of your choice (e.g., `locust-operator`).
 
-By following this approach, you can tailor the _Locust-K8s-Operator_'s behavior to match your specific needs while maintaining a structured and maintainable configuration setup.
+**Default Installation:**
 
+To install the chart with the default configuration into the currently active namespace, run:
 
-### Default values overview
+```bash
+helm install locust-operator locust-k8s-operator/locust-k8s-operator
+```
 
-This section serves as a comprehensive guide to the configurable options present within the Helm chart. Each subsection details the precise value names applicable for overrides, and when necessary, highlight the underlying rationale behind each configuration.
+**Installation with a Custom Values File:**
 
-#### General Configuration
-- `appPort`: Specifies the port that the _Operator_ will listen on.
+For more advanced configurations, it's best to use a custom `values.yaml` file. Create a file named `my-values.yaml` and add your overrides:
 
-#### Deployment Settings
-- `replicaCount`: Number of replicas for the _Operator_ deployment.
-- `image.repository`: The repository of the Docker image.
-- `image.pullPolicy`: The image pull policy.
-- `image.tag`: Overrides the default image tag (useful for specifying a version).
+```yaml
+# my-values.yaml
+replicaCount: 2
 
-##### Liveness and Readiness Probes
+config:
+  loadGenerationPods:
+    resource:
+      cpuLimit: "2000m"
+      memLimit: "2048Mi"
+```
 
-Configure liveness and readiness probes for the operator.
+Then, install the chart, specifying your custom values file and a target namespace:
 
-- `[livenessProbe || readinessProbe].httpGet.scheme`:  The scheme for the probe (HTTP).
-- `[livenessProbe || readinessProbe].httpGet.path`: The path to probe.
-- `[livenessProbe || readinessProbe].httpGet.port`: The port to probe.
-- `[livenessProbe || readinessProbe].initialDelaySeconds`: Initial delay before starting probes.
-- `[livenessProbe || readinessProbe].periodSeconds`: Time between consecutive probes.
-- `[livenessProbe || readinessProbe].timeoutSeconds`: Probe timeout.
-- `[livenessProbe || readinessProbe].failureThreshold`: Number of consecutive failures before considering the probe failed.
+```bash
+helm install locust-operator locust-k8s-operator/locust-k8s-operator \
+  --namespace locust-system \
+  --create-namespace \
+  -f my-values.yaml
+```
 
-#### Kubernetes Configuration
-  
-- `k8s.customResourceDefinition.deploy`: Specifies whether to deploy the _LocustTest_ custom resource definition.
-- `k8s.clusterRole.enabled`: Specifies whether to deploy the _Operator_ with a cluster wide role or a namespaced role.Default is _namespaced_.
+## Verifying the Installation
 
-##### Service Account Configuration
+After installation, you can verify that the operator is running correctly by checking the pods in the target namespace:
 
-- `serviceAccount.create`: Specifies whether a service account should be created.
-- `serviceAccount.annotations`: Annotations to add to the service account.
-- `serviceAccount.name`: The name of the service account to use.
+```bash
+kubectl get pods -n locust-system
+```
 
-##### Pod Annotations
+You should see a pod with a name similar to `locust-operator-b5c9f4f7-xxxxx` in the `Running` state.
 
-- `podAnnotations`: Additional annotations to apply to the _Operator_.
+To view the operator's logs, run:
 
-##### Resources Configuration
+```bash
+kubectl logs -f -n locust-system -l app.kubernetes.io/name=locust-k8s-operator
+```
 
-Configure resource requests and limits for the _Operator_.
+## Configuration
 
-- `resources`: Resource requests and limits for the _Operator_.
+The following tables list the configurable parameters of the Locust Operator Helm chart and their default values.
 
-##### Node Selector
+### General Configuration
 
-- `nodeSelector`: Node selector settings for the _Operator_ pod scheduling.
+| Parameter | Description | Default |
+|---|---|---|
+| `appPort` | The port that the operator will listen on. | `8080` |
 
-##### Tolerations
+### Deployment Settings
 
-- `tolerations`: Tolerations for the _Operator_ pod scheduling.
+| Parameter | Description | Default |
+|---|---|---|
+| `replicaCount` | Number of replicas for the operator deployment. | `1` |
+| `image.repository` | The repository of the Docker image. | `lotest/locust-k8s-operator` |
+| `image.pullPolicy` | The image pull policy. | `IfNotPresent` |
+| `image.tag` | Overrides the default image tag (defaults to the chart's `appVersion`). | `""` |
 
-##### Affinity Rules
+### Kubernetes Resources
 
-- `affinity`: Affinity rules for the _Operator_ pod scheduling.
+| Parameter | Description | Default |
+|---|---|---|
+| `k8s.customResourceDefinition.deploy` | Specifies whether to deploy the `LocustTest` CRD. | `true` |
+| `k8s.clusterRole.enabled` | Deploy with a cluster-wide role (`true`) or a namespaced role (`false`). | `true` |
+| `serviceAccount.create` | Specifies whether a service account should be created. | `true` |
+| `serviceAccount.name` | The name of the service account to use. If not set, a name is generated. | `""` |
+| `resources` | Resource requests and limits for the operator pod. | `{}` |
 
-#### Operator Configuration
+### Operator Configuration
 
-- `config.loadGenerationJobs.ttlSecondsAfterFinished`: Time-to-live in seconds for finished load generation jobs.
+| Parameter | Description | Default |
+|---|---|---|
+| `config.loadGenerationJobs.ttlSecondsAfterFinished` | Time-to-live in seconds for finished load generation jobs. Set to `""` to disable. | `""` |
 
-##### Load Generation Pods Configuration
+#### Load Generation Pods
 
-- `config.loadGenerationPods.resource.cpuRequest`: CPU resource _request_ for load generation pods.
-- `config.loadGenerationPods.resource.memRequest`: Memory resource _request_ for load generation pods.
-- `config.loadGenerationPods.resource.ephemeralRequest`: Ephemeral Storage resource _request_ for load generation pods.
-- `config.loadGenerationPods.resource.cpuLimit`: CPU resource _limit_ for load generation pods.
-- `config.loadGenerationPods.resource.memLimit`: Memory resource _limit_ for load generation pods.
-- `config.loadGenerationPods.resource.ephemeralLimit`: Ephemeral Storage resource _limit_ for load generation pods.
-- `config.loadGenerationPods.affinity.enableCrInjection`: Enable Custom Resource injection for affinity settings.
-- `config.loadGenerationPods.taintTolerations.enableCrInjection`: Enable Custom Resource injection for taint tolerations settings.
+| Parameter | Description | Default |
+|---|---|---|
+| `config.loadGenerationPods.resource.cpuRequest` | CPU resource request for load generation pods. | `250m` |
+| `config.loadGenerationPods.resource.memRequest` | Memory resource request for load generation pods. | `128Mi` |
+| `config.loadGenerationPods.resource.ephemeralRequest` | Ephemeral storage request for load generation pods. | `30M` |
+| `config.loadGenerationPods.resource.cpuLimit` | CPU resource limit for load generation pods. Set to `""` to unbind. | `1000m` |
+| `config.loadGenerationPods.resource.memLimit` | Memory resource limit for load generation pods. Set to `""` to unbind. | `1024Mi` |
+| `config.loadGenerationPods.resource.ephemeralLimit` | Ephemeral storage limit for load generation pods. Set to `""` to unbind. | `50M` |
+| `config.loadGenerationPods.affinity.enableCrInjection` | Enable Custom Resource injection for affinity settings. | `true` |
+| `config.loadGenerationPods.taintTolerations.enableCrInjection` | Enable Custom Resource injection for taint tolerations. | `true` |
 
-##### Metrics Exporter Configuration
+#### Metrics Exporter
 
-- `config.loadGenerationPods.metricsExporter.image`: Metrics Exporter Docker image.
-- `config.loadGenerationPods.metricsExporter.port`: Metrics Exporter port.
-- `config.loadGenerationPods.metricsExporter.pullPolicy`: Image pull policy.
-- `config.loadGenerationPods.metricsExporter.resource.cpuRequest`: CPU resource _request_ for Metrics Exporter container.
-- `config.loadGenerationPods.metricsExporter.resource.memRequest`: Memory resource _request_ for Metrics Exporter container.
-- `config.loadGenerationPods.metricsExporter.resource.ephemeralRequest`: Ephemeral Storage resource _request_ for Metrics Exporter container.
-- `config.loadGenerationPods.metricsExporter.resource.cpuLimit`: CPU resource _limit_ for Metrics Exporter container.
-- `config.loadGenerationPods.metricsExporter.resource.memLimit`: Memory resource _limit_ for Metrics Exporter container.
-- `config.loadGenerationPods.metricsExporter.resource.ephemeralLimit`: Ephemeral Storage resource _limit_ for Metrics Exporter container.
+| Parameter | Description | Default |
+|---|---|---|
+| `config.loadGenerationPods.metricsExporter.image` | Metrics Exporter Docker image. | `containersol/locust_exporter:v0.5.0` |
+| `config.loadGenerationPods.metricsExporter.port` | Metrics Exporter port. | `9646` |
+| `config.loadGenerationPods.metricsExporter.pullPolicy` | Image pull policy for the metrics exporter. | `IfNotPresent` |
 
-##### Kafka Configuration
+### Pod Scheduling
 
-- `config.loadGenerationPods.kafka.bootstrapServers`: Kafka bootstrap servers.
-- `config.loadGenerationPods.kafka.locustK8sKafkaUser`: Kafka user for Locust-K8s communication.
-- `config.loadGenerationPods.kafka.acl.enabled`: Enable ACL settings.
-- `config.loadGenerationPods.kafka.acl.protocol`: ACL protocol.
-- `config.loadGenerationPods.kafka.acl.secret.userKey`: Key for the Kafka username secret.
-- `config.loadGenerationPods.kafka.acl.secret.passwordKey`: Key for the Kafka password secret.
-- `config.loadGenerationPods.kafka.sasl.mechanism`: SASL mechanism.
-- `config.loadGenerationPods.kafka.sasl.jaas.config`: JAAS configuration for SASL.
+| Parameter | Description | Default |
+|---|---|---|
+| `nodeSelector` | Node selector for scheduling the operator pod. | `{}` |
+| `tolerations` | Tolerations for scheduling the operator pod. | `[]` |
+| `affinity` | Affinity rules for scheduling the operator pod. | `{}` |
 
-##### Micronaut Application Configuration
+### Liveness and Readiness Probes
 
-Configure Micronaut application metrics.
+| Parameter | Description | Default |
+|---|---|---|
+| `livenessProbe.initialDelaySeconds` | Initial delay for the liveness probe. | `10` |
+| `livenessProbe.periodSeconds` | How often to perform the liveness probe. | `20` |
+| `livenessProbe.timeoutSeconds` | When the liveness probe times out. | `10` |
+| `livenessProbe.failureThreshold` | When to give up on the liveness probe. | `1` |
+| `readinessProbe.initialDelaySeconds` | Initial delay for the readiness probe. | `30` |
+| `readinessProbe.periodSeconds` | How often to perform the readiness probe. | `20` |
+| `readinessProbe.timeoutSeconds` | When the readiness probe times out. | `10` |
+| `readinessProbe.failureThreshold` | When to give up on the readiness probe. | `1` |
 
-- `micronaut.metrics.enabled`: Enable/disable metrics.
-- `micronaut.metrics.web.enabled`: Enable/disable web metrics.
-- `micronaut.metrics.jvm.enabled: Enable/disable JVM metrics.
-- ... (Continues for other Micronaut metrics options)
+### Advanced Configuration
 
+The following sections cover advanced configuration options. For a complete list of parameters, refer to the `values.yaml` file in the chart.
 
-[//]: # "Resources urls"
-[crd-locusttest.yaml]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/kube/crd/locust-test-crd.yaml
-[serviceaccount-and-roles.yaml]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/charts/locust-k8s-operator/templates/serviceaccount-and-roles.yaml
-[deployment.yaml]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/charts/locust-k8s-operator/templates/deployment.yaml
-[HELM's official documentation]: https://helm.sh/docs/chart_template_guide/values_files/
+#### Kafka Configuration
+
+| Parameter | Description | Default |
+|---|---|---|
+| `config.loadGenerationPods.kafka.bootstrapServers` | Kafka bootstrap servers. | `localhost:9092` |
+| `config.loadGenerationPods.kafka.acl.enabled` | Enable ACL settings for Kafka. | `false` |
+| `config.loadGenerationPods.kafka.sasl.mechanism` | SASL mechanism for authentication. | `SCRAM-SHA-512` |
+
+#### Micronaut Metrics
+
+| Parameter | Description | Default |
+|---|---|---|
+| `micronaut.metrics.enabled` | Enable/disable all Micronaut metrics. | `true` |
+| `micronaut.metrics.export.prometheus.step` | The step size (duration) for Prometheus metrics export. | `PT30S` |
+
+## Upgrading the Chart
+
+To upgrade an existing release to a new version, use the `helm upgrade` command:
+
+```bash
+helm upgrade locust-operator locust-k8s-operator/locust-k8s-operator -f my-values.yaml
+```
+
+## Uninstalling the Chart
+
+To uninstall and delete the `locust-operator` deployment, run:
+
+```bash
+helm uninstall locust-operator
+```
+
+This command will remove all the Kubernetes components associated with the chart and delete the release.
+
+## Next Steps
+
+Once the operator is installed, you're ready to start running performance tests! Head over to the [Getting Started](./getting_started.md) guide to learn how to deploy your first `LocustTest`.

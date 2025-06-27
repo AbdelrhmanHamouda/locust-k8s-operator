@@ -14,7 +14,7 @@ That being said, if an organization is using kafka in production, chances are th
 To enable performance testing with _MSK_, a central/global Kafka user can be created by the "cloud admin" or "the team" responsible for the _Operator_ deployment within the organization. The _Operator_ can then be easily configured to inject the configuration of that user as environment variables in all generated resources. Those variables can be used by the test to establish authentication with the kafka broker.
 
 | Variable Name                    | Description                                                                      |
-| :------------------------------- | :------------------------------------------------------------------------------- |
+|:---------------------------------|:---------------------------------------------------------------------------------|
 | `KAFKA_BOOTSTRAP_SERVERS`        | Kafka bootstrap servers                                                          |
 | `KAFKA_SECURITY_ENABLED`         | -                                                                                |
 | `KAFKA_SECURITY_PROTOCOL_CONFIG` | Security protocol. Options: `PLAINTEXT`, `SASL_PLAINTEXT`, `SASL_SSL`, `SSL`     |
@@ -64,7 +64,7 @@ of [node affinity](https://kubernetes.io/docs/concepts/scheduling-eviction/assig
 on purpose slightly simplified in order to allow users to have easier time working with affinity.
 
 The `nodeAffinity` section supports declaring node affinity under `requiredDuringSchedulingIgnoredDuringExecution`. Meaning that any
-declared affinity labels **must** be present in nodes in order for resources to be deployed on them.
+declared affinity labels **must** be present on nodes in order for resources to be deployed on them.
 
 **Example**:
 
@@ -89,10 +89,11 @@ In the below example, generated pods will declare 3 **required** labels (keys an
 
 ### Taint Tolerations
 
-This optional sections allows deployed pods to have specific taint(s) tolerations. The features is also modeled to follow
-closely [Kubernetes native definition](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/).
+This allows generated resources to have specific _Taint Tolerations_ options.
 
-#### Spec breakdown & example
+#### Toleration Options
+
+The specification for tolerations is defined as follows
 
 === ":octicons-file-code-16: `taint-tolerations-spec.yaml`"
 
@@ -100,8 +101,8 @@ closely [Kubernetes native definition](https://kubernetes.io/docs/concepts/sched
     apiVersion: locust.io/v1
     ...
     spec:
-    ...
-    tolerations:
+      ...
+      tolerations:
         - key: <string value>
           operator: <"Exists", "Equal">
           value: <string value> #(1)!
@@ -111,25 +112,55 @@ closely [Kubernetes native definition](https://kubernetes.io/docs/concepts/sched
 
     1. Optional when `operator` value is set to `Exists`.
 
-=== ":octicons-file-code-16: `taint-tolerations-example.yaml`"
-
+=== ":octicons-file-code-16: **Example**"
     ```yaml
     apiVersion: locust.io/v1
     ...
     spec:
-        ...
-        tolerations:
-            - key: taint-A
-              operator: Equal
-              value: ssd
-              effect: NoSchedule
-
-            - key: taint-B
-              operator: Exists
-              effect: NoExecute
-            ...
-        ...
+      ...
+      tolerations:
+        - key: taint-A
+          operator: Equal
+          value: ssd
+          effect: NoSchedule
+        - key: taint-B
+          operator: Exists
+          effect: NoExecute
     ```
+
+
+## Resource Management
+
+The operator allows for fine-grained control over the resource requests and limits for the Locust master and worker pods. This is useful for ensuring that your load tests have the resources they need, and for preventing them from consuming too many resources on your cluster.
+
+Configuration is done via the `application.yml` file or through Helm values. The following properties are available:
+
+- `locust.operator.resource.pod-mem-request`
+- `locust.operator.resource.pod-cpu-request`
+- `locust.operator.resource.pod-ephemeral-storage-request`
+- `locust.operator.resource.pod-mem-limit`
+- `locust.operator.resource.pod-cpu-limit`
+- `locust.operator.resource.pod-ephemeral-storage-limit`
+
+### Disabling CPU Limits
+
+In some scenarios, particularly during performance-sensitive tests, you may want to disable CPU limits to prevent throttling. This can be achieved by setting the `pod-cpu-limit` property to a blank string.
+
+=== ":octicons-file-code-16: **Example**"
+
+    ```yaml
+    locust:
+      operator:
+        resource:
+          pod-cpu-limit: "" # (1)!
+    ```
+    
+    1.  Setting the CPU limit to an empty string disables it.
+
+!!! Note
+    When the CPU limit is disabled, the pod is allowed to use as much CPU as is available on the node. This can be useful for maximizing performance, but it can also lead to resource contention if not managed carefully.
+
+---
 
 ## Usage of a private image registry
 
@@ -139,14 +170,14 @@ Images from a private image registry can be used through various methods as desc
 apiVersion: locust.io/v1
 ...
 spec:
-  image: ghcr.io/mycompany/locust:latest #(1)!
-  imagePullSecrets: #(2)!
+  image: ghcr.io/mycompany/locust:latest # (1)!
+  imagePullSecrets: # (2)!
     - gcr-secret
   ...
 ```
 
-1. Specify which Locust image to use for both master and worker containers.
-2. [Optional] Specify an existing pull secret to use for master and worker pods.
+1.  Specify which Locust image to use for both master and worker containers.
+2.  [Optional] Specify an existing pull secret to use for master and worker pods.
 
 ### Image pull policy
 
@@ -156,13 +187,13 @@ Kubernetes uses the image tag and pull policy to control when kubelet attempts t
 apiVersion: locust.io/v1
 ...
 spec:
-  image: ghcr.io/mycompany/locust:latest #(1)!
-  imagePullPolicy: Always #(2)!
+  image: ghcr.io/mycompany/locust:latest # (1)!
+  imagePullPolicy: Always # (2)!
   ...
 ```
 
-1. Specify which Locust image to use for both master and worker containers.
-2. [Optional] Specify the pull policy to use for containers defined within master and worker containers. Supported options include `Always`, `IfNotPresent` and `Never`.
+1.  Specify which Locust image to use for both master and worker containers.
+2.  [Optional] Specify the pull policy to use for containers defined within master and worker containers. Supported options include `Always`, `IfNotPresent` and `Never`.
 
 ## Automatic Cleanup for Finished Master and Worker Jobs
 
@@ -176,15 +207,16 @@ Note that setting up a TTL will not delete `LocustTest` or `ConfigMap` resources
 To set a TTL value, override the key `ttlSecondsAfterFinished` in `values.yaml`:
 
 === ":octicons-file-code-16: `values.yaml`"
-
     ```yaml
     ...
     config:
       loadGenerationJobs:
         # Either leave empty or use an empty string to avoid setting this option
-        ttlSecondsAfterFinished: 3600
+        ttlSecondsAfterFinished: 3600 # (1)!
     ...
     ```
+    
+    1.  Time in seconds to keep the job after it finishes.
 
 You can also use Helm's CLI arguments: `helm install ... --set config.loadGenerationJobs.ttlSecondsAfterFinished=0`.
 

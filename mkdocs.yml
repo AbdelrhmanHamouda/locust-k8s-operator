@@ -18,6 +18,7 @@ copyright: >
 plugins:
   - search
   - git-revision-date-localized
+  - privacy
 
 # Configuration
 theme:
@@ -26,7 +27,6 @@ theme:
   icon:
     logo: material/kubernetes
     repo: material/github
-
 
   features:
     # Search
@@ -37,16 +37,28 @@ theme:
     - navigation.tracking
     - navigation.top
     - navigation.footer
+      - navigation.prune
 
     # Table of content
     - toc.follow
     - toc.integrate
 
-     # Code
+    # Code
     - content.code.annotate
     - content.code.copy
 
+    # Tabs
+    - content.tabs.link
+
   palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: green
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
 
     # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
@@ -56,15 +68,6 @@ theme:
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
-
-    # Palette toggle for light mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: default
-      primary: green
-      accent: teal
-      toggle:
-        icon: material/weather-night
-        name: Switch to dark mode
 
 # Customization
 extra:
@@ -79,8 +82,6 @@ extra:
       as to measure the effectiveness of our documentation and whether users
       find what they're searching for. With your consent, you're helping us to
       make our documentation better.
-
-
 
   social:
 
@@ -98,7 +99,6 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/AbdelrhmanHamouda
       name: Abdelrhman Hamouda on GitHub
-
 
     # Bug
     - icon: fontawesome/solid/bug
@@ -128,8 +128,8 @@ markdown_extensions:
   - pymdownx.caret
   - pymdownx.details
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.highlight
   - pymdownx.critic
   - pymdownx.inlinehilite

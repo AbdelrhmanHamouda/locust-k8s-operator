@@ -28,36 +28,35 @@ about the system is its ability to **horizontally scale** to meet any required p
 
 ### What does it offer
 
-Fundamentally, the _Operator_ provide the following as part of its core offerings; **cloud native**, **automation & CI**, **governance**,
-**Observability**.
+<div class="grid cards" markdown>
 
-**Distributed cloud performance testing**: _[Locust](https://github.com/locustio/locust)_ is a great and very powerful load testing tool. It
-is capable of generating a significant amount of load specially when configured correctly. That being said, there is only so much a single
-instance and vertical scaling can do. Luckily, _Locust_ has a native out of the box support for distributed mode. This _Locust Kubernetes
-Operator_ project leverage this feature and adds systems and functionalities to address challenges and situations that are exclusive to the
-cloud context.
+-   [:material-cloud-check: **Cloud Native**](#)
 
-**Low barrier of entry**: Utilizing the power of the _Operator_ lowers significantly the barrier of entry to run in the cloud. From an
-end-user perspective, running a performance test in the cloud becomes a **single command** operation.
+    ---
 
-**Test isolation** and **Parallel tests**: By default, the _Operator_ is able to support any number of Parallel test executions with an
-absolute guarantee that each test is fully protected from being polluted by the existence of any number of other tests.
+    Leverage the full power of Kubernetes and cloud-native technologies for distributed performance testing.
 
-**Automation & CI**: By having automation as a core focus point, teams and organizations can build performance testing directly into CI/CD
-pipelines. Meaning that every new service, feature or system can be potentially tested and validated for performance SLOs / SLAs.
+-   [:material-robot-happy: **Automation & CI**](#)
 
-**Separation of concerns**: By using the _Operator_, _engineering teams_ can focus on building a robust performance test/s and SREs
-DevOps teams can focus on managing the resources.
+    ---
 
-**Governance**: Enable organizations to have governance over what / how resources are deployed and run on the cloud.
+    Integrate performance testing directly into your CI/CD pipelines for continuous validation.
 
-**Cloud cost optimization**: Using the _Operator_ enables for a more effective control over the **_cloud cost_**. Since resources are
-**only** deployed when needed and **only** for as long as needed, the cost of performance testing is kept to a minimum.
+-   [:material-shield-check: **Governance**](#)
 
-**Observability**: For both engineering teams and cloud admins, the _Operator_ unlocks the ability to build observability & monitoring
-dashboards in order to analyse test results during test runtime or retroactively (interesting for teams) and infrastructure usage and
-resource monitoring ( interesting for
-cloud admins, SREs, etc...).
+    ---
+
+    Maintain control over how resources are deployed and used in the cloud.
+
+-   [:material-chart-bar: **Observability**](#)
+
+    ---
+
+    Gain insights into test results and infrastructure usage with built-in observability features.
+
+</div>
+
+[Check out the full list of features!](features.md)
 
 ![Operator feature set](assets/images/operator-feature-set.png "Operator feature set")
 
