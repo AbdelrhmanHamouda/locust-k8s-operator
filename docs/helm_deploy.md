@@ -7,7 +7,7 @@ description: Instructions on how to deploy the Locust Kubernetes Operator with H
 
 This guide provides comprehensive instructions for deploying the Locust Kubernetes Operator using its official Helm chart.
 
-## Quick Start
+## :material-run-fast: Quick Start
 
 For experienced users, here are the essential commands to get the operator running in the `default` namespace:
 
@@ -17,14 +17,14 @@ helm repo update
 helm install locust-operator locust-k8s-operator/locust-k8s-operator
 ```
 
-## Installation
+## :material-download-box-outline: Installation
 
-### Prerequisites
+### :material-check-circle-outline: Prerequisites
 
 *   A running Kubernetes cluster (e.g., Minikube, GKE, EKS, AKS).
 *   [Helm 3](https://helm.sh/docs/intro/install/) installed on your local machine.
 
-### Step 1: Add the Helm Repository
+### :material-source-repository: Step 1: Add the Helm Repository
 
 First, add the Locust Kubernetes Operator Helm repository to your local Helm client:
 
@@ -38,7 +38,7 @@ Next, update your local chart repository cache to ensure you have the latest ver
 helm repo update
 ```
 
-### Step 2: Install the Chart
+### :material-package-variant-closed: Step 2: Install the Chart
 
 You can install the chart with a release name of your choice (e.g., `locust-operator`).
 
@@ -74,7 +74,7 @@ helm install locust-operator locust-k8s-operator/locust-k8s-operator \
   -f my-values.yaml
 ```
 
-## Verifying the Installation
+## :material-check-decagram-outline: Verifying the Installation
 
 After installation, you can verify that the operator is running correctly by checking the pods in the target namespace:
 
@@ -90,7 +90,7 @@ To view the operator's logs, run:
 kubectl logs -f -n locust-system -l app.kubernetes.io/name=locust-k8s-operator
 ```
 
-## Configuration
+## :material-tune: Configuration
 
 The following tables list the configurable parameters of the Locust Operator Helm chart and their default values.
 
@@ -186,7 +186,7 @@ The following sections cover advanced configuration options. For a complete list
 | `micronaut.metrics.enabled` | Enable/disable all Micronaut metrics. | `true` |
 | `micronaut.metrics.export.prometheus.step` | The step size (duration) for Prometheus metrics export. | `PT30S` |
 
-## Upgrading the Chart
+## :material-arrow-up-bold-box-outline: Upgrading the Chart
 
 To upgrade an existing release to a new version, use the `helm upgrade` command:
 
@@ -194,7 +194,7 @@ To upgrade an existing release to a new version, use the `helm upgrade` command:
 helm upgrade locust-operator locust-k8s-operator/locust-k8s-operator -f my-values.yaml
 ```
 
-## Uninstalling the Chart
+## :material-trash-can-outline: Uninstalling the Chart
 
 To uninstall and delete the `locust-operator` deployment, run:
 
@@ -204,6 +204,6 @@ helm uninstall locust-operator
 
 This command will remove all the Kubernetes components associated with the chart and delete the release.
 
-## Next Steps
+## :material-arrow-right-bold-box-outline: Next Steps
 
 Once the operator is installed, you're ready to start running performance tests! Head over to the [Getting Started](./getting_started.md) guide to learn how to deploy your first `LocustTest`.
