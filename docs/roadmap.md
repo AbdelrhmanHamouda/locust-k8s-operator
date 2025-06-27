@@ -5,13 +5,14 @@ description: Planned features for Locust Kubernetes Operator.
 
 # Roadmap
 
-Not in a particular order (list is updated when features are implemented / planned):
+The following is a list of planned features and improvements for the Locust Kubernetes Operator. This list is not exhaustive and may change over time.
 
-- ✅ Add traceability labels to generated resources
-- ✅ Support for deploying test resources with node affinity / node taints
-- ✅ Support to configure a custom "Metrics Exporter" container
-- Dashboard examples (Grafana + prometheus configuration)
-- Enable event driven actions
-    - Integration with MSTeams: Push notification on test run completion / termination events
-- _**UNDER_INVESTIGATION**_ Benchmarking and collection of non-test generated metrics
-    - Investigation is on going to study the feasibility of supplying _Locust_ pods with external metrics that are collected from service system under-test. Test pods can then use this information to assess pass / fail criteria. This is especially useful in non-REST based services e.g. assess kafka(streams) microservice based on its _consumer lag_ performance coming from the kafka broker.
+-   **Enhanced Observability**: Provide out-of-the-box Grafana dashboard examples and more detailed Prometheus configuration guides to make monitoring even easier.
+
+-   **Event-Driven Actions**: Integrate with notification systems like Microsoft Teams or Slack to send alerts on test completion, failure, or other significant events.
+
+-   **Advanced Benchmarking**: Investigate the feasibility of incorporating external metrics into test results. This would allow for more sophisticated pass/fail criteria, such as assessing the performance of a Kafka-based service by its consumer lag.
+
+-   **Dynamic Updates**: Add support for updating a `LocustTest` custom resource while a test is running. This would allow for dynamically adjusting test parameters without restarting the test.
+
+-   **Web UI/Dashboard**: Explore the possibility of creating a simple web UI or dashboard for managing and monitoring tests directly through the operator.

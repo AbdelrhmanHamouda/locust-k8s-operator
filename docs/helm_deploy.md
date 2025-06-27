@@ -5,6 +5,8 @@ description: Instructions on how to deploy Locust Kubernetes Operator with HELM
 
 # HELM deployment
 
+## Installation
+
 In order to deploy using helm, follow the below steps:
 
 1.  Add the _Operator´s_ HELM repo
@@ -30,7 +32,7 @@ In order to deploy using helm, follow the below steps:
 
 ---------
 
-## Defaults configuration values
+## Configuration
 
 The Locust-K8s-Operator comes with a set of sensible default configuration values that are designed to work seamlessly on a wide range of Kubernetes clusters. These defaults are carefully chosen to provide a smooth out-of-the-box experience.
 

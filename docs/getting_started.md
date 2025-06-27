@@ -21,51 +21,51 @@ class User(HttpUser): # (1)!
         self.client.get("/api/v1/employees") #(3)!
 ```
 
-1. Class representing `users` that will be simulated by Locust.
-2. One or more `task` that each simulated `user` will be performing.
-3. HTTP call to a specific endpoint.
+1.  Class representing `users` that will be simulated by Locust.
+2.  One or more `task` that each simulated `user` will be performing.
+3.  HTTP call to a specific endpoint.
 
 !!! note
 
-      To be able to run performance tests effectivly, an understanding of _Locust_ which is the underline load generation tool is required. All tests must be valid _locust_ tests.
+    To be able to run performance tests effectivly, an understanding of _Locust_ which is the underline load generation tool is required. All tests must be valid _locust_ tests.
 
-      _Locust_ provide a very good and detail rich documentation that can be [found here](https://docs.locust.io/en/stable/quickstart.html).
+    _Locust_ provide a very good and detail rich documentation that can be [found here](https://docs.locust.io/en/stable/quickstart.html).
 
-### Step 2: Write a valid  custom resource for _LocustTest_ CRD
+### Step 2: Write a valid custom resource for _LocustTest_ CRD
 
 A simple _custom resource_ for the previous test can be something like the following example;
 
 > To streamline this step, [_intensive-brew_](https://abdelrhmanhamouda.github.io/intensive-brew/) should be used. It is a simple cli tool that converts a declarative yaml into a compatible LocustTest kubernetes custom resource.
 
 ```yaml title="locusttest-cr.yaml"
-apiVersion: locust.io/v1 #(1)!
-kind: LocustTest #(2)!
+apiVersion: locust.io/v1 # (1)!
+kind: LocustTest # (2)!
 metadata:
-  name: demo.test #(3)!
+  name: demo.test # (3)!
 spec:
-  image: locustio/locust:latest #(4)!
-  masterCommandSeed: #(5)!
+  image: locustio/locust:latest # (4)!
+  masterCommandSeed: # (5)!
     --locustfile /lotest/src/demo_test.py
     --host https://dummy.restapiexample.com
     --users 100
     --spawn-rate 3
     --run-time 3m
-  workerCommandSeed: --locustfile /lotest/src/demo_test.py #(6)!
-  workerReplicas: 3 #(7)!
-  configMap: demo-test-map #(8)!
+  workerCommandSeed: --locustfile /lotest/src/demo_test.py # (6)!
+  workerReplicas: 3 # (7)!
+  configMap: demo-test-map # (8)!
 ```
 
-1. API version based on the deployed _LocustTest_ CRD.
-2. Resource kind.
-3. The name field used by the operator to infer the names of test generated resources. While this value is insignificant to the Operator
-   itself, it is important to keep a good convention here since it helps in tracking resources across the cluster when needed.
-4. Image to use for the load generation pods
-5. Seed command for the _master_ node. The _Operator_ will append to this seed command/s all operational parameters needed for the _master_
-   to perform its job e.g. ports, rebalancing settings, timeouts, etc...
-6. Seed command for the _worker_ node. The _Operator_ will append to this seed command/s all operational parameters needed for the _worker_
-   to perform its job e.g. ports, master node url, master node ports, etc...
-7. The amount of _worker_ nodes to spawn in the cluster.
-8. [Optional] Name of _configMap_ to mount into the pod
+1.  API version based on the deployed _LocustTest_ CRD.
+2.  Resource kind.
+3.  The name field used by the operator to infer the names of test generated resources. While this value is insignificant to the Operator
+    itself, it is important to keep a good convention here since it helps in tracking resources across the cluster when needed.
+4.  Image to use for the load generation pods
+5.  Seed command for the _master_ node. The _Operator_ will append to this seed command/s all operational parameters needed for the _master_
+    to perform its job e.g. ports, rebalancing settings, timeouts, etc...
+6.  Seed command for the _worker_ node. The _Operator_ will append to this seed command/s all operational parameters needed for the _worker_
+    to perform its job e.g. ports, master node url, master node ports, etc...
+7.  The amount of _worker_ nodes to spawn in the cluster.
+8.  [Optional] Name of _configMap_ to mount into the pod
 
 #### Other options
 
@@ -78,14 +78,14 @@ apiVersion: locust.io/v1
 ...
 spec:
   image: locustio/locust:latest
-  labels: #(1)!
+  labels: # (1)!
     master:
       locust.io/role: "master"
       myapp.com/testId: "abc-123"
       myapp.com/tenantId: "xyz-789"
     worker:
       locust.io/role: "worker"
-  annotations: #(2)!
+  annotations: # (2)!
     master:
       myapp.com/threads: "1000"
       myapp.com/version: "2.1.0"
@@ -94,8 +94,8 @@ spec:
   ...
 ```
 
-1. [Optional] Labels are attached to both master and worker pods. They can later be used to identify pods belonging to a particular execution context. This is useful, for example, when tests are deployed programmatically. A launcher application can query the Kubernetes API for specific resources.
-2. [Optional] Annotations too are attached to master and worker pods. They can be used to include additional context about a test. For example, configuration parameters of the software system being tested.
+1.  [Optional] Labels are attached to both master and worker pods. They can later be used to identify pods belonging to a particular execution context. This is useful, for example, when tests are deployed programmatically. A launcher application can query the Kubernetes API for specific resources.
+2.  [Optional] Annotations too are attached to master and worker pods. They can be used to include additional context about a test. For example, configuration parameters of the software system being tested.
 
 Both labels and annotations can be added to the Prometheus configuration, so that metrics are associated with the appropriate information, such as the test and tenant ids. You can read more about this in the [Prometheus documentation](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#kubernetes_sd_config) site.
 
@@ -115,7 +115,7 @@ template `kubectl create configmap <configMap-name> --from-file <your_test.py>`:
 
 !!! note "Fresh cluster resources"
 
-      Fresh cluster resources are allocated for each running test, meaning that tests **DO NOT** have any cross impact on each other.
+    Fresh cluster resources are allocated for each running test, meaning that tests **DO NOT** have any cross impact on each other.
 
 ### Step 5: Start the test by deploying the _LocustTest_ custom resource.
 
