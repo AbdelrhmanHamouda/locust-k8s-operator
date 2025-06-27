@@ -6,7 +6,7 @@ title: Advanced topics
 
 Basic configuration is not always enough to satisfy the performance test needs, for example when needing to work with Kafka and MSK. Below is a collection of topics of an advanced nature. This list will be keep growing as the tool matures more and more.
 
-## Kafka & AWS MSK configuration
+## :material-apache-kafka: Kafka & AWS MSK configuration
 
 Generally speaking, the usage of Kafka in a _locustfile_ is identical to how it would be used anywhere else within the cloud context. Thus, no special setup is needed for the purposes of performance testing with the _Operator_.  
 That being said, if an organization is using kafka in production, chances are that authenticated kafka is being used. One of the main providers of such managed service is _AWS_ in the form of _MSK_. For that end, the _Operator_ have an _out-of-the-box_ support for MSK.
@@ -24,11 +24,11 @@ To enable performance testing with _MSK_, a central/global Kafka user can be cre
 
 ---
 
-## Dedicated Kubernetes Nodes
+## :material-server-network: Dedicated Kubernetes Nodes
 
 To run test resources on dedicated _Kubernetes_ node(s), the _Operator_ support deploying resources with **_Affinity_** and **_Taint Tolerations_**.
 
-### Affinity
+### :material-vector-link: Affinity
 
 This allows generated resources to have specific _Affinity_ options.
 
@@ -87,7 +87,7 @@ In the below example, generated pods will declare 3 **required** labels (keys an
         ...
     ```
 
-### Taint Tolerations
+### :material-vector-difference: Taint Tolerations
 
 This allows generated resources to have specific _Taint Tolerations_ options.
 
@@ -142,7 +142,7 @@ Configuration is done via the `application.yml` file or through Helm values. The
 - `locust.operator.resource.pod-cpu-limit`
 - `locust.operator.resource.pod-ephemeral-storage-limit`
 
-### Disabling CPU Limits
+### :material-cpu-64-bit: Disabling CPU Limits
 
 In some scenarios, particularly during performance-sensitive tests, you may want to disable CPU limits to prevent throttling. This can be achieved by setting the `pod-cpu-limit` property to a blank string.
 
@@ -162,7 +162,7 @@ In some scenarios, particularly during performance-sensitive tests, you may want
 
 ---
 
-## Usage of a private image registry
+## :material-docker: Usage of a private image registry
 
 Images from a private image registry can be used through various methods as described in the [kubernetes documentation](https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry), one of those methods depends on setting `imagePullSecrets` for pods. This is supported in the operator by simply setting the `imagePullSecrets` option in the deployed custom resource. For example:
 
@@ -179,7 +179,7 @@ spec:
 1.  Specify which Locust image to use for both master and worker containers.
 2.  [Optional] Specify an existing pull secret to use for master and worker pods.
 
-### Image pull policy
+### :material-sync: Image pull policy
 
 Kubernetes uses the image tag and pull policy to control when kubelet attempts to download (pull) a container image. The image pull policy can be defined through the `imagePullPolicy` option, as explained in the [kubernetes documentation](https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy). When using the operator, the `imagePullPolicy` option can be directly configured in the custom resource. For example:
 
@@ -195,7 +195,7 @@ spec:
 1.  Specify which Locust image to use for both master and worker containers.
 2.  [Optional] Specify the pull policy to use for containers defined within master and worker containers. Supported options include `Always`, `IfNotPresent` and `Never`.
 
-## Automatic Cleanup for Finished Master and Worker Jobs
+## :material-auto-fix: Automatic Cleanup for Finished Master and Worker Jobs
 
 Once load tests finish, master and worker jobs remain available in Kubernetes.
 You can set up a time-to-live (TTL) value in the operator's Helm chart, so that

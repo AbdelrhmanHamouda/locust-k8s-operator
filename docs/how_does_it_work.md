@@ -1,6 +1,6 @@
 ---
-title: License  
-description: Contribution information.
+title: How does it work
+description: A high-level overview of the operator's workflow.
 ---
 
 # How does it work
@@ -18,7 +18,7 @@ Since a "_Picture Is Worth a Thousand Words_", here is a gif!
 
 ## Steps performed in demo
 
-- Test configmap created in cluster.
-- LocustTest CR deployed into the cluster.
-- The _Operator_ creating, configuring and scheduling test resources on CR creation event.
-- The _Operator_ cleaning up test resources after test CR has been removed event.
+-   :material-file-code-outline: Test configmap created in cluster.
+-   :material-file-document-edit-outline: LocustTest CR deployed into the cluster.
+-   :material-robot-outline: The _Operator_ creating, configuring and scheduling test resources on CR creation event.
+-   :material-delete-sweep-outline: The _Operator_ cleaning up test resources after test CR has been removed event.

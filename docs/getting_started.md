@@ -7,7 +7,7 @@ description: How to get started using Locust Kubernetes operator
 
 Only few simple steps are needed to get a test up and running in the cluster. The following is a step-by-step guide on how to achieve this.
 
-### Step 1: Write a valid Locust test script
+### :material-language-python: Step 1: Write a valid Locust test script
 
 For this example, we will be using the following script
 
@@ -31,7 +31,7 @@ class User(HttpUser): # (1)!
 
     _Locust_ provide a very good and detail rich documentation that can be [found here](https://docs.locust.io/en/stable/quickstart.html).
 
-### Step 2: Write a valid custom resource for _LocustTest_ CRD
+### :material-file-document-outline: Step 2: Write a valid custom resource for _LocustTest_ CRD
 
 A simple _custom resource_ for the previous test can be something like the following example;
 
@@ -99,12 +99,12 @@ spec:
 
 Both labels and annotations can be added to the Prometheus configuration, so that metrics are associated with the appropriate information, such as the test and tenant ids. You can read more about this in the [Prometheus documentation](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#kubernetes_sd_config) site.
 
-### Step 3: Deploy _Locust k8s Operator_ in the cluster.
+### :material-rocket-launch-outline: Step 3: Deploy _Locust k8s Operator_ in the cluster.
 
 The recommended way to install the _Operator_ is by using the official HELM chart. Documentation on how to perform that
 is [available here](helm_deploy.md).
 
-### Step 4: Deploy test as a configMap
+### :material-cogs: Step 4: Deploy test as a configMap
 
 For the purposes of this example, the `demo_test.py` test previously demonstrated will be deployed into the cluster as a _configMap_ that
 the _Operator_ will mount to the load generation pods.  
@@ -117,7 +117,7 @@ template `kubectl create configmap <configMap-name> --from-file <your_test.py>`:
 
     Fresh cluster resources are allocated for each running test, meaning that tests **DO NOT** have any cross impact on each other.
 
-### Step 5: Start the test by deploying the _LocustTest_ custom resource.
+### :material-play-circle-outline: Step 5: Start the test by deploying the _LocustTest_ custom resource.
 
 Deploying a _custom resource_, signals to the _Operator_ the desire to start a test and thus the _Operator_ starts creating and scheduling
 all needed resources.  
@@ -136,7 +136,7 @@ The Operator will create the following resources in the cluster for each valid c
 - A kubernetes _Job_ to manage the _master_ node.
 - A kubernetes _Job_ to manage the _worker_ node.
 
-### Step 6: Clear resources after test run
+### :material-delete-outline: Step 6: Clear resources after test run
 
 In order to remove the cluster resources after a test run, simply remove the custom resource and the _Operator_ will react to this event by
 cleaning the cluster of all **related** resources.  
