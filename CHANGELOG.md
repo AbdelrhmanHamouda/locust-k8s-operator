@@ -1,3 +1,9 @@
+## 1.0.0 (2025-06-27)
+
+### Feat
+
+- disable resource limits for workers when config value is blank (#237)
+
 ## 0.11.0 (2024-10-26)
 
 ### Feat
