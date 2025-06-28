@@ -1,6 +1,6 @@
 plugins {
     id 'com.google.cloud.tools.jib' version '3.3.2'
-    id 'io.micronaut.application' version "4.2.1"
+    id 'io.micronaut.application' version "4.4.1"
     id "com.diffplug.spotless" version "6.25.0"
     id "jacoco"
     id "idea"
@@ -21,11 +21,11 @@ application {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 
-    sourceCompatibility = JavaVersion.toVersion("17")
-    targetCompatibility = JavaVersion.toVersion("17")
+    sourceCompatibility = JavaVersion.toVersion("21")
+    targetCompatibility = JavaVersion.toVersion("21")
 
 }
 graalvmNative.toolchainDetection = false
