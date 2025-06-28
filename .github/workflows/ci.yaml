@@ -90,7 +90,7 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
-        run: ct install
+        run: ct install --target-branch ${{ github.event.repository.default_branch }} --config .github/ct.yaml
 
   docs-test:
     name: Test documentation
