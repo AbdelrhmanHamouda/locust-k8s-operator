@@ -15,6 +15,7 @@ Utilize the full power of _[Locust](https://github.com/locustio/locust)_ in the 
 [![CI Pipeline][pipeline-status]][pipeline-status-url]
 [![Codacy Badge][code-coverage]][code-coverage-url]
 [![Codacy Badge][code-quality]][code-quality-url]
+[![Docker Pulls][docker-pulls]][docker-url]
 
 <div style="text-align: center;">
 <img  src="assets/images/undraw_real_time_analytics_cropped.svg" height="500" width="500" alt=""/>
@@ -95,3 +96,7 @@ performance testing.
 [issues-url]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues
 [LocustTest]:https://github.com/AbdelrhmanHamouda/locust-k8s-operator/tree/master/kube/crd/locust-test-crd.yaml
 [cr-example]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/tree/master/kube/sample-cr/locust-test-cr.yaml
+
+[//]: # (Docker badge)
+[docker-url]: https://hub.docker.com/r/lotest/locust-k8s-operator
+[docker-pulls]:https://img.shields.io/docker/pulls/lotest/locust-k8s-operator?style=flat&logo=docker&logoColor=green&label=Image%20Pulls&color=green&link=https%3A%2F%2Fhub.docker.com%2Fr%2Flotest%2Flocust-k8s-operator

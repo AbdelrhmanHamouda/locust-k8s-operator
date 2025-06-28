@@ -13,6 +13,7 @@ Docs: [github.io/locust-k8s-operator/](https://abdelrhmanhamouda.github.io/locus
 [![Codacy Badge][code-coverage]][code-coverage-url]
 [![Codacy Badge][code-quality]][code-quality-url]
 [![Documentation][docs]][docs-url]
+[![Docker Pulls][docker-pulls]][docker-url]
 
 ![](docs/assets/images/run-anywhere.png)
 
@@ -55,3 +56,6 @@ Open source licensed under Apache-2.0 license (see LICENSE file for details).
 [//]: # (Documentation badge)
 [docs]: https://img.shields.io/badge/Documentation-gh--pages-green
 [docs-url]:https://abdelrhmanhamouda.github.io/locust-k8s-operator/
+[//]: # (Docker badge)
+[docker-url]: https://hub.docker.com/r/lotest/locust-k8s-operator
+[docker-pulls]:https://img.shields.io/docker/pulls/lotest/locust-k8s-operator?style=flat&logo=docker&logoColor=green&label=Image%20Pulls&color=green&link=https%3A%2F%2Fhub.docker.com%2Fr%2Flotest%2Flocust-k8s-operator
