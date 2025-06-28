@@ -1,6 +1,6 @@
 plugins {
     id 'com.google.cloud.tools.jib' version '3.3.2'
-    id 'io.micronaut.application' version "4.4.1"
+    id 'io.micronaut.application' version "4.5.4"
     id "com.diffplug.spotless" version "6.25.0"
     id "jacoco"
     id "idea"
@@ -36,6 +36,12 @@ micronaut {
         incremental(true)
         annotations("com.*")
     }
+}
+
+test {
+    // Disable parallel test execution to prevent resource conflicts between tests
+    // that use mock Kubernetes API servers.
+    maxParallelForks = 1
 }
 
 // don"t change apply ordering
