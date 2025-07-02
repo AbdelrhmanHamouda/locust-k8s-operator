@@ -85,7 +85,7 @@ task integrationTest(type: Test) {
     }
 
     // Ensure clean state by running these tasks first
-    dependsOn clean, build, jibDockerBuild
+    dependsOn clean, assemble, classes, jibDockerBuild
 
     // Force the task to run even if it's considered up-to-date
     outputs.upToDateWhen { false }
