@@ -1,0 +1,100 @@
+// Integration Test Configuration
+sourceSets {
+    integrationTest {
+        java.srcDirs = ['src/integrationTest/java']
+        resources.srcDirs = ['src/integrationTest/resources']
+        compileClasspath += main.output + test.output
+        runtimeClasspath += main.output + test.output
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
+dependencies {
+    integrationTestImplementation 'org.testcontainers:testcontainers:1.19.0'
+    integrationTestImplementation 'org.testcontainers:k3s:1.19.0'
+    integrationTestImplementation 'io.fabric8:kubernetes-client:6.8.1'
+    integrationTestImplementation 'org.awaitility:awaitility:4.2.0'
+    integrationTestImplementation 'org.yaml:snakeyaml:2.0'
+    integrationTestImplementation 'org.apache.commons:commons-compress:1.23.0'
+    integrationTestImplementation 'commons-io:commons-io:2.11.0'
+}
+
+// Function to detect correct Docker socket path (same as jib.gradle)
+def getDockerHostForIntegrationTest() {
+    // Check if DOCKER_HOST is already set
+    def dockerHost = System.getenv('DOCKER_HOST')
+    if (dockerHost) {
+        return dockerHost
+    }
+
+    // For macOS with Docker Desktop, check the user-specific socket
+    def userDockerSocket = System.getProperty('user.home') + '/.docker/run/docker.sock'
+    if (new File(userDockerSocket).exists()) {
+        return 'unix://' + userDockerSocket
+    }
+
+    // Default Docker socket
+    def defaultSocket = '/var/run/docker.sock'
+    if (new File(defaultSocket).exists()) {
+        return 'unix://' + defaultSocket
+    }
+
+    // Fallback to default
+    return 'unix:///var/run/docker.sock'
+}
+
+task integrationTest(type: Test) {
+    group = 'verification'
+    description = 'Runs integration tests'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+
+    useJUnitPlatform()
+
+    // Set test timeouts
+    systemProperty 'junit.jupiter.execution.timeout.default', '15m'
+
+    // Pass environment variables to tests with proper Docker socket detection
+    environment 'DOCKER_HOST', getDockerHostForIntegrationTest()
+
+    // Configure Testcontainers to use default Docker socket for volume mounting
+    // This fixes the issue where Docker Desktop's user-specific socket can't be mounted as volume
+    environment 'TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE', '/var/run/docker.sock'
+
+    // Disable caching of test results to ensure fresh runs each time
+    outputs.upToDateWhen { false }
+
+    // Always run all tests, don't skip any based on previous runs
+    options {
+        // Ensure all tests run every time
+        testLogging {
+            events "passed", "skipped", "failed"
+            exceptionFormat "full"
+            showStandardStreams = true
+        }
+    }
+
+    // Configure test reporting
+    reports {
+        html.outputLocation = file("$buildDir/reports/integration-tests")
+        junitXml.outputLocation = file("$buildDir/test-results/integration-test")
+    }
+
+    // Ensure clean state by running these tasks first
+    dependsOn clean, build, jibDockerBuild
+
+    // Force the task to run even if it's considered up-to-date
+    outputs.upToDateWhen { false }
+
+    // Only run if explicitly requested
+    onlyIf { project.hasProperty('runIntegrationTests') || gradle.startParameter.taskNames.contains('integrationTest') }
+}
+
+// Make check depend on integration tests in CI
+if (System.getenv('CI') == 'true') {
+    check.dependsOn integrationTest
+}
