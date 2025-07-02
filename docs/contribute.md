@@ -1,18 +1,41 @@
 ---
-title: Contribution  
-description: Contribution information.
+title: Contributing & Development  
+description: Information for contributors and developers.
 ---
 
-# Contribute
+# Contributing & Development
 
-There's plenty to do, come say hi in [the issues][issues-url]! 👋
+## Ways to Contribute
 
-Also check out the [CONTRIBUTING.MD][contributing-url] 🤓
+There are several ways you can contribute to the Locust K8s Operator project:
 
-## project status
+### For Everyone
 
-The project is **_actively_** maintained and is under continues development and improvement. If you have any request or want to chat, kindly
-open a ticket. If you wish to contribute code and / or ideas, kindly check the contribution section.
+- **Reporting Issues**: Found a bug or have a feature request? Open an [issue][issues-url] 👋
+- **Documentation**: Help improve the documentation by suggesting clarifications or additions
+- **Community Support**: Answer questions and help others in the issue tracker
+
+### For Developers
+
+> **Note**: The following sections are intended for developers who want to contribute code to the project. If you're just using the operator, you can skip these sections.
+
+- **Code Contributions**: Implement new features or fix bugs
+- **Testing**: Improve test coverage and test in different environments
+- **Review**: Review pull requests from other contributors
+
+## Project Status
+
+The project is **_actively_** maintained and is under continuous development and improvement. If you have any request or want to chat, kindly open a ticket. If you wish to contribute code and/or ideas, please review the development documentation below.
+
+## Development Documentation
+
+For developers contributing to the Locust K8s Operator project, we provide detailed documentation on various development aspects:
+
+- [Local Development Guide](local-development.md): Setting up your development environment
+- [Integration Testing Guide](integration-testing.md): Running and creating integration tests
+- [Pull Request Process](pull-request-process.md): Guidelines for submitting code changes
+
+You can also refer to the comprehensive [CONTRIBUTING.MD][contributing-url] file in the GitHub repository for more information.
 
 [//]: # (common urls)
 [contributing-url]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/CONTRIBUTING.md

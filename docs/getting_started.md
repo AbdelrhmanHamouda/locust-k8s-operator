@@ -53,6 +53,7 @@ spec:
   workerCommandSeed: --locustfile /lotest/src/demo_test.py # (6)!
   workerReplicas: 3 # (7)!
   configMap: demo-test-map # (8)!
+  libConfigMap: demo-lib-map # (9)!
 ```
 
 1.  API version based on the deployed _LocustTest_ CRD.
@@ -66,6 +67,7 @@ spec:
     to perform its job e.g. ports, master node url, master node ports, etc...
 7.  The amount of _worker_ nodes to spawn in the cluster.
 8.  [Optional] Name of _configMap_ to mount into the pod
+9.  [Optional] Name of _configMap_ containing lib directory files to mount at `/opt/locust/lib`
 
 #### Other options
 
@@ -112,6 +114,80 @@ To deploy the test as a configMap, run the bellow command following this
 template `kubectl create configmap <configMap-name> --from-file <your_test.py>`:
 
 - `kubectl create configmap demo-test-map --from-file demo_test.py`
+
+#### :material-folder-multiple: Step 4.1: Deploy lib files as a configMap (Optional)
+
+!!! info "What are lib files and why use this feature?"
+    **Lib files** are Python modules and libraries that your Locust tests depend on. When your tests require custom helper functions, utilities, or shared code that should be available across multiple test files, this feature allows you to package and deploy them alongside your tests.
+
+##### How it works
+
+The Locust Kubernetes Operator provides a mechanism to deploy your custom Python libraries as a ConfigMap, which will then be mounted to the `/opt/locust/lib` directory inside all Locust pods (both master and worker). This allows your test scripts to import and use these libraries.
+
+For example, if you have the following structure:
+
+```
+project/
+├── my_test.py          # Your main Locust test file
+└── lib/
+    ├── helpers.py      # Helper functions
+    ├── utils.py        # Utility functions
+    └── models.py       # Data models
+```
+
+Your test might import these libraries like this:
+
+```python
+# in my_test.py
+from lib.helpers import some_helper_function
+from lib.utils import format_data
+```
+
+To make these imports work when your test runs in Kubernetes, you need to:
+
+1. Deploy your lib files as a ConfigMap
+2. Reference this ConfigMap in your LocustTest custom resource
+
+##### Step-by-step instructions
+
+**1. Create a ConfigMap from your lib directory:**
+
+You can deploy all library files from a directory:
+
+```bash
+# Deploy all files from the lib/ directory as a ConfigMap
+kubectl create configmap demo-lib-map --from-file=lib/
+```
+
+Alternatively, you can create it from individual files:
+
+```bash
+# Deploy specific files as a ConfigMap
+kubectl create configmap demo-lib-map --from-file=lib/helpers.py --from-file=lib/utils.py
+```
+
+**2. Reference the lib ConfigMap in your LocustTest custom resource:**
+
+```yaml
+apiVersion: locust.io/v1
+kind: LocustTest
+metadata:
+  name: example-locusttest
+spec:
+  masterConfig:
+    replicas: 1
+  workerConfig:
+    replicas: 2
+  configMap: demo-test-map    # Your test script ConfigMap
+  libConfigMap: demo-lib-map   # Your lib files ConfigMap
+```
+
+!!! tip "Organizing your code"
+    This feature is especially useful when:
+    
+    1. You have complex test scenarios that benefit from modular code
+    2. You want to share code between multiple Locust tests
+    3. You need to keep your test scripts clean by separating implementation details
 
 !!! note "Fresh cluster resources"
 
