@@ -31,5 +31,6 @@ public class LoadGenerationNode {
     private Integer replicas;
     private List<Integer> ports;
     private String configMap;
+    private String libConfigMap;
 
 }

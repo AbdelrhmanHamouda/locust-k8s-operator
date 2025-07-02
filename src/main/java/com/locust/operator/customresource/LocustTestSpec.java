@@ -35,6 +35,7 @@ public class LocustTestSpec implements KubernetesResource {
     private String workerCommandSeed;
     private Integer workerReplicas;
     private String configMap;
+    private String libConfigMap;
     private String image;
     private String imagePullPolicy;
     private List<String> imagePullSecrets;

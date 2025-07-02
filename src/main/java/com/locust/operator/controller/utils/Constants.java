@@ -60,6 +60,7 @@ public class Constants {
     public static final String DEFAULT_RESTART_POLICY = "Never";
     public static final int BACKOFF_LIMIT = 0;
     public static final String DEFAULT_MOUNT_PATH = "/lotest/src/";
+    public static final String LIB_MOUNT_PATH = "/opt/locust/lib";
     public static final String CONTAINER_ARGS_SEPARATOR = " ";
 
     // Node Affinity constants
