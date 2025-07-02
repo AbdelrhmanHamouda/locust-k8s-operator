@@ -1,5 +1,7 @@
-name: CI Pipeline
+# This is the main CI pipeline for the project.
+name: 🤖 CI Pipeline
 
+# This workflow is triggered on pushes to master/main and on pull requests.
 on:
   push:
     branches:
@@ -8,73 +10,90 @@ on:
   pull_request_target:
     types: [ opened, synchronize, reopened, ready_for_review ]
 
+# Sets default read-only permissions for the workflow.
 permissions: read-all
 
 jobs:
+  # Job to build and validate the project.
   build:
-    name: Build & Validate
+    name: 🏗️ Build & Validate
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      # Step 1: Checks out the repository code.
+      - name: 📂 Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      # Step 2: Sets up JDK 21.
+      - name: ☕ Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: temurin
 
-      - name: Validate Gradle wrapper
+      # Step 3: Validates the Gradle wrapper to ensure its integrity.
+      - name: ✅ Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v3.4.2
 
-      - name: Build
+      # Step 4: Builds the project and generates a JaCoCo test report.
+      - name: 🛠️ Build
         uses: gradle/gradle-build-action@v3.5.0
         with:
           arguments: build jacocoTestReport -i
 
-      - name: Report coverage
-        uses: codecov/codecov-action@v4
+      # Step 5: Reports code coverage to Codecov.
+      - name: 📊 Report coverage
+        uses: codecov/codecov-action@v5
         with:
           name: branch-${{ github.ref }}
           verbose: true
           fail_ci_if_error: false
 
-      - name: Run codacy coverage reporter
+      # Step 6: Runs the Codacy coverage reporter.
+      - name: 📈 Run codacy coverage reporter
         uses: codacy/codacy-coverage-reporter-action@v1
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
-      - uses: actions/upload-artifact@v4.4.0
+      # Step 7: Uploads build artifacts.
+      - name: 📦 Upload build artifacts
+        uses: actions/upload-artifact@v4.4.0
         with:
           name: Build Artifacts
           path: |
             **/build/reports
 
+  # Job to lint and test the Helm chart.
   lint-test-helm:
-    name: Lint & Test chart
+    name: 🌊 Lint & Test chart
     runs-on: ubuntu-latest
     needs:
       - build
     steps:
-      - name: Checkout
+      # Step 1: Checks out the repository code.
+      - name: 📂 Checkout
         uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 0
 
-      - name: Set up Helm
+      # Step 2: Sets up Helm.
+      - name: 🌊 Set up Helm
         uses: azure/setup-helm@v4
         with:
           version: v3.10.0
 
-      - uses: actions/setup-python@v5
+      # Step 3: Sets up Python.
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
           check-latest: true
 
-      - name: Set up chart-testing
+      # Step 4: Sets up chart-testing.
+      - name: 📊 Set up chart-testing
         uses: helm/chart-testing-action@v2.7.0
 
-      - name: Run chart-testing (list-changed)
+      # Step 5: Lists the Helm charts that have changed.
+      - name: 📋 Run chart-testing (list-changed)
         id: list-changed
         run: |
           changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
@@ -82,39 +101,47 @@ jobs:
             echo "::set-output name=changed::true"
           fi
 
-      - name: Run chart-testing (lint)
+      # Step 6: Lints the Helm charts.
+      - name: 🔎 Run chart-testing (lint)
         run: ct lint --target-branch ${{ github.event.repository.default_branch }} --config .github/ct.yaml
 
-      - name: Create kind cluster
+      # Step 7: Creates a KinD cluster if any charts have changed.
+      - name: ⛵ Create kind cluster
         uses: helm/kind-action@v1.10.0
         if: steps.list-changed.outputs.changed == 'true'
 
-      - name: Run chart-testing (install)
+      # Step 8: Installs the Helm charts.
+      - name: 🚀 Run chart-testing (install)
         run: ct install --target-branch ${{ github.event.repository.default_branch }} --config .github/ct.yaml
 
+  # Job to test the documentation.
   docs-test:
-    name: Test documentation
+    name: 📚 Test documentation
     runs-on: ubuntu-latest
     needs:
       - lint-test-helm
     steps:
-      - name: Checkout
+      # Step 1: Checks out the repository code.
+      - name: 📂 Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup python
+      # Step 2: Sets up Python.
+      - name: 🐍 Setup python
         uses: actions/setup-python@v5
         with:
           python-version: 3.x
 
-      - name: Install dependencies
+      # Step 3: Installs dependencies.
+      - name: 📦 Install dependencies
         run: |
           pip install \
           mkdocs-material \
           mkdocs-git-revision-date-localized-plugin
 
-      - name: Build documentation
+      # Step 4: Builds the documentation.
+      - name: 📄 Build documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
