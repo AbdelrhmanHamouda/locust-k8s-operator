@@ -14,6 +14,10 @@ import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import org.apache.commons.io.FileUtils;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterAll;
+
+import java.io.IOException;
+import java.lang.IllegalStateException;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -121,7 +125,7 @@ class LocustOperatorIntegrationTest {
 
     @Test
     @Order(2)
-    void testLocustTestDeployment() throws Exception {
+    void testLocustTestDeployment() {
         logger.info("Testing Locust test deployment...");
 
         // Create test namespace
@@ -147,7 +151,7 @@ class LocustOperatorIntegrationTest {
 
     @Test
     @Order(3)
-    void testLocustTestExecution() throws Exception {
+    void testLocustTestExecution() {
         logger.info("Testing Locust test execution...");
 
         // Port forward to Locust master
@@ -203,7 +207,7 @@ class LocustOperatorIntegrationTest {
         int exitCode = process.waitFor();
 
         if (exitCode != 0) {
-            throw new RuntimeException("Failed to build operator image, exit code: " + exitCode);
+            throw new IOException("Failed to build operator image, exit code: " + exitCode);
         }
 
         logger.info("Operator image built successfully: {}", OPERATOR_IMAGE);
@@ -221,13 +225,13 @@ class LocustOperatorIntegrationTest {
         int exitCode = process.waitFor();
 
         if (exitCode != 0) {
-            throw new RuntimeException("Failed to package Helm chart, exit code: " + exitCode);
+            throw new IOException("Failed to package Helm chart, exit code: " + exitCode);
         }
 
         // Find the packaged chart
         File[] chartFiles = tempDir.toFile().listFiles((dir, name) -> name.endsWith(".tgz"));
         if (chartFiles == null || chartFiles.length == 0) {
-            throw new RuntimeException("No Helm chart package found");
+            throw new IOException("No Helm chart package found");
         }
 
         helmChartPath = chartFiles[0].getAbsolutePath();
@@ -246,7 +250,7 @@ class LocustOperatorIntegrationTest {
         int exportExitCode = exportProcess.waitFor();
 
         if (exportExitCode != 0) {
-            throw new RuntimeException("Failed to export operator image");
+            throw new IOException("Failed to export operator image");
         }
 
         // Load the image into K3s
@@ -254,7 +258,7 @@ class LocustOperatorIntegrationTest {
         Container.ExecResult result = k3s.execInContainer("ctr", "images", "import", "/tmp/operator-image.tar");
 
         if (result.getExitCode() != 0) {
-            throw new RuntimeException("Failed to load image into K3s: " + result.getStderr());
+            throw new IOException("Failed to load image into K3s: " + result.getStderr());
         }
 
         logger.info("Operator image loaded into K3s successfully");
@@ -276,7 +280,7 @@ class LocustOperatorIntegrationTest {
 
             logger.info("Kubernetes client initialized successfully");
         } catch (Exception e) {
-            throw new RuntimeException("Failed to initialize Kubernetes client", e);
+            throw new IllegalStateException("Failed to initialize Kubernetes client", e);
         }
     }
 
@@ -314,7 +318,7 @@ class LocustOperatorIntegrationTest {
         int exitCode = process.waitFor();
 
         if (exitCode != 0) {
-            throw new RuntimeException("Failed to install operator with Helm");
+            throw new IOException("Failed to install operator with Helm");
         }
 
         logger.info("Operator installed successfully with Helm");
@@ -351,7 +355,7 @@ class LocustOperatorIntegrationTest {
 
         assertFalse(operatorPods.isEmpty(), "No operator pods found");
 
-        Pod operatorPod = operatorPods.get(0);
+        Pod operatorPod = operatorPods.getFirst();
         assertEquals("Running", operatorPod.getStatus().getPhase(),
                 "Operator pod is not running");
 
@@ -391,7 +395,7 @@ class LocustOperatorIntegrationTest {
         logger.info("Test ConfigMap created successfully");
     }
 
-    private void deployLocustTestCR() throws Exception {
+    private void deployLocustTestCR() {
         logger.info("Deploying LocustTest custom resource...");
 
         String locustTestYaml = """
@@ -482,7 +486,7 @@ class LocustOperatorIntegrationTest {
                             .getItems();
 
                     assertEquals(1, masterPods.size(), "Expected 1 master pod");
-                    Pod masterPod = masterPods.get(0);
+                    Pod masterPod = masterPods.getFirst();
 
                     if (!"Running".equals(masterPod.getStatus().getPhase())) {
                         // Log details to help debug pod failure
@@ -510,7 +514,7 @@ class LocustOperatorIntegrationTest {
                     assertEquals(1, workerPods.size(), "Expected 1 worker pod");
 
                     // Instead of requiring all worker pods to be Running, check if at least one exists
-                    assertTrue(workerPods.size() >= 1, "Expected at least one worker pod");
+                    assertFalse(workerPods.isEmpty(), "Expected at least one worker pod");
 
                     // Log all pod states for debugging
                     logger.info("Found {} worker pods:", workerPods.size());
@@ -577,7 +581,7 @@ class LocustOperatorIntegrationTest {
                 .getItems();
 
         assertFalse(masterPods.isEmpty(), "No master pods found");
-        return masterPods.get(0).getMetadata().getName();
+        return masterPods.getFirst().getMetadata().getName();
     }
 
     private void verifyLocustMasterReady(String masterPodName) {
@@ -617,7 +621,7 @@ class LocustOperatorIntegrationTest {
                         } catch (Exception e) {
                             logger.warn("Could not get logs from master pod: {}", e.getMessage());
                             // Continue even if we can't get logs
-                            assertTrue(true, "Skipping log check due to error");
+                            logger.info("Skipping log check due to error, continuing with test");
                         }
                     });
         } catch (Exception e) {
@@ -643,7 +647,7 @@ class LocustOperatorIntegrationTest {
                     logs.length() > 200 ? logs.substring(0, 200) : logs);
 
             // Accept any log content as valid - we just want to know if we can retrieve logs
-            assertTrue(!logs.isEmpty(), "Master logs are empty");
+            assertFalse(logs.isEmpty(), "Master logs are empty");
         } catch (Exception e) {
             logger.warn("Error retrieving master logs: {}", e.getMessage());
             // Don't fail the test if we can't get logs
@@ -670,7 +674,7 @@ class LocustOperatorIntegrationTest {
             }
 
             // Only check the first worker pod to simplify testing
-            Pod workerPod = workerPods.get(0);
+            Pod workerPod = workerPods.getFirst();
 
             try {
                 Awaitility.await()
@@ -688,7 +692,7 @@ class LocustOperatorIntegrationTest {
                                         logs.length() > 100 ? logs.substring(0, 100) : logs);
 
                                 // Just check for any log output rather than connection message
-                                assertTrue(!logs.isEmpty(), "No logs from worker pod: " + workerPod.getMetadata().getName());
+                                assertFalse(logs.isEmpty(), "No logs from worker pod: " + workerPod.getMetadata().getName());
                             } catch (Exception e) {
                                 logger.warn("Error getting logs from worker pod: {}", e.getMessage());
                                 // Skip log check and continue
@@ -706,7 +710,7 @@ class LocustOperatorIntegrationTest {
         logger.info("Worker verification completed");
     }
 
-    private void deleteLocustTestCR() throws Exception {
+    private void deleteLocustTestCR() {
         logger.info("Deleting LocustTest custom resource...");
 
         kubernetesClient.load(new ByteArrayInputStream(("apiVersion: locust.io/v1\nkind: LocustTest\nmetadata:\n  name: integration.test\n  namespace: " + TEST_NAMESPACE).getBytes()))

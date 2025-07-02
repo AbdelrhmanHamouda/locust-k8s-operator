@@ -164,7 +164,7 @@ show_test_results() {
 # Function to handle cleanup on exit
 cleanup_on_exit() {
     local exit_code=$?
-    if [ $exit_code -ne 0 ]; then
+    if [ "$exit_code" -ne 0 ]; then
         print_error "Integration test failed with exit code $exit_code"
         print_warning "Performing emergency cleanup..."
 
