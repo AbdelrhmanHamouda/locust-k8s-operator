@@ -19,25 +19,35 @@ plugins:
   - search
   - git-revision-date-localized
   - privacy
+  - tags
 
 # Configuration
 theme:
   name: material
+  custom_dir: overrides
 
   icon:
     logo: material/kubernetes
     repo: material/github
+    # Tag icons (optional)
+    tag:
+      docs: fontawesome/solid/book
+      api: fontawesome/solid/code
+      tutorial: fontawesome/solid/graduation-cap
+      guide: fontawesome/solid/map
 
   features:
     # Search
     - search.highlight
     - search.share
+    - search.suggest
 
     # Navigation
     - navigation.tracking
     - navigation.top
     - navigation.footer
-      - navigation.prune
+    - navigation.indexes
+    - navigation.prune
 
     # Table of content
     - toc.follow
@@ -49,6 +59,10 @@ theme:
 
     # Tabs
     - content.tabs.link
+
+    # Other features
+    - header.autohide
+    - announce.dismiss
 
   palette:
     # Palette toggle for light mode
@@ -71,6 +85,26 @@ theme:
 
 # Customization
 extra:
+  # Add CSS to site
+  css:
+    - assets/stylesheets/extra.css
+
+  # Add JavaScript for scroll effects
+  javascript:
+    - assets/javascripts/scroll-effects.js
+
+  # Version dropdown configuration
+  version:
+    provider: mike
+    default: latest
+
+  # Tag configuration (optional - for tag icons)
+  tags:
+    Documentation: docs
+    API: api
+    Tutorial: tutorial
+    Guide: guide
+
   consent:
     title: Cookie consent
     actions:
@@ -155,7 +189,7 @@ nav:
   - Roadmap: roadmap.md
   - Contributing & Development:
       - Overview: contribute.md
-      - Integration Testing: docs/integration-testing.md
-      - Local Development: docs/local-development.md
-      - Pull Request Process: docs/pull-request-process.md
+      - Integration Testing: integration-testing.md
+      - Local Development: local-development.md
+      - Pull Request Process: pull-request-process.md
   - License: license.md
