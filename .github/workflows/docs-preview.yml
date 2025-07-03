@@ -48,13 +48,28 @@ jobs:
           # Create a temporary mkdocs config for preview
           cp mkdocs.yml mkdocs-preview.yml
 
-          # Update site_url for the preview subdirectory
-          sed -i "s|site_url:.*|site_url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${{ github.event.number }}/|g" mkdocs-preview.yml || true
+          # Use Python to properly modify the YAML structure
+          python3 << 'EOF'
+          import yaml
+          import sys
 
-          # Add site_url if it doesn't exist
-          if ! grep -q "site_url:" mkdocs-preview.yml; then
-            echo "site_url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${{ github.event.number }}/" >> mkdocs-preview.yml
-          fi
+          try:
+              # Load the mkdocs config
+              with open('mkdocs-preview.yml', 'r') as f:
+                  config = yaml.safe_load(f)
+
+              # Set the site_url for the preview
+              config['site_url'] = 'https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${{ github.event.number }}/'
+
+              # Write back the modified config
+              with open('mkdocs-preview.yml', 'w') as f:
+                  yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+
+              print("✅ Successfully configured mkdocs-preview.yml")
+          except Exception as e:
+              print(f"❌ Error configuring mkdocs: {e}")
+              sys.exit(1)
+          EOF
 
       - name: 🏗️ Build documentation
         run: mkdocs build -f mkdocs-preview.yml -d site
