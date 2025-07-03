@@ -22,6 +22,9 @@ jobs:
       # Step 1: Checks out the repository code.
       - name: 📂 Checkout repo
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
 
       # Step 2: Sets up JDK 21.
       - name: ☕ Set up JDK 21
@@ -74,6 +77,8 @@ jobs:
         uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
 
       # Step 2: Sets up Helm.
       - name: 🌊 Set up Helm
@@ -126,6 +131,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
 
       # Step 2: Sets up Python.
       - name: 🐍 Setup python
