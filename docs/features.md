@@ -49,6 +49,12 @@ description: List of available features
 
     Use images from private registries for your Locust tests. The operator supports `imagePullSecrets` and configurable `imagePullPolicy`.
 
+-   :material-folder-multiple: **Lib ConfigMap Support**
+
+    ---
+
+    Mount lib directories via ConfigMap for your Locust tests. This feature allows you to include shared libraries and modules without modifying test files or patching images, similar to the helm chart's `locust_lib_configmap` functionality.
+
 -   :material-kubernetes: **Advanced Scheduling**
 
     ---

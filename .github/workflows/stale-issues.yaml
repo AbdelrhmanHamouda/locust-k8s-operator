@@ -1,19 +1,32 @@
-name: 'Mark and close stale issues'
+# This workflow marks and closes stale issues.
+name: '🧹 Mark and close stale issues'
+
+# Sets write permissions for issues.
 permissions:
   issues: write
 
+# This workflow is scheduled to run every Sunday at midnight.
 on:
   schedule:
     - cron: '0 0 * * 0'
 
 jobs:
+  # Job to handle stale issues.
   stale:
+    name: 🧟 Stale issue handler
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/stale@v9
+      # Uses the stale action to mark and close issues.
+      - name: 🤖 Mark and close stale issues
+        uses: actions/stale@v9
         with:
+          # Message to post on stale issues.
           stale-issue-message: 'This issue is stale because it has been for 30 days with no activity. Remove stale label or leave a comment, otherwise, this issue will be closed in 10 days.'
-          days-before-stale: 30
-          days-before-close: 10
+          # Number of days before an issue is marked as stale.
+          days-before-stale: 90
+          # Number of days before a stale issue is closed.
+          days-before-close: 30
+          # Issues with assignees will not be marked as stale.
           exempt-all-assignees: true
+          # Issues with these labels will not be marked as stale.
           exempt-issue-labels: 'good first issue'

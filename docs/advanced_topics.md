@@ -144,15 +144,15 @@ Configuration is done via the `application.yml` file or through Helm values. The
 
 ### :material-cpu-64-bit: Disabling CPU Limits
 
-In some scenarios, particularly during performance-sensitive tests, you may want to disable CPU limits to prevent throttling. This can be achieved by setting the `pod-cpu-limit` property to a blank string.
+In some scenarios, particularly during performance-sensitive tests, you may want to disable CPU limits to prevent throttling. This can be achieved by setting the `cpuLimit` property to a blank string in your Helm values.
 
-=== ":octicons-file-code-16: **Example**"
+=== ":octicons-file-code-16: **Helm Values Example**"
 
     ```yaml
-    locust:
-      operator:
+    config:
+      loadGenerationPods:
         resource:
-          pod-cpu-limit: "" # (1)!
+          cpuLimit: "" # (1)!
     ```
     
     1.  Setting the CPU limit to an empty string disables it.

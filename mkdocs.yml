@@ -153,5 +153,9 @@ nav:
   - Advanced topics: advanced_topics.md
   - Metrics & Dashboards: metrics_and_dashboards.md
   - Roadmap: roadmap.md
-  - Contribute: contribute.md
+  - Contributing & Development:
+      - Overview: contribute.md
+      - Integration Testing: docs/integration-testing.md
+      - Local Development: docs/local-development.md
+      - Pull Request Process: docs/pull-request-process.md
   - License: license.md

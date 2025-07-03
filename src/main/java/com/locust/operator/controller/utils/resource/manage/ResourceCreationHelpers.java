@@ -57,6 +57,7 @@ import static com.locust.operator.controller.dto.OperatorType.EQUAL;
 import static com.locust.operator.controller.utils.Constants.APP_DEFAULT_LABEL;
 import static com.locust.operator.controller.utils.Constants.BACKOFF_LIMIT;
 import static com.locust.operator.controller.utils.Constants.DEFAULT_MOUNT_PATH;
+import static com.locust.operator.controller.utils.Constants.LIB_MOUNT_PATH;
 import static com.locust.operator.controller.utils.Constants.DEFAULT_NODE_MATCH_EXPRESSION_OPERATOR;
 import static com.locust.operator.controller.utils.Constants.DEFAULT_RESOURCE_TARGET;
 import static com.locust.operator.controller.utils.Constants.DEFAULT_RESTART_POLICY;
@@ -261,6 +262,10 @@ public class ResourceCreationHelpers {
             volumeList.add(prepareVolume(nodeConfig));
         }
 
+        if (nodeConfig.getLibConfigMap() != null) {
+            volumeList.add(prepareLibVolume(nodeConfig));
+        }
+
         return volumeList;
 
     }
@@ -347,9 +352,22 @@ public class ResourceCreationHelpers {
             .build();
     }
 
+    private static Volume prepareLibVolume(LoadGenerationNode nodeConfig) {
+        return new VolumeBuilder()
+            .withName("lib")
+            .withConfigMap(prepareLibConfigMapSource(nodeConfig))
+            .build();
+    }
+
     private static ConfigMapVolumeSource prepareConfigMapSource(LoadGenerationNode nodeConfig) {
         return new ConfigMapVolumeSourceBuilder()
             .withName(nodeConfig.getConfigMap())
+            .build();
+    }
+
+    private static ConfigMapVolumeSource prepareLibConfigMapSource(LoadGenerationNode nodeConfig) {
+        return new ConfigMapVolumeSourceBuilder()
+            .withName(nodeConfig.getLibConfigMap())
             .build();
     }
 
@@ -452,16 +470,25 @@ public class ResourceCreationHelpers {
     private List<VolumeMount> prepareVolumeMounts(LoadGenerationNode nodeConfig) {
 
         List<VolumeMount> mounts = new ArrayList<>();
-        if (nodeConfig.getConfigMap() != null) {
 
-            // Prepare configMap mont
+        if (nodeConfig.getConfigMap() != null) {
+            // Prepare main configMap mount
             mounts.add(new VolumeMountBuilder()
                 .withName(nodeConfig.getName())
                 .withMountPath(DEFAULT_MOUNT_PATH)
                 .withReadOnly(false)
                 .build());
-
         }
+
+        if (nodeConfig.getLibConfigMap() != null) {
+            // Prepare lib configMap mount
+            mounts.add(new VolumeMountBuilder()
+                .withName("lib")
+                .withMountPath(LIB_MOUNT_PATH)
+                .withReadOnly(false)
+                .build());
+        }
+
         return mounts;
 
     }

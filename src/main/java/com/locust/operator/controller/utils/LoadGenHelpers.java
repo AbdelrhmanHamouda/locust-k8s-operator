@@ -58,21 +58,23 @@ public class LoadGenHelpers {
      */
     public LoadGenerationNode generateLoadGenNodeObject(LocustTest resource, OperationalMode mode) {
 
-        return new LoadGenerationNode(
-            constructNodeName(resource, mode),
-            constructNodeLabels(resource, mode),
-            constructNodeAnnotations(resource, mode),
-            getNodeAffinity(resource),
-            getPodToleration(resource),
-            getTtlSecondsAfterFinished(),
-            constructNodeCommand(resource, mode),
-            mode,
-            getNodeImage(resource),
-            getNodeImagePullPolicy(resource),
-            getNodeImagePullSecrets(resource),
-            getReplicaCount(resource, mode),
-            getNodePorts(resource, mode),
-            getConfigMap(resource));
+        return LoadGenerationNode.builder()
+            .name(constructNodeName(resource, mode))
+            .labels(constructNodeLabels(resource, mode))
+            .annotations(constructNodeAnnotations(resource, mode))
+            .affinity(getNodeAffinity(resource))
+            .tolerations(getPodToleration(resource))
+            .ttlSecondsAfterFinished(getTtlSecondsAfterFinished())
+            .command(constructNodeCommand(resource, mode))
+            .operationalMode(mode)
+            .image(getNodeImage(resource))
+            .imagePullPolicy(getNodeImagePullPolicy(resource))
+            .imagePullSecrets(getNodeImagePullSecrets(resource))
+            .replicas(getReplicaCount(resource, mode))
+            .ports(getNodePorts(resource, mode))
+            .configMap(getConfigMap(resource))
+            .libConfigMap(getLibConfigMap(resource))
+            .build();
 
     }
 
@@ -89,6 +91,12 @@ public class LoadGenHelpers {
     public String getConfigMap(LocustTest resource) {
 
         return resource.getSpec().getConfigMap();
+
+    }
+
+    public String getLibConfigMap(LocustTest resource) {
+
+        return resource.getSpec().getLibConfigMap();
 
     }
 
@@ -176,13 +184,13 @@ public class LoadGenHelpers {
         if (mode.equals(MASTER)) {
             cmd = String.format(MASTER_CMD_TEMPLATE,
                 customResource.getSpec().getMasterCommandSeed(),
-                MASTER_NODE_PORTS.get(0),
+                MASTER_NODE_PORTS.getFirst(),
                 customResource.getSpec().getWorkerReplicas());
         } else {
             // worker
             cmd = String.format(WORKER_CMD_TEMPLATE,
                 customResource.getSpec().getWorkerCommandSeed(),
-                MASTER_NODE_PORTS.get(0),
+                MASTER_NODE_PORTS.getFirst(),
                 constructNodeName(customResource, MASTER)
             );
         }

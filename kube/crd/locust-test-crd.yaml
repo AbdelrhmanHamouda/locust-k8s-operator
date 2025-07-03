@@ -124,6 +124,9 @@ spec:
                 configMap: # Child field 'configMap'
                   description: Configuration map name containing the test
                   type: string
+                libConfigMap: # Child field 'libConfigMap'
+                  description: Configuration map name containing lib directory files
+                  type: string
               required: ["masterCommandSeed", "workerCommandSeed", "workerReplicas", "image"]
       # Enables to add new column when listing instances `kubectl get lotest`
       additionalPrinterColumns:
