@@ -17,10 +17,11 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write  # Required to push to gh-pages branch
   pages: write
   id-token: write
   pull-requests: write
+  actions: read
 
 jobs:
   # Build and deploy docs preview for opened/updated PRs
