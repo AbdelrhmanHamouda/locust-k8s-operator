@@ -1,0 +1,141 @@
+/* Hero section styling to match Material for MkDocs */
+.tx-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  color: var(--md-primary-fg-color);
+}
+
+.tx-hero .md-button {
+  margin-top: 0.5rem;
+  margin-right: 0.5rem;
+  color: currentColor;
+}
+
+.tx-hero .md-button--primary {
+  background-color: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+  border-color: var(--md-primary-fg-color);
+}
+
+.tx-hero .md-button:focus,
+.tx-hero .md-button:hover {
+  background-color: var(--md-accent-fg-color);
+  color: var(--md-default-bg-color);
+  border-color: var(--md-accent-fg-color);
+}
+
+.tx-hero p {
+  margin: 0 auto;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.2rem;
+  line-height: 1.5;
+  color: var(--md-primary-fg-color);
+  max-width: 35rem;
+  text-align: center;
+}
+
+.tx-hero__content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tx-hero__image {
+  order: 1;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+  transition: transform 0.75s cubic-bezier(0.7, 0, 0.3, 1), opacity 0.75s;
+}
+
+/* Improve material grid layout */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  grid-gap: 1.2rem;
+  margin: 1em 0;
+}
+
+/* Handle scroll behavior */
+.md-header {
+  transition: background-color 0.25s, transform 0.25s ease-in;
+}
+
+.md-header--shadow {
+  transition: background-color 0.25s, transform 0.25s ease-in, box-shadow 0.25s;
+}
+
+/* Proper header scrolling effect like the reference site */
+.md-header[data-md-state="shadow"] {
+  box-shadow: 0 0 0.2rem rgba(0, 0, 0, 0.1), 0 0.2rem 0.4rem rgba(0, 0, 0, 0.2);
+}
+
+/* Style for desktop */
+@media screen and (min-width: 60em) {
+  .tx-hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .tx-hero p {
+    max-width: 38rem;
+    margin-bottom: 1.75rem;
+    font-size: 1.25rem;
+  }
+
+  .tx-hero__image {
+    max-width: 38rem;
+    margin-top: 2rem;
+    transform-origin: 50% 0;
+  }
+}
+
+.grid.cards > :is(ul, ol) {
+  display: contents;
+}
+
+.grid.cards > :is(ul, ol) > li,
+.grid > .card {
+  border-radius: 0.1rem;
+  box-shadow: var(--md-shadow-z1);
+  display: block;
+  margin: 0;
+  padding: 1rem;
+  transition: box-shadow 125ms;
+}
+
+.grid.cards > :is(ul, ol) > li:focus-within,
+.grid.cards > :is(ul, ol) > li:hover,
+.grid > .card:focus-within,
+.grid > .card:hover {
+  box-shadow: var(--md-shadow-z2);
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Announcement bar */
+.md-banner {
+  background-color: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+  text-align: center;
+  padding: 0.5rem;
+}
+
+/* Icon adjustments */
+.lg.middle {
+  font-size: 2rem;
+  vertical-align: middle;
+  margin-right: 0.5rem;
+}

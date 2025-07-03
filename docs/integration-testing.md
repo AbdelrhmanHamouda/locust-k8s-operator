@@ -248,5 +248,5 @@ If tests fail, you can manually inspect the K3s cluster:
 
 ## Related Documentation
 - [How It Works](how_does_it_work.md) - Operator architecture overview
-- [Contributing](../CONTRIBUTING.md) - Development guidelines
-- [LibConfigMap Feature](../LIBCONFIGMAP_FEATURE_IMPLEMENTATION.md) - Feature implementation details
+- [Contributing](contribute.md) - Development guidelines
+- [LibConfigMap Feature](https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/LIBCONFIGMAP_FEATURE_IMPLEMENTATION.md) - Feature implementation details
