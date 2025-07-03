@@ -42,7 +42,6 @@ jobs:
         run: |
           pip install mkdocs-material
           pip install mkdocs-git-revision-date-localized-plugin
-          pip install mkdocs-privacy-plugin
 
       - name: 🔧 Configure MkDocs for preview
         run: |
