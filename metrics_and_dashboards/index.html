@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -533,18 +533,133 @@
   
   
   
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Contributing & Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing & Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../contribute/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Contribute
+    Overview
     
   </span>
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/integration-testing.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/local-development.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local Development
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/pull-request-process.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pull Request Process
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -592,9 +707,9 @@
 
 <h1 id="metrics-dashboards">Metrics &amp; Dashboards<a class="headerlink" href="#metrics-dashboards" title="Anchor link to this section for reference">⚓</a></h1>
 <p>The Locust Kubernetes Operator is designed with observability in mind, providing out-of-the-box support for Prometheus metrics. This allows you to gain deep insights into your performance tests and the operator's behavior.</p>
-<h2 id="prometheus-metrics-exporter">Prometheus Metrics Exporter<a class="headerlink" href="#prometheus-metrics-exporter" title="Anchor link to this section for reference">⚓</a></h2>
+<h2 id="prometheus-metrics-exporter"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m23 12-4-4v3h-9v2h9v3M1 18V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3h-2V6H3v12h12v-3h2v3a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2"/></svg></span> Prometheus Metrics Exporter<a class="headerlink" href="#prometheus-metrics-exporter" title="Anchor link to this section for reference">⚓</a></h2>
 <p>By default, the operator deploys a <a href="https://github.com/ContainerSolutions/locust_exporter">Prometheus metrics exporter</a> alongside each Locust master and worker pod. This exporter collects detailed metrics from the Locust instances and exposes them in a format that Prometheus can scrape.</p>
-<h3 id="key-metrics">Key Metrics<a class="headerlink" href="#key-metrics" title="Anchor link to this section for reference">⚓</a></h3>
+<h3 id="key-metrics"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M22 18v4h-4v-3h-3v-3h-3l-2.26-2.26c-.55.17-1.13.26-1.74.26a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6c0 .61-.09 1.19-.26 1.74zM7 5a2 2 0 0 0-2 2 2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0-2-2"/></svg></span> Key Metrics<a class="headerlink" href="#key-metrics" title="Anchor link to this section for reference">⚓</a></h3>
 <p>Some of the key metrics you can monitor include:</p>
 <ul>
 <li><code>locust_requests_total</code>: The total number of requests made.</li>
@@ -602,7 +717,7 @@
 <li><code>locust_response_time_seconds</code>: The response time of requests.</li>
 <li><code>locust_users</code>: The number of simulated users.</li>
 </ul>
-<h3 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Anchor link to this section for reference">⚓</a></h3>
+<h3 id="configuration"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 17v2h6v-2zM3 5v2h10V5zm10 16v-2h8v-2h-8v-2h-2v6zM7 9v2H3v2h4v2h2V9zm14 4v-2H11v2zm-6-4h2V7h4V5h-4V3h-2z"/></svg></span> Configuration<a class="headerlink" href="#configuration" title="Anchor link to this section for reference">⚓</a></h3>
 <p>To enable Prometheus to scrape these metrics, you'll need to configure a scrape job in your <code>prometheus.yml</code> file. Here's an example configuration:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">scrape_configs</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;locust&#39;</span>
@@ -624,10 +739,10 @@
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">labelmap</span>
 <span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">__meta_kubernetes_pod_label_(.+)</span>
 </code></pre></div>
-<h2 id="grafana-dashboards">Grafana Dashboards<a class="headerlink" href="#grafana-dashboards" title="Anchor link to this section for reference">⚓</a></h2>
+<h2 id="grafana-dashboards"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 5v2h-4V5zM9 5v6H5V5zm10 8v6h-4v-6zM9 17v2H5v-2zM21 3h-8v6h8zM11 3H3v10h8zm10 8h-8v10h8zm-10 4H3v6h8z"/></svg></span> Grafana Dashboards<a class="headerlink" href="#grafana-dashboards" title="Anchor link to this section for reference">⚓</a></h2>
 <p>Once you have your metrics flowing into Prometheus, you can create powerful and informative dashboards in Grafana to visualize your test results. You can build panels to track key performance indicators (KPIs) such as response times, request rates, and error rates.</p>
 <p>There are also community-built Grafana dashboards available for Locust that you can adapt for your needs.</p>
-<h2 id="operator-metrics">Operator Metrics<a class="headerlink" href="#operator-metrics" title="Anchor link to this section for reference">⚓</a></h2>
+<h2 id="operator-metrics"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.5 15.5c0 1.11-.89 2-2 2s-2-.89-2-2 .9-2 2-2 2 .9 2 2m-9-2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.89 2-2-.89-2-2-2M23 15v3c0 .55-.45 1-1 1h-1v1c0 1.11-.89 2-2 2H5a2 2 0 0 1-2-2v-1H2c-.55 0-1-.45-1-1v-3c0-.55.45-1 1-1h1c0-3.87 3.13-7 7-7h1V5.73c-.6-.34-1-.99-1-1.73 0-1.1.9-2 2-2s2 .9 2 2c0 .74-.4 1.39-1 1.73V7h1c3.87 0 7 3.13 7 7h1c.55 0 1 .45 1 1m-2 1h-2v-2c0-2.76-2.24-5-5-5h-4c-2.76 0-5 2.24-5 5v2H3v1h2v3h14v-3h2z"/></svg></span> Operator Metrics<a class="headerlink" href="#operator-metrics" title="Anchor link to this section for reference">⚓</a></h2>
 <p>In addition to the Locust-specific metrics, the operator itself exposes a set of metrics through Micronaut's metrics module. These metrics provide insights into the operator's health and performance, including JVM metrics, uptime, and more. You can find these metrics by scraping the operator's pod on the <code>/health</code> endpoint.</p>
 
 
@@ -649,7 +764,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 27, 2025 21:54:34 UTC">June 27, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 27, 2025 22:26:04 UTC">June 27, 2025</span>
   </span>
 
     
@@ -814,7 +929,7 @@
       <script id="__config" type="application/json">{"base": "..", "features": ["search.highlight", "search.share", "navigation.tracking", "navigation.top", "navigation.footer - navigation.prune", "toc.follow", "toc.integrate", "content.code.annotate", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
         <script src="../assets/external/unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
       

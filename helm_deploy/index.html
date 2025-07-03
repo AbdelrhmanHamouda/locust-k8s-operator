@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -695,18 +695,133 @@
   
   
   
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Contributing & Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing & Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../contribute/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Contribute
+    Overview
     
   </span>
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/integration-testing.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/local-development.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local Development
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/pull-request-process.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pull Request Process
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -754,26 +869,26 @@
 
 <h1 id="helm-deployment-guide">HELM Deployment Guide<a class="headerlink" href="#helm-deployment-guide" title="Anchor link to this section for reference">⚓</a></h1>
 <p>This guide provides comprehensive instructions for deploying the Locust Kubernetes Operator using its official Helm chart.</p>
-<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Anchor link to this section for reference">⚓</a></h2>
+<h2 id="quick-start"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.5 5.5a2 2 0 0 0 2-2 2 2 0 0 0-2-2 2 2 0 0 0-2 2 2 2 0 0 0 2 2m-3.6 13.9 1-4.4 2.1 2v6h2v-7.5l-2.1-2 .6-3A7.3 7.3 0 0 0 22 13v-2c-1.76.03-3.4-.89-4.3-2.4l-1-1.6c-.36-.6-1-1-1.7-1-.3 0-.5.1-.8.1L9 8.3V13h2V9.6l1.8-.7-1.6 8.1-4.9-1-.4 2zM4 9a1 1 0 0 1-1-1 1 1 0 0 1 1-1h3v2zm1-4a1 1 0 0 1-1-1 1 1 0 0 1 1-1h5v2zm-2 8a1 1 0 0 1-1-1 1 1 0 0 1 1-1h4v2z"/></svg></span> Quick Start<a class="headerlink" href="#quick-start" title="Anchor link to this section for reference">⚓</a></h2>
 <p>For experienced users, here are the essential commands to get the operator running in the <code>default</code> namespace:</p>
 <div class="highlight"><pre><span></span><code>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>locust-k8s-operator<span class="w"> </span>https://abdelrhmanhamouda.github.io/locust-k8s-operator/
 helm<span class="w"> </span>repo<span class="w"> </span>update
 helm<span class="w"> </span>install<span class="w"> </span>locust-operator<span class="w"> </span>locust-k8s-operator/locust-k8s-operator
 </code></pre></div>
-<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Anchor link to this section for reference">⚓</a></h2>
-<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Anchor link to this section for reference">⚓</a></h3>
+<h2 id="installation"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8 17v-2h8v2zm8-7-4 4-4-4h2.5V7h3v3zM5 3h14a2 2 0 0 1 2 2v14c0 1.11-.89 2-2 2H5a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2m0 2v14h14V5z"/></svg></span> Installation<a class="headerlink" href="#installation" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="prerequisites"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2m0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8m4.59-12.42L10 14.17l-2.59-2.58L6 13l4 4 8-8z"/></svg></span> Prerequisites<a class="headerlink" href="#prerequisites" title="Anchor link to this section for reference">⚓</a></h3>
 <ul>
 <li>A running Kubernetes cluster (e.g., Minikube, GKE, EKS, AKS).</li>
 <li><a href="https://helm.sh/docs/intro/install/">Helm 3</a> installed on your local machine.</li>
 </ul>
-<h3 id="step-1-add-the-helm-repository">Step 1: Add the Helm Repository<a class="headerlink" href="#step-1-add-the-helm-repository" title="Anchor link to this section for reference">⚓</a></h3>
+<h3 id="step-1-add-the-helm-repository"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2m6.75 11.5c2.75 0 3.49-2.03 3.68-3.1.91-.29 1.57-1.14 1.57-2.15C18 7 17 6 15.75 6S13.5 7 13.5 8.25c0 .94.57 1.75 1.39 2.08C14.67 11 14 12 12 12c-1.38 0-2.34.35-3 .84V8.87c.87-.31 1.5-1.14 1.5-2.12 0-1.25-1-2.25-2.25-2.25S6 5.5 6 6.75c0 .98.63 1.81 1.5 2.12v6.26c-.87.31-1.5 1.14-1.5 2.12 0 1.25 1 2.25 2.25 2.25s2.25-1 2.25-2.25c0-.93-.56-1.75-1.37-2.07.28-.68 1.1-1.68 3.62-1.68m-4.5 3a.75.75 0 0 1 .75.75.75.75 0 0 1-.75.75.75.75 0 0 1-.75-.75.75.75 0 0 1 .75-.75m0-10.5a.75.75 0 0 1 .75.75.75.75 0 0 1-.75.75.75.75 0 0 1-.75-.75.75.75 0 0 1 .75-.75m7.5 1.5a.75.75 0 0 1 .75.75.75.75 0 0 1-.75.75.75.75 0 0 1-.75-.75.75.75 0 0 1 .75-.75"/></svg></span> Step 1: Add the Helm Repository<a class="headerlink" href="#step-1-add-the-helm-repository" title="Anchor link to this section for reference">⚓</a></h3>
 <p>First, add the Locust Kubernetes Operator Helm repository to your local Helm client:</p>
 <div class="highlight"><pre><span></span><code>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>locust-k8s-operator<span class="w"> </span>https://abdelrhmanhamouda.github.io/locust-k8s-operator/
 </code></pre></div>
 <p>Next, update your local chart repository cache to ensure you have the latest version:</p>
 <div class="highlight"><pre><span></span><code>helm<span class="w"> </span>repo<span class="w"> </span>update
 </code></pre></div>
-<h3 id="step-2-install-the-chart">Step 2: Install the Chart<a class="headerlink" href="#step-2-install-the-chart" title="Anchor link to this section for reference">⚓</a></h3>
+<h3 id="step-2-install-the-chart"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18s-.41-.06-.57-.18l-7.9-4.44A.99.99 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18s.41.06.57.18l7.9 4.44c.32.17.53.5.53.88zM12 4.15l-1.89 1.07L16 8.61l1.96-1.11zM6.04 7.5 12 10.85l1.96-1.1-5.88-3.4zM5 15.91l6 3.38v-6.71L5 9.21zm14 0v-6.7l-6 3.37v6.71z"/></svg></span> Step 2: Install the Chart<a class="headerlink" href="#step-2-install-the-chart" title="Anchor link to this section for reference">⚓</a></h3>
 <p>You can install the chart with a release name of your choice (e.g., <code>locust-operator</code>).</p>
 <p><strong>Default Installation:</strong></p>
 <p>To install the chart with the default configuration into the currently active namespace, run:</p>
@@ -796,7 +911,7 @@ helm<span class="w"> </span>install<span class="w"> </span>locust-operator<span 
 <span class="w">  </span>--create-namespace<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-f<span class="w"> </span>my-values.yaml
 </code></pre></div>
-<h2 id="verifying-the-installation">Verifying the Installation<a class="headerlink" href="#verifying-the-installation" title="Anchor link to this section for reference">⚓</a></h2>
+<h2 id="verifying-the-installation"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m23 12-2.4-2.8.3-3.7-3.6-.8-1.9-3.2L12 3 8.6 1.5 6.7 4.7l-3.6.8.3 3.7L1 12l2.4 2.8-.3 3.7 3.6.8 1.9 3.2L12 21l3.4 1.5 1.9-3.2 3.6-.8-.3-3.7zm-4.3 4.9-2.7.6-1.4 2.4-2.6-1.1-2.6 1.1L8 17.5l-2.7-.6.2-2.8L3.7 12l1.8-2.1-.2-2.8L8 6.5l1.4-2.4L12 5.2l2.6-1.1L16 6.5l2.7.6-.2 2.8 1.8 2.1-1.8 2.1zm-2.1-9.3L18 9l-8 8-4-4 1.4-1.4 2.6 2.6z"/></svg></span> Verifying the Installation<a class="headerlink" href="#verifying-the-installation" title="Anchor link to this section for reference">⚓</a></h2>
 <p>After installation, you can verify that the operator is running correctly by checking the pods in the target namespace:</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-n<span class="w"> </span>locust-system
 </code></pre></div>
@@ -804,7 +919,7 @@ helm<span class="w"> </span>install<span class="w"> </span>locust-operator<span 
 <p>To view the operator's logs, run:</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>-n<span class="w"> </span>locust-system<span class="w"> </span>-l<span class="w"> </span>app.kubernetes.io/name<span class="o">=</span>locust-k8s-operator
 </code></pre></div>
-<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Anchor link to this section for reference">⚓</a></h2>
+<h2 id="configuration"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 17v2h6v-2zM3 5v2h10V5zm10 16v-2h8v-2h-8v-2h-2v6zM7 9v2H3v2h4v2h2V9zm14 4v-2H11v2zm-6-4h2V7h4V5h-4V3h-2z"/></svg></span> Configuration<a class="headerlink" href="#configuration" title="Anchor link to this section for reference">⚓</a></h2>
 <p>The following tables list the configurable parameters of the Locust Operator Helm chart and their default values.</p>
 <h3 id="general-configuration">General Configuration<a class="headerlink" href="#general-configuration" title="Anchor link to this section for reference">⚓</a></h3>
 <table>
@@ -1118,16 +1233,16 @@ helm<span class="w"> </span>install<span class="w"> </span>locust-operator<span 
 </tr>
 </tbody>
 </table>
-<h2 id="upgrading-the-chart">Upgrading the Chart<a class="headerlink" href="#upgrading-the-chart" title="Anchor link to this section for reference">⚓</a></h2>
+<h2 id="upgrading-the-chart"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12 7 5 5h-3v4h-4v-4H7zm7 14H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2m0-2V5H5v14z"/></svg></span> Upgrading the Chart<a class="headerlink" href="#upgrading-the-chart" title="Anchor link to this section for reference">⚓</a></h2>
 <p>To upgrade an existing release to a new version, use the <code>helm upgrade</code> command:</p>
 <div class="highlight"><pre><span></span><code>helm<span class="w"> </span>upgrade<span class="w"> </span>locust-operator<span class="w"> </span>locust-k8s-operator/locust-k8s-operator<span class="w"> </span>-f<span class="w"> </span>my-values.yaml
 </code></pre></div>
-<h2 id="uninstalling-the-chart">Uninstalling the Chart<a class="headerlink" href="#uninstalling-the-chart" title="Anchor link to this section for reference">⚓</a></h2>
+<h2 id="uninstalling-the-chart"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 3v1H4v2h1v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1V4h-5V3zM7 6h10v13H7zm2 2v9h2V8zm4 0v9h2V8z"/></svg></span> Uninstalling the Chart<a class="headerlink" href="#uninstalling-the-chart" title="Anchor link to this section for reference">⚓</a></h2>
 <p>To uninstall and delete the <code>locust-operator</code> deployment, run:</p>
 <div class="highlight"><pre><span></span><code>helm<span class="w"> </span>uninstall<span class="w"> </span>locust-operator
 </code></pre></div>
 <p>This command will remove all the Kubernetes components associated with the chart and delete the release.</p>
-<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Anchor link to this section for reference">⚓</a></h2>
+<h2 id="next-steps"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17 12-5 5v-3H8v-4h4V7zM3 19V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2m2 0h14V5H5z"/></svg></span> Next Steps<a class="headerlink" href="#next-steps" title="Anchor link to this section for reference">⚓</a></h2>
 <p>Once the operator is installed, you're ready to start running performance tests! Head over to the <a href="../getting_started/">Getting Started</a> guide to learn how to deploy your first <code>LocustTest</code>.</p>
 
 
@@ -1149,7 +1264,7 @@ helm<span class="w"> </span>install<span class="w"> </span>locust-operator<span 
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 27, 2025 21:54:34 UTC">June 27, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 27, 2025 22:26:04 UTC">June 27, 2025</span>
   </span>
 
     
@@ -1314,7 +1429,7 @@ helm<span class="w"> </span>install<span class="w"> </span>locust-operator<span 
       <script id="__config" type="application/json">{"base": "..", "features": ["search.highlight", "search.share", "navigation.tracking", "navigation.top", "navigation.footer - navigation.prune", "toc.follow", "toc.integrate", "content.code.annotate", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
         <script src="../assets/external/unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
       

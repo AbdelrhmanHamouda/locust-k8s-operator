@@ -15,19 +15,19 @@
       
       
       
-      <link rel="icon" href="/assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
-        <title>Locust Kubernetes Operator</title>
+        <title>Integration Testing Guide - Locust Kubernetes Operator</title>
       
     
     
-      <link rel="stylesheet" href="/assets/stylesheets/main.342714a4.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.342714a4.min.css">
       
         
-        <link rel="stylesheet" href="/assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -41,12 +41,12 @@
         
         
         
-        <link rel="stylesheet" href="/assets/external/fonts.googleapis.com/css.49ea35f2.css">
+        <link rel="stylesheet" href="../assets/external/fonts.googleapis.com/css.49ea35f2.css">
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
     
-    <script>__md_scope=new URL("/",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -71,6 +71,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#integration-testing-guide" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -83,7 +88,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/." title="Locust Kubernetes Operator" class="md-header__button md-logo" aria-label="Locust Kubernetes Operator" data-md-component="logo">
+    <a href=".." title="Locust Kubernetes Operator" class="md-header__button md-logo" aria-label="Locust Kubernetes Operator" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.95 13.5h-.23c-.18.11-.26.32-.18.5l.86 2.11c.83-.53 1.46-1.32 1.79-2.25l-2.23-.36zm-3.45.29a.415.415 0 0 0-.38-.29h-.08l-2.22.37c.33.92.96 1.7 1.79 2.23l.85-2.07V14c.04-.05.04-.14.04-.21m1.83.81a.38.38 0 0 0-.51-.15c-.07.05-.12.08-.15.15h-.01l-1.09 1.97c.78.26 1.62.31 2.43.12.14-.03.29-.07.43-.12l-1.09-1.97zm3.45-4.57L14.1 11.5l.01.03a.37.37 0 0 0-.04.53q.075.09.18.12l.01.01 2.17.62c.07-.97-.14-1.95-.65-2.78m-3.11.16c.01.21.18.37.39.36.08 0 .15-.02.21-.05h.01l1.83-1.31a4.45 4.45 0 0 0-2.57-1.24zm-1.94.31c.17.11.4.08.52-.09.05-.06.07-.13.08-.21h.01l.12-2.25c-.15.02-.3.05-.46.08-.8.18-1.54.58-2.12 1.16l1.84 1.31zm-.99 1.69c.2-.05.32-.26.26-.46 0-.08-.05-.14-.11-.19v-.01L8.21 10c-.52.86-.74 1.84-.63 2.82l2.16-.62zm1.64.66.62.3.62-.3.15-.67-.43-.53h-.69l-.43.53zm10.89 1.32L20.5 6.5c-.09-.42-.37-.76-.74-.94l-7.17-3.43c-.37-.17-.81-.17-1.19 0L4.24 5.56c-.37.18-.65.52-.74.94l-1.77 7.67c-.05.2-.05.4 0 .59.01.06.03.12.05.18.03.09.08.19.13.27.03.04.05.08.09.11l4.95 6.18c.02 0 .05.04.05.06.1.09.19.16.28.22.12.08.26.14.4.17.11.05.23.05.32.05h8.12c.07 0 .14-.03.2-.05.05-.01.1-.03.14-.04.04-.02.07-.03.11-.05.05-.02.1-.05.15-.08.12-.08.23-.18.33-.28l.15-.2 4.8-5.98c.1-.12.17-.25.22-.38.02-.06.04-.12.05-.18.05-.19.05-.4 0-.59m-7.43 2.99c.02.06.04.12.07.17-.04.08-.06.17-.03.26.12.24.23.46.38.68.08.11.16.23.24.34 0 .03.03.08.04.12.12.2.06.46-.15.59s-.47.05-.59-.15c-.01-.03-.02-.05-.03-.08-.02-.03-.04-.09-.06-.09-.05-.15-.09-.28-.12-.41-.09-.25-.17-.49-.3-.72a.38.38 0 0 0-.21-.14l-.08-.16c-1.29.48-2.7.48-3.97-.01l-.1.18c-.07.01-.14.04-.19.09-.14.24-.24.49-.33.77-.03.13-.07.26-.12.4-.02 0-.04.07-.06.1a.43.43 0 0 1-.81-.29c.01-.03.03-.05.04-.08.04-.03.04-.08.04-.11.09-.12.16-.23.24-.35.16-.21.29-.45.39-.69a.54.54 0 0 0-.03-.25l.07-.18a5.6 5.6 0 0 1-2.47-3.09l-.2.03a.4.4 0 0 0-.23-.09c-.27.05-.51.13-.77.22-.11.06-.24.11-.37.15-.03.01-.07.02-.13.03a.44.44 0 0 1-.54-.27c-.07-.23.04-.47.28-.55.02 0 .05-.01.08-.01v-.01h.01l.11-.02c.14-.04.28-.04.41-.04.26 0 .52-.06.77-.12.08-.05.14-.11.19-.19l.19-.05c-.21-1.36.1-2.73.86-3.87l-.14-.12c0-.09-.03-.18-.08-.25-.2-.17-.41-.32-.64-.45q-.18-.09-.36-.21c-.02-.02-.06-.05-.08-.07l-.01-.01c-.2-.16-.25-.42-.11-.63.09-.1.21-.15.35-.15q.165.015.3.12l.09.07c.1.09.19.2.28.3.18.19.37.37.58.52.08.04.17.05.26.03l.15.11c.75-.8 1.73-1.36 2.8-1.6.25-.06.52-.1.78-.12l.01-.18a.45.45 0 0 0 .14-.23c.01-.26-.01-.52-.05-.77-.03-.13-.05-.27-.06-.41V5.1c-.02-.24.15-.45.39-.48s.44.15.47.38v.22c-.01.14-.03.28-.06.41-.04.25-.06.51-.05.77.02.1.07.17.14.22l.01.19c1.36.12 2.62.73 3.56 1.72l.16-.12c.09.02.18.01.26-.03.21-.15.41-.33.58-.52.09-.1.18-.2.28-.3.03-.02.07-.06.1-.06.17-.18.44-.18.59 0 .19.16.18.43 0 .6 0 .02-.03.04-.06.06a2.495 2.495 0 0 1-.44.28c-.23.13-.45.28-.64.45-.06.07-.09.15-.08.24l-.16.14a5.44 5.44 0 0 1 .88 3.86l.19.05c.04.08.11.14.19.18.25.07.51.11.77.14h.41c.03.03.08.04.12.05.24.03.4.25.37.49-.05.23-.24.4-.48.37-.03-.01-.07-.01-.07-.02v-.01c-.06 0-.1-.01-.14-.02q-.195-.06-.36-.15c-.26-.1-.5-.17-.77-.21-.09 0-.17 0-.23.08-.07-.01-.13-.02-.19-.03-.41 1.31-1.31 2.41-2.47 3.11"/></svg>
@@ -103,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Integration Testing Guide
             
           </span>
         </div>
@@ -226,7 +231,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/." title="Locust Kubernetes Operator" class="md-nav__button md-logo" aria-label="Locust Kubernetes Operator" data-md-component="logo">
+    <a href=".." title="Locust Kubernetes Operator" class="md-nav__button md-logo" aria-label="Locust Kubernetes Operator" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.95 13.5h-.23c-.18.11-.26.32-.18.5l.86 2.11c.83-.53 1.46-1.32 1.79-2.25l-2.23-.36zm-3.45.29a.415.415 0 0 0-.38-.29h-.08l-2.22.37c.33.92.96 1.7 1.79 2.23l.85-2.07V14c.04-.05.04-.14.04-.21m1.83.81a.38.38 0 0 0-.51-.15c-.07.05-.12.08-.15.15h-.01l-1.09 1.97c.78.26 1.62.31 2.43.12.14-.03.29-.07.43-.12l-1.09-1.97zm3.45-4.57L14.1 11.5l.01.03a.37.37 0 0 0-.04.53q.075.09.18.12l.01.01 2.17.62c.07-.97-.14-1.95-.65-2.78m-3.11.16c.01.21.18.37.39.36.08 0 .15-.02.21-.05h.01l1.83-1.31a4.45 4.45 0 0 0-2.57-1.24zm-1.94.31c.17.11.4.08.52-.09.05-.06.07-.13.08-.21h.01l.12-2.25c-.15.02-.3.05-.46.08-.8.18-1.54.58-2.12 1.16l1.84 1.31zm-.99 1.69c.2-.05.32-.26.26-.46 0-.08-.05-.14-.11-.19v-.01L8.21 10c-.52.86-.74 1.84-.63 2.82l2.16-.62zm1.64.66.62.3.62-.3.15-.67-.43-.53h-.69l-.43.53zm10.89 1.32L20.5 6.5c-.09-.42-.37-.76-.74-.94l-7.17-3.43c-.37-.17-.81-.17-1.19 0L4.24 5.56c-.37.18-.65.52-.74.94l-1.77 7.67c-.05.2-.05.4 0 .59.01.06.03.12.05.18.03.09.08.19.13.27.03.04.05.08.09.11l4.95 6.18c.02 0 .05.04.05.06.1.09.19.16.28.22.12.08.26.14.4.17.11.05.23.05.32.05h8.12c.07 0 .14-.03.2-.05.05-.01.1-.03.14-.04.04-.02.07-.03.11-.05.05-.02.1-.05.15-.08.12-.08.23-.18.33-.28l.15-.2 4.8-5.98c.1-.12.17-.25.22-.38.02-.06.04-.12.05-.18.05-.19.05-.4 0-.59m-7.43 2.99c.02.06.04.12.07.17-.04.08-.06.17-.03.26.12.24.23.46.38.68.08.11.16.23.24.34 0 .03.03.08.04.12.12.2.06.46-.15.59s-.47.05-.59-.15c-.01-.03-.02-.05-.03-.08-.02-.03-.04-.09-.06-.09-.05-.15-.09-.28-.12-.41-.09-.25-.17-.49-.3-.72a.38.38 0 0 0-.21-.14l-.08-.16c-1.29.48-2.7.48-3.97-.01l-.1.18c-.07.01-.14.04-.19.09-.14.24-.24.49-.33.77-.03.13-.07.26-.12.4-.02 0-.04.07-.06.1a.43.43 0 0 1-.81-.29c.01-.03.03-.05.04-.08.04-.03.04-.08.04-.11.09-.12.16-.23.24-.35.16-.21.29-.45.39-.69a.54.54 0 0 0-.03-.25l.07-.18a5.6 5.6 0 0 1-2.47-3.09l-.2.03a.4.4 0 0 0-.23-.09c-.27.05-.51.13-.77.22-.11.06-.24.11-.37.15-.03.01-.07.02-.13.03a.44.44 0 0 1-.54-.27c-.07-.23.04-.47.28-.55.02 0 .05-.01.08-.01v-.01h.01l.11-.02c.14-.04.28-.04.41-.04.26 0 .52-.06.77-.12.08-.05.14-.11.19-.19l.19-.05c-.21-1.36.1-2.73.86-3.87l-.14-.12c0-.09-.03-.18-.08-.25-.2-.17-.41-.32-.64-.45q-.18-.09-.36-.21c-.02-.02-.06-.05-.08-.07l-.01-.01c-.2-.16-.25-.42-.11-.63.09-.1.21-.15.35-.15q.165.015.3.12l.09.07c.1.09.19.2.28.3.18.19.37.37.58.52.08.04.17.05.26.03l.15.11c.75-.8 1.73-1.36 2.8-1.6.25-.06.52-.1.78-.12l.01-.18a.45.45 0 0 0 .14-.23c.01-.26-.01-.52-.05-.77-.03-.13-.05-.27-.06-.41V5.1c-.02-.24.15-.45.39-.48s.44.15.47.38v.22c-.01.14-.03.28-.06.41-.04.25-.06.51-.05.77.02.1.07.17.14.22l.01.19c1.36.12 2.62.73 3.56 1.72l.16-.12c.09.02.18.01.26-.03.21-.15.41-.33.58-.52.09-.1.18-.2.28-.3.03-.02.07-.06.1-.06.17-.18.44-.18.59 0 .19.16.18.43 0 .6 0 .02-.03.04-.06.06a2.495 2.495 0 0 1-.44.28c-.23.13-.45.28-.64.45-.06.07-.09.15-.08.24l-.16.14a5.44 5.44 0 0 1 .88 3.86l.19.05c.04.08.11.14.19.18.25.07.51.11.77.14h.41c.03.03.08.04.12.05.24.03.4.25.37.49-.05.23-.24.4-.48.37-.03-.01-.07-.01-.07-.02v-.01c-.06 0-.1-.01-.14-.02q-.195-.06-.36-.15c-.26-.1-.5-.17-.77-.21-.09 0-.17 0-.23.08-.07-.01-.13-.02-.19-.03-.41 1.31-1.31 2.41-2.47 3.11"/></svg>
@@ -256,7 +261,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -278,7 +283,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/how_does_it_work/" class="md-nav__link">
+      <a href="../how_does_it_work/" class="md-nav__link">
         
   
   
@@ -300,7 +305,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/features/" class="md-nav__link">
+      <a href="../features/" class="md-nav__link">
         
   
   
@@ -322,7 +327,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/getting_started/" class="md-nav__link">
+      <a href="../getting_started/" class="md-nav__link">
         
   
   
@@ -344,7 +349,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/helm_deploy/" class="md-nav__link">
+      <a href="../helm_deploy/" class="md-nav__link">
         
   
   
@@ -366,7 +371,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/advanced_topics/" class="md-nav__link">
+      <a href="../advanced_topics/" class="md-nav__link">
         
   
   
@@ -388,7 +393,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/metrics_and_dashboards/" class="md-nav__link">
+      <a href="../metrics_and_dashboards/" class="md-nav__link">
         
   
   
@@ -410,7 +415,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/roadmap/" class="md-nav__link">
+      <a href="../roadmap/" class="md-nav__link">
         
   
   
@@ -470,7 +475,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/contribute/" class="md-nav__link">
+      <a href="../contribute/" class="md-nav__link">
         
   
   
@@ -493,7 +498,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/docs/integration-testing.md" class="md-nav__link">
+      <a href="../docs/integration-testing.md" class="md-nav__link">
         
   
   
@@ -516,7 +521,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/docs/local-development.md" class="md-nav__link">
+      <a href="../docs/local-development.md" class="md-nav__link">
         
   
   
@@ -539,7 +544,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/docs/pull-request-process.md" class="md-nav__link">
+      <a href="../docs/pull-request-process.md" class="md-nav__link">
         
   
   
@@ -569,7 +574,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/license/" class="md-nav__link">
+      <a href="../license/" class="md-nav__link">
         
   
   
@@ -596,8 +601,283 @@
             <div class="md-content" data-md-component="content">
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+
+  
+  
+
+
+<h1 id="integration-testing-guide">Integration Testing Guide<a class="headerlink" href="#integration-testing-guide" title="Anchor link to this section for reference">⚓</a></h1>
+<p>This document describes the comprehensive integration testing setup for the Locust K8s Operator, which validates the complete end-to-end functionality beyond unit tests.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Anchor link to this section for reference">⚓</a></h2>
+<p>The integration test suite performs the following workflow:
+1. <strong>Build</strong> - Creates the operator Docker image
+2. <strong>Package</strong> - Packages the Helm chart
+3. <strong>Deploy</strong> - Spins up a K8s cluster (K3s) and installs the operator
+4. <strong>Test</strong> - Deploys a LocustTest CR and validates operator behavior
+5. <strong>Validate</strong> - Ensures Locust master/workers are running correctly
+6. <strong>Cleanup</strong> - Removes all resources and tears down the environment</p>
+<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="test-framework">Test Framework<a class="headerlink" href="#test-framework" title="Anchor link to this section for reference">⚓</a></h3>
+<ul>
+<li><strong>Testing Framework</strong>: JUnit 5 with Testcontainers</li>
+<li><strong>Kubernetes Cluster</strong>: K3s via Testcontainers for local development, KinD in CI environment</li>
+<li><strong>Build System</strong>: Gradle with custom integration test source set</li>
+<li><strong>Container Management</strong>: Docker with Jib plugin for image building</li>
+</ul>
+<h3 id="test-structure">Test Structure<a class="headerlink" href="#test-structure" title="Anchor link to this section for reference">⚓</a></h3>
+<div class="highlight"><pre><span></span><code>src/integrationTest/
+├── java/com/locust/operator/
+│   └── LocustOperatorIntegrationTest.java    # Main integration test
+└── resources/
+    └── application-test.yml                   # Test configuration
+</code></pre></div>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="local-development">Local Development<a class="headerlink" href="#local-development" title="Anchor link to this section for reference">⚓</a></h3>
+<ul>
+<li><strong>Docker</strong>: Running Docker daemon</li>
+<li><strong>Java 21</strong>: Required for building the operator</li>
+<li><strong>Helm 3.x</strong>: For chart packaging and installation</li>
+<li><strong>Gradle</strong>: Uses project's gradle wrapper</li>
+</ul>
+<h3 id="cicd-github-actions">CI/CD (GitHub Actions)<a class="headerlink" href="#cicd-github-actions" title="Anchor link to this section for reference">⚓</a></h3>
+<ul>
+<li>Uses Ubuntu latest runner</li>
+<li>Automatically installs all dependencies</li>
+<li>Runs on PR and push to main branch</li>
+</ul>
+<h2 id="running-integration-tests">Running Integration Tests<a class="headerlink" href="#running-integration-tests" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="option-1-using-the-integration-test-script-recommended">Option 1: Using the Integration Test Script (Recommended)<a class="headerlink" href="#option-1-using-the-integration-test-script-recommended" title="Anchor link to this section for reference">⚓</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Make script executable (first time only)</span>
+chmod<span class="w"> </span>+x<span class="w"> </span>scripts/run-integration-test.sh
+
+<span class="c1"># Run integration tests</span>
+./scripts/run-integration-test.sh
+</code></pre></div>
+<p>The script performs several helpful functions:
+- Checks prerequisites (Docker, Helm, Java)
+- Cleans up previous runs and Docker resources
+- Runs the integration tests with proper error handling
+- Provides detailed error reporting and logs
+- Shows test results and report locations</p>
+<h3 id="option-2-using-gradle-directly">Option 2: Using Gradle Directly<a class="headerlink" href="#option-2-using-gradle-directly" title="Anchor link to this section for reference">⚓</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Run integration tests</span>
+./gradlew<span class="w"> </span>integrationTest<span class="w"> </span>-PrunIntegrationTests
+
+<span class="c1"># Run with verbose output</span>
+./gradlew<span class="w"> </span>integrationTest<span class="w"> </span>-PrunIntegrationTests<span class="w"> </span>--info
+
+<span class="c1"># Run specific test class</span>
+./gradlew<span class="w"> </span>integrationTest<span class="w"> </span>-PrunIntegrationTests<span class="w"> </span>--tests<span class="o">=</span><span class="s2">&quot;LocustOperatorIntegrationTest&quot;</span>
+</code></pre></div>
+<h3 id="option-3-in-cicd">Option 3: In CI/CD<a class="headerlink" href="#option-3-in-cicd" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Integration tests run automatically in GitHub Actions:
+- On pull requests to <code>main</code> or <code>master</code>
+- On pushes to <code>main</code> or <code>master</code>
+- Can be triggered manually via <code>workflow_dispatch</code></p>
+<h2 id="test-scenarios">Test Scenarios<a class="headerlink" href="#test-scenarios" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="test-1-operator-deployment">Test 1: Operator Deployment<a class="headerlink" href="#test-1-operator-deployment" title="Anchor link to this section for reference">⚓</a></h3>
+<ul>
+<li>Creates operator namespace</li>
+<li>Installs operator via Helm chart</li>
+<li>Validates operator deployment is ready</li>
+<li>Verifies operator pod is running</li>
+</ul>
+<h3 id="test-2-locusttest-deployment">Test 2: LocustTest Deployment<a class="headerlink" href="#test-2-locusttest-deployment" title="Anchor link to this section for reference">⚓</a></h3>
+<ul>
+<li>Creates test namespace and ConfigMap with simple Locust script</li>
+<li>Deploys LocustTest custom resource</li>
+<li>Validates master and worker deployments are created</li>
+<li>Ensures all pods reach Running state</li>
+</ul>
+<h3 id="test-3-locusttest-execution">Test 3: LocustTest Execution<a class="headerlink" href="#test-3-locusttest-execution" title="Anchor link to this section for reference">⚓</a></h3>
+<ul>
+<li>Verifies Locust master web interface starts</li>
+<li>Checks master logs for successful initialization</li>
+<li>Validates workers connect to master</li>
+<li>Confirms test environment is functional</li>
+</ul>
+<h3 id="test-4-cleanup">Test 4: Cleanup<a class="headerlink" href="#test-4-cleanup" title="Anchor link to this section for reference">⚓</a></h3>
+<ul>
+<li>Deletes LocustTest custom resource</li>
+<li>Verifies all managed resources are cleaned up</li>
+<li>Uninstalls operator</li>
+<li>Validates complete cleanup</li>
+</ul>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="integration-test-configuration">Integration Test Configuration<a class="headerlink" href="#integration-test-configuration" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Located in <code>gradle/integration-test.gradle</code>:
+- Defines separate source set for integration tests
+- Configures dependencies (Testcontainers, Kubernetes client, etc.)
+- Sets up test reporting and timeouts
+- Links to main build pipeline</p>
+<h3 id="test-application-configuration">Test Application Configuration<a class="headerlink" href="#test-application-configuration" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Located in <code>src/integrationTest/resources/application-test.yml</code>:
+- Configures logging levels for test visibility
+- Sets timeouts for different test phases
+- Defines resource locations and image names</p>
+<h3 id="ci-configuration">CI Configuration<a class="headerlink" href="#ci-configuration" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Located in <code>.github/workflows/integration-test.yml</code>:
+- GitHub Actions workflow for automated testing
+- Includes caching for Gradle and Docker layers
+- Uploads test results as artifacts
+- Uses <strong>KinD (Kubernetes in Docker)</strong> cluster with custom configuration in <code>.github/kind-config.yaml</code>
+- Uses Helm 3.12.0 for chart installation</p>
+<h2 id="sample-locusttest-resource">Sample LocustTest Resource<a class="headerlink" href="#sample-locusttest-resource" title="Anchor link to this section for reference">⚓</a></h2>
+<p>The integration test creates this sample LocustTest CR:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust.io/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LocustTest</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integration-test</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust-tests</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">masterConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locustio/locust:2.15.1</span>
+<span class="w">    </span><span class="nt">resources</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">requests</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;128Mi&quot;</span>
+<span class="w">        </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;100m&quot;</span>
+<span class="w">      </span><span class="nt">limits</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;256Mi&quot;</span>
+<span class="w">        </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;200m&quot;</span>
+<span class="w">  </span><span class="nt">workerConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locustio/locust:2.15.1</span>
+<span class="w">    </span><span class="nt">resources</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">requests</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;128Mi&quot;</span>
+<span class="w">        </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;100m&quot;</span>
+<span class="w">      </span><span class="nt">limits</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;256Mi&quot;</span>
+<span class="w">        </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;200m&quot;</span>
+<span class="w">  </span><span class="nt">configMap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust-test-scripts</span>
+</code></pre></div>
+<h2 id="test-reports-and-artifacts">Test Reports and Artifacts<a class="headerlink" href="#test-reports-and-artifacts" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="local-testing">Local Testing<a class="headerlink" href="#local-testing" title="Anchor link to this section for reference">⚓</a></h3>
+<ul>
+<li><strong>HTML Report</strong>: <code>build/reports/integration-tests/index.html</code></li>
+<li><strong>JUnit XML</strong>: <code>build/test-results/integration-test/</code></li>
+<li><strong>Logs</strong>: <code>/tmp/locust-integration-test-{timestamp}.log</code></li>
+</ul>
+<h3 id="ci-testing">CI Testing<a class="headerlink" href="#ci-testing" title="Anchor link to this section for reference">⚓</a></h3>
+<ul>
+<li>Test results uploaded as GitHub Actions artifacts</li>
+<li>Available for download from the Actions run page</li>
+<li>Includes both HTML reports and raw XML results</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="common-issues">Common Issues<a class="headerlink" href="#common-issues" title="Anchor link to this section for reference">⚓</a></h3>
+<h4 id="docker-permission-errors">Docker Permission Errors<a class="headerlink" href="#docker-permission-errors" title="Anchor link to this section for reference">⚓</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># On Linux, ensure user is in docker group</span>
+sudo<span class="w"> </span>usermod<span class="w"> </span>-aG<span class="w"> </span>docker<span class="w"> </span><span class="nv">$USER</span>
+<span class="c1"># Then logout and login again</span>
+</code></pre></div>
+<h4 id="k3s-container-startup-issues">K3s Container Startup Issues<a class="headerlink" href="#k3s-container-startup-issues" title="Anchor link to this section for reference">⚓</a></h4>
+<ul>
+<li>Ensure Docker has enough resources (4GB+ RAM recommended)</li>
+<li>Check Docker daemon is running: <code>docker info</code></li>
+<li>Verify no conflicting containers: <code>docker ps -a</code></li>
+</ul>
+<h4 id="helm-chart-packaging-failures">Helm Chart Packaging Failures<a class="headerlink" href="#helm-chart-packaging-failures" title="Anchor link to this section for reference">⚓</a></h4>
+<ul>
+<li>Ensure Helm is installed: <code>helm version</code></li>
+<li>Check chart syntax: <code>helm lint charts/locust-k8s-operator</code></li>
+<li>Verify chart dependencies: <code>helm dependency list charts/locust-k8s-operator</code></li>
+</ul>
+<h4 id="integration-test-timeouts">Integration Test Timeouts<a class="headerlink" href="#integration-test-timeouts" title="Anchor link to this section for reference">⚓</a></h4>
+<ul>
+<li>Tests have generous timeouts but may need adjustment for slower systems</li>
+<li>Modify timeouts in <code>application-test.yml</code> if needed</li>
+<li>Check system resources during test execution</li>
+</ul>
+<h3 id="debug-mode">Debug Mode<a class="headerlink" href="#debug-mode" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Enable debug logging by setting:
+<div class="highlight"><pre><span></span><code><span class="nt">logger</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">levels</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">com.locust</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DEBUG</span>
+<span class="w">    </span><span class="nt">org.testcontainers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DEBUG</span>
+</code></pre></div></p>
+<h3 id="manual-debugging">Manual Debugging<a class="headerlink" href="#manual-debugging" title="Anchor link to this section for reference">⚓</a></h3>
+<p>If tests fail, you can manually inspect the K3s cluster:
+1. The test creates temporary kubeconfig files
+2. Look for log messages indicating kubeconfig location
+3. Use <code>kubectl</code> with the temporary kubeconfig to inspect cluster state</p>
+<h2 id="performance-considerations">Performance Considerations<a class="headerlink" href="#performance-considerations" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="resource-requirements">Resource Requirements<a class="headerlink" href="#resource-requirements" title="Anchor link to this section for reference">⚓</a></h3>
+<ul>
+<li><strong>Memory</strong>: ~4GB available RAM recommended</li>
+<li><strong>CPU</strong>: 2+ cores for reasonable performance</li>
+<li><strong>Disk</strong>: ~10GB for images and temporary files</li>
+<li><strong>Network</strong>: Internet access for pulling images</li>
+</ul>
+<h3 id="execution-time">Execution Time<a class="headerlink" href="#execution-time" title="Anchor link to this section for reference">⚓</a></h3>
+<ul>
+<li>Full test suite: ~10-15 minutes</li>
+<li>Individual test phases:</li>
+<li>Cluster startup: ~2-3 minutes</li>
+<li>Image building: ~3-5 minutes</li>
+<li>Deployment validation: ~2-3 minutes</li>
+<li>Test execution: ~2-3 minutes</li>
+<li>Cleanup: ~1-2 minutes</li>
+</ul>
+<h2 id="future-enhancements">Future Enhancements<a class="headerlink" href="#future-enhancements" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="planned-improvements">Planned Improvements<a class="headerlink" href="#planned-improvements" title="Anchor link to this section for reference">⚓</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Multi-scenario testing (different LocustTest configurations)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Performance benchmarking integration</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Integration with libConfigMap feature testing</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Cross-platform testing (ARM64 support)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Parallel test execution for faster CI</li>
+</ul>
+<h3 id="extension-points">Extension Points<a class="headerlink" href="#extension-points" title="Anchor link to this section for reference">⚓</a></h3>
+<ul>
+<li>Add custom test scenarios in separate test classes</li>
+<li>Extend with custom Kubernetes resources validation</li>
+<li>Integrate with monitoring and observability testing</li>
+<li>Add chaos engineering tests for resilience validation</li>
+</ul>
+<h2 id="related-documentation">Related Documentation<a class="headerlink" href="#related-documentation" title="Anchor link to this section for reference">⚓</a></h2>
+<ul>
+<li><a href="../how_does_it_work/">How It Works</a> - Operator architecture overview</li>
+<li><a href="../CONTRIBUTING.md">Contributing</a> - Development guidelines</li>
+<li><a href="../LIBCONFIGMAP_FEATURE_IMPLEMENTATION.md">LibConfigMap Feature</a> - Feature implementation details</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 3, 2025 14:41:18 UTC">July 3, 2025</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -746,12 +1026,12 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "/", "features": ["search.highlight", "search.share", "navigation.tracking", "navigation.top", "navigation.footer - navigation.prune", "toc.follow", "toc.integrate", "content.code.annotate", "content.code.copy", "content.tabs.link"], "search": "/assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["search.highlight", "search.share", "navigation.tracking", "navigation.top", "navigation.footer - navigation.prune", "toc.follow", "toc.integrate", "content.code.annotate", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="/assets/javascripts/bundle.56ea9cef.min.js"></script>
+      <script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
-        <script src="/assets/external/unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
+        <script src="../assets/external/unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
       
     
   </body>

@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -444,6 +444,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Step 4: Deploy test as a configMap">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-41-deploy-lib-files-as-a-configmap-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4.1: Deploy lib files as a configMap (Optional)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 4.1: Deploy lib files as a configMap (Optional)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How it works
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-by-step-instructions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step-by-step instructions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -581,18 +620,133 @@
   
   
   
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Contributing & Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing & Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../contribute/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Contribute
+    Overview
     
   </span>
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/integration-testing.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/local-development.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local Development
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/pull-request-process.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pull Request Process
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -640,7 +794,7 @@
 
 <h1 id="getting-started">Getting started<a class="headerlink" href="#getting-started" title="Anchor link to this section for reference">⚓</a></h1>
 <p>Only few simple steps are needed to get a test up and running in the cluster. The following is a step-by-step guide on how to achieve this.</p>
-<h3 id="step-1-write-a-valid-locust-test-script">Step 1: Write a valid Locust test script<a class="headerlink" href="#step-1-write-a-valid-locust-test-script" title="Anchor link to this section for reference">⚓</a></h3>
+<h3 id="step-1-write-a-valid-locust-test-script"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.14 7.5A2.86 2.86 0 0 1 22 10.36v3.78A2.86 2.86 0 0 1 19.14 17H12c0 .39.32.96.71.96H17v1.68a2.86 2.86 0 0 1-2.86 2.86H9.86A2.86 2.86 0 0 1 7 19.64v-3.75a2.85 2.85 0 0 1 2.86-2.85h5.25a2.85 2.85 0 0 0 2.85-2.86V7.5zm-4.28 11.79c-.4 0-.72.3-.72.89s.32.71.72.71a.71.71 0 0 0 .71-.71c0-.59-.32-.89-.71-.89m-10-1.79A2.86 2.86 0 0 1 2 14.64v-3.78A2.86 2.86 0 0 1 4.86 8H12c0-.39-.32-.96-.71-.96H7V5.36A2.86 2.86 0 0 1 9.86 2.5h4.28A2.86 2.86 0 0 1 17 5.36v3.75a2.85 2.85 0 0 1-2.86 2.85H8.89a2.85 2.85 0 0 0-2.85 2.86v2.68zM9.14 5.71c.4 0 .72-.3.72-.89s-.32-.71-.72-.71c-.39 0-.71.12-.71.71s.32.89.71.89"/></svg></span> Step 1: Write a valid Locust test script<a class="headerlink" href="#step-1-write-a-valid-locust-test-script" title="Anchor link to this section for reference">⚓</a></h3>
 <p>For this example, we will be using the following script</p>
 <div class="highlight"><span class="filename">demo_test.py</span><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">locust</span><span class="w"> </span><span class="kn">import</span> <span class="n">HttpUser</span><span class="p">,</span> <span class="n">task</span>
 
@@ -660,7 +814,7 @@
 <p>To be able to run performance tests effectivly, an understanding of <em>Locust</em> which is the underline load generation tool is required. All tests must be valid <em>locust</em> tests.</p>
 <p><em>Locust</em> provide a very good and detail rich documentation that can be <a href="https://docs.locust.io/en/stable/quickstart.html">found here</a>.</p>
 </div>
-<h3 id="step-2-write-a-valid-custom-resource-for-locusttest-crd">Step 2: Write a valid custom resource for <em>LocustTest</em> CRD<a class="headerlink" href="#step-2-write-a-valid-custom-resource-for-locusttest-crd" title="Anchor link to this section for reference">⚓</a></h3>
+<h3 id="step-2-write-a-valid-custom-resource-for-locusttest-crd"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm0 2h7v5h5v11H6zm2 8v2h8v-2zm0 4v2h5v-2z"/></svg></span> Step 2: Write a valid custom resource for <em>LocustTest</em> CRD<a class="headerlink" href="#step-2-write-a-valid-custom-resource-for-locusttest-crd" title="Anchor link to this section for reference">⚓</a></h3>
 <p>A simple <em>custom resource</em> for the previous test can be something like the following example;</p>
 <blockquote>
 <p>To streamline this step, <a href="https://abdelrhmanhamouda.github.io/intensive-brew/"><em>intensive-brew</em></a> should be used. It is a simple cli tool that converts a declarative yaml into a compatible LocustTest kubernetes custom resource.</p>
@@ -680,6 +834,7 @@
 <span class="w">  </span><span class="nt">workerCommandSeed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--locustfile /lotest/src/demo_test.py</span><span class="w"> </span><span class="c1"># (6)!</span>
 <span class="w">  </span><span class="nt">workerReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w"> </span><span class="c1"># (7)!</span>
 <span class="w">  </span><span class="nt">configMap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">demo-test-map</span><span class="w"> </span><span class="c1"># (8)!</span>
+<span class="w">  </span><span class="nt">libConfigMap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">demo-lib-map</span><span class="w"> </span><span class="c1"># (9)!</span>
 </code></pre></div>
 <ol>
 <li>API version based on the deployed <em>LocustTest</em> CRD.</li>
@@ -693,6 +848,7 @@
     to perform its job e.g. ports, master node url, master node ports, etc...</li>
 <li>The amount of <em>worker</em> nodes to spawn in the cluster.</li>
 <li>[Optional] Name of <em>configMap</em> to mount into the pod</li>
+<li>[Optional] Name of <em>configMap</em> containing lib directory files to mount at <code>/opt/locust/lib</code></li>
 </ol>
 <h4 id="other-options">Other options<a class="headerlink" href="#other-options" title="Anchor link to this section for reference">⚓</a></h4>
 <h5 id="labels-and-annotations">Labels and annotations<a class="headerlink" href="#labels-and-annotations" title="Anchor link to this section for reference">⚓</a></h5>
@@ -721,10 +877,10 @@
 <li>[Optional] Annotations too are attached to master and worker pods. They can be used to include additional context about a test. For example, configuration parameters of the software system being tested.</li>
 </ol>
 <p>Both labels and annotations can be added to the Prometheus configuration, so that metrics are associated with the appropriate information, such as the test and tenant ids. You can read more about this in the <a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/#kubernetes_sd_config">Prometheus documentation</a> site.</p>
-<h3 id="step-3-deploy-locust-k8s-operator-in-the-cluster">Step 3: Deploy <em>Locust k8s Operator</em> in the cluster.<a class="headerlink" href="#step-3-deploy-locust-k8s-operator-in-the-cluster" title="Anchor link to this section for reference">⚓</a></h3>
+<h3 id="step-3-deploy-locust-k8s-operator-in-the-cluster"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m13.13 22.19-1.63-3.83c1.57-.58 3.04-1.36 4.4-2.27zM5.64 12.5l-3.83-1.63 6.1-2.77C7 9.46 6.22 10.93 5.64 12.5M19.22 4c.28 0 .53 0 .74.05.17 1.39-.02 4.25-3.3 7.53-1.7 1.71-3.73 3.02-6.01 3.89l-2.15-2.1c.92-2.31 2.23-4.34 3.92-6.03C15.18 4.58 17.64 4 19.22 4m0-2c-1.98 0-4.98.69-8.22 3.93-2.19 2.19-3.5 4.6-4.35 6.71-.28.75-.09 1.57.46 2.13l2.13 2.12c.38.38.89.61 1.42.61.23 0 .47-.06.7-.15A19.1 19.1 0 0 0 18.07 13c5.66-5.66 3.54-10.61 3.54-10.61S20.7 2 19.22 2m-4.68 7.46c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0c.77.78.78 2.05 0 2.83s-2.05.78-2.83 0m-5.66 7.07-1.41-1.41zM6.24 22l3.64-3.64c-.34-.09-.67-.24-.97-.45L4.83 22zM2 22h1.41l4.77-4.76-1.42-1.41L2 20.59zm0-2.83 4.09-4.08c-.21-.3-.36-.62-.45-.97L2 17.76z"/></svg></span> Step 3: Deploy <em>Locust k8s Operator</em> in the cluster.<a class="headerlink" href="#step-3-deploy-locust-k8s-operator-in-the-cluster" title="Anchor link to this section for reference">⚓</a></h3>
 <p>The recommended way to install the <em>Operator</em> is by using the official HELM chart. Documentation on how to perform that
 is <a href="../helm_deploy/">available here</a>.</p>
-<h3 id="step-4-deploy-test-as-a-configmap">Step 4: Deploy test as a configMap<a class="headerlink" href="#step-4-deploy-test-as-a-configmap" title="Anchor link to this section for reference">⚓</a></h3>
+<h3 id="step-4-deploy-test-as-a-configmap"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.9 18.45c1.35 0 2.45-1.1 2.45-2.45s-1.1-2.45-2.45-2.45c-1.36 0-2.45 1.1-2.45 2.45s1.09 2.45 2.45 2.45m5.2-1.77 1.48 1.16c.13.11.17.29.08.45l-1.4 2.42a.35.35 0 0 1-.43.15l-1.74-.7c-.36.28-.76.51-1.18.69l-.27 1.85c-.02.17-.17.3-.34.3h-2.8c-.18 0-.32-.13-.35-.3l-.26-1.85c-.43-.18-.82-.41-1.18-.69l-1.75.7c-.15.06-.34 0-.42-.15l-1.4-2.42a.35.35 0 0 1 .08-.45l1.48-1.16-.05-.68.05-.69-1.48-1.15a.35.35 0 0 1-.08-.45l1.4-2.42c.08-.16.27-.22.42-.16l1.75.71c.36-.28.75-.52 1.18-.69l.26-1.86c.03-.16.17-.29.35-.29h2.8c.17 0 .32.13.34.29l.27 1.86c.42.17.82.41 1.18.69l1.74-.71c.17-.06.34 0 .43.16l1.4 2.42c.09.15.05.34-.08.45l-1.48 1.15.05.69zM6.69 8.07c.87 0 1.57-.7 1.57-1.57s-.7-1.58-1.57-1.58A1.58 1.58 0 0 0 5.11 6.5c0 .87.71 1.57 1.58 1.57m3.34-1.13.97.74c.07.07.09.19.03.29l-.9 1.56c-.05.1-.17.14-.27.1l-1.12-.45-.74.44-.19 1.19c-.02.11-.11.19-.22.19h-1.8c-.12 0-.21-.08-.23-.19L5.4 9.62l-.76-.44-1.14.45c-.09.04-.2 0-.26-.1l-.9-1.56c-.06-.1-.03-.22.05-.29l.95-.74-.03-.44.03-.44-.95-.74a.23.23 0 0 1-.05-.29l.9-1.56c.06-.1.17-.14.26-.1l1.13.45.77-.44.16-1.19c.02-.11.11-.19.23-.19h1.8c.11 0 .2.08.22.19L8 3.38l.74.44 1.12-.45c.1-.04.22 0 .27.1l.9 1.56c.06.1.04.22-.03.29l-.97.74.03.44z"/></svg></span> Step 4: Deploy test as a configMap<a class="headerlink" href="#step-4-deploy-test-as-a-configmap" title="Anchor link to this section for reference">⚓</a></h3>
 <p>For the purposes of this example, the <code>demo_test.py</code> test previously demonstrated will be deployed into the cluster as a <em>configMap</em> that
 the <em>Operator</em> will mount to the load generation pods.<br />
 To deploy the test as a configMap, run the bellow command following this
@@ -732,11 +888,68 @@ template <code>kubectl create configmap &lt;configMap-name&gt; --from-file &lt;y
 <ul>
 <li><code>kubectl create configmap demo-test-map --from-file demo_test.py</code></li>
 </ul>
+<h4 id="step-41-deploy-lib-files-as-a-configmap-optional"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M22 4h-8l-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2M2 6H0v14a2 2 0 0 0 2 2h18v-2H2z"/></svg></span> Step 4.1: Deploy lib files as a configMap (Optional)<a class="headerlink" href="#step-41-deploy-lib-files-as-a-configmap-optional" title="Anchor link to this section for reference">⚓</a></h4>
+<div class="admonition info">
+<p class="admonition-title">What are lib files and why use this feature?</p>
+<p><strong>Lib files</strong> are Python modules and libraries that your Locust tests depend on. When your tests require custom helper functions, utilities, or shared code that should be available across multiple test files, this feature allows you to package and deploy them alongside your tests.</p>
+</div>
+<h5 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Anchor link to this section for reference">⚓</a></h5>
+<p>The Locust Kubernetes Operator provides a mechanism to deploy your custom Python libraries as a ConfigMap, which will then be mounted to the <code>/opt/locust/lib</code> directory inside all Locust pods (both master and worker). This allows your test scripts to import and use these libraries.</p>
+<p>For example, if you have the following structure:</p>
+<div class="highlight"><pre><span></span><code>project/
+├── my_test.py          # Your main Locust test file
+└── lib/
+    ├── helpers.py      # Helper functions
+    ├── utils.py        # Utility functions
+    └── models.py       # Data models
+</code></pre></div>
+<p>Your test might import these libraries like this:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># in my_test.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lib.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">some_helper_function</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lib.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_data</span>
+</code></pre></div>
+<p>To make these imports work when your test runs in Kubernetes, you need to:</p>
+<ol>
+<li>Deploy your lib files as a ConfigMap</li>
+<li>Reference this ConfigMap in your LocustTest custom resource</li>
+</ol>
+<h5 id="step-by-step-instructions">Step-by-step instructions<a class="headerlink" href="#step-by-step-instructions" title="Anchor link to this section for reference">⚓</a></h5>
+<p><strong>1. Create a ConfigMap from your lib directory:</strong></p>
+<p>You can deploy all library files from a directory:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Deploy all files from the lib/ directory as a ConfigMap</span>
+kubectl<span class="w"> </span>create<span class="w"> </span>configmap<span class="w"> </span>demo-lib-map<span class="w"> </span>--from-file<span class="o">=</span>lib/
+</code></pre></div>
+<p>Alternatively, you can create it from individual files:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Deploy specific files as a ConfigMap</span>
+kubectl<span class="w"> </span>create<span class="w"> </span>configmap<span class="w"> </span>demo-lib-map<span class="w"> </span>--from-file<span class="o">=</span>lib/helpers.py<span class="w"> </span>--from-file<span class="o">=</span>lib/utils.py
+</code></pre></div>
+<p><strong>2. Reference the lib ConfigMap in your LocustTest custom resource:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust.io/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LocustTest</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example-locusttest</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">masterConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">workerConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">  </span><span class="nt">configMap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">demo-test-map</span><span class="w">    </span><span class="c1"># Your test script ConfigMap</span>
+<span class="w">  </span><span class="nt">libConfigMap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">demo-lib-map</span><span class="w">   </span><span class="c1"># Your lib files ConfigMap</span>
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Organizing your code</p>
+<p>This feature is especially useful when:</p>
+<ol>
+<li>You have complex test scenarios that benefit from modular code</li>
+<li>You want to share code between multiple Locust tests</li>
+<li>You need to keep your test scripts clean by separating implementation details</li>
+</ol>
+</div>
 <div class="admonition note">
 <p class="admonition-title">Fresh cluster resources</p>
 <p>Fresh cluster resources are allocated for each running test, meaning that tests <strong>DO NOT</strong> have any cross impact on each other.</p>
 </div>
-<h3 id="step-5-start-the-test-by-deploying-the-locusttest-custom-resource">Step 5: Start the test by deploying the <em>LocustTest</em> custom resource.<a class="headerlink" href="#step-5-start-the-test-by-deploying-the-locusttest-custom-resource" title="Anchor link to this section for reference">⚓</a></h3>
+<h3 id="step-5-start-the-test-by-deploying-the-locusttest-custom-resource"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 20c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8m0-18A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2m-2 14.5 6-4.5-6-4.5z"/></svg></span> Step 5: Start the test by deploying the <em>LocustTest</em> custom resource.<a class="headerlink" href="#step-5-start-the-test-by-deploying-the-locusttest-custom-resource" title="Anchor link to this section for reference">⚓</a></h3>
 <p>Deploying a <em>custom resource</em>, signals to the <em>Operator</em> the desire to start a test and thus the <em>Operator</em> starts creating and scheduling
 all needed resources.<br />
 To do that, deploy the custom resource following this template <code>kubectl apply -f &lt;valid_cr&gt;.yaml</code>:</p>
@@ -752,7 +965,7 @@ custom resource.</p>
 <li>A kubernetes <em>Job</em> to manage the <em>master</em> node.</li>
 <li>A kubernetes <em>Job</em> to manage the <em>worker</em> node.</li>
 </ul>
-<h3 id="step-6-clear-resources-after-test-run">Step 6: Clear resources after test run<a class="headerlink" href="#step-6-clear-resources-after-test-run" title="Anchor link to this section for reference">⚓</a></h3>
+<h3 id="step-6-clear-resources-after-test-run"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6zM8 9h8v10H8zm7.5-5-1-1h-5l-1 1H5v2h14V4z"/></svg></span> Step 6: Clear resources after test run<a class="headerlink" href="#step-6-clear-resources-after-test-run" title="Anchor link to this section for reference">⚓</a></h3>
 <p>In order to remove the cluster resources after a test run, simply remove the custom resource and the <em>Operator</em> will react to this event by
 cleaning the cluster of all <strong>related</strong> resources.<br />
 To delete a resource, run the below command following this template <code>kubectl delete -f &lt;valid_cr&gt;.yaml</code>:</p>
@@ -779,7 +992,7 @@ To delete a resource, run the below command following this template <code>kubect
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 27, 2025 21:54:34 UTC">June 27, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 3, 2025 14:41:18 UTC">July 3, 2025</span>
   </span>
 
     
@@ -944,7 +1157,7 @@ To delete a resource, run the below command following this template <code>kubect
       <script id="__config" type="application/json">{"base": "..", "features": ["search.highlight", "search.share", "navigation.tracking", "navigation.top", "navigation.footer - navigation.prune", "toc.follow", "toc.integrate", "content.code.annotate", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
         <script src="../assets/external/unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
       
