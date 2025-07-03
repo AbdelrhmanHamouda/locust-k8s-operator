@@ -1,11 +1,6 @@
 ---
 title: Locust Kubernetes Operator
 description: Enable performance testing for the modern era! Utilize the full power of Locust in the cloud with a fully automated, cloud-native approach.
-tags:
-  - kubernetes
-  - performance testing
-  - cloud native
-  - locust
 ---
 
 # Performance testing that simply works
@@ -25,13 +20,22 @@ tags:
 </div>
 </div>
 
------------------------------
-
-[//]: # (Badges)
-[![CI Pipeline][pipeline-status]][pipeline-status-url]
-[![Codacy Badge][code-coverage]][code-coverage-url]
-[![Codacy Badge][code-quality]][code-quality-url]
-[![Docker Pulls][docker-pulls]][docker-url]
+<div class="badges-section">
+  <div class="badges-container">
+    <a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/actions/workflows/ci.yaml" target="_blank">
+      <img src="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/actions/workflows/ci.yaml/badge.svg?branch=master" alt="CI Pipeline" class="badge">
+    </a>
+    <a href="https://app.codacy.com/gh/AbdelrhmanHamouda/locust-k8s-operator/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade" target="_blank">
+      <img src="https://app.codacy.com/project/badge/Grade/70b76e69dbde4a9ebfd36ad5ccf6de78" alt="Code Quality" class="badge">
+    </a>
+    <a href="https://app.codacy.com/gh/AbdelrhmanHamouda/locust-k8s-operator/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage" target="_blank">
+      <img src="https://app.codacy.com/project/badge/Coverage/70b76e69dbde4a9ebfd36ad5ccf6de78" alt="Code Coverage" class="badge">
+    </a>
+    <a href="https://hub.docker.com/r/lotest/locust-k8s-operator" target="_blank">
+      <img src="https://img.shields.io/docker/pulls/lotest/locust-k8s-operator?style=flat&logo=docker&logoColor=green&label=Image%20Pulls&color=green" alt="Docker Pulls" class="badge">
+    </a>
+  </div>
+</div>
 
 
 

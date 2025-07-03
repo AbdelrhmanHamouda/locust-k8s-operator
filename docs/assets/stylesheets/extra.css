@@ -608,3 +608,75 @@ html {
 .md-content {
   animation: pageLoad 0.5s ease-out;
 }
+
+/* Enhanced badge section styling */
+.badges-section {
+  margin: 0.75rem 0;
+  padding: 0.75rem 0;
+  background: linear-gradient(135deg, rgba(var(--md-primary-fg-color--rgb), 0.03) 0%, rgba(var(--md-accent-fg-color--rgb), 0.03) 100%);
+  border-radius: 1rem;
+  text-align: center;
+}
+
+.badges-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.badge {
+  transition: all 0.3s ease-out !important;
+  border-radius: 6px !important;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)) !important;
+}
+
+.badge:hover {
+  transform: translateY(-2px) scale(1.05) !important;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15)) !important;
+}
+
+/* Enhanced section styling */
+.md-content h2 {
+  margin-top: 2rem !important;
+  margin-bottom: 1rem !important;
+  font-size: 2.2rem !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+
+/* Improved image styling throughout docs */
+.md-content img:not(.twemoji):not(.badge) {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+  transition: all 0.3s ease-out !important;
+  margin: 1rem auto !important;
+  display: block !important;
+}
+
+.md-content img:not(.twemoji):not(.badge):hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18) !important;
+}
+
+/* Enhanced grid sections */
+.md-content .grid:not(.cards) {
+  gap: 1.5rem !important;
+  margin: 1.5rem 0 !important;
+}
+
+/* Better typography hierarchy */
+.md-content h3 {
+  font-size: 1.4rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 1rem !important;
+  color: var(--md-default-fg-color) !important;
+}
+
+.md-content p {
+  line-height: 1.7 !important;
+  margin-bottom: 1rem !important;
+}
