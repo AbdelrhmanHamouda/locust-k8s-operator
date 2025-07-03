@@ -88,6 +88,7 @@ extra_css:
 
 extra_javascript:
   - assets/javascripts/scroll-effects.js
+  - assets/javascripts/custom-announcements.js
 
 # Customization
 extra:
