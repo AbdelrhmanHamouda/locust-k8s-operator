@@ -24,7 +24,7 @@ plugins:
 # Configuration
 theme:
   name: material
-  custom_dir: overrides
+  favicon: assets/images/favicon.png
 
   icon:
     logo: material/kubernetes
@@ -62,7 +62,6 @@ theme:
 
     # Other features
     - header.autohide
-    - announce.dismiss
 
   palette:
     # Palette toggle for light mode
@@ -83,16 +82,15 @@ theme:
         icon: material/weather-sunny
         name: Switch to light mode
 
+# Extra CSS and JavaScript
+extra_css:
+  - assets/stylesheets/extra.css
+
+extra_javascript:
+  - assets/javascripts/scroll-effects.js
+
 # Customization
 extra:
-  # Add CSS to site
-  css:
-    - assets/stylesheets/extra.css
-
-  # Add JavaScript for scroll effects
-  javascript:
-    - assets/javascripts/scroll-effects.js
-
   # Version dropdown configuration
   version:
     provider: mike

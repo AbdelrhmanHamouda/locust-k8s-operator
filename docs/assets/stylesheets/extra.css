@@ -1,67 +1,226 @@
-/* Hero section styling to match Material for MkDocs */
-.tx-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: center;
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
-  color: var(--md-primary-fg-color);
+/* Modern hero section with gradient background and enhanced styling */
+.md-content .tx-hero {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+  padding: 2rem 1rem !important;
+  background: linear-gradient(135deg,
+    rgba(var(--md-primary-fg-color--rgb), 0.05) 0%,
+    rgba(var(--md-accent-fg-color--rgb), 0.05) 100%) !important;
+  border-radius: 1rem !important;
+  margin: 0.5rem 0 1.5rem 0 !important;
+  position: relative !important;
+  overflow: hidden !important;
 }
 
-.tx-hero .md-button {
-  margin-top: 0.5rem;
-  margin-right: 0.5rem;
-  color: currentColor;
+.tx-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg at 50% 50%,
+    transparent 0deg,
+    rgba(var(--md-accent-fg-color--rgb), 0.03) 90deg,
+    transparent 180deg,
+    rgba(var(--md-primary-fg-color--rgb), 0.03) 270deg,
+    transparent 360deg);
+  animation: rotate 20s linear infinite;
+  z-index: 0;
 }
 
-.tx-hero .md-button--primary {
-  background-color: var(--md-primary-fg-color);
-  color: var(--md-primary-bg-color);
-  border-color: var(--md-primary-fg-color);
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.tx-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.md-content .tx-hero .md-button {
+  margin-top: 0.5rem !important;
+  margin-right: 0.5rem !important;
+  padding: 0.75rem 2rem !important;
+  border-radius: 2rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.tx-hero .md-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.tx-hero .md-button:hover::before {
+  left: 100%;
+}
+
+.md-content .tx-hero .md-button--primary {
+  background: linear-gradient(135deg, var(--md-primary-fg-color), var(--md-accent-fg-color)) !important;
+  color: var(--md-primary-bg-color) !important;
+  border: none !important;
+  box-shadow: 0 4px 15px rgba(var(--md-primary-fg-color--rgb), 0.3) !important;
 }
 
 .tx-hero .md-button:focus,
 .tx-hero .md-button:hover {
-  background-color: var(--md-accent-fg-color);
-  color: var(--md-default-bg-color);
-  border-color: var(--md-accent-fg-color);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(var(--md-primary-fg-color--rgb), 0.4);
+}
+
+.tx-hero .md-button:not(.md-button--primary) {
+  background: transparent;
+  border: 2px solid var(--md-primary-fg-color);
+  color: var(--md-primary-fg-color);
+}
+
+.tx-hero .md-button:not(.md-button--primary):hover {
+  background: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
 }
 
 .tx-hero p {
   margin: 0 auto;
   margin-top: 1rem;
-  margin-bottom: 1.5rem;
-  font-size: 1.2rem;
-  line-height: 1.5;
-  color: var(--md-primary-fg-color);
-  max-width: 35rem;
+  margin-bottom: 2rem;
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: var(--md-default-fg-color);
+  max-width: 40rem;
   text-align: center;
+  font-weight: 400;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.8s ease-out 0.3s forwards;
+}
+
+.tx-hero h1 {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 0.8s ease-out 0.1s forwards;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .tx-hero__content {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 1rem;
+  gap: 1rem;
+  margin-top: 2rem;
   margin-bottom: 1rem;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.8s ease-out 0.5s forwards;
 }
 
 .tx-hero__image {
   order: 1;
   width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
+  max-width: 500px;
+  margin: 1.5rem auto 0;
   text-align: center;
-  transition: transform 0.75s cubic-bezier(0.7, 0, 0.3, 1), opacity 0.75s;
+  opacity: 0;
+  transform: translateY(30px) scale(0.9);
+  animation: heroImageIn 1s ease-out 0.7s forwards;
 }
 
-/* Improve material grid layout */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  grid-gap: 1.2rem;
-  margin: 1em 0;
+@keyframes heroImageIn {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tx-hero__image img {
+  filter: drop-shadow(0 10px 25px rgba(0,0,0,0.1));
+  transition: transform 0.3s ease-out;
+}
+
+.tx-hero__image:hover img {
+  transform: translateY(-5px) scale(1.02);
+}
+
+/* Enhanced grid layout with animations - only for homepage */
+.md-content .grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)) !important;
+  gap: 1.2rem !important;
+  margin: 2rem 0 !important;
+}
+
+/* Homepage specific - better 4-card layout */
+.md-content article:first-child .grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  max-width: 1200px !important;
+  margin: 2rem auto !important;
+  gap: 1.5rem !important;
+}
+
+/* Force 2x2 layout on medium screens for better appearance */
+@media screen and (min-width: 768px) and (max-width: 1199px) {
+  .md-content article:first-child .grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    max-width: 700px !important;
+  }
+}
+
+/* Single column on small screens */
+@media screen and (max-width: 767px) {
+  .md-content article:first-child .grid {
+    grid-template-columns: 1fr !important;
+    max-width: 400px !important;
+  }
+}
+
+/* Features page specific grid layout - 3 cards per row for better spacing */
+@media screen and (min-width: 900px) {
+  body[data-md-color-scheme] .md-content .grid.cards {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1.5rem !important;
+    max-width: 1200px !important;
+    margin: 2rem auto !important;
+  }
+}
+
+@media screen and (max-width: 899px) {
+  body[data-md-color-scheme] .md-content .grid.cards {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1rem !important;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  body[data-md-color-scheme] .md-content .grid.cards {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+}
+
+/* Animation only for homepage grid */
+.md-content article:first-child .grid {
+  opacity: 0;
+  transform: translateY(40px);
+  animation: fadeInUp 0.8s ease-out 1s forwards;
 }
 
 /* Handle scroll behavior */
@@ -104,38 +263,348 @@
   display: contents;
 }
 
-.grid.cards > :is(ul, ol) > li,
-.grid > .card {
-  border-radius: 0.1rem;
-  box-shadow: var(--md-shadow-z1);
-  display: block;
-  margin: 0;
-  padding: 1rem;
-  transition: box-shadow 125ms;
+.md-content .grid.cards > :is(ul, ol) > li,
+.md-content .grid > .card {
+  border-radius: 1rem !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  margin: 0 !important;
+  padding: 1.5rem !important;
+  background: var(--md-default-bg-color) !important;
+  border: 1px solid rgba(var(--md-default-fg-color--rgb), 0.05) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  min-height: 260px !important;
+  justify-content: flex-start !important;
+}
+
+/* Features page cards - professional styling */
+body[data-md-color-scheme] .md-content .grid.cards > :is(ul, ol) > li {
+  min-height: 240px !important;
+  padding: 1.25rem !important;
+  background: linear-gradient(145deg, var(--md-default-bg-color) 0%, rgba(var(--md-primary-fg-color--rgb), 0.02) 100%) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/* Enhanced features page typography and spacing */
+body[data-md-color-scheme] .md-content .grid.cards > :is(ul, ol) > li > p:first-child {
+  font-size: 1.05rem !important;
+  margin-bottom: 1rem !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Professional description styling for features */
+body[data-md-color-scheme] .md-content .grid.cards > :is(ul, ol) > li > p:nth-of-type(2) {
+  font-size: 0.95rem !important;
+  line-height: 1.7 !important;
+  color: var(--md-default-fg-color--light) !important;
+  margin-bottom: 1.5rem !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.2px !important;
+}
+
+/* Enhanced hover effects for features cards */
+body[data-md-color-scheme] .md-content .grid.cards > :is(ul, ol) > li:hover {
+  background: linear-gradient(145deg, var(--md-default-bg-color) 0%, rgba(var(--md-primary-fg-color--rgb), 0.05) 100%) !important;
+  transform: translateY(-6px) !important;
+}
+
+/* Card animations only for homepage */
+.md-content article:first-child .grid.cards > :is(ul, ol) > li {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: cardFadeIn 0.6s ease-out forwards;
+}
+
+/* Staggered animation delays only for homepage cards */
+.md-content article:first-child .grid.cards > :is(ul, ol) > li:nth-child(1) { animation-delay: 0.1s; }
+.md-content article:first-child .grid.cards > :is(ul, ol) > li:nth-child(2) { animation-delay: 0.2s; }
+.md-content article:first-child .grid.cards > :is(ul, ol) > li:nth-child(3) { animation-delay: 0.3s; }
+.md-content article:first-child .grid.cards > :is(ul, ol) > li:nth-child(4) { animation-delay: 0.4s; }
+.md-content article:first-child .grid.cards > :is(ul, ol) > li:nth-child(5) { animation-delay: 0.5s; }
+.md-content article:first-child .grid.cards > :is(ul, ol) > li:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes cardFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.grid.cards > :is(ul, ol) > li::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--md-primary-fg-color), var(--md-accent-fg-color));
+  transition: left 0.5s ease-out;
 }
 
 .grid.cards > :is(ul, ol) > li:focus-within,
 .grid.cards > :is(ul, ol) > li:hover,
 .grid > .card:focus-within,
 .grid > .card:hover {
-  box-shadow: var(--md-shadow-z2);
+  transform: translateY(-8px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: rgba(var(--md-primary-fg-color--rgb), 0.1);
+}
+
+.grid.cards > :is(ul, ol) > li:hover::before,
+.grid > .card:hover::before {
+  left: 0;
+}
+
+/* Perfect card content alignment - targeting Material's exact structure */
+
+/* Card header (icon + title combination) */
+.md-content .grid.cards > :is(ul, ol) > li > p:first-child {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  margin: 0 0 0.75rem 0 !important;
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+  line-height: 1.3 !important;
+  min-height: 3rem !important;
+}
+
+/* Horizontal rule after title */
+.md-content .grid.cards > :is(ul, ol) > li > hr {
+  margin: 0.75rem 0 1rem 0 !important;
+  border: none !important;
+  height: 1px !important;
+  background: rgba(var(--md-default-fg-color--rgb), 0.12) !important;
+}
+
+/* Main description paragraph */
+.md-content .grid.cards > :is(ul, ol) > li > p:nth-of-type(2) {
+  margin: 0 0 1rem 0 !important;
+  color: var(--md-default-fg-color--light) !important;
+  line-height: 1.6 !important;
+  flex-grow: 1 !important;
+  font-size: 0.9rem !important;
+}
+
+/* Learn more link paragraph */
+.md-content .grid.cards > :is(ul, ol) > li > p:last-child {
+  margin: auto 0 0 0 !important;
+  padding-top: 0.75rem !important;
+}
+
+/* Perfect icon sizing and alignment in card headers */
+.md-content .grid.cards > :is(ul, ol) > li > p:first-child .twemoji {
+  width: 2.4rem !important;
+  height: 2.4rem !important;
+  margin: 0 !important;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)) !important;
+  transition: transform 0.3s ease-out !important;
+  flex-shrink: 0 !important;
+}
+
+.md-content .grid.cards > :is(ul, ol) > li:hover > p:first-child .twemoji {
+  transform: scale(1.05) rotate(2deg) !important;
+}
+
+/* Perfect learn more link alignment */
+.md-content .grid.cards > :is(ul, ol) > li > p:last-child > a {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  text-decoration: none !important;
+  color: var(--md-primary-fg-color) !important;
+  font-weight: 500 !important;
+  font-size: 0.9rem !important;
+  transition: all 0.2s ease-out !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.md-content .grid.cards > :is(ul, ol) > li > p:last-child > a:hover {
+  color: var(--md-accent-fg-color) !important;
+  transform: translateX(3px) !important;
+}
+
+/* Perfect arrow icon alignment */
+.md-content .grid.cards > :is(ul, ol) > li > p:last-child > a .twemoji {
+  width: 0.9rem !important;
+  height: 0.9rem !important;
+  margin: 0 !important;
+  transition: transform 0.2s ease-out !important;
+  flex-shrink: 0 !important;
+  opacity: 0.8 !important;
+}
+
+.md-content .grid.cards > :is(ul, ol) > li > p:last-child > a:hover .twemoji {
+  transform: translateX(2px) !important;
+  opacity: 1 !important;
 }
 
 .text-center {
   text-align: center;
 }
 
-/* Announcement bar */
-.md-banner {
-  background-color: var(--md-primary-fg-color);
-  color: var(--md-primary-bg-color);
-  text-align: center;
-  padding: 0.5rem;
+/* Enhanced announcement bar aligned with site colors */
+.md-announce {
+  background: linear-gradient(135deg, var(--md-accent-fg-color) 0%, #00695c 100%) !important;
+  color: white !important;
+  box-shadow: 0 1px 3px rgba(var(--md-accent-fg-color--rgb), 0.2) !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
-/* Icon adjustments */
+/* Fix Material's default announcement styling conflicts */
+.md-announce,
+.md-announce--primary {
+  background: linear-gradient(135deg, var(--md-accent-fg-color) 0%, #00695c 100%) !important;
+  color: white !important;
+}
+
+.md-announce__inner {
+  padding: 0.5rem 1rem !important;
+  text-align: center !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  line-height: 1.4 !important;
+  min-height: auto !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.md-announce a {
+  color: rgba(255, 255, 255, 0.95) !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+  margin-left: 0.5rem !important;
+  transition: all 0.2s ease-out !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.6) !important;
+  background: none !important;
+}
+
+.md-announce a:hover {
+  color: white !important;
+  border-bottom-color: white !important;
+  transform: translateX(2px) !important;
+  background: none !important;
+}
+
+/* Legacy banner styling (fallback) */
+.md-banner {
+  background: linear-gradient(135deg, var(--md-accent-fg-color) 0%, #00695c 100%) !important;
+  color: white !important;
+  text-align: center;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 1px 3px rgba(var(--md-accent-fg-color--rgb), 0.2);
+  border: none;
+}
+
+/* Enhanced icon styling */
 .lg.middle {
-  font-size: 2rem;
+  font-size: 2.5rem;
   vertical-align: middle;
-  margin-right: 0.5rem;
+  margin-right: 0.75rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s ease-out;
+}
+
+/* Section titles with better typography */
+.text-center {
+  text-align: center;
+}
+
+h2.text-center {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, var(--md-primary-fg-color), var(--md-accent-fg-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+}
+
+/* Hide anchor link symbol to prevent underline misalignment */
+h2.text-center .headerlink {
+  display: none !important;
+}
+
+/* Fix underline positioning for section headings */
+h2.text-center::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--md-primary-fg-color), var(--md-accent-fg-color));
+  border-radius: 2px;
+}
+
+/* Ensure hover state doesn't interfere with underline */
+h2.text-center:hover::after {
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
+/* Badges enhancement */
+.md-typeset img[src*="badge"] {
+  transition: transform 0.2s ease-out;
+  border-radius: 4px;
+}
+
+.md-typeset img[src*="badge"]:hover {
+  transform: scale(1.05);
+}
+
+/* Responsive improvements */
+@media screen and (max-width: 768px) {
+  .tx-hero {
+    padding: 2rem 1rem;
+    margin: 0.5rem 0;
+  }
+
+  .tx-hero p {
+    font-size: 1.1rem;
+  }
+
+  h2.text-center {
+    font-size: 2rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus states for accessibility */
+.tx-hero .md-button:focus-visible {
+  outline: 2px solid var(--md-accent-fg-color);
+  outline-offset: 2px;
+}
+
+/* Loading animation for the entire page */
+@keyframes pageLoad {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.md-content {
+  animation: pageLoad 0.5s ease-out;
 }
