@@ -1,5 +1,12 @@
 ---
 title: Advanced topics
+description: Advanced configuration and integration topics for experienced users
+tags:
+  - advanced
+  - configuration
+  - kafka
+  - aws msk
+  - technical
 ---
 
 # Advanced topics

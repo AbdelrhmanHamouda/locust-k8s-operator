@@ -1,8 +1,20 @@
-# Locust Kubernetes Operator
+<div align="center" style="margin: 2rem 0;">
+  <img src="docs/assets/images/logo.gif" 
+       alt="Locust Kubernetes Operator Logo" 
+       width="120" 
+       height="120"
+       style="border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-bottom: 0.1rem;">
+</div>
 
+<h1 align="center" style="margin-top: 0.01rem;">Locust Kubernetes Operator</h1>
+
+<p align="center">
 Enable performance testing for the modern era!
+</p>
 
-Utilize the full power of _[Locust](https://github.com/locustio/locust)_ in the cloud.
+<p align="center">
+Utilize the full power of <em><a href="https://github.com/locustio/locust">Locust</a></em> in the cloud.
+</p>
 
 Docs: [github.io/locust-k8s-operator/](https://abdelrhmanhamouda.github.io/locust-k8s-operator/)
 

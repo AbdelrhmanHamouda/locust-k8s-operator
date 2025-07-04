@@ -1,6 +1,12 @@
 ---
 title: Features
-description: List of available features 
+description: List of available features
+tags:
+  - features
+  - capabilities
+  - cloud native
+  - kubernetes
+  - automation
 ---
 
 # Features

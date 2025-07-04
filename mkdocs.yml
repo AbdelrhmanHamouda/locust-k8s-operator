@@ -2,7 +2,7 @@
 
 # Project information
 site_name: Locust Kubernetes Operator
-site_author: Abdelrhman hamouda
+site_author: Abdelrhman Hamouda
 site_description: Locust kubernetes operator documentation.
 
 # Repository
@@ -11,7 +11,7 @@ repo_url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
 
 # Copyright
 copyright: >
-  Copyright &copy; 2023 Abdelrhman Hamouda –
+  Copyright &copy; 2025 Abdelrhman Hamouda –
   <a href="#__consent">Change cookie settings</a>
 
 # Plugins
@@ -19,25 +19,35 @@ plugins:
   - search
   - git-revision-date-localized
   - privacy
+  - tags
 
 # Configuration
 theme:
   name: material
+  favicon: assets/images/favicon.png
 
   icon:
     logo: material/kubernetes
     repo: material/github
+    # Tag icons (optional)
+    tag:
+      docs: fontawesome/solid/book
+      api: fontawesome/solid/code
+      tutorial: fontawesome/solid/graduation-cap
+      guide: fontawesome/solid/map
 
   features:
     # Search
     - search.highlight
     - search.share
+    - search.suggest
 
     # Navigation
     - navigation.tracking
     - navigation.top
     - navigation.footer
-      - navigation.prune
+    - navigation.indexes
+    - navigation.prune
 
     # Table of content
     - toc.follow
@@ -49,6 +59,9 @@ theme:
 
     # Tabs
     - content.tabs.link
+
+    # Other features
+    - header.autohide
 
   palette:
     # Palette toggle for light mode
@@ -69,8 +82,28 @@ theme:
         icon: material/weather-sunny
         name: Switch to light mode
 
+# Extra CSS and JavaScript
+extra_css:
+  - assets/stylesheets/extra.css
+
+extra_javascript:
+  - assets/javascripts/scroll-effects.js
+  - assets/javascripts/custom-announcements.js
+
 # Customization
 extra:
+  # Version dropdown configuration
+  version:
+    provider: mike
+    default: latest
+
+  # Tag configuration (optional - for tag icons)
+  tags:
+    Documentation: docs
+    API: api
+    Tutorial: tutorial
+    Guide: guide
+
   consent:
     title: Cookie consent
     actions:
@@ -155,7 +188,7 @@ nav:
   - Roadmap: roadmap.md
   - Contributing & Development:
       - Overview: contribute.md
-      - Integration Testing: docs/integration-testing.md
-      - Local Development: docs/local-development.md
-      - Pull Request Process: docs/pull-request-process.md
+      - Integration Testing: integration-testing.md
+      - Local Development: local-development.md
+      - Pull Request Process: pull-request-process.md
   - License: license.md

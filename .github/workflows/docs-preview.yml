@@ -1,0 +1,180 @@
+# Documentation Preview Deployment for Pull Requests
+name: 📚 Docs Preview
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - '.github/workflows/docs-preview.yml'
+  pull_request_target:
+    types: [closed]
+    branches:
+      - master
+      - main
+
+permissions:
+  contents: write  # Required to push to gh-pages branch
+  pages: write
+  id-token: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  # Build and deploy docs preview for opened/updated PRs
+  build-preview:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📂 Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install mkdocs-material
+          pip install mkdocs-git-revision-date-localized-plugin
+
+      - name: 🔧 Configure MkDocs for preview
+        run: |
+          # Create a temporary mkdocs config for preview
+          cp mkdocs.yml mkdocs-preview.yml
+
+          # Use sed to safely add site_url without corrupting Python object references
+          # Insert site_url right after the site_description line
+          sed -i '/^site_description:/a\nsite_url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${{ github.event.number }}/' mkdocs-preview.yml
+
+          # Verify the configuration is valid
+          if mkdocs build --config-file mkdocs-preview.yml --help > /dev/null 2>&1; then
+            echo "✅ Successfully configured mkdocs-preview.yml"
+          else
+            echo "❌ Error: mkdocs-preview.yml configuration is invalid"
+            echo "Falling back to original mkdocs.yml"
+            cp mkdocs.yml mkdocs-preview.yml
+          fi
+
+      - name: 🏗️ Build documentation
+        run: mkdocs build -f mkdocs-preview.yml -d site
+
+      - name: 📤 Deploy to GitHub Pages subdirectory
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          destination_dir: pr-${{ github.event.number }}
+          keep_files: true
+          commit_message: 'Deploy docs preview for PR #${{ github.event.number }}'
+
+      - name: 💬 Comment on PR with preview link
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const previewUrl = `https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${prNumber}/`;
+
+            // Find existing preview comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('📚 Documentation Preview')
+            );
+
+            const commentBody = `## 📚 Documentation Preview
+
+            Your documentation preview is ready! 🎉
+
+            🔗 **Preview URL:** ${previewUrl}
+
+            This preview will be automatically updated when you push new changes to this PR.
+            The preview will be cleaned up when the PR is merged or closed.
+
+            ---
+            <sub>🤖 This comment is automatically updated by the docs preview workflow.</sub>`;
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+            }
+
+  # Clean up preview when PR is closed/merged
+  cleanup-preview:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📂 Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🧹 Remove preview directory
+        run: |
+          if [ -d "pr-${{ github.event.number }}" ]; then
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            rm -rf "pr-${{ github.event.number }}"
+            git add .
+            git commit -m "Clean up docs preview for PR #${{ github.event.number }}" || echo "Nothing to clean up"
+            git push || echo "Nothing to push"
+          else
+            echo "Preview directory pr-${{ github.event.number }} not found, nothing to clean up"
+          fi
+
+      - name: 💬 Update PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+
+            // Find existing preview comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('📚 Documentation Preview')
+            );
+
+            if (botComment) {
+              const updatedBody = botComment.body.replace(
+                /🔗 \*\*Preview URL:\*\* .*/,
+                '🔗 **Preview URL:** ~~Preview cleaned up after PR closure~~'
+              );
+
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: updatedBody + '\n\n✅ **Preview cleaned up** - This PR has been closed/merged.'
+              });
+            }

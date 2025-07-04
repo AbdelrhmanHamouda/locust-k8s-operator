@@ -1,6 +1,12 @@
 ---
 title: Getting Started
 description: How to get started using Locust Kubernetes operator
+tags:
+  - tutorial
+  - getting started
+  - setup
+  - guide
+  - quickstart
 ---
 
 # Getting started

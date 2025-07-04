@@ -1,6 +1,12 @@
 ---
 title: Metrics & Dashboards
 description: Information on Metrics & Dashboards.
+tags:
+  - monitoring
+  - metrics
+  - dashboards
+  - prometheus
+  - observability
 ---
 
 # Metrics & Dashboards

@@ -1,6 +1,12 @@
 ---
 title: Contributing & Development  
 description: Information for contributors and developers.
+tags:
+  - contributing
+  - development
+  - community
+  - open source
+  - collaboration
 ---
 
 # Contributing & Development

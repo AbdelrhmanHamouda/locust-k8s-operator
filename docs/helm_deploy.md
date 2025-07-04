@@ -1,6 +1,12 @@
 ---
 title: HELM Deployment
 description: Instructions on how to deploy the Locust Kubernetes Operator with HELM.
+tags:
+  - deployment
+  - helm
+  - installation
+  - kubernetes
+  - setup
 ---
 
 # HELM Deployment Guide
