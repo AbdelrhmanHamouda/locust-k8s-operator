@@ -57,7 +57,7 @@ jobs:
 
     # Step 6: Sets up a KinD (Kubernetes in Docker) cluster for running tests.
     - name: ⛵ Set up Kind
-      uses: helm/kind-action@v1.8.0
+      uses: helm/kind-action@v1.12.0
       with:
         cluster_name: locust-integration-test
         config: .github/kind-config.yaml
