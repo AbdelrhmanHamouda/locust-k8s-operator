@@ -24,7 +24,7 @@ jobs:
     steps:
     # Step 1: Checks out the repository code.
     - name: 📂 Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     # Step 2: Sets up JDK 21.
     - name: ☕ Set up JDK 21
