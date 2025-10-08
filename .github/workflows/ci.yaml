@@ -21,7 +21,7 @@ jobs:
     steps:
       # Step 1: Checks out the repository code.
       - name: 📂 Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -74,7 +74,7 @@ jobs:
     steps:
       # Step 1: Checks out the repository code.
       - name: 📂 Checkout
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
@@ -128,7 +128,7 @@ jobs:
     steps:
       # Step 1: Checks out the repository code.
       - name: 📂 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
