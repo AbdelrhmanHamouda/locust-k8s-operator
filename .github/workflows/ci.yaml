@@ -88,7 +88,7 @@ jobs:
 
       # Step 3: Sets up Python.
       - name: 🐍 Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.9'
           check-latest: true
@@ -136,7 +136,7 @@ jobs:
 
       # Step 2: Sets up Python.
       - name: 🐍 Setup python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.x
 
