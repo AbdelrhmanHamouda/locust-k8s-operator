@@ -18,7 +18,7 @@ jobs:
     steps:
       # Uses the stale action to mark and close issues.
       - name: 🤖 Mark and close stale issues
-        uses: actions/stale@v9
+        uses: actions/stale@v10
         with:
           # Message to post on stale issues.
           stale-issue-message: 'This issue is stale because it has been for 30 days with no activity. Remove stale label or leave a comment, otherwise, this issue will be closed in 10 days.'
