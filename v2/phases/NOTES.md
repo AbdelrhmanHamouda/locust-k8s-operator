@@ -1,3 +1,7 @@
+# Phase Implementation Notes
+
+---
+
 # Phase 0 Completion Notes
 
 **Completed:** 2026-01-16
@@ -29,35 +33,56 @@ This was corrected during implementation. The original plan used `--domain locus
 
 ---
 
-## Notes for Phase 1 (v1 API Types)
+# Phase 1 Completion Notes
 
-1. **API Types Location**: `api/v1/locusttest_types.go` is the skeleton to populate with fields from the Java CRD.
+**Completed:** 2026-01-17
 
-2. **Existing Java CRD Reference**: Use `/kube/crd/locust-test-crd.yaml` as the source of truth for field definitions.
+---
 
-3. **Required Fields from Java CRD**:
-   - `masterCommandSeed` (string, required)
-   - `workerCommandSeed` (string, required)
-   - `workerReplicas` (integer, required, min: 1, max: 500, default: 1)
-   - `image` (string, required)
-   - `imagePullPolicy` (enum: Always, IfNotPresent, Never)
-   - `imagePullSecrets` (array of strings)
-   - `configMap` (string)
-   - `libConfigMap` (string)
-   - `labels` (object with master/worker sub-objects)
-   - `annotations` (object with master/worker sub-objects)
-   - `affinity` (object with nodeAffinity)
-   - `tolerations` (array of toleration objects)
+## Summary
 
-4. **Kubebuilder Markers**: Add validation markers for:
-   - Required fields: `// +kubebuilder:validation:Required`
-   - Min/Max: `// +kubebuilder:validation:Minimum=1`, `// +kubebuilder:validation:Maximum=500`
-   - Enums: `// +kubebuilder:validation:Enum=Always;IfNotPresent;Never`
-   - Defaults: `// +kubebuilder:default=1`
+Implemented v1 API types that exactly match the Java CRD schema for backward compatibility.
 
-5. **Printer Columns**: The Java CRD defines additional printer columns for `kubectl get lotest`:
-   - `master_cmd`, `worker_replica_count`, `Image`, `Age`
+## Files Created/Modified
 
-6. **Short Name**: Add `lotest` as a short name via kubebuilder marker.
+- `api/v1/locusttest_types.go` - Full v1 API types with all fields and kubebuilder markers
+- `api/v1/locusttest_types_test.go` - Unit tests for JSON marshaling and field names
+- `api/v1/zz_generated.deepcopy.go` - Auto-generated DeepCopy methods
+- `config/crd/bases/locust.io_locusttests.yaml` - Generated CRD manifest
+- `internal/controller/locusttest_controller_test.go` - Updated to use new spec fields
 
-7. **Regenerate After Changes**: Run `make manifests` after updating types to regenerate the CRD.
+## Types Defined
+
+| Type | Description |
+|------|-------------|
+| `LocustTestSpec` | Main spec with 12 fields matching Java CRD |
+| `LocustTestStatus` | Empty status (to be populated in Phase 9) |
+| `PodLabels` | Master/Worker label maps |
+| `PodAnnotations` | Master/Worker annotation maps |
+| `LocustTestAffinity` | NodeAffinity wrapper |
+| `LocustTestNodeAffinity` | RequiredDuringSchedulingIgnoredDuringExecution map |
+| `LocustTestToleration` | Key, Operator, Value, Effect fields |
+
+## Validation Markers Applied
+
+- **Required fields**: `masterCommandSeed`, `workerCommandSeed`, `workerReplicas`, `image`
+- **WorkerReplicas constraints**: min=1, max=500, default=1
+- **Enums**: ImagePullPolicy (Always/IfNotPresent/Never), Toleration.Operator (Exists/Equal), Toleration.Effect (NoSchedule/PreferNoSchedule/NoExecute)
+
+## CRD Features
+
+- Short name: `lotest`
+- Printer columns: master_cmd, worker_replica_count, Image, Age
+- Status subresource enabled
+
+## Verification
+
+- `make build` ✓
+- `make test` ✓
+- `go test ./api/v1/... -v` ✓ (4 tests pass)
+
+## Notes for Phase 2
+
+1. The controller test now uses valid spec fields - any future controller changes should maintain this.
+2. Status is empty - Phase 9 will add status fields.
+3. The generated CRD at `config/crd/bases/locust.io_locusttests.yaml` is schema-compatible with the Java CRD.

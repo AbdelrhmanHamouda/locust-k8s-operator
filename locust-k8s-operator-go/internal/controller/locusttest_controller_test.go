@@ -51,7 +51,12 @@ var _ = Describe("LocustTest Controller", func() {
 						Name:      resourceName,
 						Namespace: "default",
 					},
-					// TODO(user): Specify other spec details if needed.
+					Spec: locustv1.LocustTestSpec{
+						MasterCommandSeed: "--locustfile /lotest/src/test.py --host https://example.com",
+						WorkerCommandSeed: "--locustfile /lotest/src/test.py",
+						WorkerReplicas:    1,
+						Image:             "locustio/locust:latest",
+					},
 				}
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 			}
