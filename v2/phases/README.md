@@ -16,4 +16,8 @@ phases/
 
 ## Phase Status
 
+| Phase | Status | Directory |
+|-------|--------|-----------|
+| 0 - Project Scaffolding | **Complete** | [phase-0-scaffolding/](./phase-0-scaffolding/) |
+
 See [../ROADMAP.md](../ROADMAP.md) for the full phase summary and dependencies.
