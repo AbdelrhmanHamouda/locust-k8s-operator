@@ -20,16 +20,119 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// PodLabels defines labels for master and worker pods.
+type PodLabels struct {
+	// Master defines labels attached to the master pod.
+	// +optional
+	Master map[string]string `json:"master,omitempty"`
+
+	// Worker defines labels attached to worker pods.
+	// +optional
+	Worker map[string]string `json:"worker,omitempty"`
+}
+
+// PodAnnotations defines annotations for master and worker pods.
+type PodAnnotations struct {
+	// Master defines annotations attached to the master pod.
+	// +optional
+	Master map[string]string `json:"master,omitempty"`
+
+	// Worker defines annotations attached to worker pods.
+	// +optional
+	Worker map[string]string `json:"worker,omitempty"`
+}
+
+// LocustTestAffinity defines affinity rules for pod scheduling.
+type LocustTestAffinity struct {
+	// NodeAffinity defines node affinity rules.
+	// +optional
+	NodeAffinity *LocustTestNodeAffinity `json:"nodeAffinity,omitempty"`
+}
+
+// LocustTestNodeAffinity defines node affinity configuration.
+type LocustTestNodeAffinity struct {
+	// RequiredDuringSchedulingIgnoredDuringExecution defines required node affinity rules.
+	// The map keys are label keys and values are label values that nodes must have.
+	// +optional
+	RequiredDuringSchedulingIgnoredDuringExecution map[string]string `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+}
+
+// LocustTestToleration defines a toleration for pod scheduling.
+type LocustTestToleration struct {
+	// Key is the taint key that the toleration applies to.
+	// +kubebuilder:validation:Required
+	Key string `json:"key"`
+
+	// Operator represents the relationship between the key and value.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=Exists;Equal
+	Operator string `json:"operator"`
+
+	// Value is the taint value the toleration matches to.
+	// +optional
+	Value string `json:"value,omitempty"`
+
+	// Effect indicates the taint effect to match.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=NoSchedule;PreferNoSchedule;NoExecute
+	Effect string `json:"effect"`
+}
 
 // LocustTestSpec defines the desired state of LocustTest.
 type LocustTestSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// MasterCommandSeed is the command seed for the master pod.
+	// This forms the base of the locust master command.
+	// +kubebuilder:validation:Required
+	MasterCommandSeed string `json:"masterCommandSeed"`
 
-	// Foo is an example field of LocustTest. Edit locusttest_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// WorkerCommandSeed is the command seed for worker pods.
+	// This forms the base of the locust worker command.
+	// +kubebuilder:validation:Required
+	WorkerCommandSeed string `json:"workerCommandSeed"`
+
+	// WorkerReplicas is the number of worker pods to spawn.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=500
+	// +kubebuilder:default=1
+	WorkerReplicas int32 `json:"workerReplicas"`
+
+	// Image is the Locust container image to use.
+	// +kubebuilder:validation:Required
+	Image string `json:"image"`
+
+	// ImagePullPolicy defines when to pull the image.
+	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
+	// +optional
+	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
+
+	// ImagePullSecrets is a list of secret names for pulling images from private registries.
+	// +optional
+	ImagePullSecrets []string `json:"imagePullSecrets,omitempty"`
+
+	// ConfigMap is the name of the ConfigMap containing the test file(s).
+	// +optional
+	ConfigMap string `json:"configMap,omitempty"`
+
+	// LibConfigMap is the name of the ConfigMap containing lib directory files.
+	// +optional
+	LibConfigMap string `json:"libConfigMap,omitempty"`
+
+	// Labels defines labels to attach to deployed pods.
+	// +optional
+	Labels *PodLabels `json:"labels,omitempty"`
+
+	// Annotations defines annotations to attach to deployed pods.
+	// +optional
+	Annotations *PodAnnotations `json:"annotations,omitempty"`
+
+	// Affinity defines affinity rules for pod scheduling.
+	// +optional
+	Affinity *LocustTestAffinity `json:"affinity,omitempty"`
+
+	// Tolerations defines tolerations for pod scheduling.
+	// +optional
+	Tolerations []LocustTestToleration `json:"tolerations,omitempty"`
 }
 
 // LocustTestStatus defines the observed state of LocustTest.
@@ -40,6 +143,11 @@ type LocustTestStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:shortName=lotest
+// +kubebuilder:printcolumn:name="master_cmd",type=string,JSONPath=`.spec.masterCommandSeed`,description="Master pod command seed"
+// +kubebuilder:printcolumn:name="worker_replica_count",type=integer,JSONPath=`.spec.workerReplicas`,description="Number of requested worker pods"
+// +kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.spec.image`,description="Locust image"
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // LocustTest is the Schema for the locusttests API.
 type LocustTest struct {
