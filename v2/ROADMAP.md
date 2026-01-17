@@ -130,7 +130,6 @@ Define Go types that exactly match the current Java v1 CRD for backward compatib
 - `api/v1/groupversion_info.go`
 
 ---
-<in a new dir within the phases dir @phases  plan exactly what is needed to implement phase 2 of the roadmap >
 
 
 ## Phase 2: Configuration System
