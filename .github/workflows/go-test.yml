@@ -15,8 +15,8 @@ defaults:
 
 jobs:
   test:
-    name: 🐧 Run on Ubuntu
-    runs-on: ubuntu-slim
+    name: ✅ Run Unit Tests
+    runs-on: ubuntu-latest
     steps:
       - name: 📥 Clone the code
         uses: actions/checkout@v4

@@ -15,8 +15,8 @@ defaults:
 
 jobs:
   test-e2e:
-    name: 🐧 Run on Ubuntu
-    runs-on: ubuntu-slim
+    name: 🎯 Run E2E Tests
+    runs-on: ubuntu-latest
     steps:
       - name: 📥 Clone the code
         uses: actions/checkout@v4

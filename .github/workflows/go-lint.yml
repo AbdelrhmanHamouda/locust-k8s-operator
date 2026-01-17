@@ -15,8 +15,8 @@ defaults:
 
 jobs:
   lint:
-    name: 🐧 Run on Ubuntu
-    runs-on: ubuntu-slim
+    name: 🔍 Lint Go Code
+    runs-on: ubuntu-latest
     steps:
       - name: 📥 Clone the code
         uses: actions/checkout@v4
