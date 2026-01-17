@@ -54,15 +54,15 @@ Initialize the Go operator project using Operator SDK with proper structure.
 
 ### Tasks
 
-- [ ] **0.1** Install Operator SDK CLI (v1.37+)
-- [ ] **0.2** Initialize project structure
+- [x] **0.1** Install Operator SDK CLI (v1.37+)
+- [x] **0.2** Initialize project structure
   ```bash
   operator-sdk init \
     --domain locust.io \
     --repo github.com/AbdelrhmanHamouda/locust-k8s-operator \
     --plugins go/v4
   ```
-- [ ] **0.3** Create v1 API scaffold
+- [x] **0.3** Create v1 API scaffold
   ```bash
   operator-sdk create api \
     --group locust \
@@ -71,9 +71,9 @@ Initialize the Go operator project using Operator SDK with proper structure.
     --resource \
     --controller
   ```
-- [ ] **0.4** Configure `go.mod` with correct dependencies
-- [ ] **0.5** Verify project builds: `make build`
-- [ ] **0.6** Verify CRD generation: `make manifests`
+- [x] **0.4** Configure `go.mod` with correct dependencies
+- [x] **0.5** Verify project builds: `make build`
+- [x] **0.6** Verify CRD generation: `make manifests`
 
 ### Acceptance Criteria
 - [ ] Project compiles without errors
@@ -102,23 +102,23 @@ Define Go types that exactly match the current Java v1 CRD for backward compatib
 
 ### Tasks
 
-- [ ] **1.1** Define `LocustTestSpec` struct with all v1 fields
+- [x] **1.1** Define `LocustTestSpec` struct with all v1 fields
   - `masterCommandSeed`, `workerCommandSeed`, `workerReplicas`
   - `image`, `imagePullPolicy`, `imagePullSecrets`
   - `configMap`, `libConfigMap`
   - `labels`, `annotations` (nested maps)
   - `affinity`, `tolerations`
-- [ ] **1.2** Define supporting types
+- [x] **1.2** Define supporting types
   - `PodLabels`, `PodAnnotations`
   - `LocustTestAffinity`, `LocustTestNodeAffinity`
   - `LocustTestToleration`
-- [ ] **1.3** Add kubebuilder validation markers
+- [x] **1.3** Add kubebuilder validation markers
   - `+kubebuilder:validation:Required` for required fields
   - `+kubebuilder:validation:Minimum=1`, `Maximum=500` for `workerReplicas`
   - `+kubebuilder:validation:Enum` for `imagePullPolicy`
-- [ ] **1.4** Add printer columns for `kubectl get`
-- [ ] **1.5** Run `make manifests` and verify CRD matches Java version
-- [ ] **1.6** Write type tests for JSON marshaling/unmarshaling
+- [x] **1.4** Add printer columns for `kubectl get`
+- [x] **1.5** Run `make manifests` and verify CRD matches Java version
+- [x] **1.6** Write type tests for JSON marshaling/unmarshaling
 
 ### Acceptance Criteria
 - [ ] Generated CRD schema matches existing Java CRD
@@ -130,6 +130,8 @@ Define Go types that exactly match the current Java v1 CRD for backward compatib
 - `api/v1/groupversion_info.go`
 
 ---
+<in a new dir within the phases dir @phases  plan exactly what is needed to implement phase 2 of the roadmap >
+
 
 ## Phase 2: Configuration System
 
