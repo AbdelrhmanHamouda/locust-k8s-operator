@@ -86,3 +86,57 @@ Implemented v1 API types that exactly match the Java CRD schema for backward com
 1. The controller test now uses valid spec fields - any future controller changes should maintain this.
 2. Status is empty - Phase 9 will add status fields.
 3. The generated CRD at `config/crd/bases/locust.io_locusttests.yaml` is schema-compatible with the Java CRD.
+
+---
+
+# Phase 2 Completion Notes
+
+**Completed:** 2026-01-17
+
+---
+
+## Summary
+
+Implemented environment-based configuration system matching Java `SysConfig.java`. The configuration system provides operator-wide settings that resource builders and the reconciler will use.
+
+## Files Created
+
+- `internal/config/config.go` - OperatorConfig struct and LoadConfig function
+- `internal/config/config_test.go` - Comprehensive unit tests with 100% coverage
+
+## Configuration Fields Implemented
+
+| Category | Fields |
+|----------|--------|
+| **Job** | TTLSecondsAfterFinished (*int32 - nullable) |
+| **Pod Resources** | PodCPURequest, PodMemRequest, PodEphemeralStorageRequest, PodCPULimit, PodMemLimit, PodEphemeralStorageLimit |
+| **Metrics Exporter** | MetricsExporterImage, MetricsExporterPort, MetricsExporterPullPolicy, + CPU/Mem/Ephemeral request/limit |
+| **Kafka** | KafkaBootstrapServers, KafkaSecurityEnabled, KafkaSecurityProtocol, KafkaUsername, KafkaPassword, KafkaSaslMechanism, KafkaSaslJaasConfig |
+| **Feature Flags** | EnableAffinityCRInjection, EnableTolerationsCRInjection |
+
+## Helper Functions
+
+- `getEnv(key, defaultValue string) string` - String env var with default
+- `getEnvBool(key string, defaultValue bool) bool` - Boolean parsing with default
+- `getEnvInt32(key string, defaultValue int32) int32` - Int32 parsing with default
+- `getEnvInt32Ptr(key string) *int32` - Nullable int32 for TTL (nil when unset)
+
+## Key Design Decisions
+
+1. **Kafka credentials default to empty strings** - Unlike Java which uses placeholder values, Go defaults to empty for security
+2. **TTLSecondsAfterFinished uses *int32** - Correctly distinguishes "not set" (nil) from "set to 0"
+3. **No DI framework** - Go idiom using explicit struct wiring via LoadConfig()
+
+## Verification
+
+- `go build ./...` ✓
+- `go test ./internal/config/... -v -cover` ✓ (100% coverage)
+- `golangci-lint run ./internal/config/...` ✓ (0 issues)
+- `make test` ✓
+
+## Notes for Phase 3
+
+1. Use `config.LoadConfig()` to get operator configuration
+2. Pass `*OperatorConfig` to resource builders
+3. Use `cfg.TTLSecondsAfterFinished` directly on Job specs (nil-safe)
+4. Resource quantities (e.g., "250m", "128Mi") are strings - parse with `resource.MustParse()` when building K8s resources
