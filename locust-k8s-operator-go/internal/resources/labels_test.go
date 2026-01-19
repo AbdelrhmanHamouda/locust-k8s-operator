@@ -205,3 +205,66 @@ func TestBuildAnnotations_WithUserAnnotations(t *testing.T) {
 	workerAnnotations := BuildAnnotations(lt, Worker, cfg)
 	assert.Equal(t, "worker-value", workerAnnotations["custom-annotation"])
 }
+
+func TestBuildLabels_NilLabelsSpec(t *testing.T) {
+	lt := &locustv1.LocustTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-test",
+			Namespace: "default",
+		},
+		Spec: locustv1.LocustTestSpec{
+			MasterCommandSeed: "locust -f /lotest/src/test.py",
+			WorkerCommandSeed: "locust -f /lotest/src/test.py",
+			WorkerReplicas:    3,
+			Image:             "locustio/locust:latest",
+			Labels:            nil,
+		},
+	}
+
+	labels := BuildLabels(lt, Master)
+
+	// Should have base labels even when user labels are nil
+	assert.Equal(t, "my-test", labels[LabelApp])
+	assert.Equal(t, ManagedByValue, labels[LabelManagedBy])
+}
+
+func TestBuildAnnotations_NilAnnotationsSpec(t *testing.T) {
+	lt := &locustv1.LocustTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-test",
+			Namespace: "default",
+		},
+		Spec: locustv1.LocustTestSpec{
+			MasterCommandSeed: "locust -f /lotest/src/test.py",
+			WorkerCommandSeed: "locust -f /lotest/src/test.py",
+			WorkerReplicas:    3,
+			Image:             "locustio/locust:latest",
+			Annotations:       nil,
+		},
+	}
+
+	cfg := &config.OperatorConfig{
+		MetricsExporterPort: 9646,
+	}
+
+	annotations := BuildAnnotations(lt, Master, cfg)
+
+	// Should still have Prometheus annotations for master
+	assert.Equal(t, "true", annotations[AnnotationPrometheusScrape])
+}
+
+func TestWorkerPortInts(t *testing.T) {
+	ports := WorkerPortInts()
+
+	assert.Contains(t, ports, int32(WorkerPort))
+	assert.Len(t, ports, 1)
+}
+
+func TestMasterPortInts(t *testing.T) {
+	ports := MasterPortInts()
+
+	assert.Contains(t, ports, int32(MasterPort))
+	assert.Contains(t, ports, int32(MasterBindPort))
+	assert.Contains(t, ports, int32(WebUIPort))
+	assert.Len(t, ports, 3)
+}

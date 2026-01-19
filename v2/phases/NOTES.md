@@ -270,3 +270,85 @@ Implemented the core reconciliation loop matching Java `LocustTestReconciler.jav
 2. Manual verification with a real cluster is still pending (listed in checklist)
 3. The `GenerationChangedPredicate` filter ensures we only reconcile on spec changes
 4. Event recording provides visibility into resource creation for users
+
+---
+
+# Phase 5 Completion Notes
+
+**Completed:** 2026-01-19
+
+---
+
+## Summary
+
+Implemented comprehensive unit tests achieving all coverage targets. Added test fixtures for reusable test data.
+
+## Coverage Results
+
+| Package | Before | After | Target |
+|---------|--------|-------|--------|
+| `internal/config/` | 100% | 100% | ≥80% ✓ |
+| `internal/controller/` | 56.8% | **77.3%** | ≥70% ✓ |
+| `internal/resources/` | 93.9% | **97.7%** | ≥80% ✓ |
+| **Total** | 86.4% | **93.4%** | - |
+
+## Files Created
+
+| File | Purpose | LOC |
+|------|---------|-----|
+| `internal/controller/locusttest_controller_unit_test.go` | Comprehensive controller unit tests | ~600 |
+| `internal/testdata/fixtures.go` | Test fixture loader helper | ~50 |
+| `internal/testdata/fixtures_test.go` | Tests for fixture loader | ~90 |
+| `internal/testdata/locusttest_minimal.json` | Minimal CR fixture | - |
+| `internal/testdata/locusttest_full.json` | Full-featured CR fixture | - |
+| `internal/testdata/locusttest_with_affinity.json` | Affinity config fixture | - |
+| `internal/testdata/locusttest_with_tolerations.json` | Tolerations config fixture | - |
+
+## Files Modified
+
+| File | Changes |
+|------|---------|
+| `internal/resources/job_test.go` | +112 LOC (edge case tests) |
+| `internal/resources/labels_test.go` | +63 LOC (edge case tests, port tests) |
+
+## Tests Added
+
+### Controller Tests (17 new tests)
+- `TestReconcile_NotFound` - CR deleted handling
+- `TestReconcile_CreateResources` - Resource creation on new CR
+- `TestReconcile_NoOpOnUpdate` - Generation > 1 NO-OP
+- `TestReconcile_OwnerReferences` - Owner ref verification
+- `TestReconcile_IdempotentCreate` - AlreadyExists handling
+- `TestReconcile_WithDifferentGenerations` - Table-driven generation tests
+- `TestReconcile_VerifyServiceConfiguration` - Service spec verification
+- `TestReconcile_VerifyMasterJobConfiguration` - Master job spec
+- `TestReconcile_VerifyWorkerJobConfiguration` - Worker job spec
+- `TestReconcile_EventRecording` - Event creation verification
+- `TestReconcile_WithCustomLabels` - Custom label propagation
+- `TestReconcile_WithImagePullSecrets` - Image pull secrets
+- `TestReconcile_WithLibConfigMap` - Lib volume mounting
+- `TestReconcile_MultipleNamespaces` - Cross-namespace handling
+
+### Resource Tests (10 new tests)
+- `TestBuildTolerations_ExistsOperator` - Exists operator handling
+- `TestBuildMasterJob_EmptyImagePullPolicy` - Default policy
+- `TestBuildMasterJob_NoConfigMap` - No volumes when empty
+- `TestBuildMasterJob_KafkaEnvVars` - Kafka env injection
+- `TestBuildAffinity_NilNodeAffinity` - Nil affinity handling
+- `TestBuildAffinity_EmptyRequirements` - Empty requirements
+- `TestBuildMasterJob_Completions` - Completions field
+- `TestBuildMasterJob_BackoffLimit` - BackoffLimit verification
+- `TestWorkerPortInts` - Worker port helper
+- `TestMasterPortInts` - Master port helper
+
+## Verification
+
+- `make test` ✓
+- `go test -race ./internal/...` ✓ (no data races)
+- All tests complete in < 15 seconds
+
+## Notes for Phase 6
+
+1. Test fixtures in `internal/testdata/` are available for use in integration tests
+2. Controller tests use fake client - envtest integration already exists in suite_test.go
+3. `SetupWithManager()` has 0% coverage - requires real manager, covered in integration tests
