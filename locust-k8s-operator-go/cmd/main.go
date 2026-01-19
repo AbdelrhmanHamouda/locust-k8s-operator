@@ -38,6 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	locustv1 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v1"
+	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/controller"
 	// +kubebuilder:scaffold:imports
@@ -52,6 +53,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(locustv1.AddToScheme(scheme))
+	utilruntime.Must(locustv2.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 

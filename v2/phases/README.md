@@ -25,5 +25,6 @@ phases/
 | 4 - Core Reconciler | **Complete** | [phase-4-core-reconciler/](./phase-4-core-reconciler/) |
 | 5 - Unit Tests | **Complete** | [phase-5-unit-tests/](./phase-5-unit-tests/) |
 | 6 - Integration Tests | **Complete** | [phase-6-integration-tests/](./phase-6-integration-tests/) |
+| 7 - v2 API Types | **Complete** | [phase-7-v2-api-types/](./phase-7-v2-api-types/) |
 
 See [../ROADMAP.md](../ROADMAP.md) for the full phase summary and dependencies.

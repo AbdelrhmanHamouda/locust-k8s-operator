@@ -419,3 +419,101 @@ Implemented controller integration tests using envtest framework. Tests validate
 1. Integration tests provide full coverage of `SetupWithManager()` 
 2. E2E tests (Phase 15) will be needed to test actual garbage collection
 3. Test namespace isolation pattern can be reused for future test suites
+
+---
+
+# Phase 7 Completion Notes
+
+**Completed:** 2026-01-19
+
+---
+
+## Summary
+
+Implemented v2 API types with grouped configuration and new feature fields. v1 remains storage version until Phase 8 implements conversion webhook.
+
+## Files Created
+
+| File | Purpose | LOC |
+|------|---------|-----|
+| `api/v2/groupversion_info.go` | v2 group/version registration | ~35 |
+| `api/v2/locusttest_types.go` | All v2 type definitions | ~390 |
+| `api/v2/conditions.go` | Condition type and reason constants | ~55 |
+| `api/v2/zz_generated.deepcopy.go` | Auto-generated DeepCopy methods | Auto |
+| `config/samples/locust_v2_locusttest.yaml` | Sample v2 CR | ~45 |
+
+## Files Modified
+
+| File | Changes |
+|------|---------|
+| `cmd/main.go` | Added v2 scheme registration |
+| `api/v1/locusttest_types.go` | Added `+kubebuilder:storageversion` marker |
+| `internal/controller/suite_test.go` | Added v2 scheme registration for tests |
+
+## v2 Types Implemented
+
+### Core Types
+| Type | Description |
+|------|-------------|
+| `MasterSpec` | Grouped master config (command, resources, labels, annotations, autostart, autoquit, extraArgs) |
+| `WorkerSpec` | Grouped worker config (command, replicas, resources, labels, annotations, extraArgs) |
+| `AutoquitConfig` | Autoquit behavior (enabled, timeout) |
+| `TestFilesConfig` | ConfigMap refs with mount paths |
+| `SchedulingConfig` | Affinity, tolerations, nodeSelector |
+
+### New Feature Types (Issue References)
+| Type | Purpose | Issue |
+|------|---------|-------|
+| `EnvConfig` | Environment injection | #149 |
+| `ConfigMapEnvSource` | ConfigMap env source with prefix | #149 |
+| `SecretEnvSource` | Secret env source with prefix | #149 |
+| `SecretMount` | Secret file mounting | #149 |
+| `TargetedVolumeMount` | Volume mount with master/worker/both target | #252 |
+| `ObservabilityConfig` | Observability settings wrapper | #72 |
+| `OpenTelemetryConfig` | OTel integration (enabled, endpoint, protocol, insecure) | #72 |
+
+### Status Types
+| Type | Fields |
+|------|--------|
+| `LocustTestStatus` | Phase, ExpectedWorkers, ConnectedWorkers, StartTime, CompletionTime, Conditions |
+
+### Condition Constants
+- **Types:** Ready, WorkersConnected, TestCompleted
+- **Reasons:** ResourcesCreating, ResourcesCreated, ResourcesFailed, WaitingForWorkers, AllWorkersConnected, WorkersMissing, TestInProgress, TestSucceeded, TestFailed
+- **Phases:** Pending, Running, Succeeded, Failed
+
+## Key Decision: Storage Version
+
+**Decision:** v1 remains storage version until Phase 8
+
+**Rationale:** Without a conversion webhook, using v2 as storage version breaks v1 API usage. When tests fetch a v1 CR and update it, the API server converts to/from v2 storage, causing field mapping issues (e.g., WorkerReplicas becoming 0).
+
+**Action:** 
+- Removed `+kubebuilder:storageversion` from v2
+- Added `+kubebuilder:storageversion` to v1
+- Phase 8 will implement conversion webhook and switch storage to v2
+
+## Printer Columns (v2)
+
+| Column | JSONPath | Description |
+|--------|----------|-------------|
+| Phase | `.status.phase` | Current test phase |
+| Workers | `.spec.worker.replicas` | Requested worker count |
+| Connected | `.status.connectedWorkers` | Connected workers |
+| Image | `.spec.image` | Container image (priority=1) |
+| Age | `.metadata.creationTimestamp` | Resource age |
+
+## Verification
+
+- `make generate` ✓ (DeepCopy methods generated)
+- `make manifests` ✓ (CRD with v1 and v2 versions)
+- `make build` ✓
+- `make test` ✓ (all 21 integration tests pass)
+- CRD contains both v1 (storage=true) and v2 (storage=false)
+
+## Notes for Phase 8
+
+1. Implement v1↔v2 conversion webhook
+2. Switch storage version to v2 after conversion is working
+3. Test conversion with existing v1 CRs
+4. The v2 types are ready - only conversion logic needed

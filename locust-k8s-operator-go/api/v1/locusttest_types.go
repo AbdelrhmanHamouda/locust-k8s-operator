@@ -144,6 +144,7 @@ type LocustTestStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:shortName=lotest
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="master_cmd",type=string,JSONPath=`.spec.masterCommandSeed`,description="Master pod command seed"
 // +kubebuilder:printcolumn:name="worker_replica_count",type=integer,JSONPath=`.spec.workerReplicas`,description="Number of requested worker pods"
 // +kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.spec.image`,description="Locust image"
