@@ -1,0 +1,14 @@
+{
+  "apiVersion": "locust.io/v1",
+  "kind": "LocustTest",
+  "metadata": {
+    "name": "minimal-test",
+    "namespace": "default"
+  },
+  "spec": {
+    "masterCommandSeed": "locust -f /lotest/src/test.py",
+    "workerCommandSeed": "locust -f /lotest/src/test.py",
+    "workerReplicas": 1,
+    "image": "locustio/locust:latest"
+  }
+}

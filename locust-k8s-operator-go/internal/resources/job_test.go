@@ -347,3 +347,115 @@ func TestBuildTolerations_Enabled(t *testing.T) {
 	assert.Equal(t, "performance", job.Spec.Template.Spec.Tolerations[0].Value)
 	assert.Equal(t, corev1.TaintEffectNoSchedule, job.Spec.Template.Spec.Tolerations[0].Effect)
 }
+
+func TestBuildTolerations_ExistsOperator(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Tolerations = []locustv1.LocustTestToleration{
+		{
+			Key:      "node.kubernetes.io/not-ready",
+			Operator: "Exists",
+			Effect:   "NoExecute",
+		},
+	}
+	cfg := newTestConfig()
+	cfg.EnableTolerationsCRInjection = true
+
+	job := BuildMasterJob(lt, cfg)
+
+	require.Len(t, job.Spec.Template.Spec.Tolerations, 1)
+	assert.Equal(t, corev1.TolerationOpExists, job.Spec.Template.Spec.Tolerations[0].Operator)
+	assert.Empty(t, job.Spec.Template.Spec.Tolerations[0].Value, "Value should be empty for Exists operator")
+}
+
+func TestBuildMasterJob_EmptyImagePullPolicy(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.ImagePullPolicy = "" // Empty should default to IfNotPresent
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+	assert.Equal(t, corev1.PullIfNotPresent, container.ImagePullPolicy)
+}
+
+func TestBuildMasterJob_NoConfigMap(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.ConfigMap = ""
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	assert.Empty(t, job.Spec.Template.Spec.Volumes)
+	assert.Empty(t, job.Spec.Template.Spec.Containers[0].VolumeMounts)
+}
+
+func TestBuildMasterJob_KafkaEnvVars(t *testing.T) {
+	lt := newTestLocustTest()
+	cfg := newTestConfig()
+	cfg.KafkaSecurityEnabled = true
+	cfg.KafkaBootstrapServers = "kafka.example.com:9092"
+	cfg.KafkaSecurityProtocol = "SASL_SSL"
+	cfg.KafkaUsername = "user"
+	cfg.KafkaPassword = "secret"
+
+	job := BuildMasterJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+	envMap := make(map[string]string)
+	for _, env := range container.Env {
+		envMap[env.Name] = env.Value
+	}
+
+	assert.Equal(t, "kafka.example.com:9092", envMap["KAFKA_BOOTSTRAP_SERVERS"])
+	assert.Equal(t, "SASL_SSL", envMap["KAFKA_SECURITY_PROTOCOL_CONFIG"])
+	assert.Equal(t, "user", envMap["KAFKA_USERNAME"])
+	assert.Equal(t, "secret", envMap["KAFKA_PASSWORD"])
+}
+
+func TestBuildAffinity_NilNodeAffinity(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Affinity = &locustv1.LocustTestAffinity{
+		NodeAffinity: nil,
+	}
+	cfg := newTestConfig()
+	cfg.EnableAffinityCRInjection = true
+
+	job := BuildMasterJob(lt, cfg)
+
+	assert.Nil(t, job.Spec.Template.Spec.Affinity)
+}
+
+func TestBuildAffinity_EmptyRequirements(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Affinity = &locustv1.LocustTestAffinity{
+		NodeAffinity: &locustv1.LocustTestNodeAffinity{
+			RequiredDuringSchedulingIgnoredDuringExecution: map[string]string{},
+		},
+	}
+	cfg := newTestConfig()
+	cfg.EnableAffinityCRInjection = true
+
+	job := BuildMasterJob(lt, cfg)
+
+	assert.Nil(t, job.Spec.Template.Spec.Affinity)
+}
+
+func TestBuildMasterJob_Completions(t *testing.T) {
+	lt := newTestLocustTest()
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	// Master job should not have Completions set (nil means run to completion)
+	assert.Nil(t, job.Spec.Completions)
+}
+
+func TestBuildMasterJob_BackoffLimit(t *testing.T) {
+	lt := newTestLocustTest()
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	require.NotNil(t, job.Spec.BackoffLimit)
+	assert.Equal(t, int32(0), *job.Spec.BackoffLimit)
+}

@@ -1,0 +1,28 @@
+{
+  "apiVersion": "locust.io/v1",
+  "kind": "LocustTest",
+  "metadata": {
+    "name": "tolerations-test",
+    "namespace": "default"
+  },
+  "spec": {
+    "masterCommandSeed": "locust -f /lotest/src/test.py",
+    "workerCommandSeed": "locust -f /lotest/src/test.py",
+    "workerReplicas": 3,
+    "image": "locustio/locust:latest",
+    "configMap": "locust-scripts",
+    "tolerations": [
+      {
+        "key": "dedicated",
+        "operator": "Equal",
+        "value": "performance",
+        "effect": "NoSchedule"
+      },
+      {
+        "key": "node.kubernetes.io/not-ready",
+        "operator": "Exists",
+        "effect": "NoExecute"
+      }
+    ]
+  }
+}

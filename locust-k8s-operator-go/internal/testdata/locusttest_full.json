@@ -1,0 +1,35 @@
+{
+  "apiVersion": "locust.io/v1",
+  "kind": "LocustTest",
+  "metadata": {
+    "name": "full-featured-test",
+    "namespace": "load-testing"
+  },
+  "spec": {
+    "masterCommandSeed": "locust -f /lotest/src/test.py --host https://api.example.com",
+    "workerCommandSeed": "locust -f /lotest/src/test.py",
+    "workerReplicas": 10,
+    "image": "locustio/locust:2.20.0",
+    "imagePullPolicy": "IfNotPresent",
+    "imagePullSecrets": ["registry-secret"],
+    "configMap": "locust-scripts",
+    "libConfigMap": "locust-lib",
+    "labels": {
+      "master": {
+        "team": "platform",
+        "environment": "staging"
+      },
+      "worker": {
+        "team": "platform"
+      }
+    },
+    "annotations": {
+      "master": {
+        "description": "Load test master"
+      },
+      "worker": {
+        "description": "Load test worker"
+      }
+    }
+  }
+}
