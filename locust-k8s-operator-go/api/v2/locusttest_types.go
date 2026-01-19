@@ -360,6 +360,7 @@ type LocustTestSpec struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:shortName=lotest
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`,description="Current test phase"
 // +kubebuilder:printcolumn:name="Workers",type=integer,JSONPath=`.spec.worker.replicas`,description="Requested worker count"
 // +kubebuilder:printcolumn:name="Connected",type=integer,JSONPath=`.status.connectedWorkers`,description="Connected workers"
