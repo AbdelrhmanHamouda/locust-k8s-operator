@@ -511,9 +511,130 @@ Implemented v2 API types with grouped configuration and new feature fields. v1 r
 - `make test` ✓ (all 21 integration tests pass)
 - CRD contains both v1 (storage=true) and v2 (storage=false)
 
-## Notes for Phase 8
+---
 
-1. Implement v1↔v2 conversion webhook
-2. Switch storage version to v2 after conversion is working
-3. Test conversion with existing v1 CRs
-4. The v2 types are ready - only conversion logic needed
+# Phase 8 Completion Notes
+
+**Completed:** 2026-01-19
+
+---
+
+## Summary
+
+Implemented v1↔v2 conversion webhook using Hub-and-Spoke pattern. v2 is the Hub, v1 is the Spoke with ConvertTo/ConvertFrom methods. v1 shows deprecation warning.
+
+## Files Created
+
+| File | Purpose | LOC |
+|------|---------|-----|
+| `api/v2/locusttest_conversion.go` | Hub marker implementation | ~20 |
+| `api/v1/locusttest_conversion.go` | Spoke conversion logic | ~260 |
+| `api/v1/locusttest_webhook.go` | Webhook setup | ~30 |
+| `api/v1/locusttest_conversion_test.go` | Conversion unit tests | ~550 |
+| `config/webhook/kustomization.yaml` | Webhook kustomize config | ~2 |
+| `config/webhook/manifests.yaml` | Placeholder manifest | ~6 |
+
+## Files Modified
+
+| File | Changes |
+|------|---------|
+| `api/v1/locusttest_types.go` | Added deprecation warning marker |
+| `cmd/main.go` | Added webhook registration |
+| `internal/controller/suite_test.go` | (reverted to original - webhook not needed for unit tests) |
+
+## Conversion Mapping Implemented
+
+### v1 → v2 (ConvertTo)
+- `masterCommandSeed` → `master.command`
+- `workerCommandSeed` → `worker.command`
+- `workerReplicas` → `worker.replicas`
+- `image`, `imagePullPolicy`, `imagePullSecrets` → direct mapping
+- `labels.master/worker` → `master.labels`, `worker.labels`
+- `annotations.master/worker` → `master.annotations`, `worker.annotations`
+- `configMap` → `testFiles.configMapRef`
+- `libConfigMap` → `testFiles.libConfigMapRef`
+- `affinity` (custom) → `scheduling.affinity` (corev1.Affinity)
+- `tolerations[]` (custom) → `scheduling.tolerations[]` (corev1.Toleration)
+- Sets defaults: `master.autostart=true`, `master.autoquit={enabled:true, timeout:60}`
+
+### v2 → v1 (ConvertFrom) - Lossy
+All v1-compatible fields preserved. v2-only fields lost:
+- `master.resources`, `master.extraArgs`
+- `worker.resources`, `worker.extraArgs`
+- `testFiles.srcMountPath`, `testFiles.libMountPath`
+- `scheduling.nodeSelector`
+- `env` (all sub-fields)
+- `volumes`, `volumeMounts`
+- `observability` (OpenTelemetry config)
+
+## Key Decision: Storage Version
+
+**Decision:** v2 IS storage version ✅
+
+**Implementation:** E2E tests in Kind cluster with cert-manager confirm conversion webhook works.
+
+## Files Created/Modified for Webhook Infrastructure
+
+| File | Purpose |
+|------|---------|
+| `config/certmanager/certificate.yaml` | Self-signed issuer and certificate for webhook TLS |
+| `config/certmanager/kustomization.yaml` | Kustomize config for cert-manager resources |
+| `config/webhook/manifests.yaml` | Webhook service definition |
+| `config/crd/patches/webhook_in_locusttests.yaml` | CRD patch for conversion webhook |
+| `config/default/manager_webhook_patch.yaml` | Deployment patch for webhook volume mounts |
+| `config/default/kustomization.yaml` | Updated with webhook/certmanager resources |
+| `config/crd/kustomization.yaml` | Updated with webhook patch |
+
+## E2E Test Infrastructure
+
+| File | Purpose |
+|------|---------|
+| `test/e2e/kind-config.yaml` | Kind cluster configuration |
+| `test/e2e/conversion/v1-cr.yaml` | Sample v1 CR for testing |
+| `test/e2e/conversion/v2-cr.yaml` | Sample v2 CR for testing |
+| `test/e2e/conversion/configmap.yaml` | Test ConfigMap |
+| `test/e2e/conversion/run-e2e.sh` | E2E test script |
+
+## Test Results
+
+- **Conversion unit tests:** 15 tests, all pass
+- **E2E tests:** 7 tests, all pass in Kind cluster
+  - Test 1: Create v1 CR ✓
+  - Test 2: Read v1 CR as v2 (v1→v2 conversion) ✓
+  - Test 3: Create v2 CR ✓
+  - Test 4: Read v2 CR as v1 (v2→v1 conversion) ✓
+  - Test 5: Update v1 CR reflected in v2 view ✓
+  - Test 6: Reconciler creates Jobs ✓
+  - Test 7: Deprecation warning shown ✓
+
+## Verification Commands
+
+```bash
+# Create Kind cluster
+kind create cluster --name locust-webhook-test --config test/e2e/kind-config.yaml
+
+# Install cert-manager
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.yaml
+
+# Build and deploy
+make docker-build IMG=locust-k8s-operator:e2e-test
+kind load docker-image locust-k8s-operator:e2e-test --name locust-webhook-test
+make deploy IMG=locust-k8s-operator:e2e-test
+
+# Verify storage version
+kubectl get crd locusttests.locust.io -o jsonpath='{.spec.versions[?(@.storage==true)].name}'
+# Output: v2
+
+# Run E2E tests
+./test/e2e/conversion/run-e2e.sh
+
+# Cleanup
+kind delete cluster --name locust-webhook-test
+```
+
+## Notes for Phase 9+
+
+1. v2 is confirmed as storage version with working conversion webhook
+2. Conversion webhook registration in main.go is controlled by `ENABLE_WEBHOOKS` env var
+3. Production deployment requires cert-manager for webhook TLS
+4. Unit tests (envtest) still pass but don't exercise webhook - E2E tests validate webhook

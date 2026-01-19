@@ -32,10 +32,12 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    deprecated: true
+    deprecationWarning: locust.io/v1 LocustTest is deprecated, migrate to locust.io/v2
     name: v1
     schema:
       openAPIV3Schema:
-        description: LocustTest is the Schema for the locusttests API.
+        description: LocustTest is the Schema for the locusttests API (v1 - DEPRECATED).
         properties:
           apiVersion:
             description: |-
@@ -187,7 +189,7 @@ spec:
             type: object
         type: object
     served: true
-    storage: true
+    storage: false
     subresources:
       status: {}
   - additionalPrinterColumns:
@@ -3627,6 +3629,6 @@ spec:
             type: object
         type: object
     served: true
-    storage: false
+    storage: true
     subresources:
       status: {}

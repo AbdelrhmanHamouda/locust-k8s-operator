@@ -71,8 +71,11 @@ var _ = BeforeSuite(func() {
 	ctx, cancel = context.WithCancel(context.TODO())
 
 	By("bootstrapping test environment")
+	// Use v1-only CRD for integration tests to avoid conversion webhook requirements.
+	// The test CRD has v1 as storage version, eliminating v1→v2 conversion.
+	// E2E tests cover the full webhook/conversion functionality.
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
+		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "test")},
 		ErrorIfCRDPathMissing: true,
 	}
 

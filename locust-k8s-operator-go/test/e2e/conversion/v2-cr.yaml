@@ -1,0 +1,19 @@
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: e2e-test-v2
+  namespace: default
+spec:
+  image: "locustio/locust:2.20.0"
+  master:
+    command: "locust"
+    autostart: true
+    labels:
+      app: locust-master
+  worker:
+    command: "locust"
+    replicas: 3
+    labels:
+      app: locust-worker
+  testFiles:
+    configMapRef: "e2e-test-scripts"
