@@ -38,6 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	locustv1 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v1"
+	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
@@ -202,9 +203,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Load operator configuration
+	cfg := config.LoadConfig()
+	setupLog.Info("Operator configuration loaded",
+		"ttlSecondsAfterFinished", cfg.TTLSecondsAfterFinished,
+		"metricsExporterImage", cfg.MetricsExporterImage,
+		"affinityInjection", cfg.EnableAffinityCRInjection,
+		"tolerationsInjection", cfg.EnableTolerationsCRInjection)
+
+	// Setup LocustTest reconciler
 	if err := (&controller.LocustTestReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Config:   cfg,
+		Recorder: mgr.GetEventRecorderFor("locusttest-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "LocustTest")
 		os.Exit(1)

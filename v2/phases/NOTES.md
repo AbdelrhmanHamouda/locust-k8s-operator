@@ -205,3 +205,68 @@ Implemented resource builders matching Java `ResourceCreationHelpers.java` and `
 2. Use `BuildMasterService()` for service creation
 3. Set owner references on created resources for garbage collection
 4. Jobs and Services are created in the same namespace as the LocustTest CR
+
+---
+
+# Phase 4 Completion Notes
+
+**Completed:** 2026-01-19
+
+---
+
+## Summary
+
+Implemented the core reconciliation loop matching Java `LocustTestReconciler.java` behavior. The reconciler watches LocustTest CRs, creates Kubernetes resources (Jobs, Services) on CR creation, and relies on owner references for automatic cleanup on CR deletion.
+
+## Files Created/Modified
+
+- `internal/controller/locusttest_controller.go` - Full reconciler implementation (~187 LOC)
+- `internal/controller/locusttest_controller_test.go` - Updated to include Config and Recorder
+- `cmd/main.go` - Wired reconciler with config and event recorder
+- `config/rbac/role.yaml` - Auto-generated RBAC for Jobs, Services, Events
+
+## Key Functions Implemented
+
+| Function | Description |
+|----------|-------------|
+| `Reconcile()` | Main reconciliation loop with NO-OP on updates |
+| `createResources()` | Creates master Service, master Job, worker Job |
+| `createResource()` | Generic helper with owner reference and idempotent create |
+| `SetupWithManager()` | Configures controller with Owns and predicates |
+
+## Reconciler Behavior
+
+| Event | Action |
+|-------|--------|
+| CR Created (generation=1) | Create Service → Master Job → Worker Job |
+| CR Updated (generation>1) | NO-OP with log message |
+| CR Deleted | Automatic cleanup via owner references |
+| Resource Already Exists | Log and continue (idempotent) |
+
+## RBAC Permissions Added
+
+```yaml
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch", "create", "delete"]
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list", "watch", "create", "delete"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch"]
+```
+
+## Verification
+
+- `make build` ✓
+- `make test` ✓ (controller tests pass with 56.8% coverage)
+- `make manifests` ✓ (RBAC regenerated)
+- `golangci-lint run ./internal/controller/...` ✓ (0 issues)
+
+## Notes for Phase 5
+
+1. Controller test coverage is at 56.8% - Phase 5 will add comprehensive unit tests
+2. Manual verification with a real cluster is still pending (listed in checklist)
+3. The `GenerationChangedPredicate` filter ensures we only reconcile on spec changes
+4. Event recording provides visibility into resource creation for users

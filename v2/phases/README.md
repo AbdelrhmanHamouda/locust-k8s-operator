@@ -22,6 +22,6 @@ phases/
 | 1 - v1 API Types | **Complete** | [phase-1-v1-api-types/](./phase-1-v1-api-types/) |
 | 2 - Configuration System | **Complete** | [phase-2-configuration-system/](./phase-2-configuration-system/) |
 | 3 - Resource Builders | **Complete** | [phase-3-resource-builders/](./phase-3-resource-builders/) |
-| 4 - Core Reconciler | Pending | - |
+| 4 - Core Reconciler | **Complete** | [phase-4-core-reconciler/](./phase-4-core-reconciler/) |
 
 See [../ROADMAP.md](../ROADMAP.md) for the full phase summary and dependencies.

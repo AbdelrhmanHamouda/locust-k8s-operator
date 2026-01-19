@@ -23,11 +23,13 @@ import (
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	locustv1 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v1"
+	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
 )
 
 var _ = Describe("LocustTest Controller", func() {
@@ -74,8 +76,10 @@ var _ = Describe("LocustTest Controller", func() {
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
 			controllerReconciler := &LocustTestReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
+				Client:   k8sClient,
+				Scheme:   k8sClient.Scheme(),
+				Config:   config.LoadConfig(),
+				Recorder: record.NewFakeRecorder(10),
 			}
 
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
