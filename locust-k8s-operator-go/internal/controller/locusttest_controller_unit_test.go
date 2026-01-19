@@ -138,7 +138,7 @@ func TestReconcile_CreateResources(t *testing.T) {
 
 	// Verify Service created
 	svc := &corev1.Service{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "my-test-master",
 		Namespace: "default",
 	}, svc)
@@ -147,7 +147,7 @@ func TestReconcile_CreateResources(t *testing.T) {
 
 	// Verify master Job created
 	masterJob := &batchv1.Job{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "my-test-master",
 		Namespace: "default",
 	}, masterJob)
@@ -155,7 +155,7 @@ func TestReconcile_CreateResources(t *testing.T) {
 
 	// Verify worker Job created
 	workerJob := &batchv1.Job{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "my-test-worker",
 		Namespace: "default",
 	}, workerJob)
@@ -193,7 +193,7 @@ func TestReconcile_NoOpOnUpdate(t *testing.T) {
 
 	// Verify no resources created
 	svc := &corev1.Service{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "my-test-master",
 		Namespace: "default",
 	}, svc)
@@ -214,7 +214,7 @@ func TestReconcile_OwnerReferences(t *testing.T) {
 
 	// Verify owner reference on Service
 	svc := &corev1.Service{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "my-test-master",
 		Namespace: "default",
 	}, svc)
@@ -226,7 +226,7 @@ func TestReconcile_OwnerReferences(t *testing.T) {
 
 	// Verify owner reference on master Job
 	masterJob := &batchv1.Job{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "my-test-master",
 		Namespace: "default",
 	}, masterJob)
@@ -236,7 +236,7 @@ func TestReconcile_OwnerReferences(t *testing.T) {
 
 	// Verify owner reference on worker Job
 	workerJob := &batchv1.Job{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "my-test-worker",
 		Namespace: "default",
 	}, workerJob)
@@ -306,7 +306,7 @@ func TestReconcile_WithDifferentGenerations(t *testing.T) {
 			require.NoError(t, err)
 
 			svc := &corev1.Service{}
-			err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+			err = reconciler.Get(context.Background(), types.NamespacedName{
 				Name:      "test-gen-master",
 				Namespace: "default",
 			}, svc)
@@ -333,7 +333,7 @@ func TestReconcile_VerifyServiceConfiguration(t *testing.T) {
 	require.NoError(t, err)
 
 	svc := &corev1.Service{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "svc-test-master",
 		Namespace: "default",
 	}, svc)
@@ -362,7 +362,7 @@ func TestReconcile_VerifyMasterJobConfiguration(t *testing.T) {
 	require.NoError(t, err)
 
 	job := &batchv1.Job{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "job-test-master",
 		Namespace: "default",
 	}, job)
@@ -393,7 +393,7 @@ func TestReconcile_VerifyWorkerJobConfiguration(t *testing.T) {
 	require.NoError(t, err)
 
 	job := &batchv1.Job{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "worker-test-worker",
 		Namespace: "default",
 	}, job)
@@ -478,7 +478,7 @@ func TestReconcile_WithCustomLabels(t *testing.T) {
 
 	// Verify master job has custom label
 	masterJob := &batchv1.Job{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "label-test-master",
 		Namespace: "default",
 	}, masterJob)
@@ -487,7 +487,7 @@ func TestReconcile_WithCustomLabels(t *testing.T) {
 
 	// Verify worker job has custom label
 	workerJob := &batchv1.Job{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "label-test-worker",
 		Namespace: "default",
 	}, workerJob)
@@ -509,7 +509,7 @@ func TestReconcile_WithImagePullSecrets(t *testing.T) {
 	require.NoError(t, err)
 
 	job := &batchv1.Job{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "secret-test-master",
 		Namespace: "default",
 	}, job)
@@ -533,7 +533,7 @@ func TestReconcile_WithLibConfigMap(t *testing.T) {
 	require.NoError(t, err)
 
 	job := &batchv1.Job{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "lib-test-master",
 		Namespace: "default",
 	}, job)
@@ -578,7 +578,7 @@ func TestReconcile_MultipleNamespaces(t *testing.T) {
 
 	// Verify resources in namespace-a
 	svc1 := &corev1.Service{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "test1-master",
 		Namespace: "namespace-a",
 	}, svc1)
@@ -586,7 +586,7 @@ func TestReconcile_MultipleNamespaces(t *testing.T) {
 
 	// Verify resources in namespace-b
 	svc2 := &corev1.Service{}
-	err = reconciler.Client.Get(context.Background(), types.NamespacedName{
+	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "test2-master",
 		Namespace: "namespace-b",
 	}, svc2)
