@@ -140,3 +140,68 @@ Implemented environment-based configuration system matching Java `SysConfig.java
 2. Pass `*OperatorConfig` to resource builders
 3. Use `cfg.TTLSecondsAfterFinished` directly on Job specs (nil-safe)
 4. Resource quantities (e.g., "250m", "128Mi") are strings - parse with `resource.MustParse()` when building K8s resources
+
+---
+
+# Phase 3 Completion Notes
+
+**Completed:** 2026-01-17
+
+---
+
+## Summary
+
+Implemented resource builders matching Java `ResourceCreationHelpers.java` and `LoadGenHelpers.java` behavior. These pure functions build Kubernetes Jobs and Services from LocustTest CRs and operator configuration.
+
+## Files Created
+
+| File | Purpose | LOC |
+|------|---------|-----|
+| `internal/resources/types.go` | OperationalMode type (Master/Worker) | ~30 |
+| `internal/resources/constants.go` | Ports, paths, labels, annotations | ~120 |
+| `internal/resources/labels.go` | NodeName, BuildLabels, BuildAnnotations | ~100 |
+| `internal/resources/ports.go` | MasterPorts, WorkerPorts helpers | ~50 |
+| `internal/resources/command.go` | BuildMasterCommand, BuildWorkerCommand | ~45 |
+| `internal/resources/job.go` | BuildMasterJob, BuildWorkerJob + helpers | ~365 |
+| `internal/resources/service.go` | BuildMasterService | ~70 |
+| `internal/resources/labels_test.go` | Labels/annotations tests | ~200 |
+| `internal/resources/command_test.go` | Command builder tests | ~90 |
+| `internal/resources/job_test.go` | Job builder tests | ~300 |
+| `internal/resources/service_test.go` | Service builder tests | ~160 |
+
+## Key Functions Implemented
+
+| Function | Description |
+|----------|-------------|
+| `NodeName(crName, mode)` | Constructs node name with dots→dashes replacement |
+| `BuildLabels(lt, mode)` | Builds pod labels including user-defined labels |
+| `BuildAnnotations(lt, mode, cfg)` | Builds annotations with Prometheus scrape (master only) |
+| `BuildMasterCommand(seed, replicas)` | Constructs master command with all flags |
+| `BuildWorkerCommand(seed, masterHost)` | Constructs worker command with master host |
+| `BuildMasterJob(lt, cfg)` | Creates master Job with 2 containers (locust + exporter) |
+| `BuildWorkerJob(lt, cfg)` | Creates worker Job with 1 container |
+| `BuildMasterService(lt, cfg)` | Creates ClusterIP service (excludes WebUI port 8089) |
+
+## Java Behavior Preserved
+
+1. **Command Templates** - Exact match with Java MASTER_CMD_TEMPLATE and WORKER_CMD_TEMPLATE
+2. **Node Naming** - `{cr-name}-{mode}` with dots replaced by dashes
+3. **Labels** - `performance-test-name`, `performance-test-pod-name`, `managed-by`, `app`
+4. **Prometheus Annotations** - Master only: scrape=true, path=/metrics, port from config
+5. **Service Ports** - 5557, 5558, metrics port (NOT 8089 WebUI)
+6. **Feature Flags** - Affinity and tolerations respect EnableAffinityCRInjection/EnableTolerationsCRInjection
+
+## Verification
+
+- `go build ./internal/resources/...` ✓
+- `go test ./internal/resources/... -v -cover` ✓ (35 tests, 93.9% coverage)
+- `golangci-lint run ./internal/resources/...` ✓ (0 issues)
+- `make build` ✓
+- `make test` ✓
+
+## Notes for Phase 4
+
+1. Use `BuildMasterJob()` and `BuildWorkerJob()` in reconciler
+2. Use `BuildMasterService()` for service creation
+3. Set owner references on created resources for garbage collection
+4. Jobs and Services are created in the same namespace as the LocustTest CR
