@@ -144,20 +144,20 @@ Implement environment-based configuration matching Java `SysConfig.java`.
 
 ### Tasks
 
-- [ ] **2.1** Create `internal/config/config.go`
-- [ ] **2.2** Define `OperatorConfig` struct with fields:
+- [x] **2.1** Create `internal/config/config.go`
+- [x] **2.2** Define `OperatorConfig` struct with fields:
   - `TTLSecondsAfterFinished *int32`
   - `PodCPURequest`, `PodMemRequest`, `PodCPULimit`, `PodMemLimit`
   - `MetricsExporterImage`, `MetricsExporterPort`
   - `EnableAffinityCRInjection`, `EnableTolerationsCRInjection`
-- [ ] **2.3** Implement `LoadConfig()` function reading from env vars
-- [ ] **2.4** Add helper functions: `getEnv`, `getEnvBool`, `getEnvInt32`, `getEnvInt32Ptr`
-- [ ] **2.5** Write unit tests for config loading
+- [x] **2.3** Implement `LoadConfig()` function reading from env vars
+- [x] **2.4** Add helper functions: `getEnv`, `getEnvBool`, `getEnvInt32`, `getEnvInt32Ptr`
+- [x] **2.5** Write unit tests for config loading
 
 ### Acceptance Criteria
-- [ ] Config loads with defaults when env vars not set
-- [ ] Config respects env var overrides
-- [ ] All Java `application.yml` properties have Go equivalents
+- [x] Config loads with defaults when env vars not set
+- [x] Config respects env var overrides
+- [x] All Java `application.yml` properties have Go equivalents
 
 ### Files to Create
 - `internal/config/config.go`
@@ -178,38 +178,38 @@ Implement Job and Service builders matching Java `ResourceCreationHelpers.java`.
 ### Tasks
 
 #### Day 1: Core Builders
-- [ ] **3.1** Create `internal/resources/types.go`
+- [x] **3.1** Create `internal/resources/types.go`
   - Define `OperationalMode` (Master/Worker)
   - Define internal DTOs if needed
-- [ ] **3.2** Create `internal/resources/constants.go`
+- [x] **3.2** Create `internal/resources/constants.go`
   - Port constants from Java `Constants.java`
   - Ports: 5557, 5558, 8089, 8080, 9646
   - Mount paths: `/lotest/src/`, `/opt/locust/lib`
-- [ ] **3.3** Create `internal/resources/labels.go`
+- [x] **3.3** Create `internal/resources/labels.go`
   - `NodeName(crName, mode)` function
   - `BuildLabels(lt, mode)` function
   - `BuildAnnotations(lt, mode, cfg)` function
 
 #### Day 2: Job & Service Builders
-- [ ] **3.4** Create `internal/resources/command.go`
+- [x] **3.4** Create `internal/resources/command.go`
   - `BuildMasterCommand()` - construct master CLI args
   - `BuildWorkerCommand()` - construct worker CLI args
-- [ ] **3.5** Create `internal/resources/job.go`
+- [x] **3.5** Create `internal/resources/job.go`
   - `BuildMasterJob(lt, cfg)` - returns `*batchv1.Job`
   - `BuildWorkerJob(lt, cfg)` - returns `*batchv1.Job`
   - `buildLocustContainer()` helper
   - `buildMetricsExporterContainer()` helper
   - `buildVolumes()`, `buildVolumeMounts()` helpers
-- [ ] **3.6** Create `internal/resources/service.go`
+- [x] **3.6** Create `internal/resources/service.go`
   - `BuildMasterService(lt, cfg)` - returns `*corev1.Service`
-- [ ] **3.7** Create `internal/resources/ports.go`
+- [x] **3.7** Create `internal/resources/ports.go`
   - `MasterPorts()`, `WorkerPorts()` helpers
 
 ### Acceptance Criteria
-- [ ] `BuildMasterJob()` produces Job spec matching Java output
-- [ ] `BuildWorkerJob()` produces Job spec matching Java output
-- [ ] `BuildMasterService()` produces Service spec matching Java output
-- [ ] All resource builders are pure functions (no side effects)
+- [x] `BuildMasterJob()` produces Job spec matching Java output
+- [x] `BuildWorkerJob()` produces Job spec matching Java output
+- [x] `BuildMasterService()` produces Service spec matching Java output
+- [x] All resource builders are pure functions (no side effects)
 
 ### Files to Create
 - `internal/resources/types.go`
