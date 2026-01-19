@@ -23,5 +23,7 @@ phases/
 | 2 - Configuration System | **Complete** | [phase-2-configuration-system/](./phase-2-configuration-system/) |
 | 3 - Resource Builders | **Complete** | [phase-3-resource-builders/](./phase-3-resource-builders/) |
 | 4 - Core Reconciler | **Complete** | [phase-4-core-reconciler/](./phase-4-core-reconciler/) |
+| 5 - Unit Tests | **Complete** | [phase-5-unit-tests/](./phase-5-unit-tests/) |
+| 6 - Integration Tests | **Complete** | [phase-6-integration-tests/](./phase-6-integration-tests/) |
 
 See [../ROADMAP.md](../ROADMAP.md) for the full phase summary and dependencies.

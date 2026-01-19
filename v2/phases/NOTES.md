@@ -352,3 +352,70 @@ Implemented comprehensive unit tests achieving all coverage targets. Added test 
 1. Test fixtures in `internal/testdata/` are available for use in integration tests
 2. Controller tests use fake client - envtest integration already exists in suite_test.go
 3. `SetupWithManager()` has 0% coverage - requires real manager, covered in integration tests
+
+---
+
+# Phase 6 Completion Notes
+
+**Completed:** 2026-01-19
+
+---
+
+## Summary
+
+Implemented controller integration tests using envtest framework. Tests validate actual reconciliation behavior against a real Kubernetes API server.
+
+## Files Created/Modified
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `internal/controller/suite_test.go` | Enhanced | Added manager startup, controller registration, timeout constants |
+| `internal/controller/integration_test.go` | Created | All integration test cases (~600 LOC) |
+
+## Test Categories Implemented
+
+| Category | Tests | Description |
+|----------|-------|-------------|
+| **Create Flow** | 5 | Service, master Job, worker Job creation with owner refs and labels |
+| **Create Flow Edge Cases** | 7 | Custom labels, annotations, affinity, tolerations, imagePullSecrets |
+| **Update NO-OP Flow** | 3 | Verify spec updates don't modify existing resources |
+| **Delete Flow** | 2 | CR deletion and non-existent CR handling |
+| **Error Handling** | 4 | Idempotent creation, multi-namespace, rapid cycles |
+
+## Test Results
+
+- **Total Tests:** 21 integration tests
+- **Coverage:** 100% on controller package
+- **Execution Time:** ~31 seconds
+- **All tests pass consistently**
+
+## Key Discoveries
+
+1. **envtest Limitations:**
+   - No garbage collection controller - cannot test cascade deletion
+   - Owner references are verified in Create Flow tests instead
+   - Resources remain after CR deletion in envtest
+
+2. **Service Configuration:**
+   - Service has 3 ports (5557, 5558, metrics) - WebUI port 8089 is excluded
+   - Service selector uses `performance-test-pod-name` label
+
+3. **Label Keys:**
+   - Pod labels use `performance-test-pod-name`, `managed-by`, `app`, `performance-test-name`
+   - Service doesn't have labels set in BuildMasterService
+
+4. **Job Completions:**
+   - Master Job doesn't explicitly set Completions (nil = 1 by default)
+   - Worker Job has Completions = nil (parallel workers)
+
+## Verification
+
+- `make test` ✓ (all tests pass)
+- `go test -v ./internal/controller/... -ginkgo.v` ✓ (21/21 passed)
+- No flaky tests observed
+
+## Notes for Phase 7+
+
+1. Integration tests provide full coverage of `SetupWithManager()` 
+2. E2E tests (Phase 15) will be needed to test actual garbage collection
+3. Test namespace isolation pattern can be reused for future test suites
