@@ -22,7 +22,8 @@ import (
 )
 
 // log is for logging in this package.
-var locusttestlog = logf.Log.WithName("locusttest-resource")
+// locusttestlog is available for future webhook logging needs
+var _ = logf.Log.WithName("locusttest-resource")
 
 // SetupWebhookWithManager registers the webhook for LocustTest with the manager.
 func (r *LocustTest) SetupWebhookWithManager(mgr ctrl.Manager) error {

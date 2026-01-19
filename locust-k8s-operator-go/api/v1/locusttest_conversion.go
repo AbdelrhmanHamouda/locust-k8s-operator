@@ -193,7 +193,7 @@ func convertAffinityToV2(src *LocustTestAffinity) *corev1.Affinity {
 		return nil
 	}
 
-	var terms []corev1.NodeSelectorRequirement
+	terms := make([]corev1.NodeSelectorRequirement, 0, len(nodeReqs))
 	for key, value := range nodeReqs {
 		terms = append(terms, corev1.NodeSelectorRequirement{
 			Key:      key,
