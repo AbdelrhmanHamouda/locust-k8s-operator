@@ -34,14 +34,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	locustv1 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v1"
+	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
 )
 
 // newTestScheme creates a scheme with all required types registered.
 func newTestScheme() *runtime.Scheme {
 	scheme := runtime.NewScheme()
-	_ = locustv1.AddToScheme(scheme)
+	_ = locustv2.AddToScheme(scheme)
 	_ = batchv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
 	return scheme
@@ -53,6 +53,7 @@ func newTestReconciler(objs ...client.Object) (*LocustTestReconciler, *record.Fa
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithObjects(objs...).
+		WithStatusSubresource(&locustv2.LocustTest{}).
 		Build()
 	recorder := record.NewFakeRecorder(10)
 
@@ -90,20 +91,26 @@ func newTestOperatorConfig() *config.OperatorConfig {
 }
 
 // newTestLocustTestCR creates a test LocustTest CR.
-func newTestLocustTestCR(name, namespace string) *locustv1.LocustTest {
-	return &locustv1.LocustTest{
+func newTestLocustTestCR(name, namespace string) *locustv2.LocustTest {
+	return &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       name,
 			Namespace:  namespace,
 			Generation: 1,
 			UID:        "test-uid-12345",
 		},
-		Spec: locustv1.LocustTestSpec{
-			MasterCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerReplicas:    3,
-			Image:             "locustio/locust:latest",
-			ConfigMap:         "test-configmap",
+		Spec: locustv2.LocustTestSpec{
+			Image: "locustio/locust:latest",
+			Master: locustv2.MasterSpec{
+				Command: "locust -f /lotest/src/test.py",
+			},
+			Worker: locustv2.WorkerSpec{
+				Command:  "locust -f /lotest/src/test.py",
+				Replicas: 3,
+			},
+			TestFiles: &locustv2.TestFilesConfig{
+				ConfigMapRef: "test-configmap",
+			},
 		},
 	}
 }
@@ -381,7 +388,7 @@ func TestReconcile_VerifyMasterJobConfiguration(t *testing.T) {
 
 func TestReconcile_VerifyWorkerJobConfiguration(t *testing.T) {
 	lt := newTestLocustTestCR("worker-test", "default")
-	lt.Spec.WorkerReplicas = 5
+	lt.Spec.Worker.Replicas = 5
 	reconciler, _ := newTestReconciler(lt)
 
 	_, err := reconciler.Reconcile(context.Background(), ctrl.Request{
@@ -458,13 +465,11 @@ done:
 
 func TestReconcile_WithCustomLabels(t *testing.T) {
 	lt := newTestLocustTestCR("label-test", "default")
-	lt.Spec.Labels = &locustv1.PodLabels{
-		Master: map[string]string{
-			"custom-label": "master-value",
-		},
-		Worker: map[string]string{
-			"custom-label": "worker-value",
-		},
+	lt.Spec.Master.Labels = map[string]string{
+		"custom-label": "master-value",
+	}
+	lt.Spec.Worker.Labels = map[string]string{
+		"custom-label": "worker-value",
 	}
 	reconciler, _ := newTestReconciler(lt)
 
@@ -497,7 +502,9 @@ func TestReconcile_WithCustomLabels(t *testing.T) {
 
 func TestReconcile_WithImagePullSecrets(t *testing.T) {
 	lt := newTestLocustTestCR("secret-test", "default")
-	lt.Spec.ImagePullSecrets = []string{"my-registry-secret"}
+	lt.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{Name: "my-registry-secret"},
+	}
 	reconciler, _ := newTestReconciler(lt)
 
 	_, err := reconciler.Reconcile(context.Background(), ctrl.Request{
@@ -521,7 +528,7 @@ func TestReconcile_WithImagePullSecrets(t *testing.T) {
 
 func TestReconcile_WithLibConfigMap(t *testing.T) {
 	lt := newTestLocustTestCR("lib-test", "default")
-	lt.Spec.LibConfigMap = "locust-lib"
+	lt.Spec.TestFiles.LibConfigMapRef = "locust-lib"
 	reconciler, _ := newTestReconciler(lt)
 
 	_, err := reconciler.Reconcile(context.Background(), ctrl.Request{
@@ -776,19 +783,25 @@ func TestReconcile_CreateWorkerJobError(t *testing.T) {
 
 func TestCreateResource_SetControllerReferenceError(t *testing.T) {
 	// Create a LocustTest without a UID - this causes SetControllerReference to fail
-	lt := &locustv1.LocustTest{
+	lt := &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "no-uid-test",
 			Namespace:  "default",
 			Generation: 1,
 			// UID intentionally not set
 		},
-		Spec: locustv1.LocustTestSpec{
-			MasterCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerReplicas:    1,
-			Image:             "locustio/locust:latest",
-			ConfigMap:         "test-configmap",
+		Spec: locustv2.LocustTestSpec{
+			Image: "locustio/locust:latest",
+			Master: locustv2.MasterSpec{
+				Command: "locust -f /lotest/src/test.py",
+			},
+			Worker: locustv2.WorkerSpec{
+				Command:  "locust -f /lotest/src/test.py",
+				Replicas: 1,
+			},
+			TestFiles: &locustv2.TestFilesConfig{
+				ConfigMapRef: "test-configmap",
+			},
 		},
 	}
 
@@ -796,7 +809,7 @@ func TestCreateResource_SetControllerReferenceError(t *testing.T) {
 	badScheme := runtime.NewScheme()
 	_ = batchv1.AddToScheme(badScheme)
 	_ = corev1.AddToScheme(badScheme)
-	// Note: NOT adding locustv1 to scheme
+	// Note: NOT adding locustv2 to scheme
 
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(badScheme).

@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strconv"
 
-	locustv1 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v1"
+	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -29,24 +29,24 @@ import (
 )
 
 // BuildMasterJob creates a Kubernetes Job for the Locust master node.
-func BuildMasterJob(lt *locustv1.LocustTest, cfg *config.OperatorConfig) *batchv1.Job {
+func BuildMasterJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig) *batchv1.Job {
 	nodeName := NodeName(lt.Name, Master)
-	command := BuildMasterCommand(lt.Spec.MasterCommandSeed, lt.Spec.WorkerReplicas)
+	command := BuildMasterCommand(lt.Spec.Master.Command, lt.Spec.Worker.Replicas)
 
 	return buildJob(lt, cfg, Master, nodeName, command)
 }
 
 // BuildWorkerJob creates a Kubernetes Job for the Locust worker nodes.
-func BuildWorkerJob(lt *locustv1.LocustTest, cfg *config.OperatorConfig) *batchv1.Job {
+func BuildWorkerJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig) *batchv1.Job {
 	nodeName := NodeName(lt.Name, Worker)
 	masterHost := NodeName(lt.Name, Master)
-	command := BuildWorkerCommand(lt.Spec.WorkerCommandSeed, masterHost)
+	command := BuildWorkerCommand(lt.Spec.Worker.Command, masterHost)
 
 	return buildJob(lt, cfg, Worker, nodeName, command)
 }
 
 // buildJob is the internal function that constructs a Job for either master or worker.
-func buildJob(lt *locustv1.LocustTest, cfg *config.OperatorConfig, mode OperationalMode, nodeName string, command []string) *batchv1.Job {
+func buildJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, mode OperationalMode, nodeName string, command []string) *batchv1.Job {
 	labels := BuildLabels(lt, mode)
 	annotations := BuildAnnotations(lt, mode, cfg)
 
@@ -55,7 +55,7 @@ func buildJob(lt *locustv1.LocustTest, cfg *config.OperatorConfig, mode Operatio
 	if mode == Master {
 		parallelism = MasterReplicaCount
 	} else {
-		parallelism = lt.Spec.WorkerReplicas
+		parallelism = lt.Spec.Worker.Replicas
 	}
 
 	// Determine ports based on mode
@@ -108,7 +108,7 @@ func buildJob(lt *locustv1.LocustTest, cfg *config.OperatorConfig, mode Operatio
 }
 
 // buildLocustContainer creates the main Locust container.
-func buildLocustContainer(lt *locustv1.LocustTest, name string, command []string, ports []corev1.ContainerPort, cfg *config.OperatorConfig) corev1.Container {
+func buildLocustContainer(lt *locustv2.LocustTest, name string, command []string, ports []corev1.ContainerPort, cfg *config.OperatorConfig) corev1.Container {
 	container := corev1.Container{
 		Name:            name,
 		Image:           lt.Spec.Image,
@@ -152,42 +152,41 @@ func buildMetricsExporterContainer(cfg *config.OperatorConfig) corev1.Container 
 }
 
 // buildImagePullSecrets creates LocalObjectReferences for image pull secrets.
-func buildImagePullSecrets(lt *locustv1.LocustTest) []corev1.LocalObjectReference {
-	if lt.Spec.ImagePullSecrets == nil {
-		return nil
-	}
-
-	refs := make([]corev1.LocalObjectReference, len(lt.Spec.ImagePullSecrets))
-	for i, secretName := range lt.Spec.ImagePullSecrets {
-		refs[i] = corev1.LocalObjectReference{Name: secretName}
-	}
-	return refs
+func buildImagePullSecrets(lt *locustv2.LocustTest) []corev1.LocalObjectReference {
+	return lt.Spec.ImagePullSecrets
 }
 
 // buildVolumes creates the volumes for ConfigMap and LibConfigMap.
-func buildVolumes(lt *locustv1.LocustTest, nodeName string) []corev1.Volume {
+func buildVolumes(lt *locustv2.LocustTest, nodeName string) []corev1.Volume {
 	var volumes []corev1.Volume
 
-	if lt.Spec.ConfigMap != "" {
+	// Get ConfigMap refs from v2 TestFiles config
+	var configMapRef, libConfigMapRef string
+	if lt.Spec.TestFiles != nil {
+		configMapRef = lt.Spec.TestFiles.ConfigMapRef
+		libConfigMapRef = lt.Spec.TestFiles.LibConfigMapRef
+	}
+
+	if configMapRef != "" {
 		volumes = append(volumes, corev1.Volume{
 			Name: nodeName,
 			VolumeSource: corev1.VolumeSource{
 				ConfigMap: &corev1.ConfigMapVolumeSource{
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: lt.Spec.ConfigMap,
+						Name: configMapRef,
 					},
 				},
 			},
 		})
 	}
 
-	if lt.Spec.LibConfigMap != "" {
+	if libConfigMapRef != "" {
 		volumes = append(volumes, corev1.Volume{
 			Name: LibVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				ConfigMap: &corev1.ConfigMapVolumeSource{
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: lt.Spec.LibConfigMap,
+						Name: libConfigMapRef,
 					},
 				},
 			},
@@ -198,21 +197,36 @@ func buildVolumes(lt *locustv1.LocustTest, nodeName string) []corev1.Volume {
 }
 
 // buildVolumeMounts creates the volume mounts for ConfigMap and LibConfigMap.
-func buildVolumeMounts(lt *locustv1.LocustTest, nodeName string) []corev1.VolumeMount {
+func buildVolumeMounts(lt *locustv2.LocustTest, nodeName string) []corev1.VolumeMount {
 	var mounts []corev1.VolumeMount
 
-	if lt.Spec.ConfigMap != "" {
+	// Get ConfigMap refs and mount paths from v2 TestFiles config
+	var configMapRef, libConfigMapRef string
+	srcMountPath := DefaultMountPath
+	libMountPath := LibMountPath
+	if lt.Spec.TestFiles != nil {
+		configMapRef = lt.Spec.TestFiles.ConfigMapRef
+		libConfigMapRef = lt.Spec.TestFiles.LibConfigMapRef
+		if lt.Spec.TestFiles.SrcMountPath != "" {
+			srcMountPath = lt.Spec.TestFiles.SrcMountPath
+		}
+		if lt.Spec.TestFiles.LibMountPath != "" {
+			libMountPath = lt.Spec.TestFiles.LibMountPath
+		}
+	}
+
+	if configMapRef != "" {
 		mounts = append(mounts, corev1.VolumeMount{
 			Name:      nodeName,
-			MountPath: DefaultMountPath,
+			MountPath: srcMountPath,
 			ReadOnly:  false,
 		})
 	}
 
-	if lt.Spec.LibConfigMap != "" {
+	if libConfigMapRef != "" {
 		mounts = append(mounts, corev1.VolumeMount{
 			Name:      LibVolumeName,
-			MountPath: LibMountPath,
+			MountPath: libMountPath,
 			ReadOnly:  false,
 		})
 	}
@@ -288,77 +302,30 @@ func buildResourceList(cpu, memory, ephemeral string) corev1.ResourceList {
 
 // buildAffinity creates the pod affinity configuration from the CR spec.
 // Returns nil if affinity injection is disabled or no affinity is specified.
-func buildAffinity(lt *locustv1.LocustTest, cfg *config.OperatorConfig) *corev1.Affinity {
+func buildAffinity(lt *locustv2.LocustTest, cfg *config.OperatorConfig) *corev1.Affinity {
 	if !cfg.EnableAffinityCRInjection {
 		return nil
 	}
 
-	if lt.Spec.Affinity == nil || lt.Spec.Affinity.NodeAffinity == nil {
+	if lt.Spec.Scheduling == nil || lt.Spec.Scheduling.Affinity == nil {
 		return nil
 	}
 
-	nodeSelector := buildNodeSelector(lt.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution)
-	if nodeSelector == nil {
-		return nil
-	}
-
-	return &corev1.Affinity{
-		NodeAffinity: &corev1.NodeAffinity{
-			RequiredDuringSchedulingIgnoredDuringExecution: nodeSelector,
-		},
-	}
-}
-
-// buildNodeSelector creates a NodeSelector from the affinity requirements map.
-func buildNodeSelector(requirements map[string]string) *corev1.NodeSelector {
-	if len(requirements) == 0 {
-		return nil
-	}
-
-	matchExpressions := make([]corev1.NodeSelectorRequirement, 0, len(requirements))
-	for key, value := range requirements {
-		matchExpressions = append(matchExpressions, corev1.NodeSelectorRequirement{
-			Key:      key,
-			Operator: corev1.NodeSelectorOpIn,
-			Values:   []string{value},
-		})
-	}
-
-	return &corev1.NodeSelector{
-		NodeSelectorTerms: []corev1.NodeSelectorTerm{
-			{
-				MatchExpressions: matchExpressions,
-			},
-		},
-	}
+	// v2 uses standard corev1.Affinity directly
+	return lt.Spec.Scheduling.Affinity
 }
 
 // buildTolerations creates pod tolerations from the CR spec.
 // Returns nil if toleration injection is disabled or no tolerations are specified.
-func buildTolerations(lt *locustv1.LocustTest, cfg *config.OperatorConfig) []corev1.Toleration {
+func buildTolerations(lt *locustv2.LocustTest, cfg *config.OperatorConfig) []corev1.Toleration {
 	if !cfg.EnableTolerationsCRInjection {
 		return nil
 	}
 
-	if lt.Spec.Tolerations == nil {
+	if lt.Spec.Scheduling == nil || lt.Spec.Scheduling.Tolerations == nil {
 		return nil
 	}
 
-	tolerations := make([]corev1.Toleration, len(lt.Spec.Tolerations))
-	for i, t := range lt.Spec.Tolerations {
-		toleration := corev1.Toleration{
-			Key:      t.Key,
-			Operator: corev1.TolerationOperator(t.Operator),
-			Effect:   corev1.TaintEffect(t.Effect),
-		}
-
-		// Only set Value if Operator is Equal
-		if t.Operator == "Equal" {
-			toleration.Value = t.Value
-		}
-
-		tolerations[i] = toleration
-	}
-
-	return tolerations
+	// v2 uses standard corev1.Toleration directly
+	return lt.Spec.Scheduling.Tolerations
 }

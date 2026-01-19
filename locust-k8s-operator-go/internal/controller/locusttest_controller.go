@@ -23,15 +23,15 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	locustv1 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v1"
+	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/resources"
 )
@@ -59,7 +59,7 @@ func (r *LocustTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	log := logf.FromContext(ctx)
 
 	// Fetch the LocustTest CR
-	locustTest := &locustv1.LocustTest{}
+	locustTest := &locustv2.LocustTest{}
 	if err := r.Get(ctx, req.NamespacedName, locustTest); err != nil {
 		if apierrors.IsNotFound(err) {
 			// CR deleted - nothing to do (cleanup via owner references)
@@ -70,7 +70,28 @@ func (r *LocustTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	// NO-OP on updates - matching Java behavior
+	// Initialize status on first reconcile
+	if locustTest.Status.Phase == "" {
+		r.initializeStatus(locustTest)
+		if err := r.Status().Update(ctx, locustTest); err != nil {
+			log.Error(err, "Failed to initialize status")
+			return ctrl.Result{}, err
+		}
+		// Re-fetch after status update to get the latest resource version
+		if err := r.Get(ctx, req.NamespacedName, locustTest); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
+	// If resources already exist (Phase is Running or terminal), check Job status
+	// This handles reconciles triggered by Job status changes
+	if locustTest.Status.Phase == locustv2.PhaseRunning ||
+		locustTest.Status.Phase == locustv2.PhaseSucceeded ||
+		locustTest.Status.Phase == locustv2.PhaseFailed {
+		return r.reconcileStatus(ctx, locustTest)
+	}
+
+	// NO-OP on spec updates - matching Java behavior
 	// Generation > 1 means the spec has been modified after creation
 	if locustTest.Generation > 1 {
 		log.Info("LocustTest updated - NO-OP by design",
@@ -81,18 +102,22 @@ func (r *LocustTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	// On initial creation
+	// On initial creation (Phase is Pending)
 	log.Info("LocustTest created",
 		"name", locustTest.Name,
 		"namespace", locustTest.Namespace)
 
 	// Log detailed CR information (debug level)
+	var configMapRef string
+	if locustTest.Spec.TestFiles != nil {
+		configMapRef = locustTest.Spec.TestFiles.ConfigMapRef
+	}
 	log.V(1).Info("Custom resource information",
 		"image", locustTest.Spec.Image,
-		"masterCommand", locustTest.Spec.MasterCommandSeed,
-		"workerCommand", locustTest.Spec.WorkerCommandSeed,
-		"workerReplicas", locustTest.Spec.WorkerReplicas,
-		"configMap", locustTest.Spec.ConfigMap)
+		"masterCommand", locustTest.Spec.Master.Command,
+		"workerCommand", locustTest.Spec.Worker.Command,
+		"workerReplicas", locustTest.Spec.Worker.Replicas,
+		"configMap", configMapRef)
 
 	// Create resources
 	return r.createResources(ctx, locustTest)
@@ -100,7 +125,7 @@ func (r *LocustTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 // createResources creates the master Service, master Job, and worker Job.
 // Resources are created with owner references for automatic garbage collection.
-func (r *LocustTestReconciler) createResources(ctx context.Context, lt *locustv1.LocustTest) (ctrl.Result, error) {
+func (r *LocustTestReconciler) createResources(ctx context.Context, lt *locustv2.LocustTest) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 
 	// Build resources using resource builders from Phase 3
@@ -132,12 +157,23 @@ func (r *LocustTestReconciler) createResources(ctx context.Context, lt *locustv1
 		"masterJob", masterJob.Name,
 		"workerJob", workerJob.Name)
 
+	// Update status after successful resource creation
+	lt.Status.Phase = locustv2.PhaseRunning
+	now := metav1.Now()
+	lt.Status.StartTime = &now
+	r.setReady(lt, true, locustv2.ReasonResourcesCreated, "All resources created")
+
+	if err := r.Status().Update(ctx, lt); err != nil {
+		log.Error(err, "Failed to update status after resource creation")
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 
 // createResource creates a Kubernetes resource with owner reference set.
 // If the resource already exists, it logs and returns success (idempotent).
-func (r *LocustTestReconciler) createResource(ctx context.Context, lt *locustv1.LocustTest, obj client.Object, kind string) error {
+func (r *LocustTestReconciler) createResource(ctx context.Context, lt *locustv2.LocustTest, obj client.Object, kind string) error {
 	log := logf.FromContext(ctx)
 
 	// Set owner reference for automatic garbage collection
@@ -175,13 +211,52 @@ func (r *LocustTestReconciler) createResource(ctx context.Context, lt *locustv1.
 	return nil
 }
 
+// reconcileStatus updates the LocustTest status based on owned Job states.
+// Called when resources already exist and we need to track Job completion.
+func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2.LocustTest) (ctrl.Result, error) {
+	log := logf.FromContext(ctx)
+
+	// Don't update if already in terminal state
+	if lt.Status.Phase == locustv2.PhaseSucceeded || lt.Status.Phase == locustv2.PhaseFailed {
+		return ctrl.Result{}, nil
+	}
+
+	// Fetch master Job to determine status
+	masterJob := &batchv1.Job{}
+	masterJobName := lt.Name + "-master"
+	if err := r.Get(ctx, client.ObjectKey{Name: masterJobName, Namespace: lt.Namespace}, masterJob); err != nil {
+		if apierrors.IsNotFound(err) {
+			// Job not found yet, requeue
+			return ctrl.Result{Requeue: true}, nil
+		}
+		return ctrl.Result{}, err
+	}
+
+	// Fetch worker Job for worker count
+	workerJob := &batchv1.Job{}
+	workerJobName := lt.Name + "-worker"
+	if err := r.Get(ctx, client.ObjectKey{Name: workerJobName, Namespace: lt.Namespace}, workerJob); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return ctrl.Result{}, err
+		}
+		workerJob = nil
+	}
+
+	// Update status from Jobs
+	if err := r.updateStatusFromJobs(ctx, lt, masterJob, workerJob); err != nil {
+		log.Error(err, "Failed to update status from Jobs")
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, nil
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *LocustTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&locustv1.LocustTest{}).
-		Owns(&batchv1.Job{}).                                    // Watch owned Jobs for status updates
-		Owns(&corev1.Service{}).                                 // Watch owned Services
-		WithEventFilter(predicate.GenerationChangedPredicate{}). // Filter status-only updates
+		For(&locustv2.LocustTest{}).
+		Owns(&batchv1.Job{}).    // Watch owned Jobs for status updates
+		Owns(&corev1.Service{}). // Watch owned Services
 		Named("locusttest").
 		Complete(r)
 }

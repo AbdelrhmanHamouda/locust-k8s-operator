@@ -19,7 +19,7 @@ package resources
 import (
 	"testing"
 
-	locustv1 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v1"
+	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,19 +27,27 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestBuildMasterService(t *testing.T) {
-	lt := &locustv1.LocustTest{
+func newTestLocustTestForService() *locustv2.LocustTest {
+	return &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-test",
 			Namespace: "default",
 		},
-		Spec: locustv1.LocustTestSpec{
-			MasterCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerReplicas:    3,
-			Image:             "locustio/locust:latest",
+		Spec: locustv2.LocustTestSpec{
+			Image: "locustio/locust:latest",
+			Master: locustv2.MasterSpec{
+				Command: "locust -f /lotest/src/test.py",
+			},
+			Worker: locustv2.WorkerSpec{
+				Command:  "locust -f /lotest/src/test.py",
+				Replicas: 3,
+			},
 		},
 	}
+}
+
+func TestBuildMasterService(t *testing.T) {
+	lt := newTestLocustTestForService()
 
 	cfg := &config.OperatorConfig{
 		MetricsExporterPort: 9646,
@@ -53,18 +61,7 @@ func TestBuildMasterService(t *testing.T) {
 }
 
 func TestBuildMasterService_Ports(t *testing.T) {
-	lt := &locustv1.LocustTest{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-test",
-			Namespace: "default",
-		},
-		Spec: locustv1.LocustTestSpec{
-			MasterCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerReplicas:    3,
-			Image:             "locustio/locust:latest",
-		},
-	}
+	lt := newTestLocustTestForService()
 
 	cfg := &config.OperatorConfig{
 		MetricsExporterPort: 9646,
@@ -87,18 +84,7 @@ func TestBuildMasterService_Ports(t *testing.T) {
 }
 
 func TestBuildMasterService_NoWebUIPort(t *testing.T) {
-	lt := &locustv1.LocustTest{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-test",
-			Namespace: "default",
-		},
-		Spec: locustv1.LocustTestSpec{
-			MasterCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerReplicas:    3,
-			Image:             "locustio/locust:latest",
-		},
-	}
+	lt := newTestLocustTestForService()
 
 	cfg := &config.OperatorConfig{
 		MetricsExporterPort: 9646,
@@ -113,18 +99,7 @@ func TestBuildMasterService_NoWebUIPort(t *testing.T) {
 }
 
 func TestBuildMasterService_CustomMetricsPort(t *testing.T) {
-	lt := &locustv1.LocustTest{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-test",
-			Namespace: "default",
-		},
-		Spec: locustv1.LocustTestSpec{
-			MasterCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerReplicas:    3,
-			Image:             "locustio/locust:latest",
-		},
-	}
+	lt := newTestLocustTestForService()
 
 	cfg := &config.OperatorConfig{
 		MetricsExporterPort: 9999,
@@ -146,18 +121,7 @@ func TestBuildMasterService_CustomMetricsPort(t *testing.T) {
 }
 
 func TestBuildMasterService_Selector(t *testing.T) {
-	lt := &locustv1.LocustTest{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-test",
-			Namespace: "default",
-		},
-		Spec: locustv1.LocustTestSpec{
-			MasterCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerReplicas:    3,
-			Image:             "locustio/locust:latest",
-		},
-	}
+	lt := newTestLocustTestForService()
 
 	cfg := &config.OperatorConfig{
 		MetricsExporterPort: 9646,

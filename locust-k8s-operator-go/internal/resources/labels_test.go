@@ -19,7 +19,7 @@ package resources
 import (
 	"testing"
 
-	locustv1 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v1"
+	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -67,16 +67,20 @@ func TestNodeName(t *testing.T) {
 }
 
 func TestBuildLabels(t *testing.T) {
-	lt := &locustv1.LocustTest{
+	lt := &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-test",
 			Namespace: "default",
 		},
-		Spec: locustv1.LocustTestSpec{
-			MasterCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerReplicas:    3,
-			Image:             "locustio/locust:latest",
+		Spec: locustv2.LocustTestSpec{
+			Image: "locustio/locust:latest",
+			Master: locustv2.MasterSpec{
+				Command: "locust -f /lotest/src/test.py",
+			},
+			Worker: locustv2.WorkerSpec{
+				Command:  "locust -f /lotest/src/test.py",
+				Replicas: 3,
+			},
 		},
 	}
 
@@ -89,22 +93,24 @@ func TestBuildLabels(t *testing.T) {
 }
 
 func TestBuildLabels_WithUserLabels(t *testing.T) {
-	lt := &locustv1.LocustTest{
+	lt := &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-test",
 			Namespace: "default",
 		},
-		Spec: locustv1.LocustTestSpec{
-			MasterCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerReplicas:    3,
-			Image:             "locustio/locust:latest",
-			Labels: &locustv1.PodLabels{
-				Master: map[string]string{
+		Spec: locustv2.LocustTestSpec{
+			Image: "locustio/locust:latest",
+			Master: locustv2.MasterSpec{
+				Command: "locust -f /lotest/src/test.py",
+				Labels: map[string]string{
 					"custom-label": "master-value",
 					"team":         "platform",
 				},
-				Worker: map[string]string{
+			},
+			Worker: locustv2.WorkerSpec{
+				Command:  "locust -f /lotest/src/test.py",
+				Replicas: 3,
+				Labels: map[string]string{
 					"custom-label": "worker-value",
 				},
 			},
@@ -121,16 +127,20 @@ func TestBuildLabels_WithUserLabels(t *testing.T) {
 }
 
 func TestBuildAnnotations_Master(t *testing.T) {
-	lt := &locustv1.LocustTest{
+	lt := &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-test",
 			Namespace: "default",
 		},
-		Spec: locustv1.LocustTestSpec{
-			MasterCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerReplicas:    3,
-			Image:             "locustio/locust:latest",
+		Spec: locustv2.LocustTestSpec{
+			Image: "locustio/locust:latest",
+			Master: locustv2.MasterSpec{
+				Command: "locust -f /lotest/src/test.py",
+			},
+			Worker: locustv2.WorkerSpec{
+				Command:  "locust -f /lotest/src/test.py",
+				Replicas: 3,
+			},
 		},
 	}
 
@@ -146,16 +156,20 @@ func TestBuildAnnotations_Master(t *testing.T) {
 }
 
 func TestBuildAnnotations_Worker(t *testing.T) {
-	lt := &locustv1.LocustTest{
+	lt := &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-test",
 			Namespace: "default",
 		},
-		Spec: locustv1.LocustTestSpec{
-			MasterCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerReplicas:    3,
-			Image:             "locustio/locust:latest",
+		Spec: locustv2.LocustTestSpec{
+			Image: "locustio/locust:latest",
+			Master: locustv2.MasterSpec{
+				Command: "locust -f /lotest/src/test.py",
+			},
+			Worker: locustv2.WorkerSpec{
+				Command:  "locust -f /lotest/src/test.py",
+				Replicas: 3,
+			},
 		},
 	}
 
@@ -172,21 +186,23 @@ func TestBuildAnnotations_Worker(t *testing.T) {
 }
 
 func TestBuildAnnotations_WithUserAnnotations(t *testing.T) {
-	lt := &locustv1.LocustTest{
+	lt := &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-test",
 			Namespace: "default",
 		},
-		Spec: locustv1.LocustTestSpec{
-			MasterCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerReplicas:    3,
-			Image:             "locustio/locust:latest",
-			Annotations: &locustv1.PodAnnotations{
-				Master: map[string]string{
+		Spec: locustv2.LocustTestSpec{
+			Image: "locustio/locust:latest",
+			Master: locustv2.MasterSpec{
+				Command: "locust -f /lotest/src/test.py",
+				Annotations: map[string]string{
 					"custom-annotation": "master-value",
 				},
-				Worker: map[string]string{
+			},
+			Worker: locustv2.WorkerSpec{
+				Command:  "locust -f /lotest/src/test.py",
+				Replicas: 3,
+				Annotations: map[string]string{
 					"custom-annotation": "worker-value",
 				},
 			},
@@ -207,17 +223,21 @@ func TestBuildAnnotations_WithUserAnnotations(t *testing.T) {
 }
 
 func TestBuildLabels_NilLabelsSpec(t *testing.T) {
-	lt := &locustv1.LocustTest{
+	lt := &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-test",
 			Namespace: "default",
 		},
-		Spec: locustv1.LocustTestSpec{
-			MasterCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerReplicas:    3,
-			Image:             "locustio/locust:latest",
-			Labels:            nil,
+		Spec: locustv2.LocustTestSpec{
+			Image: "locustio/locust:latest",
+			Master: locustv2.MasterSpec{
+				Command: "locust -f /lotest/src/test.py",
+				Labels:  nil,
+			},
+			Worker: locustv2.WorkerSpec{
+				Command:  "locust -f /lotest/src/test.py",
+				Replicas: 3,
+			},
 		},
 	}
 
@@ -229,17 +249,21 @@ func TestBuildLabels_NilLabelsSpec(t *testing.T) {
 }
 
 func TestBuildAnnotations_NilAnnotationsSpec(t *testing.T) {
-	lt := &locustv1.LocustTest{
+	lt := &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-test",
 			Namespace: "default",
 		},
-		Spec: locustv1.LocustTestSpec{
-			MasterCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerReplicas:    3,
-			Image:             "locustio/locust:latest",
-			Annotations:       nil,
+		Spec: locustv2.LocustTestSpec{
+			Image: "locustio/locust:latest",
+			Master: locustv2.MasterSpec{
+				Command:     "locust -f /lotest/src/test.py",
+				Annotations: nil,
+			},
+			Worker: locustv2.WorkerSpec{
+				Command:  "locust -f /lotest/src/test.py",
+				Replicas: 3,
+			},
 		},
 	}
 

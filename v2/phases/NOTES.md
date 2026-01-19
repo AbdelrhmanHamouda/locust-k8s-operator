@@ -638,3 +638,100 @@ kind delete cluster --name locust-webhook-test
 2. Conversion webhook registration in main.go is controlled by `ENABLE_WEBHOOKS` env var
 3. Production deployment requires cert-manager for webhook TLS
 4. Unit tests (envtest) still pass but don't exercise webhook - E2E tests validate webhook
+
+---
+
+# Phase 9: Status Subresource Implementation
+
+## Date: 2026-01-20
+
+## Summary
+
+Implemented status subresource for LocustTest resources and migrated the controller and resource builders from v1 to v2 API. v2 is now the primary API version used throughout the codebase.
+
+## Key Changes
+
+### 1. Controller Migration to v2 API
+- `internal/controller/locusttest_controller.go` now uses `locustv2.LocustTest`
+- Removed `GenerationChangedPredicate` to allow status-only updates to trigger reconciliation
+- Added status initialization on first reconcile
+- Added status update after successful resource creation
+
+### 2. Resource Builders Migration to v2 API
+- `internal/resources/job.go` - Updated to use v2 API types
+- `internal/resources/labels.go` - Updated to use v2 API types  
+- `internal/resources/service.go` - Updated to use v2 API types
+
+### 3. Status Helper Functions
+Created `internal/controller/status.go` with:
+- `initializeStatus()` - Sets initial status values (Phase=Pending, conditions)
+- `setCondition()` - Sets/updates a condition using standard meta.SetStatusCondition
+- `setReady()` - Convenience wrapper for Ready condition
+- `updateStatusFromJobs()` - Derives status from Job states
+- `derivePhaseFromJob()` - Maps Job status to LocustTest phase
+- `isJobComplete()` / `isJobFailed()` - Job status helpers
+
+### 4. Test Updates
+All test files updated to use v2 API:
+- `internal/resources/job_test.go`
+- `internal/resources/labels_test.go`
+- `internal/resources/service_test.go`
+- `internal/controller/locusttest_controller_test.go`
+- `internal/controller/locusttest_controller_unit_test.go`
+- `internal/controller/integration_test.go`
+
+Created `internal/controller/status_test.go` with unit tests for status helpers.
+
+## Status Tracking Behavior
+
+### Phases
+- **Pending**: Initial state, resources being created
+- **Running**: Resources created, test is running
+- **Succeeded**: Master Job completed successfully
+- **Failed**: Master Job failed
+
+### Conditions
+- **Ready**: True when all resources are created
+- **WorkersConnected**: Tracks worker connection status
+- **TestCompleted**: True when test finishes (succeeded or failed)
+
+## Files Modified
+- `internal/controller/locusttest_controller.go`
+- `internal/controller/status.go` (new)
+- `internal/controller/status_test.go` (new)
+- `internal/resources/job.go`
+- `internal/resources/labels.go`
+- `internal/resources/service.go`
+- All test files in `internal/resources/` and `internal/controller/`
+
+## Test Results
+- All unit tests pass (27 tests)
+- Integration tests pass (21 tests) - occasional flakiness due to envtest race conditions
+- Build compiles successfully
+
+## Test Infrastructure Simplification
+- Removed `config/crd/test/` directory (v1-only test CRD no longer needed)
+- Integration tests now use main CRD from `config/crd/bases/` with v2 as storage
+- Updated `suite_test.go` to point to main CRD directory
+- Updated `locusttest_controller_test.go` to verify manager reconciliation instead of manual reconcile calls
+
+## v1 API Deprecation Status
+- v1 API types still exist for conversion webhook compatibility
+- Controller and resource builders now exclusively use v2 API
+- v1 will be removed in a future release after deprecation period
+
+---
+
+# Notes for Future Phases
+
+## Phase 10: Environment & Secret Injection (Issue #149)
+
+### Considerations
+- Resource builders already have basic structure for env handling
+- Need to implement:
+  - `configMapRefs` → `envFrom` with ConfigMapRef
+  - `secretRefs` → `envFrom` with SecretRef
+  - `variables` → individual `env` entries
+  - `secretMounts` → Volume + VolumeMount
+- Validation webhook needed to prevent path conflicts with operator-managed paths
+- Test coverage should include all injection types

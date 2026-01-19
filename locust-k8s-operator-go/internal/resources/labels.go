@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	locustv1 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v1"
+	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
 )
 
@@ -34,7 +34,7 @@ func NodeName(crName string, mode OperationalMode) string {
 
 // BuildLabels constructs the labels for a pod based on the LocustTest CR and mode.
 // Includes required labels and merges user-defined labels from the CR spec.
-func BuildLabels(lt *locustv1.LocustTest, mode OperationalMode) map[string]string {
+func BuildLabels(lt *locustv2.LocustTest, mode OperationalMode) map[string]string {
 	nodeName := NodeName(lt.Name, mode)
 
 	labels := map[string]string{
@@ -53,16 +53,12 @@ func BuildLabels(lt *locustv1.LocustTest, mode OperationalMode) map[string]strin
 }
 
 // getUserLabels extracts user-defined labels from the CR spec for the given mode.
-func getUserLabels(lt *locustv1.LocustTest, mode OperationalMode) map[string]string {
-	if lt.Spec.Labels == nil {
-		return nil
-	}
-
+func getUserLabels(lt *locustv2.LocustTest, mode OperationalMode) map[string]string {
 	switch mode {
 	case Master:
-		return lt.Spec.Labels.Master
+		return lt.Spec.Master.Labels
 	case Worker:
-		return lt.Spec.Labels.Worker
+		return lt.Spec.Worker.Labels
 	default:
 		return nil
 	}
@@ -71,7 +67,7 @@ func getUserLabels(lt *locustv1.LocustTest, mode OperationalMode) map[string]str
 // BuildAnnotations constructs the annotations for a pod based on the LocustTest CR and mode.
 // Master pods include Prometheus scrape annotations; worker pods do not.
 // Merges user-defined annotations from the CR spec.
-func BuildAnnotations(lt *locustv1.LocustTest, mode OperationalMode, cfg *config.OperatorConfig) map[string]string {
+func BuildAnnotations(lt *locustv2.LocustTest, mode OperationalMode, cfg *config.OperatorConfig) map[string]string {
 	annotations := make(map[string]string)
 
 	// Master pods get Prometheus annotations
@@ -90,16 +86,12 @@ func BuildAnnotations(lt *locustv1.LocustTest, mode OperationalMode, cfg *config
 }
 
 // getUserAnnotations extracts user-defined annotations from the CR spec for the given mode.
-func getUserAnnotations(lt *locustv1.LocustTest, mode OperationalMode) map[string]string {
-	if lt.Spec.Annotations == nil {
-		return nil
-	}
-
+func getUserAnnotations(lt *locustv2.LocustTest, mode OperationalMode) map[string]string {
 	switch mode {
 	case Master:
-		return lt.Spec.Annotations.Master
+		return lt.Spec.Master.Annotations
 	case Worker:
-		return lt.Spec.Annotations.Worker
+		return lt.Spec.Worker.Annotations
 	default:
 		return nil
 	}

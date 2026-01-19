@@ -21,15 +21,14 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	locustv1 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v1"
-	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
+	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 )
 
 var _ = Describe("LocustTest Controller", func() {
@@ -40,24 +39,28 @@ var _ = Describe("LocustTest Controller", func() {
 
 		typeNamespacedName := types.NamespacedName{
 			Name:      resourceName,
-			Namespace: "default", // TODO(user):Modify as needed
+			Namespace: "default",
 		}
-		locusttest := &locustv1.LocustTest{}
+		locusttest := &locustv2.LocustTest{}
 
 		BeforeEach(func() {
 			By("creating the custom resource for the Kind LocustTest")
 			err := k8sClient.Get(ctx, typeNamespacedName, locusttest)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &locustv1.LocustTest{
+				resource := &locustv2.LocustTest{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: "default",
 					},
-					Spec: locustv1.LocustTestSpec{
-						MasterCommandSeed: "--locustfile /lotest/src/test.py --host https://example.com",
-						WorkerCommandSeed: "--locustfile /lotest/src/test.py",
-						WorkerReplicas:    1,
-						Image:             "locustio/locust:latest",
+					Spec: locustv2.LocustTestSpec{
+						Image: "locustio/locust:latest",
+						Master: locustv2.MasterSpec{
+							Command: "--locustfile /lotest/src/test.py --host https://example.com",
+						},
+						Worker: locustv2.WorkerSpec{
+							Command:  "--locustfile /lotest/src/test.py",
+							Replicas: 1,
+						},
 					},
 				}
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
@@ -65,8 +68,7 @@ var _ = Describe("LocustTest Controller", func() {
 		})
 
 		AfterEach(func() {
-			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &locustv1.LocustTest{}
+			resource := &locustv2.LocustTest{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -74,20 +76,44 @@ var _ = Describe("LocustTest Controller", func() {
 			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
 		})
 		It("should successfully reconcile the resource", func() {
-			By("Reconciling the created resource")
-			controllerReconciler := &LocustTestReconciler{
-				Client:   k8sClient,
-				Scheme:   k8sClient.Scheme(),
-				Config:   config.LoadConfig(),
-				Recorder: record.NewFakeRecorder(10),
-			}
+			By("Waiting for the manager to reconcile and create resources")
 
-			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).NotTo(HaveOccurred())
-			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
-			// Example: If you expect a certain status condition after reconciliation, verify it here.
+			// Wait for master Service to be created by the manager
+			svc := &corev1.Service{}
+			Eventually(func() error {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      resourceName + "-master",
+					Namespace: "default",
+				}, svc)
+			}, timeout, interval).Should(Succeed())
+
+			// Wait for master Job to be created
+			masterJob := &batchv1.Job{}
+			Eventually(func() error {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      resourceName + "-master",
+					Namespace: "default",
+				}, masterJob)
+			}, timeout, interval).Should(Succeed())
+
+			// Wait for worker Job to be created
+			workerJob := &batchv1.Job{}
+			Eventually(func() error {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      resourceName + "-worker",
+					Namespace: "default",
+				}, workerJob)
+			}, timeout, interval).Should(Succeed())
+
+			// Verify status was updated
+			lt := &locustv2.LocustTest{}
+			Eventually(func() string {
+				err := k8sClient.Get(ctx, typeNamespacedName, lt)
+				if err != nil {
+					return ""
+				}
+				return lt.Status.Phase
+			}, timeout, interval).Should(Equal(locustv2.PhaseRunning))
 		})
 	})
 })
