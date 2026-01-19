@@ -179,8 +179,8 @@ func (r *LocustTestReconciler) createResource(ctx context.Context, lt *locustv1.
 func (r *LocustTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&locustv1.LocustTest{}).
-		Owns(&batchv1.Job{}). // Watch owned Jobs for status updates
-		Owns(&corev1.Service{}). // Watch owned Services
+		Owns(&batchv1.Job{}).                                    // Watch owned Jobs for status updates
+		Owns(&corev1.Service{}).                                 // Watch owned Services
 		WithEventFilter(predicate.GenerationChangedPredicate{}). // Filter status-only updates
 		Named("locusttest").
 		Complete(r)
