@@ -1,0 +1,44 @@
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: sample-test
+  namespace: default
+spec:
+  image: locustio/locust:2.43.1
+  imagePullPolicy: IfNotPresent
+  
+  master:
+    command: "locust -f /lotest/src/locustfile.py"
+    autostart: true
+    autoquit:
+      enabled: true
+      timeout: 60
+    labels:
+      role: master
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1Gi"
+  
+  worker:
+    command: "locust -f /lotest/src/locustfile.py"
+    replicas: 5
+    labels:
+      role: worker
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+  
+  testFiles:
+    configMapRef: my-locust-tests
+  
+  scheduling:
+    nodeSelector:
+      workload-type: testing
