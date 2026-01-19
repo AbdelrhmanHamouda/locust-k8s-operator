@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -604,4 +605,218 @@ func containsHelper(s, substr string) bool {
 		}
 	}
 	return false
+}
+
+// errorClient is a fake client that returns errors for testing error paths.
+type errorClient struct {
+	client.Client
+	getError    error
+	createError error
+}
+
+func (e *errorClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+	if e.getError != nil {
+		return e.getError
+	}
+	return e.Client.Get(ctx, key, obj, opts...)
+}
+
+func (e *errorClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
+	if e.createError != nil {
+		return e.createError
+	}
+	return e.Client.Create(ctx, obj, opts...)
+}
+
+func TestReconcile_GetError(t *testing.T) {
+	scheme := newTestScheme()
+	fakeClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+	recorder := record.NewFakeRecorder(10)
+
+	// Wrap with error client that returns an error on Get
+	errClient := &errorClient{
+		Client:   fakeClient,
+		getError: apierrors.NewInternalError(fmt.Errorf("internal server error")),
+	}
+
+	reconciler := &LocustTestReconciler{
+		Client:   errClient,
+		Scheme:   scheme,
+		Config:   newTestOperatorConfig(),
+		Recorder: recorder,
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "test",
+			Namespace: "default",
+		},
+	})
+
+	assert.Error(t, err)
+	assert.Equal(t, ctrl.Result{}, result)
+}
+
+func TestReconcile_CreateServiceError(t *testing.T) {
+	lt := newTestLocustTestCR("error-test", "default")
+	scheme := newTestScheme()
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(lt).
+		Build()
+	recorder := record.NewFakeRecorder(10)
+
+	// Wrap with error client that returns an error on Create
+	errClient := &errorClient{
+		Client:      fakeClient,
+		createError: apierrors.NewInternalError(fmt.Errorf("failed to create")),
+	}
+
+	reconciler := &LocustTestReconciler{
+		Client:   errClient,
+		Scheme:   scheme,
+		Config:   newTestOperatorConfig(),
+		Recorder: recorder,
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "error-test",
+			Namespace: "default",
+		},
+	})
+
+	assert.Error(t, err)
+	assert.Equal(t, ctrl.Result{}, result)
+}
+
+// sequentialErrorClient returns error only after N successful creates
+type sequentialErrorClient struct {
+	client.Client
+	createCount      int
+	errorAfterCreate int
+	createError      error
+}
+
+func (s *sequentialErrorClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
+	s.createCount++
+	if s.createCount > s.errorAfterCreate {
+		return s.createError
+	}
+	return s.Client.Create(ctx, obj, opts...)
+}
+
+func TestReconcile_CreateMasterJobError(t *testing.T) {
+	lt := newTestLocustTestCR("job-error-test", "default")
+	scheme := newTestScheme()
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(lt).
+		Build()
+	recorder := record.NewFakeRecorder(10)
+
+	// Error after first create (Service succeeds, Master Job fails)
+	errClient := &sequentialErrorClient{
+		Client:           fakeClient,
+		errorAfterCreate: 1,
+		createError:      apierrors.NewInternalError(fmt.Errorf("failed to create job")),
+	}
+
+	reconciler := &LocustTestReconciler{
+		Client:   errClient,
+		Scheme:   scheme,
+		Config:   newTestOperatorConfig(),
+		Recorder: recorder,
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "job-error-test",
+			Namespace: "default",
+		},
+	})
+
+	assert.Error(t, err)
+	assert.Equal(t, ctrl.Result{}, result)
+}
+
+func TestReconcile_CreateWorkerJobError(t *testing.T) {
+	lt := newTestLocustTestCR("worker-error-test", "default")
+	scheme := newTestScheme()
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(lt).
+		Build()
+	recorder := record.NewFakeRecorder(10)
+
+	// Error after second create (Service and Master Job succeed, Worker Job fails)
+	errClient := &sequentialErrorClient{
+		Client:           fakeClient,
+		errorAfterCreate: 2,
+		createError:      apierrors.NewInternalError(fmt.Errorf("failed to create worker job")),
+	}
+
+	reconciler := &LocustTestReconciler{
+		Client:   errClient,
+		Scheme:   scheme,
+		Config:   newTestOperatorConfig(),
+		Recorder: recorder,
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "worker-error-test",
+			Namespace: "default",
+		},
+	})
+
+	assert.Error(t, err)
+	assert.Equal(t, ctrl.Result{}, result)
+}
+
+func TestCreateResource_SetControllerReferenceError(t *testing.T) {
+	// Create a LocustTest without a UID - this causes SetControllerReference to fail
+	lt := &locustv1.LocustTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "no-uid-test",
+			Namespace:  "default",
+			Generation: 1,
+			// UID intentionally not set
+		},
+		Spec: locustv1.LocustTestSpec{
+			MasterCommandSeed: "locust -f /lotest/src/test.py",
+			WorkerCommandSeed: "locust -f /lotest/src/test.py",
+			WorkerReplicas:    1,
+			Image:             "locustio/locust:latest",
+			ConfigMap:         "test-configmap",
+		},
+	}
+
+	// Use a scheme without LocustTest to cause SetControllerReference to fail
+	badScheme := runtime.NewScheme()
+	_ = batchv1.AddToScheme(badScheme)
+	_ = corev1.AddToScheme(badScheme)
+	// Note: NOT adding locustv1 to scheme
+
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(badScheme).
+		Build()
+	recorder := record.NewFakeRecorder(10)
+
+	reconciler := &LocustTestReconciler{
+		Client:   fakeClient,
+		Scheme:   badScheme,
+		Config:   newTestOperatorConfig(),
+		Recorder: recorder,
+	}
+
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-svc",
+			Namespace: "default",
+		},
+	}
+
+	err := reconciler.createResource(context.Background(), lt, svc, "Service")
+	assert.Error(t, err)
 }
