@@ -342,3 +342,37 @@ func GetJobVolumeMounts(namespace, jobName, containerName string) (string, error
 	jsonpath := fmt.Sprintf(".spec.template.spec.containers[?(@.name==\"%s\")].volumeMounts[*].mountPath", containerName)
 	return GetResourceField("job", namespace, jobName, jsonpath)
 }
+
+// WaitForControllerReady waits for the controller-manager deployment to be ready
+func WaitForControllerReady(namespace string, timeout string) error {
+	_, _ = fmt.Fprintf(GinkgoWriter, "Waiting for controller-manager deployment to be ready...\n")
+	cmd := exec.Command("kubectl", "wait", "deployment",
+		"-l", "control-plane=controller-manager",
+		"-n", namespace,
+		"--for=condition=Available",
+		"--timeout", timeout)
+	_, err := Run(cmd)
+	return err
+}
+
+// WaitForWebhookReady waits for the webhook service endpoint to be ready
+func WaitForWebhookReady(namespace, serviceName string, timeout string) error {
+	_, _ = fmt.Fprintf(GinkgoWriter, "Waiting for webhook service endpoint to be ready...\n")
+	cmd := exec.Command("kubectl", "wait", "endpoints", serviceName,
+		"-n", namespace,
+		"--for=jsonpath={.subsets[0].addresses[0].ip}",
+		"--timeout", timeout)
+	_, err := Run(cmd)
+	return err
+}
+
+// WaitForCertificateReady waits for the serving certificate to be ready
+func WaitForCertificateReady(namespace, certName string, timeout string) error {
+	_, _ = fmt.Fprintf(GinkgoWriter, "Waiting for certificate %s to be ready...\n", certName)
+	cmd := exec.Command("kubectl", "wait", "certificate", certName,
+		"-n", namespace,
+		"--for=condition=Ready",
+		"--timeout", timeout)
+	_, err := Run(cmd)
+	return err
+}
