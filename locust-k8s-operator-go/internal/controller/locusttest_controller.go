@@ -157,6 +157,12 @@ func (r *LocustTestReconciler) createResources(ctx context.Context, lt *locustv2
 		"masterJob", masterJob.Name,
 		"workerJob", workerJob.Name)
 
+	// Refetch to get latest resource version before status update
+	if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
+		log.Error(err, "Failed to refetch LocustTest before status update")
+		return ctrl.Result{}, err
+	}
+
 	// Update status after successful resource creation
 	lt.Status.Phase = locustv2.PhaseRunning
 	now := metav1.Now()

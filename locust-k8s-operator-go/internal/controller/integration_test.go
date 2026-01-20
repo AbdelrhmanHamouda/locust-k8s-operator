@@ -461,14 +461,28 @@ var _ = Describe("LocustTest Controller Integration", func() {
 			Expect(*workerJob.Spec.Parallelism).To(Equal(int32(5)))
 			originalUID := workerJob.UID
 
-			// Update workerReplicas
-			updatedLT := &locustv2.LocustTest{}
-			Expect(k8sClient.Get(ctx, types.NamespacedName{
-				Name: "worker-update-noop-test", Namespace: testNamespace,
-			}, updatedLT)).To(Succeed())
+			// Wait for status to be initialized
+			Eventually(func() string {
+				updatedLT := &locustv2.LocustTest{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name: "worker-update-noop-test", Namespace: testNamespace,
+				}, updatedLT); err != nil {
+					return ""
+				}
+				return updatedLT.Status.Phase
+			}, timeout, interval).Should(Equal(locustv2.PhaseRunning))
 
-			updatedLT.Spec.Worker.Replicas = 20
-			Expect(k8sClient.Update(ctx, updatedLT)).To(Succeed())
+			// Update workerReplicas using Eventually to handle concurrent status updates
+			Eventually(func() error {
+				updatedLT := &locustv2.LocustTest{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name: "worker-update-noop-test", Namespace: testNamespace,
+				}, updatedLT); err != nil {
+					return err
+				}
+				updatedLT.Spec.Worker.Replicas = 20
+				return k8sClient.Update(ctx, updatedLT)
+			}, timeout, interval).Should(Succeed())
 
 			// Worker Job should remain unchanged
 			Consistently(func() int32 {
@@ -505,14 +519,28 @@ var _ = Describe("LocustTest Controller Integration", func() {
 
 			originalUID := masterJob.UID
 
-			// Update masterCommand
-			updatedLT := &locustv2.LocustTest{}
-			Expect(k8sClient.Get(ctx, types.NamespacedName{
-				Name: "master-cmd-update-noop-test", Namespace: testNamespace,
-			}, updatedLT)).To(Succeed())
+			// Wait for status to be initialized
+			Eventually(func() string {
+				updatedLT := &locustv2.LocustTest{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name: "master-cmd-update-noop-test", Namespace: testNamespace,
+				}, updatedLT); err != nil {
+					return ""
+				}
+				return updatedLT.Status.Phase
+			}, timeout, interval).Should(Equal(locustv2.PhaseRunning))
 
-			updatedLT.Spec.Master.Command = "locust -f /lotest/src/new_test.py"
-			Expect(k8sClient.Update(ctx, updatedLT)).To(Succeed())
+			// Update masterCommand using Eventually to handle concurrent status updates
+			Eventually(func() error {
+				updatedLT := &locustv2.LocustTest{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name: "master-cmd-update-noop-test", Namespace: testNamespace,
+				}, updatedLT); err != nil {
+					return err
+				}
+				updatedLT.Spec.Master.Command = "locust -f /lotest/src/new_test.py"
+				return k8sClient.Update(ctx, updatedLT)
+			}, timeout, interval).Should(Succeed())
 
 			// Master Job UID should remain unchanged
 			Consistently(func() types.UID {
@@ -578,24 +606,40 @@ var _ = Describe("LocustTest Controller Integration", func() {
 			lt := createLocustTest("idempotent-test")
 			Expect(k8sClient.Create(ctx, lt)).To(Succeed())
 
-			// Wait for resources
+			// Wait for resources and status to be updated
 			Eventually(func() error {
 				return k8sClient.Get(ctx, types.NamespacedName{
 					Name: "idempotent-test-master", Namespace: testNamespace,
 				}, &batchv1.Job{})
 			}, timeout, interval).Should(Succeed())
 
-			// Manually trigger another reconciliation by adding an annotation
-			updatedLT := &locustv2.LocustTest{}
-			Expect(k8sClient.Get(ctx, types.NamespacedName{
-				Name: "idempotent-test", Namespace: testNamespace,
-			}, updatedLT)).To(Succeed())
+			// Wait for status to be initialized
+			Eventually(func() string {
+				updatedLT := &locustv2.LocustTest{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name: "idempotent-test", Namespace: testNamespace,
+				}, updatedLT); err != nil {
+					return ""
+				}
+				return updatedLT.Status.Phase
+			}, timeout, interval).Should(Equal(locustv2.PhaseRunning))
 
-			if updatedLT.Annotations == nil {
-				updatedLT.Annotations = make(map[string]string)
-			}
-			updatedLT.Annotations["test-trigger"] = "reconcile"
-			Expect(k8sClient.Update(ctx, updatedLT)).To(Succeed())
+			// Manually trigger another reconciliation by adding an annotation
+			// Use Eventually to handle concurrent status updates
+			Eventually(func() error {
+				updatedLT := &locustv2.LocustTest{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name: "idempotent-test", Namespace: testNamespace,
+				}, updatedLT); err != nil {
+					return err
+				}
+
+				if updatedLT.Annotations == nil {
+					updatedLT.Annotations = make(map[string]string)
+				}
+				updatedLT.Annotations["test-trigger"] = "reconcile"
+				return k8sClient.Update(ctx, updatedLT)
+			}, timeout, interval).Should(Succeed())
 
 			// Should not fail - resources already exist
 			Consistently(func() error {
