@@ -37,6 +37,12 @@ const (
 	DefaultLibMountPath = "/opt/locust/lib"
 )
 
+// Reserved volume name constants
+const (
+	reservedVolumeNamePrefix = "secret-"
+	libVolumeName            = "locust-lib"
+)
+
 // LocustTestCustomValidator handles validation for LocustTest resources.
 type LocustTestCustomValidator struct{}
 
@@ -59,7 +65,7 @@ func (v *LocustTestCustomValidator) ValidateCreate(ctx context.Context, obj runt
 		return nil, fmt.Errorf("expected LocustTest but got %T", obj)
 	}
 	locusttestlog.Info("validate create", "name", lt.Name)
-	return validateSecretMounts(lt)
+	return validateLocustTest(lt)
 }
 
 // ValidateUpdate implements webhook.CustomValidator.
@@ -69,7 +75,7 @@ func (v *LocustTestCustomValidator) ValidateUpdate(ctx context.Context, oldObj, 
 		return nil, fmt.Errorf("expected LocustTest but got %T", newObj)
 	}
 	locusttestlog.Info("validate update", "name", lt.Name)
-	return validateSecretMounts(lt)
+	return validateLocustTest(lt)
 }
 
 // ValidateDelete implements webhook.CustomValidator.
@@ -83,9 +89,9 @@ func (v *LocustTestCustomValidator) ValidateDelete(ctx context.Context, obj runt
 }
 
 // validateSecretMounts checks that secret mount paths don't conflict with reserved paths.
-func validateSecretMounts(lt *LocustTest) (admission.Warnings, error) {
+func validateSecretMounts(lt *LocustTest) error {
 	if lt.Spec.Env == nil || len(lt.Spec.Env.SecretMounts) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	reservedPaths := getReservedPaths(lt)
@@ -93,7 +99,7 @@ func validateSecretMounts(lt *LocustTest) (admission.Warnings, error) {
 	for _, sm := range lt.Spec.Env.SecretMounts {
 		for _, reserved := range reservedPaths {
 			if PathConflicts(sm.MountPath, reserved) {
-				return nil, fmt.Errorf(
+				return fmt.Errorf(
 					"secretMount path %q conflicts with reserved path %q; "+
 						"operator uses this path for test files",
 					sm.MountPath, reserved)
@@ -101,7 +107,7 @@ func validateSecretMounts(lt *LocustTest) (admission.Warnings, error) {
 		}
 	}
 
-	return nil, nil
+	return nil
 }
 
 // getReservedPaths returns the paths that are reserved by the operator.
@@ -149,4 +155,92 @@ func PathConflicts(path1, path2 string) bool {
 	return p1 == p2 ||
 		strings.HasPrefix(p1, p2+"/") ||
 		strings.HasPrefix(p2, p1+"/")
+}
+
+// validateLocustTest runs all validation checks.
+func validateLocustTest(lt *LocustTest) (admission.Warnings, error) {
+	// Validate secret mounts
+	if err := validateSecretMounts(lt); err != nil {
+		return nil, err
+	}
+
+	// Validate user volumes
+	if err := validateVolumes(lt); err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+// validateVolumes checks for volume name and mount path conflicts.
+func validateVolumes(lt *LocustTest) error {
+	// Check volume names
+	for _, vol := range lt.Spec.Volumes {
+		if err := validateVolumeName(lt, vol.Name); err != nil {
+			return err
+		}
+	}
+
+	// Check mount paths
+	reservedPaths := getReservedPaths(lt)
+	for _, mount := range lt.Spec.VolumeMounts {
+		if err := validateMountPath(mount.MountPath, reservedPaths); err != nil {
+			return err
+		}
+	}
+
+	// Validate that all mounts reference defined volumes
+	if err := validateMountReferences(lt); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateVolumeName checks if a volume name conflicts with operator-managed names.
+func validateVolumeName(lt *LocustTest, name string) error {
+	// Check for reserved prefix
+	if strings.HasPrefix(name, reservedVolumeNamePrefix) {
+		return fmt.Errorf("volume name %q uses reserved prefix %q", name, reservedVolumeNamePrefix)
+	}
+
+	// Check for lib volume name
+	if name == libVolumeName {
+		return fmt.Errorf("volume name %q is reserved by the operator", name)
+	}
+
+	// Check for CR-based names
+	masterName := lt.Name + "-master"
+	workerName := lt.Name + "-worker"
+	if name == masterName || name == workerName {
+		return fmt.Errorf("volume name %q conflicts with operator-generated name", name)
+	}
+
+	return nil
+}
+
+// validateMountPath checks if a mount path conflicts with reserved paths.
+func validateMountPath(path string, reservedPaths []string) error {
+	for _, reserved := range reservedPaths {
+		if PathConflicts(path, reserved) {
+			return fmt.Errorf("volumeMount path %q conflicts with reserved path %q", path, reserved)
+		}
+	}
+	return nil
+}
+
+// validateMountReferences ensures all mounts reference defined volumes.
+func validateMountReferences(lt *LocustTest) error {
+	volumeNames := make(map[string]bool)
+	for _, vol := range lt.Spec.Volumes {
+		volumeNames[vol.Name] = true
+	}
+
+	for _, mount := range lt.Spec.VolumeMounts {
+		if !volumeNames[mount.Name] {
+			return fmt.Errorf("volumeMount %q references undefined volume", mount.Name)
+		}
+	}
+
+	return nil
 }

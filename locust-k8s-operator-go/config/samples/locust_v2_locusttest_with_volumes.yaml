@@ -1,0 +1,42 @@
+# Example LocustTest with user-defined volumes
+# Demonstrates volume mounting with target selection (master/worker/both)
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: load-test-with-volumes
+  namespace: default
+spec:
+  image: locustio/locust:2.20.0
+  
+  master:
+    command: "locust -f /lotest/src/locustfile.py"
+  
+  worker:
+    command: "locust -f /lotest/src/locustfile.py"
+    replicas: 2
+  
+  testFiles:
+    configMapRef: locust-scripts
+  
+  # User-defined volumes (all Kubernetes volume types supported)
+  volumes:
+    - name: test-results
+      emptyDir: {}
+    - name: shared-data
+      emptyDir: {}
+    - name: custom-certs
+      secret:
+        secretName: tls-certificates
+  
+  # Volume mounts with target selection
+  volumeMounts:
+    - name: test-results
+      mountPath: /results
+      target: master  # Only master writes results
+    - name: shared-data
+      mountPath: /shared
+      target: both    # All pods share this volume
+    - name: custom-certs
+      mountPath: /etc/ssl/custom
+      readOnly: true
+      target: worker  # Only workers need certs for HTTPS testing

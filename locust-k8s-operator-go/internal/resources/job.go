@@ -68,7 +68,7 @@ func buildJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, mode Operatio
 
 	// Build containers
 	containers := []corev1.Container{
-		buildLocustContainer(lt, nodeName, command, ports, cfg),
+		buildLocustContainer(lt, nodeName, command, ports, cfg, mode),
 	}
 
 	// Master gets the metrics exporter sidecar
@@ -96,7 +96,7 @@ func buildJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, mode Operatio
 					RestartPolicy:    corev1.RestartPolicyNever,
 					ImagePullSecrets: buildImagePullSecrets(lt),
 					Containers:       containers,
-					Volumes:          buildVolumes(lt, nodeName),
+					Volumes:          buildVolumes(lt, nodeName, mode),
 					Affinity:         buildAffinity(lt, cfg),
 					Tolerations:      buildTolerations(lt, cfg),
 				},
@@ -108,7 +108,7 @@ func buildJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, mode Operatio
 }
 
 // buildLocustContainer creates the main Locust container.
-func buildLocustContainer(lt *locustv2.LocustTest, name string, command []string, ports []corev1.ContainerPort, cfg *config.OperatorConfig) corev1.Container {
+func buildLocustContainer(lt *locustv2.LocustTest, name string, command []string, ports []corev1.ContainerPort, cfg *config.OperatorConfig, mode OperationalMode) corev1.Container {
 	container := corev1.Container{
 		Name:            name,
 		Image:           lt.Spec.Image,
@@ -118,7 +118,7 @@ func buildLocustContainer(lt *locustv2.LocustTest, name string, command []string
 		Resources:       buildResourceRequirements(cfg, false),
 		Env:             BuildEnvVars(lt, cfg),
 		EnvFrom:         BuildEnvFrom(lt),
-		VolumeMounts:    buildVolumeMounts(lt, name),
+		VolumeMounts:    buildVolumeMounts(lt, name, mode),
 	}
 
 	// Default to IfNotPresent if not specified
@@ -157,8 +157,8 @@ func buildImagePullSecrets(lt *locustv2.LocustTest) []corev1.LocalObjectReferenc
 	return lt.Spec.ImagePullSecrets
 }
 
-// buildVolumes creates the volumes for ConfigMap, LibConfigMap, and Secrets.
-func buildVolumes(lt *locustv2.LocustTest, nodeName string) []corev1.Volume {
+// buildVolumes creates the volumes for ConfigMap, LibConfigMap, Secrets, and user volumes.
+func buildVolumes(lt *locustv2.LocustTest, nodeName string, mode OperationalMode) []corev1.Volume {
 	var volumes []corev1.Volume
 
 	// Get ConfigMap refs from v2 TestFiles config
@@ -200,11 +200,17 @@ func buildVolumes(lt *locustv2.LocustTest, nodeName string) []corev1.Volume {
 		volumes = append(volumes, secretVolumes...)
 	}
 
+	// Add user-defined volumes (filtered by target)
+	userVolumes := BuildUserVolumes(lt, mode)
+	if len(userVolumes) > 0 {
+		volumes = append(volumes, userVolumes...)
+	}
+
 	return volumes
 }
 
-// buildVolumeMounts creates the volume mounts for ConfigMap, LibConfigMap, and Secrets.
-func buildVolumeMounts(lt *locustv2.LocustTest, nodeName string) []corev1.VolumeMount {
+// buildVolumeMounts creates the volume mounts for ConfigMap, LibConfigMap, Secrets, and user mounts.
+func buildVolumeMounts(lt *locustv2.LocustTest, nodeName string, mode OperationalMode) []corev1.VolumeMount {
 	var mounts []corev1.VolumeMount
 
 	// Get ConfigMap refs and mount paths from v2 TestFiles config
@@ -242,6 +248,12 @@ func buildVolumeMounts(lt *locustv2.LocustTest, nodeName string) []corev1.Volume
 	secretMounts := BuildSecretVolumeMounts(lt)
 	if len(secretMounts) > 0 {
 		mounts = append(mounts, secretMounts...)
+	}
+
+	// Add user-defined volume mounts (filtered by target)
+	userMounts := BuildUserVolumeMounts(lt, mode)
+	if len(userMounts) > 0 {
+		mounts = append(mounts, userMounts...)
 	}
 
 	return mounts
