@@ -1100,3 +1100,130 @@ Added to `locust-k8s-operator-go/Makefile`:
 3. ko builds use distroless base image automatically
 
 ---
+
+# Phase 15: E2E Tests (Kind) - Completion Notes
+
+**Date**: 2026-01-20
+
+Implemented comprehensive E2E tests using Kind cluster to validate the full operator lifecycle, including LocustTest CR reconciliation, v1 backward compatibility, and OpenTelemetry integration.
+
+## Key Changes
+
+### 1. Test Data Fixtures (`test/e2e/testdata/`)
+Created YAML fixtures for E2E tests:
+- `configmaps/test-config.yaml` - Test ConfigMap with locustfile.py
+- `configmaps/env-configmap.yaml` - Environment ConfigMap for env injection tests
+- `v2/locusttest-basic.yaml` - Basic v2 CR
+- `v2/locusttest-with-env.yaml` - v2 CR with environment injection
+- `v2/locusttest-with-otel.yaml` - v2 CR with OpenTelemetry enabled
+- `v2/locusttest-with-volumes.yaml` - v2 CR with custom volumes
+- `v2/locusttest-invalid.yaml` - Invalid CR for validation tests
+- `v1/locusttest-basic.yaml` - v1 CR for backward compatibility tests
+
+### 2. Helper Functions (`test/utils/utils.go`)
+Extended with E2E helper functions:
+- `ApplyFromFile()` - Apply Kubernetes resources from YAML files
+- `DeleteFromFile()` - Delete resources with --ignore-not-found
+- `WaitForResource()` - Wait for resource creation
+- `ResourceExists()` - Check if resource exists
+- `GetResourceField()` - Retrieve field via jsonpath
+- `GetOwnerReferenceName()` - Get owner reference name
+- `GetJobContainerEnv()` - Get container env vars
+- `GetJobContainerCommand()` - Get container command
+- `GetJobContainerArgs()` - Get container args
+- `GetJobContainerNames()` - Get all container names
+- `GetServicePorts()` - Get service port names
+- `GetJobEnvFrom()` - Get envFrom configuration
+- `GetJobVolumes()` - Get volume names
+- `GetJobVolumeMounts()` - Get volume mount paths
+
+### 3. LocustTest Lifecycle Tests (`test/e2e/locusttest_e2e_test.go`)
+Core lifecycle tests:
+- Create master Service on CR creation
+- Create master Job on CR creation
+- Create worker Job on CR creation
+- Set owner references on created resources
+- Update status phase
+- Clean up resources on CR deletion
+
+Environment injection tests:
+- Inject ConfigMap env vars via envFrom
+- Inject inline env variables
+
+Volume mounting tests:
+- Mount volumes to master pod
+- Mount volumes to worker pods
+
+### 4. v1 Compatibility Tests (`test/e2e/v1_compatibility_test.go`)
+- Accept v1 LocustTest CR
+- Create resources from v1 CR
+- Allow reading v1 CR as v2 (conversion)
+- Verify owner references
+
+### 5. OpenTelemetry Tests (`test/e2e/otel_e2e_test.go`)
+- Create resources with OTel enabled
+- Add --otel flag when enabled
+- Inject OTEL_* environment variables
+- NOT deploy metrics sidecar when OTel enabled
+- Have only one container (locust) in master pod
+- Exclude metrics port from Service when OTel enabled
+
+### 6. Validation Tests (`test/e2e/validation_e2e_test.go`)
+- Reject CR with invalid workerReplicas (0)
+- Accept valid CR
+
+### 7. Enhanced Debug Output (`test/e2e/e2e_test.go`)
+Added failure debug output:
+- LocustTest CR dump
+- Jobs listing
+- Services listing
+
+## Files Created
+| File | Purpose | LOC |
+|------|---------|-----|
+| `test/e2e/testdata/configmaps/test-config.yaml` | Test ConfigMap | ~15 |
+| `test/e2e/testdata/configmaps/env-configmap.yaml` | Env ConfigMap | ~10 |
+| `test/e2e/testdata/v2/locusttest-basic.yaml` | Basic v2 CR | ~15 |
+| `test/e2e/testdata/v2/locusttest-with-env.yaml` | v2 CR with env | ~20 |
+| `test/e2e/testdata/v2/locusttest-with-otel.yaml` | v2 CR with OTel | ~18 |
+| `test/e2e/testdata/v2/locusttest-with-volumes.yaml` | v2 CR with volumes | ~20 |
+| `test/e2e/testdata/v2/locusttest-invalid.yaml` | Invalid CR | ~15 |
+| `test/e2e/testdata/v1/locusttest-basic.yaml` | v1 CR | ~10 |
+| `test/e2e/locusttest_e2e_test.go` | Lifecycle tests | ~250 |
+| `test/e2e/v1_compatibility_test.go` | v1 compat tests | ~105 |
+| `test/e2e/otel_e2e_test.go` | OTel tests | ~115 |
+| `test/e2e/validation_e2e_test.go` | Validation tests | ~70 |
+
+## Files Modified
+| File | Changes |
+|------|---------|
+| `test/utils/utils.go` | Added 13 helper functions (~90 LOC) |
+| `test/e2e/e2e_test.go` | Added debug output for LocustTest, Jobs, Services |
+
+## Test Categories Summary
+
+| Category | Tests | Description |
+|----------|-------|-------------|
+| Core Lifecycle | 6 | CR create/delete, resource verification |
+| Environment Injection | 3 | ConfigMap refs, inline vars |
+| Volume Mounting | 3 | Master/worker volume mounts |
+| v1 Compatibility | 4 | v1 CR acceptance, conversion |
+| OpenTelemetry | 6 | OTel flag, env vars, sidecar |
+| Validation | 2 | Invalid CR rejection |
+| **Total** | **24** | - |
+
+## Verification
+
+```bash
+cd locust-k8s-operator-go
+go build ./test/...  # Compiles successfully
+```
+
+## Notes for Future
+
+1. Tests require Kind cluster with CertManager installed
+2. Run with `make test-e2e` for full E2E execution
+3. Individual test categories can be run with `-ginkgo.focus`
+4. Debug output automatically collected on test failure
+
+---

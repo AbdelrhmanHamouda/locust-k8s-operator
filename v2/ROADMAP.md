@@ -697,6 +697,7 @@ Implement end-to-end tests using Kind cluster.
 ### Acceptance Criteria
 - [ ] E2E tests pass locally
 - [ ] E2E tests pass in CI
+- [ ] E2E tests contribute coverage to Codecov if applicable
 - [ ] Tests complete in < 10 minutes
 
 ### Files to Create
