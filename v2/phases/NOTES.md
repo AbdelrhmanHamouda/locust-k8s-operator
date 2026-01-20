@@ -722,16 +722,72 @@ Created `internal/controller/status_test.go` with unit tests for status helpers.
 
 ---
 
-# Notes for Future Phases
+# Phase 10: Environment & Secret Injection (Issue #149)
 
-## Phase 10: Environment & Secret Injection (Issue #149)
+## Date: 2026-01-20
 
-### Considerations
-- Resource builders already have basic structure for env handling
-- Need to implement:
-  - `configMapRefs` → `envFrom` with ConfigMapRef
-  - `secretRefs` → `envFrom` with SecretRef
-  - `variables` → individual `env` entries
-  - `secretMounts` → Volume + VolumeMount
-- Validation webhook needed to prevent path conflicts with operator-managed paths
-- Test coverage should include all injection types
+## Summary
+
+Implemented environment variable and secret injection into Locust pods, addressing Issue #149. Users can now securely pass credentials, API keys, and configuration without hardcoding them in test files.
+
+## Key Changes
+
+### 1. Environment Builder Functions (`internal/resources/env.go`)
+- `BuildEnvFrom()` - Creates `envFrom` entries from ConfigMap and Secret refs
+- `BuildUserEnvVars()` - Creates `env` entries from user-defined variables
+- `BuildEnvVars()` - Combines Kafka env vars with user-defined vars (Kafka first)
+- `BuildSecretVolumes()` - Creates volumes for secret file mounts
+- `BuildSecretVolumeMounts()` - Creates volume mounts for secret files
+- `SecretVolumeName()` - Generates prefixed volume names (`secret-<name>`)
+
+### 2. Job Builder Updates (`internal/resources/job.go`)
+- Updated `buildLocustContainer()` to use `BuildEnvVars()` and `BuildEnvFrom()`
+- Updated `buildVolumes()` to include secret volumes
+- Updated `buildVolumeMounts()` to include secret mounts
+- Exported `BuildKafkaEnvVars()` for use in env.go
+
+### 3. Validation Webhook (`api/v2/locusttest_webhook.go`)
+- Implemented `LocustTestCustomValidator` using `webhook.CustomValidator` interface
+- `validateSecretMounts()` - Validates secret mount paths don't conflict with reserved paths
+- `getReservedPaths()` - Dynamically calculates reserved paths based on testFiles config
+- `PathConflicts()` - Checks if two paths conflict (exact match or prefix)
+- Reserved paths: `/lotest/src` (default) and `/opt/locust/lib` (default)
+
+### 4. Test Coverage
+- `internal/resources/env_test.go` - 27 unit tests for env builders
+- `api/v2/locusttest_webhook_test.go` - 17 unit tests for webhook validation
+- `internal/resources/job_test.go` - 7 new tests for env injection in jobs
+
+## Files Created
+| File | Purpose | LOC |
+|------|---------|-----|
+| `internal/resources/env.go` | Environment builder functions | ~120 |
+| `internal/resources/env_test.go` | Env builder unit tests | ~430 |
+| `api/v2/locusttest_webhook.go` | Validation webhook | ~140 |
+| `api/v2/locusttest_webhook_test.go` | Webhook unit tests | ~340 |
+| `config/samples/locust_v2_locusttest_with_env.yaml` | Sample CR | ~40 |
+
+## Files Modified
+| File | Changes |
+|------|---------|
+| `internal/resources/job.go` | Integrated env builders, added secret volumes/mounts |
+| `internal/resources/job_test.go` | Added 7 env injection tests |
+
+## Design Decisions
+
+| Decision | Chosen | Rationale |
+|----------|--------|-----------|
+| Env var order | Kafka first, user vars last | Matches existing behavior, user can override |
+| Volume naming | `secret-<name>` prefix | Avoids conflicts with ConfigMap volumes |
+| Path validation | Dynamic based on testFiles | Respects custom mount paths |
+| Webhook interface | `CustomValidator` | Required for controller-runtime v0.21.0 |
+
+## Test Results
+- All unit tests pass (resources: 96.8% coverage, api/v2: 26.4% coverage)
+- Integration test has pre-existing flaky test (race condition on update)
+
+## Notes for Future Phases
+- Webhook registration in main.go controlled by `ENABLE_WEBHOOKS` env var
+- v2 validation webhook path: `/validate-locust-io-v2-locusttest`
+
+---

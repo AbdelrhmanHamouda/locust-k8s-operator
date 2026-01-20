@@ -112,11 +112,12 @@ func buildLocustContainer(lt *locustv2.LocustTest, name string, command []string
 	container := corev1.Container{
 		Name:            name,
 		Image:           lt.Spec.Image,
-		ImagePullPolicy: corev1.PullPolicy(lt.Spec.ImagePullPolicy),
+		ImagePullPolicy: lt.Spec.ImagePullPolicy,
 		Args:            command,
 		Ports:           ports,
 		Resources:       buildResourceRequirements(cfg, false),
-		Env:             buildKafkaEnvVars(cfg),
+		Env:             BuildEnvVars(lt, cfg),
+		EnvFrom:         BuildEnvFrom(lt),
 		VolumeMounts:    buildVolumeMounts(lt, name),
 	}
 
@@ -156,7 +157,7 @@ func buildImagePullSecrets(lt *locustv2.LocustTest) []corev1.LocalObjectReferenc
 	return lt.Spec.ImagePullSecrets
 }
 
-// buildVolumes creates the volumes for ConfigMap and LibConfigMap.
+// buildVolumes creates the volumes for ConfigMap, LibConfigMap, and Secrets.
 func buildVolumes(lt *locustv2.LocustTest, nodeName string) []corev1.Volume {
 	var volumes []corev1.Volume
 
@@ -193,10 +194,16 @@ func buildVolumes(lt *locustv2.LocustTest, nodeName string) []corev1.Volume {
 		})
 	}
 
+	// Add secret volumes from env.secretMounts
+	secretVolumes := BuildSecretVolumes(lt)
+	if len(secretVolumes) > 0 {
+		volumes = append(volumes, secretVolumes...)
+	}
+
 	return volumes
 }
 
-// buildVolumeMounts creates the volume mounts for ConfigMap and LibConfigMap.
+// buildVolumeMounts creates the volume mounts for ConfigMap, LibConfigMap, and Secrets.
 func buildVolumeMounts(lt *locustv2.LocustTest, nodeName string) []corev1.VolumeMount {
 	var mounts []corev1.VolumeMount
 
@@ -231,11 +238,17 @@ func buildVolumeMounts(lt *locustv2.LocustTest, nodeName string) []corev1.Volume
 		})
 	}
 
+	// Add secret mounts from env.secretMounts
+	secretMounts := BuildSecretVolumeMounts(lt)
+	if len(secretMounts) > 0 {
+		mounts = append(mounts, secretMounts...)
+	}
+
 	return mounts
 }
 
-// buildKafkaEnvVars creates the Kafka environment variables for the Locust container.
-func buildKafkaEnvVars(cfg *config.OperatorConfig) []corev1.EnvVar {
+// BuildKafkaEnvVars creates the Kafka environment variables for the Locust container.
+func BuildKafkaEnvVars(cfg *config.OperatorConfig) []corev1.EnvVar {
 	return []corev1.EnvVar{
 		{Name: EnvKafkaBootstrapServers, Value: cfg.KafkaBootstrapServers},
 		{Name: EnvKafkaSecurityEnabled, Value: strconv.FormatBool(cfg.KafkaSecurityEnabled)},

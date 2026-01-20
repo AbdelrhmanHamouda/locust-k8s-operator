@@ -27,6 +27,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const secretTLSCertsVolumeName = "secret-tls-certs"
+
 func newTestLocustTest() *locustv2.LocustTest {
 	return &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
@@ -493,4 +495,167 @@ func TestBuildMasterJob_BackoffLimit(t *testing.T) {
 
 	require.NotNil(t, job.Spec.BackoffLimit)
 	assert.Equal(t, int32(0), *job.Spec.BackoffLimit)
+}
+
+func TestBuildMasterJob_WithEnvConfigMapRef(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Env = &locustv2.EnvConfig{
+		ConfigMapRefs: []locustv2.ConfigMapEnvSource{
+			{Name: "app-config", Prefix: "APP_"},
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+	require.Len(t, container.EnvFrom, 1)
+	assert.NotNil(t, container.EnvFrom[0].ConfigMapRef)
+	assert.Equal(t, "app-config", container.EnvFrom[0].ConfigMapRef.Name)
+	assert.Equal(t, "APP_", container.EnvFrom[0].Prefix)
+}
+
+func TestBuildMasterJob_WithEnvSecretRef(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Env = &locustv2.EnvConfig{
+		SecretRefs: []locustv2.SecretEnvSource{
+			{Name: "api-credentials"},
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+	require.Len(t, container.EnvFrom, 1)
+	assert.NotNil(t, container.EnvFrom[0].SecretRef)
+	assert.Equal(t, "api-credentials", container.EnvFrom[0].SecretRef.Name)
+}
+
+func TestBuildMasterJob_WithEnvVariables(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Env = &locustv2.EnvConfig{
+		Variables: []corev1.EnvVar{
+			{Name: "TARGET_HOST", Value: "https://example.com"},
+			{Name: "LOG_LEVEL", Value: "DEBUG"},
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+	envMap := make(map[string]string)
+	for _, env := range container.Env {
+		envMap[env.Name] = env.Value
+	}
+
+	// User vars should be present
+	assert.Equal(t, "https://example.com", envMap["TARGET_HOST"])
+	assert.Equal(t, "DEBUG", envMap["LOG_LEVEL"])
+
+	// Kafka vars should still be present
+	assert.Contains(t, envMap, "KAFKA_BOOTSTRAP_SERVERS")
+}
+
+func TestBuildMasterJob_WithSecretMount(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Env = &locustv2.EnvConfig{
+		SecretMounts: []locustv2.SecretMount{
+			{Name: "tls-certs", MountPath: "/etc/locust/certs", ReadOnly: true},
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	// Check volume exists
+	var secretVolumeFound bool
+	for _, v := range job.Spec.Template.Spec.Volumes {
+		if v.Name == secretTLSCertsVolumeName {
+			secretVolumeFound = true
+			assert.NotNil(t, v.Secret)
+			assert.Equal(t, "tls-certs", v.Secret.SecretName)
+		}
+	}
+	assert.True(t, secretVolumeFound, "Secret volume should exist")
+
+	// Check volume mount exists
+	container := job.Spec.Template.Spec.Containers[0]
+	var secretMountFound bool
+	for _, m := range container.VolumeMounts {
+		if m.Name == secretTLSCertsVolumeName {
+			secretMountFound = true
+			assert.Equal(t, "/etc/locust/certs", m.MountPath)
+			assert.True(t, m.ReadOnly)
+		}
+	}
+	assert.True(t, secretMountFound, "Secret volume mount should exist")
+}
+
+func TestBuildMasterJob_EnvCombinesKafkaAndUser(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Env = &locustv2.EnvConfig{
+		Variables: []corev1.EnvVar{
+			{Name: "USER_VAR", Value: "user-value"},
+		},
+	}
+	cfg := newTestConfig()
+	cfg.KafkaBootstrapServers = "kafka:9092"
+
+	job := BuildMasterJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+
+	// Should have 7 Kafka vars + 1 user var = 8 total
+	assert.Len(t, container.Env, 8)
+
+	// Kafka vars come first
+	assert.Equal(t, "KAFKA_BOOTSTRAP_SERVERS", container.Env[0].Name)
+	assert.Equal(t, "kafka:9092", container.Env[0].Value)
+
+	// User var comes last
+	assert.Equal(t, "USER_VAR", container.Env[7].Name)
+	assert.Equal(t, "user-value", container.Env[7].Value)
+}
+
+func TestBuildWorkerJob_WithEnvConfig(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Env = &locustv2.EnvConfig{
+		ConfigMapRefs: []locustv2.ConfigMapEnvSource{
+			{Name: "app-config"},
+		},
+		Variables: []corev1.EnvVar{
+			{Name: "TARGET_HOST", Value: "https://example.com"},
+		},
+		SecretMounts: []locustv2.SecretMount{
+			{Name: "tls-certs", MountPath: "/etc/certs"},
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildWorkerJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+
+	// EnvFrom should have ConfigMapRef
+	require.Len(t, container.EnvFrom, 1)
+	assert.Equal(t, "app-config", container.EnvFrom[0].ConfigMapRef.Name)
+
+	// Env should have Kafka + user vars
+	envMap := make(map[string]string)
+	for _, env := range container.Env {
+		envMap[env.Name] = env.Value
+	}
+	assert.Equal(t, "https://example.com", envMap["TARGET_HOST"])
+	assert.Contains(t, envMap, "KAFKA_BOOTSTRAP_SERVERS")
+
+	// Secret mount should exist
+	var secretMountFound bool
+	for _, m := range container.VolumeMounts {
+		if m.Name == secretTLSCertsVolumeName {
+			secretMountFound = true
+		}
+	}
+	assert.True(t, secretMountFound)
 }

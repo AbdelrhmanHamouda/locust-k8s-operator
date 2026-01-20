@@ -28,5 +28,6 @@ phases/
 | 7 - v2 API Types | **Complete** | [phase-7-v2-api-types/](./phase-7-v2-api-types/) |
 | 8 - Conversion Webhook | **Complete** | [phase-8-conversion-webhook/](./phase-8-conversion-webhook/) |
 | 9 - Status Subresource | **Complete** | [phase-9-status-subresource/](./phase-9-status-subresource/) |
+| 10 - Env & Secret Injection | **Complete** | [phase-10-env-secret-injection/](./phase-10-env-secret-injection/) |
 
 See [../ROADMAP.md](../ROADMAP.md) for the full phase summary and dependencies.

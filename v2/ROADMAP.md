@@ -495,33 +495,38 @@ Implement status tracking with phase and conditions.
 
 **Effort:** 1 day  
 **Priority:** P1 - Must Have  
-**Requirements:** §5.1.2 Environment Injection (Issue #149)
+**Requirements:** §5.1.2 Environment Injection (Issue #149)  
+**Status:** ✅ Complete (2026-01-20)
 
 ### Objective
 Enable ConfigMap and Secret injection into Locust pods.
 
 ### Tasks
 
-- [ ] **10.1** Update resource builders to handle `env` config
+- [x] **10.1** Update resource builders to handle `env` config
   - Process `configMapRefs` → `envFrom` with ConfigMapRef
   - Process `secretRefs` → `envFrom` with SecretRef
   - Process `variables` → individual `env` entries
-- [ ] **10.2** Implement secret file mounting
+- [x] **10.2** Implement secret file mounting
   - Process `secretMounts` → Volume + VolumeMount
-- [ ] **10.3** Add validation webhook
+- [x] **10.3** Add validation webhook
   - Ensure no conflicts with operator-managed paths
-- [ ] **10.4** Write tests for env injection
+- [x] **10.4** Write tests for env injection
 
 ### Acceptance Criteria
-- [ ] ConfigMap values available as env vars in pods
-- [ ] Secret values available as env vars in pods
-- [ ] Secrets mountable as files
-- [ ] Path conflicts rejected at validation
+- [x] ConfigMap values available as env vars in pods
+- [x] Secret values available as env vars in pods
+- [x] Secrets mountable as files
+- [x] Path conflicts rejected at validation
 
-### Files to Modify
-- `internal/resources/job.go`
-- `internal/resources/env.go` (new)
-- `api/v2/locusttest_webhook.go`
+### Files Created/Modified
+- `internal/resources/env.go` (new - 120 LOC)
+- `internal/resources/env_test.go` (new - 430 LOC)
+- `api/v2/locusttest_webhook.go` (new - 140 LOC)
+- `api/v2/locusttest_webhook_test.go` (new - 340 LOC)
+- `internal/resources/job.go` (modified)
+- `internal/resources/job_test.go` (modified - +7 tests)
+- `config/samples/locust_v2_locusttest_with_env.yaml` (new)
 
 ---
 
@@ -645,7 +650,7 @@ Update GitHub Actions for Go build and test.
   - Update test commands
   - Add coverage reporting
 - [ ] **14.2** Update Docker build
-  - Multi-stage Go build or `ko`
+  - Use `ko`
   - Multi-arch support (amd64, arm64)
 - [ ] **14.3** Update release workflow
   - GoReleaser or `ko` for releases
