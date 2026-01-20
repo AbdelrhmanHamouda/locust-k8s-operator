@@ -8,8 +8,7 @@ spec:
   worker:
     replicas: 1
     command: "-f /lotest/src/locustfile.py"
-  image:
-    name: locustio/locust:latest
+  image: locustio/locust:latest
   testFiles:
     configMapRef: e2e-test-configmap
   env:
