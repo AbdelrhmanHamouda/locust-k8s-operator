@@ -104,8 +104,33 @@ jobs:
         uses: helm/kind-action@v1.12.0
         if: steps.list-changed.outputs.changed == 'true'
 
+      - name: 🔧 Setup Go
+        if: steps.list-changed.outputs.changed == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: locust-k8s-operator-go/go.mod
+
+      - name: 🛠️ Install ko
+        if: steps.list-changed.outputs.changed == 'true'
+        uses: ko-build/setup-ko@v0.7
+
+      - name: 🐳 Build operator image with ko
+        if: steps.list-changed.outputs.changed == 'true'
+        working-directory: locust-k8s-operator-go
+        env:
+          KO_DOCKER_REPO: lotest/locust-k8s-operator
+        run: |
+          CHART_VERSION=$(grep '^appVersion:' ../charts/locust-k8s-operator/Chart.yaml | awk '{print $2}' | tr -d '"')
+          ko build ./cmd/main.go --local --bare --tags=${CHART_VERSION}
+
+      - name: 📦 Load image into kind cluster
+        if: steps.list-changed.outputs.changed == 'true'
+        run: |
+          CHART_VERSION=$(grep '^appVersion:' charts/locust-k8s-operator/Chart.yaml | awk '{print $2}' | tr -d '"')
+          kind load docker-image lotest/locust-k8s-operator:${CHART_VERSION}
+
       - name: 🚀 Run chart-testing (install)
-        run: ct install --target-branch ${{ github.event.repository.default_branch }} --config .github/ct.yaml
+        run: ct install --target-branch ${{ github.event.repository.default_branch }} --config .github/ct.yaml --helm-extra-set-args "--set=image.pullPolicy=Never"
 
   docs-test:
     name: 📚 Test documentation
