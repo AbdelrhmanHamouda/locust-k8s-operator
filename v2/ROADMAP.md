@@ -712,35 +712,51 @@ Implement end-to-end tests using Kind cluster.
 **Effort:** 1 day  
 **Priority:** P1 - Should Have  
 **Requirements:** §7.2 Code Quality (Documentation)
+**Status:** ✅ Complete (2026-01-20)
 
 ### Objective
 Update all documentation for v2.0 release.
 
 ### Tasks
 
-- [ ] **16.1** Update `README.md`
-  - New installation instructions
-  - v2 API examples
-  - Migration guide from v1
-- [ ] **16.2** Update `docs/getting_started.md`
-- [ ] **16.3** Update `docs/features.md` with new features
+- [x] **16.1** Update `README.md`
+  - Announcemnt of v2.0 release and GO rewrite
+    - Reasons for rewrite
+    - Migration guide from v1 link (to docs gh page)
+  - keep same look and feel
+- [x] **16.2** Update `docs/getting_started.md`
+- [x] **16.3** Update `docs/features.md` with new features
   - OTel support
   - Secret injection
   - Volume mounting
   - Separate resources
-- [ ] **16.4** Add `docs/migration.md` for v1→v2
-- [ ] **16.5** Update API reference docs
-- [ ] **16.6** Add CHANGELOG entry for v2.0
+- [x] **16.4** Add `docs/migration.md` for v1→v2
+- [x] **16.5** Update API reference docs
+- [x] **16.6** make sure that `docs/` has all that is needed in the correct palces
+- [x] **16.7** update helm vaslues 
+- [x] **16.8** observability part
+- [x] **16.9** features that now makesense with the new changes
+- [x] **16.10** highlight on the main page new features and reasoning behidn the rewrite
 
 ### Acceptance Criteria
-- [ ] All docs reflect v2 API
-- [ ] Migration guide complete
-- [ ] Examples work with new operator
+- [x] All docs reflect v2 API
+- [x] Migration guide complete
+- [x] Examples work with new operator
 
-### Files to Modify
-- `README.md`
-- `docs/*.md`
-- `CHANGELOG.md`
+### Files Modified
+- `README.md` - Added v2.0 announcement section
+- `CHANGELOG.md` - Added v2.0.0 release notes
+- `mkdocs.yml` - Added API Reference and Migration Guide to navigation
+- `docs/index.md` - Added v2.0 highlights section
+- `docs/features.md` - Added 6 new feature cards
+- `docs/getting_started.md` - Updated with v2 API examples
+- `docs/advanced_topics.md` - Added OTel, env injection, volumes, separate resources sections
+- `docs/helm_deploy.md` - Updated for Go operator configuration
+- `docs/metrics_and_dashboards.md` - Added OTel section, updated operator metrics
+
+### Files Created
+- `docs/migration.md` - Complete v1→v2 migration guide
+- `docs/api_reference.md` - Complete API documentation
 
 ---
 

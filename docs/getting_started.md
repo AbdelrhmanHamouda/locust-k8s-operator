@@ -43,37 +43,67 @@ A simple _custom resource_ for the previous test can be something like the follo
 
 > To streamline this step, [_intensive-brew_](https://abdelrhmanhamouda.github.io/intensive-brew/) should be used. It is a simple cli tool that converts a declarative yaml into a compatible LocustTest kubernetes custom resource.
 
-```yaml title="locusttest-cr.yaml"
-apiVersion: locust.io/v1 # (1)!
-kind: LocustTest # (2)!
-metadata:
-  name: demo.test # (3)!
-spec:
-  image: locustio/locust:latest # (4)!
-  masterCommandSeed: # (5)!
-    --locustfile /lotest/src/demo_test.py
-    --host https://dummy.restapiexample.com
-    --users 100
-    --spawn-rate 3
-    --run-time 3m
-  workerCommandSeed: --locustfile /lotest/src/demo_test.py # (6)!
-  workerReplicas: 3 # (7)!
-  configMap: demo-test-map # (8)!
-  libConfigMap: demo-lib-map # (9)!
-```
+=== "v2 API (Recommended)"
 
-1.  API version based on the deployed _LocustTest_ CRD.
-2.  Resource kind.
-3.  The name field used by the operator to infer the names of test generated resources. While this value is insignificant to the Operator
-    itself, it is important to keep a good convention here since it helps in tracking resources across the cluster when needed.
-4.  Image to use for the load generation pods
-5.  Seed command for the _master_ node. The _Operator_ will append to this seed command/s all operational parameters needed for the _master_
-    to perform its job e.g. ports, rebalancing settings, timeouts, etc...
-6.  Seed command for the _worker_ node. The _Operator_ will append to this seed command/s all operational parameters needed for the _worker_
-    to perform its job e.g. ports, master node url, master node ports, etc...
-7.  The amount of _worker_ nodes to spawn in the cluster.
-8.  [Optional] Name of _configMap_ to mount into the pod
-9.  [Optional] Name of _configMap_ containing lib directory files to mount at `/opt/locust/lib`
+    ```yaml title="locusttest-cr.yaml"
+    apiVersion: locust.io/v2 # (1)!
+    kind: LocustTest # (2)!
+    metadata:
+      name: demo-test # (3)!
+    spec:
+      image: locustio/locust:2.20.0 # (4)!
+      master: # (5)!
+        command: "--locustfile /lotest/src/demo_test.py --host https://dummy.restapiexample.com --users 100 --spawn-rate 3 --run-time 3m"
+      worker: # (6)!
+        command: "--locustfile /lotest/src/demo_test.py"
+        replicas: 3 # (7)!
+      testFiles: # (8)!
+        configMapRef: demo-test-map
+        libConfigMapRef: demo-lib-map
+    ```
+
+    1.  API version - use `locust.io/v2` for new deployments.
+    2.  Resource kind.
+    3.  The name field used by the operator to infer the names of test generated resources.
+    4.  Image to use for the load generation pods. Always specify a version tag.
+    5.  Master configuration block with the command seed.
+    6.  Worker configuration block with command and replicas.
+    7.  The amount of _worker_ nodes to spawn in the cluster (1-500).
+    8.  [Optional] ConfigMap references for test files and libraries.
+
+=== "v1 API (Deprecated)"
+
+    !!! warning "Deprecated"
+        The v1 API is deprecated. Use v2 for new deployments. See the [Migration Guide](migration.md).
+
+    ```yaml title="locusttest-cr.yaml"
+    apiVersion: locust.io/v1 # (1)!
+    kind: LocustTest # (2)!
+    metadata:
+      name: demo.test # (3)!
+    spec:
+      image: locustio/locust:latest # (4)!
+      masterCommandSeed: # (5)!
+        --locustfile /lotest/src/demo_test.py
+        --host https://dummy.restapiexample.com
+        --users 100
+        --spawn-rate 3
+        --run-time 3m
+      workerCommandSeed: --locustfile /lotest/src/demo_test.py # (6)!
+      workerReplicas: 3 # (7)!
+      configMap: demo-test-map # (8)!
+      libConfigMap: demo-lib-map # (9)!
+    ```
+
+    1.  API version based on the deployed _LocustTest_ CRD.
+    2.  Resource kind.
+    3.  The name field used by the operator to infer the names of test generated resources.
+    4.  Image to use for the load generation pods
+    5.  Seed command for the _master_ node.
+    6.  Seed command for the _worker_ node.
+    7.  The amount of _worker_ nodes to spawn in the cluster.
+    8.  [Optional] Name of _configMap_ to mount into the pod
+    9.  [Optional] Name of _configMap_ containing lib directory files to mount at `/opt/locust/lib`
 
 #### Other options
 
@@ -81,29 +111,57 @@ spec:
 
 You can add labels and annotations to generated Pods. For example:
 
-```yaml title="locusttest-cr.yaml"
-apiVersion: locust.io/v1
-...
-spec:
-  image: locustio/locust:latest
-  labels: # (1)!
-    master:
-      locust.io/role: "master"
-      myapp.com/testId: "abc-123"
-      myapp.com/tenantId: "xyz-789"
-    worker:
-      locust.io/role: "worker"
-  annotations: # (2)!
-    master:
-      myapp.com/threads: "1000"
-      myapp.com/version: "2.1.0"
-    worker:
-      myapp.com/version: "2.1.0"
-  ...
-```
+=== "v2 API"
 
-1.  [Optional] Labels are attached to both master and worker pods. They can later be used to identify pods belonging to a particular execution context. This is useful, for example, when tests are deployed programmatically. A launcher application can query the Kubernetes API for specific resources.
-2.  [Optional] Annotations too are attached to master and worker pods. They can be used to include additional context about a test. For example, configuration parameters of the software system being tested.
+    ```yaml title="locusttest-cr.yaml"
+    apiVersion: locust.io/v2
+    ...
+    spec:
+      image: locustio/locust:2.20.0
+      master:
+        command: "..."
+        labels: # (1)!
+          locust.io/role: "master"
+          myapp.com/testId: "abc-123"
+        annotations: # (2)!
+          myapp.com/threads: "1000"
+      worker:
+        command: "..."
+        replicas: 3
+        labels:
+          locust.io/role: "worker"
+        annotations:
+          myapp.com/version: "2.1.0"
+    ```
+
+    1.  Labels are attached to master pods and can be used to identify pods belonging to a particular execution context.
+    2.  Annotations can include additional context about a test, such as configuration parameters.
+
+=== "v1 API (Deprecated)"
+
+    ```yaml title="locusttest-cr.yaml"
+    apiVersion: locust.io/v1
+    ...
+    spec:
+      image: locustio/locust:latest
+      labels: # (1)!
+        master:
+          locust.io/role: "master"
+          myapp.com/testId: "abc-123"
+          myapp.com/tenantId: "xyz-789"
+        worker:
+          locust.io/role: "worker"
+      annotations: # (2)!
+        master:
+          myapp.com/threads: "1000"
+          myapp.com/version: "2.1.0"
+        worker:
+          myapp.com/version: "2.1.0"
+      ...
+    ```
+
+    1.  [Optional] Labels are attached to both master and worker pods.
+    2.  [Optional] Annotations are attached to master and worker pods.
 
 Both labels and annotations can be added to the Prometheus configuration, so that metrics are associated with the appropriate information, such as the test and tenant ids. You can read more about this in the [Prometheus documentation](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#kubernetes_sd_config) site.
 
@@ -174,19 +232,39 @@ kubectl create configmap demo-lib-map --from-file=lib/helpers.py --from-file=lib
 
 **2. Reference the lib ConfigMap in your LocustTest custom resource:**
 
-```yaml
-apiVersion: locust.io/v1
-kind: LocustTest
-metadata:
-  name: example-locusttest
-spec:
-  masterConfig:
-    replicas: 1
-  workerConfig:
-    replicas: 2
-  configMap: demo-test-map    # Your test script ConfigMap
-  libConfigMap: demo-lib-map   # Your lib files ConfigMap
-```
+=== "v2 API"
+
+    ```yaml
+    apiVersion: locust.io/v2
+    kind: LocustTest
+    metadata:
+      name: example-locusttest
+    spec:
+      testFiles:
+        configMapRef: demo-test-map    # Your test script ConfigMap
+        libConfigMapRef: demo-lib-map   # Your lib files ConfigMap
+      master:
+        command: "--locustfile /lotest/src/my_test.py --host https://example.com"
+      worker:
+        command: "--locustfile /lotest/src/my_test.py"
+        replicas: 2
+    ```
+
+=== "v1 API (Deprecated)"
+
+    ```yaml
+    apiVersion: locust.io/v1
+    kind: LocustTest
+    metadata:
+      name: example-locusttest
+    spec:
+      masterConfig:
+        replicas: 1
+      workerConfig:
+        replicas: 2
+      configMap: demo-test-map    # Your test script ConfigMap
+      libConfigMap: demo-lib-map   # Your lib files ConfigMap
+    ```
 
 !!! tip "Organizing your code"
     This feature is especially useful when:

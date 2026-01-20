@@ -4,8 +4,15 @@ This guide describes the setup and workflow for local development on the Locust 
 
 ## Development Setup
 
-<details open>
-<summary>Initial Setup</summary>
+### Prerequisites
+
+- **Go 1.23+**: Required for building the operator
+- **Docker**: Running Docker daemon for building images
+- **kubectl**: Kubernetes CLI for cluster interaction
+- **Kind** or **Minikube**: Local Kubernetes cluster for testing
+- **Helm 3.x**: For chart packaging and installation
+
+### Initial Setup
 
 1. Clone the repository:
    ```bash
@@ -13,103 +20,168 @@ This guide describes the setup and workflow for local development on the Locust 
    cd locust-k8s-operator
    ```
 
-2. Install [pre-commit](https://pre-commit.com/) and set up the git hooks:
+2. Install dependencies and tools:
    ```bash
-   pre-commit install --install-hooks
-   pre-commit install --hook-type commit-msg
+   # Download Go dependencies
+   make tidy
+   
+   # Install development tools (controller-gen, envtest, etc.)
+   make controller-gen
+   make envtest
+   make kustomize
    ```
-</details>
 
 ## Development Guidelines
 
 - This project follows the [Conventional Commits](https://www.conventionalcommits.org/) standard to automate [Semantic Versioning](https://semver.org/) and [Keep A Changelog](https://keepachangelog.com/) with [Commitizen](https://github.com/commitizen-tools/commitizen).
 
-- All code should include appropriate tests. See the [integration testing guide](integration-testing.md) for details on the integration test setup.
+- All code should include appropriate tests. See the [integration testing guide](integration-testing.md) for details on the test setup.
 
-## Local Testing with Minikube and Helm
+## Common Development Commands
 
-For local development and testing, you can use Minikube to create a local Kubernetes cluster. This allows you to test the operator and your changes in an environment that closely resembles a production setup.
+The project uses a `Makefile` for common development tasks. Run `make help` to see all available targets.
 
-### Prerequisites
+### Build & Test
 
-- [Minikube](https://minikube.sigs.k8s.io/docs/start/)
-- [Helm](https://helm.sh/docs/intro/install/)
+```bash
+# Build the operator binary
+make build
+
+# Run all tests (unit + integration via envtest)
+make test
+
+# Run linter
+make lint
+
+# Run linter with auto-fix
+make lint-fix
+
+# Run all CI checks locally
+make ci
+```
+
+### Code Generation
+
+```bash
+# Generate CRDs, RBAC, and webhook manifests
+make manifests
+
+# Generate DeepCopy implementations
+make generate
+
+# Format code
+make fmt
+
+# Run go vet
+make vet
+```
+
+### Running Locally
+
+```bash
+# Run the operator locally against your current kubeconfig cluster
+make run
+
+# Install CRDs into the cluster
+make install
+
+# Uninstall CRDs from the cluster
+make uninstall
+```
+
+## Local Testing with Kind
+
+For local development and testing, Kind (Kubernetes in Docker) is the recommended approach.
 
 ### Steps
 
-1. **Start Minikube**
-
-   Start a local Kubernetes cluster using Minikube:
+1. **Create a Kind Cluster**
 
    ```bash
-   minikube start
+   kind create cluster --name locust-dev
    ```
 
 2. **Build and Load the Docker Image**
 
-   If you've made changes to the operator's source code, you'll need to build a new Docker image and load it into your Minikube cluster. This project uses the Jib Gradle plugin to build images directly, so you don't need a `Dockerfile`.
-
-   First, build the image to your local Docker daemon:
    ```bash
-   ./gradlew jibDockerBuild
-   ```
-
-   Next, load the image into Minikube's internal registry:
-   ```bash
-   minikube image load locust-k8s-operator:latest
-   ```
-
-3. **Package the Helm Chart**
-
-   Package the Helm chart to create a distributable `.tgz` file.
-
-   ```bash
-   helm package ./charts/locust-k8s-operator
-   ```
-
-4. **Install the Operator with Helm**
-
-   Install the Helm chart on your Minikube cluster. The command below overrides the default image settings to use the one you just built and loaded.
-
-   You can use a `values.yaml` file to override other settings.
-
-   ```yaml
-   # values.yaml (optional)
-   # Example: Set resource requests and limits for the operator pod
-   config:
-     loadGenerationPods:
-       resource:
-         cpuRequest: 250m
-         memRequest: 128Mi
-         ephemeralRequest: 300M
-         cpuLimit: 1000m
-         memLimit: 1024Mi
-         ephemeralLimit: 50M
+   # Build the Docker image
+   make docker-build IMG=locust-k8s-operator:dev
    
-   # To leave a resource unbound, Leave the limit empty
-   # This is useful when you don't want to set a specific limit.
-   # example:
-   # config:
-   #   loadGenerationPods:
-   #     resource:
-   #       cpuLimit: ""
-   #       memLimit: ""
-   #       ephemeralLimit: ""
+   # Load the image into Kind
+   kind load docker-image locust-k8s-operator:dev --name locust-dev
    ```
 
-   Install the chart using the following command. The `-f values.yaml` flag is optional.
+3. **Deploy the Operator**
 
+   Option A: Using kustomize (for development):
    ```bash
-   helm install locust-operator locust-k8s-operator-*.tgz -f values.yaml \
+   # Deploy CRDs and operator
+   make deploy IMG=locust-k8s-operator:dev
+   ```
+
+   Option B: Using Helm (for production-like testing):
+   ```bash
+   # Package the Helm chart
+   helm package ../charts/locust-k8s-operator
+   
+   # Install with local image
+   helm install locust-operator locust-k8s-operator-*.tgz \
      --set image.repository=locust-k8s-operator \
-     --set image.tag=latest \
+     --set image.tag=dev \
      --set image.pullPolicy=IfNotPresent
    ```
 
-   This will deploy the operator to your Minikube cluster using the settings defined in your `values.yaml` file.
+4. **Verify the Deployment**
+
+   ```bash
+   kubectl get pods -n locust-k8s-operator-go-system
+   kubectl logs -f -n locust-k8s-operator-go-system deployment/locust-k8s-operator-go-controller-manager
+   ```
+
+5. **Test with a Sample CR**
+
+   ```bash
+   # Create a test ConfigMap with a simple Locust script
+   kubectl create configmap locust-test --from-literal=locustfile.py='
+   from locust import HttpUser, task
+   class TestUser(HttpUser):
+       @task
+       def hello(self):
+           self.client.get("/")
+   '
+   
+   # Apply a sample LocustTest CR
+   kubectl apply -f config/samples/locust_v2_locusttest.yaml
+   
+   # Watch the resources
+   kubectl get locusttests,jobs,pods -w
+   ```
+
+6. **Cleanup**
+
+   ```bash
+   # Remove the operator
+   make undeploy
+   
+   # Delete the Kind cluster
+   kind delete cluster --name locust-dev
+   ```
 
 ## Writing Documentation
 
 All documentation is located under the `docs/` directory. The documentation is hosted on [GitHub Pages](https://abdelrhmanhamouda.github.io/locust-k8s-operator/) and updated automatically with each release. To manage and build the documentation, the project uses [MkDocs](https://www.mkdocs.org/) & [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/) framework.
+
+### Preview Documentation Locally
+
+```bash
+# Install MkDocs (if not installed)
+pip install mkdocs mkdocs-material
+
+# Serve documentation locally
+mkdocs serve
+
+# Build documentation
+mkdocs build --strict
+```
 
 During development, the **_CI_** workflow will build the documentation as part of the validation.

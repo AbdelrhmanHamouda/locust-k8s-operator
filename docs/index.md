@@ -20,6 +20,19 @@ description: Enable performance testing for the modern era! Utilize the full pow
 </div>
 </div>
 
+<div class="admonition success glowing-border" markdown>
+<p class="admonition-title">🎉 v2.0 is here: Rebuilt in Go!</p>
+We've completely rewritten the operator in Go to bring you <strong>60x faster startup times</strong> and a <strong>4x smaller memory footprint</strong>.
+
+**New capabilities:**
+
+*   :material-chart-timeline: **Native OpenTelemetry**
+*   :material-key-variant: **Secret & ConfigMap Injection**
+*   :material-harddisk: **Flexible Volume Mounting**
+
+[Start your migration](migration.md){ .md-button .md-button--primary }
+</div>
+
 <div class="badges-section">
   <div class="badges-container">
     <a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/actions/workflows/ci.yaml" target="_blank">

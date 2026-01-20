@@ -956,3 +956,52 @@ html {
     font-size: 1.25rem;
   }
 }
+
+/* Glowing border animation for v2 announcement */
+.admonition.success.glowing-border {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent !important;
+  background-clip: padding-box !important;
+  z-index: 0;
+}
+
+.admonition.success.glowing-border::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg, 
+    transparent 0deg, 
+    var(--md-primary-fg-color) 45deg, 
+    var(--md-accent-fg-color) 135deg, 
+    #00bcd4 225deg, 
+    var(--md-primary-fg-color) 315deg, 
+    transparent 360deg
+  );
+  animation: borderRotate 8s linear infinite;
+  z-index: -2;
+}
+
+.admonition.success.glowing-border::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  background: var(--md-default-bg-color);
+  z-index: -1;
+  border-radius: inherit;
+}
+
+@keyframes borderRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Ensure content stays readable on top */
+.admonition.success.glowing-border > * {
+  position: relative;
+  z-index: 1;
+}

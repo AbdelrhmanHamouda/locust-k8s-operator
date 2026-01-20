@@ -1227,3 +1227,92 @@ go build ./test/...  # Compiles successfully
 4. Debug output automatically collected on test failure
 
 ---
+
+# Phase 16: Documentation - Completion Notes
+
+**Date**: 2026-01-20
+
+Updated all project documentation for the v2.0 release, covering the Go rewrite, new features, migration guidance, and API reference.
+
+## Files Created
+
+| File | Purpose | LOC |
+|------|---------|-----|
+| `docs/migration.md` | v1 to v2 migration guide | ~280 |
+| `docs/api_reference.md` | Complete v2 API documentation | ~320 |
+
+## Files Modified
+
+| File | Changes |
+|------|---------|
+| `docs/index.md` | Added v2.0 highlights section with feature cards |
+| `docs/features.md` | Added 6 new feature cards (OTel, secrets, volumes, resources, status) |
+| `docs/getting_started.md` | Updated with v2 API examples in tabs, v1 marked deprecated |
+| `docs/advanced_topics.md` | Added 4 new sections (~280 LOC): OTel, env injection, volumes, separate resources |
+| `docs/helm_deploy.md` | Rewrote configuration section for Go operator (~150 LOC changed) |
+| `docs/metrics_and_dashboards.md` | Added OTel section, updated operator metrics for Go |
+| `README.md` | Added v2.0 announcement section with feature highlights |
+| `CHANGELOG.md` | Added v2.0.0 release notes |
+| `mkdocs.yml` | Added API Reference and Migration Guide to navigation |
+
+## Documentation Structure (v2.0)
+
+```
+docs/
+├── index.md                    # Updated with v2 highlights
+├── getting_started.md          # Updated for v2 API (tabbed examples)
+├── features.md                 # Updated with 6 new feature cards
+├── helm_deploy.md              # Updated for Go operator
+├── advanced_topics.md          # Updated + 4 new sections
+├── metrics_and_dashboards.md   # Updated + OTel section
+├── migration.md                # NEW: v1→v2 migration guide
+├── api_reference.md            # NEW: Complete API documentation
+├── how_does_it_work.md         # No changes needed
+├── contribute.md               # No changes needed
+├── local-development.md        # No changes needed
+├── integration-testing.md      # No changes needed
+├── pull-request-process.md     # No changes needed
+├── license.md                  # No changes needed
+└── roadmap.md                  # No changes needed
+```
+
+## Key Documentation Additions
+
+### Migration Guide
+- Overview of Go rewrite benefits
+- Step-by-step upgrade instructions
+- Field mapping reference (v1 → v2)
+- Troubleshooting section
+- Rollback procedure
+
+### API Reference
+- Complete v2 spec fields with types and descriptions
+- Status fields documentation
+- Condition types and reasons
+- Complete v2 example CR
+- v1 API reference (marked deprecated)
+
+### New Feature Documentation
+- OpenTelemetry integration with examples
+- Environment & secret injection patterns
+- Volume mounting with target filtering
+- Separate resource specs for master/worker
+
+## Success Criteria Verification
+
+| Criteria | Status |
+|----------|--------|
+| All documentation reflects v2 API structure | ✅ |
+| Migration guide enables v1→v2 upgrade | ✅ |
+| Examples work with new Go operator | ✅ |
+| README clearly communicates major version change | ✅ |
+| mkdocs navigation updated | ✅ |
+
+## Notes
+
+1. Documentation uses Material for MkDocs features (tabs, admonitions, grid cards)
+2. v1 API examples preserved in tabs for reference but marked deprecated
+3. All new v2 features documented with "New in v2.0" admonitions
+4. Helm chart documentation updated to reflect Go operator defaults
+
+---

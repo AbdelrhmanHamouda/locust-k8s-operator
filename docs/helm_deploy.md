@@ -60,16 +60,34 @@ helm install locust-operator locust-k8s-operator/locust-k8s-operator
 
 For more advanced configurations, it's best to use a custom `values.yaml` file. Create a file named `my-values.yaml` and add your overrides:
 
-```yaml
-# my-values.yaml
-replicaCount: 2
+=== "v2 Helm Values (Recommended)"
 
-config:
-  loadGenerationPods:
-    resource:
-      cpuLimit: "2000m"
-      memLimit: "2048Mi"
-```
+    ```yaml
+    # my-values.yaml
+    replicaCount: 2
+    
+    locustPods:
+      resources:
+        limits:
+          cpu: "2000m"
+          memory: "2048Mi"
+        requests:
+          cpu: "500m"
+          memory: "512Mi"
+    ```
+
+=== "v1 Helm Values (Deprecated)"
+
+    ```yaml
+    # my-values.yaml (old format - still works via compatibility shims)
+    replicaCount: 2
+    
+    config:
+      loadGenerationPods:
+        resource:
+          cpuLimit: "2000m"
+          memLimit: "2048Mi"
+    ```
 
 Then, install the chart, specifying your custom values file and a target namespace:
 
@@ -100,57 +118,124 @@ kubectl logs -f -n locust-system -l app.kubernetes.io/name=locust-k8s-operator
 
 The following tables list the configurable parameters of the Locust Operator Helm chart and their default values.
 
-### General Configuration
-
-| Parameter | Description | Default |
-|---|---|---|
-| `appPort` | The port that the operator will listen on. | `8080` |
+!!! info "v2.0 Changes"
+    The v2 Helm chart has been updated for the Go operator. Java-specific settings (Micronaut, JVM) have been removed. Backward compatibility shims are provided for common settings.
 
 ### Deployment Settings
 
 | Parameter | Description | Default |
 |---|---|---|
-| `replicaCount` | Number of replicas for the operator deployment. | `1` |
+| `replicaCount` | Number of replicas for the operator deployment. | `2` |
 | `image.repository` | The repository of the Docker image. | `lotest/locust-k8s-operator` |
 | `image.pullPolicy` | The image pull policy. | `IfNotPresent` |
 | `image.tag` | Overrides the default image tag (defaults to the chart's `appVersion`). | `""` |
+| `image.pullSecrets` | List of image pull secrets. | `[]` |
 
 ### Kubernetes Resources
 
 | Parameter | Description | Default |
 |---|---|---|
-| `k8s.customResourceDefinition.deploy` | Specifies whether to deploy the `LocustTest` CRD. | `true` |
+| `crd.install` | Specifies whether to deploy the `LocustTest` CRD. | `true` |
 | `k8s.clusterRole.enabled` | Deploy with a cluster-wide role (`true`) or a namespaced role (`false`). | `true` |
 | `serviceAccount.create` | Specifies whether a service account should be created. | `true` |
-| `serviceAccount.name` | The name of the service account to use. If not set, a name is generated. | `""` |
-| `resources` | Resource requests and limits for the operator pod. | `{}` |
+| `serviceAccount.name` | The name of the service account to use. If not set, a name is generated. | `default` |
+| `serviceAccount.annotations` | Annotations to add to the service account. | `{}` |
 
-### Operator Configuration
+### Operator Resources
 
-| Parameter | Description | Default |
-|---|---|---|
-| `config.loadGenerationJobs.ttlSecondsAfterFinished` | Time-to-live in seconds for finished load generation jobs. Set to `""` to disable. | `""` |
-
-#### Load Generation Pods
+The Go operator requires significantly fewer resources than the Java version:
 
 | Parameter | Description | Default |
 |---|---|---|
-| `config.loadGenerationPods.resource.cpuRequest` | CPU resource request for load generation pods. | `250m` |
-| `config.loadGenerationPods.resource.memRequest` | Memory resource request for load generation pods. | `128Mi` |
-| `config.loadGenerationPods.resource.ephemeralRequest` | Ephemeral storage request for load generation pods. | `30M` |
-| `config.loadGenerationPods.resource.cpuLimit` | CPU resource limit for load generation pods. Set to `""` to unbind. | `1000m` |
-| `config.loadGenerationPods.resource.memLimit` | Memory resource limit for load generation pods. Set to `""` to unbind. | `1024Mi` |
-| `config.loadGenerationPods.resource.ephemeralLimit` | Ephemeral storage limit for load generation pods. Set to `""` to unbind. | `50M` |
-| `config.loadGenerationPods.affinity.enableCrInjection` | Enable Custom Resource injection for affinity settings. | `true` |
-| `config.loadGenerationPods.taintTolerations.enableCrInjection` | Enable Custom Resource injection for taint tolerations. | `true` |
+| `resources.limits.memory` | Operator memory limit. | `128Mi` |
+| `resources.limits.cpu` | Operator CPU limit. | `500m` |
+| `resources.requests.memory` | Operator memory request. | `64Mi` |
+| `resources.requests.cpu` | Operator CPU request. | `10m` |
 
-#### Metrics Exporter
+### Feature Toggles
 
 | Parameter | Description | Default |
 |---|---|---|
-| `config.loadGenerationPods.metricsExporter.image` | Metrics Exporter Docker image. | `containersol/locust_exporter:v0.5.0` |
-| `config.loadGenerationPods.metricsExporter.port` | Metrics Exporter port. | `9646` |
-| `config.loadGenerationPods.metricsExporter.pullPolicy` | Image pull policy for the metrics exporter. | `IfNotPresent` |
+| `leaderElection.enabled` | Enable leader election for HA deployments. | `true` |
+| `metrics.enabled` | Enable Prometheus metrics endpoint. | `false` |
+| `metrics.port` | Metrics server port. | `8080` |
+| `metrics.secure` | Use HTTPS for metrics endpoint. | `false` |
+| `webhook.enabled` | Enable conversion webhook (requires cert-manager). | `false` |
+
+### Webhook Configuration
+
+Required when `webhook.enabled: true`:
+
+| Parameter | Description | Default |
+|---|---|---|
+| `webhook.port` | Webhook server port. | `9443` |
+| `webhook.certManager.enabled` | Use cert-manager for TLS certificate management. | `true` |
+
+!!! note
+    The conversion webhook requires [cert-manager](https://cert-manager.io/) to be installed in your cluster for automatic TLS certificate management.
+
+### Locust Pod Configuration
+
+| Parameter | Description | Default |
+|---|---|---|
+| `locustPods.resources.requests.cpu` | CPU request for Locust pods. | `250m` |
+| `locustPods.resources.requests.memory` | Memory request for Locust pods. | `128Mi` |
+| `locustPods.resources.requests.ephemeralStorage` | Ephemeral storage request for Locust pods. | `30M` |
+| `locustPods.resources.limits.cpu` | CPU limit for Locust pods. Set to `""` to unbind. | `1000m` |
+| `locustPods.resources.limits.memory` | Memory limit for Locust pods. Set to `""` to unbind. | `1024Mi` |
+| `locustPods.resources.limits.ephemeralStorage` | Ephemeral storage limit for Locust pods. | `50M` |
+| `locustPods.affinityInjection` | Enable affinity injection from CRs. | `true` |
+| `locustPods.tolerationsInjection` | Enable tolerations injection from CRs. | `true` |
+
+### Metrics Exporter
+
+| Parameter | Description | Default |
+|---|---|---|
+| `locustPods.metricsExporter.image` | Metrics Exporter Docker image. | `containersol/locust_exporter:v0.5.0` |
+| `locustPods.metricsExporter.port` | Metrics Exporter port. | `9646` |
+| `locustPods.metricsExporter.pullPolicy` | Image pull policy for the metrics exporter. | `IfNotPresent` |
+| `locustPods.metricsExporter.resources.requests.cpu` | CPU request for metrics exporter. | `100m` |
+| `locustPods.metricsExporter.resources.requests.memory` | Memory request for metrics exporter. | `64Mi` |
+| `locustPods.metricsExporter.resources.limits.cpu` | CPU limit for metrics exporter. | `250m` |
+| `locustPods.metricsExporter.resources.limits.memory` | Memory limit for metrics exporter. | `128Mi` |
+
+!!! tip
+    When using OpenTelemetry (`spec.observability.openTelemetry.enabled: true`), the metrics exporter sidecar is not deployed.
+
+### Job Configuration
+
+| Parameter | Description | Default |
+|---|---|---|
+| `locustPods.ttlSecondsAfterFinished` | TTL for finished jobs. Set to `""` to disable. | `""` |
+
+### Kafka Configuration
+
+| Parameter | Description | Default |
+|---|---|---|
+| `kafka.enabled` | Enable Kafka configuration injection. | `false` |
+| `kafka.bootstrapServers` | Kafka bootstrap servers. | `localhost:9092` |
+| `kafka.security.enabled` | Enable Kafka security. | `false` |
+| `kafka.security.protocol` | Security protocol (`SASL_SSL`, `SASL_PLAINTEXT`, etc.). | `SASL_PLAINTEXT` |
+| `kafka.security.saslMechanism` | SASL mechanism. | `SCRAM-SHA-512` |
+| `kafka.security.jaasConfig` | JAAS configuration string. | `""` |
+| `kafka.credentials.secretName` | Name of secret containing Kafka credentials. | `""` |
+| `kafka.credentials.usernameKey` | Key in secret for username. | `username` |
+| `kafka.credentials.passwordKey` | Key in secret for password. | `password` |
+
+### OpenTelemetry Collector (Optional)
+
+Deploy an OTel Collector alongside the operator:
+
+| Parameter | Description | Default |
+|---|---|---|
+| `otelCollector.enabled` | Deploy OTel Collector. | `false` |
+| `otelCollector.image` | Collector image. | `otel/opentelemetry-collector-contrib:0.92.0` |
+| `otelCollector.replicas` | Number of collector replicas. | `1` |
+| `otelCollector.resources.requests.cpu` | CPU request for collector. | `50m` |
+| `otelCollector.resources.requests.memory` | Memory request for collector. | `64Mi` |
+| `otelCollector.resources.limits.cpu` | CPU limit for collector. | `200m` |
+| `otelCollector.resources.limits.memory` | Memory limit for collector. | `256Mi` |
+| `otelCollector.config` | OTel Collector configuration (YAML string). | See values.yaml |
 
 ### Pod Scheduling
 
@@ -159,38 +244,25 @@ The following tables list the configurable parameters of the Locust Operator Hel
 | `nodeSelector` | Node selector for scheduling the operator pod. | `{}` |
 | `tolerations` | Tolerations for scheduling the operator pod. | `[]` |
 | `affinity` | Affinity rules for scheduling the operator pod. | `{}` |
+| `podAnnotations` | Annotations to add to the operator pod. | `{}` |
 
-### Liveness and Readiness Probes
+### Backward Compatibility
 
-| Parameter | Description | Default |
-|---|---|---|
-| `livenessProbe.initialDelaySeconds` | Initial delay for the liveness probe. | `10` |
-| `livenessProbe.periodSeconds` | How often to perform the liveness probe. | `20` |
-| `livenessProbe.timeoutSeconds` | When the liveness probe times out. | `10` |
-| `livenessProbe.failureThreshold` | When to give up on the liveness probe. | `1` |
-| `readinessProbe.initialDelaySeconds` | Initial delay for the readiness probe. | `30` |
-| `readinessProbe.periodSeconds` | How often to perform the readiness probe. | `20` |
-| `readinessProbe.timeoutSeconds` | When the readiness probe times out. | `10` |
-| `readinessProbe.failureThreshold` | When to give up on the readiness probe. | `1` |
+The following v1 paths are still supported via helper functions:
 
-### Advanced Configuration
+| Old Path (v1) | New Path (v2) |
+|---------------|---------------|
+| `config.loadGenerationPods.resource.cpuRequest` | `locustPods.resources.requests.cpu` |
+| `config.loadGenerationPods.resource.memLimit` | `locustPods.resources.limits.memory` |
+| `config.loadGenerationPods.affinity.enableCrInjection` | `locustPods.affinityInjection` |
+| `config.loadGenerationPods.kafka.*` | `kafka.*` |
 
-The following sections cover advanced configuration options. For a complete list of parameters, refer to the `values.yaml` file in the chart.
-
-#### Kafka Configuration
-
-| Parameter | Description | Default |
-|---|---|---|
-| `config.loadGenerationPods.kafka.bootstrapServers` | Kafka bootstrap servers. | `localhost:9092` |
-| `config.loadGenerationPods.kafka.acl.enabled` | Enable ACL settings for Kafka. | `false` |
-| `config.loadGenerationPods.kafka.sasl.mechanism` | SASL mechanism for authentication. | `SCRAM-SHA-512` |
-
-#### Micronaut Metrics
-
-| Parameter | Description | Default |
-|---|---|---|
-| `micronaut.metrics.enabled` | Enable/disable all Micronaut metrics. | `true` |
-| `micronaut.metrics.export.prometheus.step` | The step size (duration) for Prometheus metrics export. | `PT30S` |
+!!! warning "Removed Settings"
+    The following Java-specific settings have been removed and have no effect in v2:
+    
+    - `appPort` - Fixed at 8081
+    - `micronaut.*` - No Micronaut in Go operator
+    - `livenessProbe.*` / `readinessProbe.*` - Fixed probes on `/healthz` and `/readyz`
 
 ## :material-arrow-up-bold-box-outline: Upgrading the Chart
 

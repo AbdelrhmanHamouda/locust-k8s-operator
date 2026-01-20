@@ -20,6 +20,28 @@ Docs: [github.io/locust-k8s-operator/](https://abdelrhmanhamouda.github.io/locus
 
 -----------------------------
 
+## 🎉 v2.0 - Complete Go Rewrite
+
+The operator has been completely rewritten in Go, bringing significant improvements:
+
+| Improvement   | Before (Java)     | After (Go)   |
+|---------------|-------------------|--------------|
+| **Memory**    | ~256MB            | ~64MB        |
+| **Startup**   | ~60s              | <1s          |
+| **Framework** | Java Operator SDK | Operator SDK |
+
+### New Features in v2.0
+
+- **Native OpenTelemetry** - Export traces and metrics directly with `--otel` flag
+- **Secret & ConfigMap Injection** - Securely inject credentials as env vars or file mounts
+- **Volume Mounting** - Mount PVCs, ConfigMaps, Secrets with target filtering (master/worker/both)
+- **Separate Resource Specs** - Independent resource configuration for master and worker pods
+- **Enhanced Status** - Phase tracking, conditions, and worker connection status
+
+📖 **[Migration Guide](https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/)** for existing v1 users
+
+-----------------------------
+
 [//]: # (Badges)
 [![CI Pipeline][pipeline-status]][pipeline-status-url]
 [![Codacy Badge][code-coverage]][code-coverage-url]

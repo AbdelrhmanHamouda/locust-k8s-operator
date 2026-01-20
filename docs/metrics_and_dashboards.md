@@ -11,54 +11,116 @@ tags:
 
 # Metrics & Dashboards
 
-The Locust Kubernetes Operator is designed with observability in mind, providing out-of-the-box support for Prometheus metrics. This allows you to gain deep insights into your performance tests and the operator's behavior.
 
-## :material-export: Prometheus Metrics Exporter
+## :material-chart-timeline: OpenTelemetry Metrics & Traces
 
-By default, the operator deploys a [Prometheus metrics exporter](https://github.com/ContainerSolutions/locust_exporter) alongside each Locust master and worker pod. This exporter collects detailed metrics from the Locust instances and exposes them in a format that Prometheus can scrape.
+!!! info "New in v2.0"
+    Native OpenTelemetry support is available in the v2 API.
 
-### :material-key-variant: Key Metrics
+### Native OpenTelemetry Support
 
-Some of the key metrics you can monitor include:
+Locust 2.x includes native OpenTelemetry support, which the operator can configure automatically. This provides both metrics and distributed tracing without requiring the metrics exporter sidecar.
 
--   `locust_requests_total`: The total number of requests made.
--   `locust_requests_failed_total`: The total number of failed requests.
--   `locust_response_time_seconds`: The response time of requests.
--   `locust_users`: The number of simulated users.
+### Configuring OTel
 
-### :material-tune: Configuration
-
-To enable Prometheus to scrape these metrics, you'll need to configure a scrape job in your `prometheus.yml` file. Here's an example configuration:
+Enable OpenTelemetry in your LocustTest CR:
 
 ```yaml
-scrape_configs:
-  - job_name: 'locust'
-    kubernetes_sd_configs:
-      - role: pod
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-        action: keep
-        regex: true
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-        action: replace
-        target_label: __metrics_path__
-        regex: (.+)
-      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-        action: replace
-        regex: ([^:]+)(?::\d+)?;(\d+)
-        replacement: $1:$2
-        target_label: __address__
-      - action: labelmap
-        regex: __meta_kubernetes_pod_label_(.+)
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: otel-test
+spec:
+  image: locustio/locust:2.20.0
+  master:
+    command: "--locustfile /lotest/src/test.py --host https://example.com"
+  worker:
+    command: "--locustfile /lotest/src/test.py"
+    replicas: 5
+  observability:
+    openTelemetry:
+      enabled: true
+      endpoint: "otel-collector.monitoring:4317"
+      protocol: "grpc"
 ```
 
-## :material-view-dashboard-outline: Grafana Dashboards
+See [Advanced Topics - OpenTelemetry](advanced_topics.md#opentelemetry-integration) for detailed configuration options.
 
-Once you have your metrics flowing into Prometheus, you can create powerful and informative dashboards in Grafana to visualize your test results. You can build panels to track key performance indicators (KPIs) such as response times, request rates, and error rates.
+### OTel Collector Setup
 
-There are also community-built Grafana dashboards available for Locust that you can adapt for your needs.
+For a complete observability setup, deploy an OTel Collector. Example configuration:
+
+```yaml
+# otel-collector-config.yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  prometheus:
+    endpoint: 0.0.0.0:8889
+  jaeger:
+    endpoint: jaeger-collector:14250
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      exporters: [prometheus]
+    traces:
+      receivers: [otlp]
+      exporters: [jaeger]
+```
+
+!!! tip
+    The Helm chart includes an optional OTel Collector deployment. Enable it with `otelCollector.enabled: true`.
+
+---
 
 ## :material-robot-outline: Operator Metrics
 
-In addition to the Locust-specific metrics, the operator itself exposes a set of metrics through Micronaut's metrics module. These metrics provide insights into the operator's health and performance, including JVM metrics, uptime, and more. You can find these metrics by scraping the operator's pod on the `/health` endpoint.
+The Go operator exposes controller-runtime metrics on port 8080:
+
+| Metric | Description |
+|--------|-------------|
+| `controller_runtime_reconcile_total` | Total reconciliations |
+| `controller_runtime_reconcile_errors_total` | Reconciliation errors |
+| `controller_runtime_reconcile_time_seconds` | Reconciliation duration |
+| `workqueue_depth` | Current queue depth |
+| `workqueue_adds_total` | Items added to queue |
+
+These metrics can be scraped by Prometheus using the standard `/metrics` endpoint on the operator pod.
+
+### Enabling Operator Metrics
+
+Enable metrics in your Helm values:
+
+```yaml
+metrics:
+  enabled: true
+```
+
+Then configure Prometheus to scrape the operator:
+
+```yaml
+scrape_configs:
+  - job_name: 'locust-operator'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+        action: keep
+        regex: locust-k8s-operator
+      - source_labels: [__address__]
+        action: replace
+        regex: ([^:]+)(?::\d+)?
+        replacement: $1:8080
+        target_label: __address__
+```
 
