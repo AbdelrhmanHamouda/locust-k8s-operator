@@ -22,23 +22,47 @@ import (
 )
 
 // BuildMasterCommand constructs the command arguments for the master node.
-// Template: "{seed} --master --master-port=5557 --expect-workers={N} --autostart --autoquit 60 --enable-rebalancing --only-summary"
-func BuildMasterCommand(commandSeed string, workerReplicas int32) []string {
-	cmd := fmt.Sprintf("%s --master --master-port=%d --expect-workers=%d --autostart --autoquit 60 --enable-rebalancing --only-summary",
-		commandSeed,
-		MasterPort,
-		workerReplicas,
+// Template: "{seed} [--otel] --master --master-port=5557 --expect-workers={N} --autostart --autoquit 60 --enable-rebalancing --only-summary"
+func BuildMasterCommand(commandSeed string, workerReplicas int32, otelEnabled bool) []string {
+	var cmdParts []string
+	cmdParts = append(cmdParts, commandSeed)
+
+	// Add --otel flag if enabled (must come before other flags)
+	if otelEnabled {
+		cmdParts = append(cmdParts, "--otel")
+	}
+
+	cmdParts = append(cmdParts,
+		"--master",
+		fmt.Sprintf("--master-port=%d", MasterPort),
+		fmt.Sprintf("--expect-workers=%d", workerReplicas),
+		"--autostart",
+		"--autoquit", "60",
+		"--enable-rebalancing",
+		"--only-summary",
 	)
+
+	cmd := strings.Join(cmdParts, " ")
 	return strings.Fields(cmd)
 }
 
 // BuildWorkerCommand constructs the command arguments for worker nodes.
-// Template: "{seed} --worker --master-port=5557 --master-host={master-name}"
-func BuildWorkerCommand(commandSeed string, masterHost string) []string {
-	cmd := fmt.Sprintf("%s --worker --master-port=%d --master-host=%s",
-		commandSeed,
-		MasterPort,
-		masterHost,
+// Template: "{seed} [--otel] --worker --master-port=5557 --master-host={master-name}"
+func BuildWorkerCommand(commandSeed string, masterHost string, otelEnabled bool) []string {
+	var cmdParts []string
+	cmdParts = append(cmdParts, commandSeed)
+
+	// Add --otel flag if enabled (must come before other flags)
+	if otelEnabled {
+		cmdParts = append(cmdParts, "--otel")
+	}
+
+	cmdParts = append(cmdParts,
+		"--worker",
+		fmt.Sprintf("--master-port=%d", MasterPort),
+		fmt.Sprintf("--master-host=%s", masterHost),
 	)
+
+	cmd := strings.Join(cmdParts, " ")
 	return strings.Fields(cmd)
 }

@@ -76,10 +76,16 @@ func BuildUserEnvVars(lt *locustv2.LocustTest) []corev1.EnvVar {
 	return result
 }
 
-// BuildEnvVars combines Kafka env vars with user-defined env vars.
+// BuildEnvVars combines Kafka env vars, OTel env vars, and user-defined env vars.
 func BuildEnvVars(lt *locustv2.LocustTest, cfg *config.OperatorConfig) []corev1.EnvVar {
 	// Start with Kafka env vars (existing behavior)
 	envVars := BuildKafkaEnvVars(cfg)
+
+	// Add OTel environment variables if enabled
+	otelEnvVars := BuildOTelEnvVars(lt)
+	if len(otelEnvVars) > 0 {
+		envVars = append(envVars, otelEnvVars...)
+	}
 
 	// Append user-defined variables
 	userVars := BuildUserEnvVars(lt)

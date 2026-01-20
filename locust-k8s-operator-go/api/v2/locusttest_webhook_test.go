@@ -619,3 +619,174 @@ func TestValidateCreate_WithInvalidVolumeName(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "uses reserved prefix")
 }
+
+// ============================================
+// OTel Validation Tests
+// ============================================
+
+func TestValidateOTelConfig_NoObservability(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Observability: nil,
+		},
+	}
+
+	err := validateOTelConfig(lt)
+	assert.NoError(t, err)
+}
+
+func TestValidateOTelConfig_NoOpenTelemetry(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Observability: &ObservabilityConfig{
+				OpenTelemetry: nil,
+			},
+		},
+	}
+
+	err := validateOTelConfig(lt)
+	assert.NoError(t, err)
+}
+
+func TestValidateOTelConfig_Disabled(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Observability: &ObservabilityConfig{
+				OpenTelemetry: &OpenTelemetryConfig{
+					Enabled: false,
+				},
+			},
+		},
+	}
+
+	err := validateOTelConfig(lt)
+	assert.NoError(t, err)
+}
+
+func TestValidateOTelConfig_EnabledWithEndpoint(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Observability: &ObservabilityConfig{
+				OpenTelemetry: &OpenTelemetryConfig{
+					Enabled:  true,
+					Endpoint: "otel-collector:4317",
+				},
+			},
+		},
+	}
+
+	err := validateOTelConfig(lt)
+	assert.NoError(t, err)
+}
+
+func TestValidateOTelConfig_EnabledNoEndpoint(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Observability: &ObservabilityConfig{
+				OpenTelemetry: &OpenTelemetryConfig{
+					Enabled:  true,
+					Endpoint: "", // Missing endpoint
+				},
+			},
+		},
+	}
+
+	err := validateOTelConfig(lt)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "endpoint is required when OpenTelemetry is enabled")
+}
+
+func TestValidateOTelConfig_ValidProtocolGRPC(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Observability: &ObservabilityConfig{
+				OpenTelemetry: &OpenTelemetryConfig{
+					Enabled:  true,
+					Endpoint: "otel-collector:4317",
+					Protocol: "grpc",
+				},
+			},
+		},
+	}
+
+	err := validateOTelConfig(lt)
+	assert.NoError(t, err)
+}
+
+func TestValidateOTelConfig_ValidProtocolHTTP(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Observability: &ObservabilityConfig{
+				OpenTelemetry: &OpenTelemetryConfig{
+					Enabled:  true,
+					Endpoint: "otel-collector:4318",
+					Protocol: "http/protobuf",
+				},
+			},
+		},
+	}
+
+	err := validateOTelConfig(lt)
+	assert.NoError(t, err)
+}
+
+func TestValidateCreate_WithOTelEnabled(t *testing.T) {
+	validator := &LocustTestCustomValidator{}
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Image: "locustio/locust:2.32.0",
+			Master: MasterSpec{
+				Command: "locust -f /lotest/src/locustfile.py",
+			},
+			Worker: WorkerSpec{
+				Command:  "locust -f /lotest/src/locustfile.py",
+				Replicas: 1,
+			},
+			Observability: &ObservabilityConfig{
+				OpenTelemetry: &OpenTelemetryConfig{
+					Enabled:  true,
+					Endpoint: "otel-collector:4317",
+				},
+			},
+		},
+	}
+
+	warnings, err := validator.ValidateCreate(context.Background(), lt)
+	require.NoError(t, err)
+	assert.Nil(t, warnings)
+}
+
+func TestValidateCreate_WithOTelEnabledNoEndpoint(t *testing.T) {
+	validator := &LocustTestCustomValidator{}
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Image: "locustio/locust:2.32.0",
+			Master: MasterSpec{
+				Command: "locust -f /lotest/src/locustfile.py",
+			},
+			Worker: WorkerSpec{
+				Command:  "locust -f /lotest/src/locustfile.py",
+				Replicas: 1,
+			},
+			Observability: &ObservabilityConfig{
+				OpenTelemetry: &OpenTelemetryConfig{
+					Enabled: true,
+					// No endpoint - should fail
+				},
+			},
+		},
+	}
+
+	_, err := validator.ValidateCreate(context.Background(), lt)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "endpoint is required")
+}

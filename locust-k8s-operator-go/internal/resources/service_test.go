@@ -131,3 +131,102 @@ func TestBuildMasterService_Selector(t *testing.T) {
 
 	assert.Equal(t, "my-test-master", svc.Spec.Selector[LabelPodName])
 }
+
+// ============================================
+// OTel Support Tests
+// ============================================
+
+func TestBuildMasterService_OTelDisabled_HasMetricsPort(t *testing.T) {
+	lt := newTestLocustTestForService()
+	// No OTel config = disabled
+
+	cfg := &config.OperatorConfig{
+		MetricsExporterPort: 9646,
+	}
+
+	svc := BuildMasterService(lt, cfg)
+
+	// Should have 3 ports: 5557, 5558, and metrics (9646)
+	assert.Len(t, svc.Spec.Ports, 3)
+
+	var metricsPortFound bool
+	for _, p := range svc.Spec.Ports {
+		if p.Name == MetricsPortName {
+			metricsPortFound = true
+			assert.Equal(t, int32(9646), p.Port)
+		}
+	}
+	assert.True(t, metricsPortFound, "Metrics port should be present when OTel is disabled")
+}
+
+func TestBuildMasterService_OTelEnabled_NoMetricsPort(t *testing.T) {
+	lt := newTestLocustTestForService()
+	lt.Spec.Observability = &locustv2.ObservabilityConfig{
+		OpenTelemetry: &locustv2.OpenTelemetryConfig{
+			Enabled:  true,
+			Endpoint: "otel-collector:4317",
+		},
+	}
+
+	cfg := &config.OperatorConfig{
+		MetricsExporterPort: 9646,
+	}
+
+	svc := BuildMasterService(lt, cfg)
+
+	// Should have 2 ports: 5557, 5558 (no metrics)
+	assert.Len(t, svc.Spec.Ports, 2)
+
+	for _, p := range svc.Spec.Ports {
+		assert.NotEqual(t, MetricsPortName, p.Name, "Metrics port should NOT be present when OTel is enabled")
+		assert.NotEqual(t, int32(9646), p.Port, "Metrics port 9646 should NOT be present when OTel is enabled")
+	}
+}
+
+func TestBuildMasterService_NoObservability_HasMetricsPort(t *testing.T) {
+	lt := newTestLocustTestForService()
+	lt.Spec.Observability = nil
+
+	cfg := &config.OperatorConfig{
+		MetricsExporterPort: 9646,
+	}
+
+	svc := BuildMasterService(lt, cfg)
+
+	// Should have 3 ports when observability is nil
+	assert.Len(t, svc.Spec.Ports, 3)
+
+	var metricsPortFound bool
+	for _, p := range svc.Spec.Ports {
+		if p.Name == MetricsPortName {
+			metricsPortFound = true
+		}
+	}
+	assert.True(t, metricsPortFound, "Metrics port should be present when observability is nil")
+}
+
+func TestBuildMasterService_OTelEnabledFalse_HasMetricsPort(t *testing.T) {
+	lt := newTestLocustTestForService()
+	lt.Spec.Observability = &locustv2.ObservabilityConfig{
+		OpenTelemetry: &locustv2.OpenTelemetryConfig{
+			Enabled: false,
+		},
+	}
+
+	cfg := &config.OperatorConfig{
+		MetricsExporterPort: 9646,
+	}
+
+	svc := BuildMasterService(lt, cfg)
+
+	// Should have 3 ports when OTel is explicitly disabled
+	assert.Len(t, svc.Spec.Ports, 3)
+
+	var metricsPortFound bool
+	for _, p := range svc.Spec.Ports {
+		if p.Name == MetricsPortName {
+			metricsPortFound = true
+		}
+	}
+	assert.True(t, metricsPortFound, "Metrics port should be present when OTel is explicitly disabled")
+}

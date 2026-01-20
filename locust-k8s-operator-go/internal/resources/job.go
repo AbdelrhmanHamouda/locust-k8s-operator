@@ -31,7 +31,8 @@ import (
 // BuildMasterJob creates a Kubernetes Job for the Locust master node.
 func BuildMasterJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig) *batchv1.Job {
 	nodeName := NodeName(lt.Name, Master)
-	command := BuildMasterCommand(lt.Spec.Master.Command, lt.Spec.Worker.Replicas)
+	otelEnabled := IsOTelEnabled(lt)
+	command := BuildMasterCommand(lt.Spec.Master.Command, lt.Spec.Worker.Replicas, otelEnabled)
 
 	return buildJob(lt, cfg, Master, nodeName, command)
 }
@@ -40,7 +41,8 @@ func BuildMasterJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig) *batchv
 func BuildWorkerJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig) *batchv1.Job {
 	nodeName := NodeName(lt.Name, Worker)
 	masterHost := NodeName(lt.Name, Master)
-	command := BuildWorkerCommand(lt.Spec.Worker.Command, masterHost)
+	otelEnabled := IsOTelEnabled(lt)
+	command := BuildWorkerCommand(lt.Spec.Worker.Command, masterHost, otelEnabled)
 
 	return buildJob(lt, cfg, Worker, nodeName, command)
 }
@@ -71,8 +73,8 @@ func buildJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, mode Operatio
 		buildLocustContainer(lt, nodeName, command, ports, cfg, mode),
 	}
 
-	// Master gets the metrics exporter sidecar
-	if mode == Master {
+	// Master gets the metrics exporter sidecar ONLY if OTel is disabled
+	if mode == Master && !IsOTelEnabled(lt) {
 		containers = append(containers, buildMetricsExporterContainer(cfg))
 	}
 

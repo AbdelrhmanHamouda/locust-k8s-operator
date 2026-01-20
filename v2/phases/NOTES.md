@@ -868,3 +868,84 @@ Implemented arbitrary volume mounting to Locust master and/or worker pods with t
 - Build compiles successfully
 
 ---
+
+# Phase 12: OpenTelemetry Support - Completion Notes
+
+**Date**: 2026-01-20
+
+Implemented native OpenTelemetry integration for Locust, replacing the Prometheus metrics exporter sidecar when OTel is enabled. This allows direct export of traces and metrics to an OTel collector.
+
+## Key Changes
+
+### 1. OTel Helper Functions (`internal/resources/otel.go`)
+- `IsOTelEnabled()` - Returns true if OpenTelemetry is enabled in the spec
+- `GetOTelConfig()` - Returns the OpenTelemetry configuration or nil
+- `BuildOTelEnvVars()` - Creates environment variables for OTel SDK configuration
+- Constants for OTel environment variable names and default values
+
+### 2. Command Builder Updates (`internal/resources/command.go`)
+- Updated `BuildMasterCommand()` to accept `otelEnabled` parameter
+- Updated `BuildWorkerCommand()` to accept `otelEnabled` parameter
+- Both functions add `--otel` flag when OTel is enabled (positioned before other flags)
+
+### 3. Environment Variable Integration (`internal/resources/env.go`)
+- Updated `BuildEnvVars()` to include OTel environment variables when enabled
+- OTel env vars are injected between Kafka env vars and user-defined vars
+
+### 4. Job Builder Updates (`internal/resources/job.go`)
+- Updated `BuildMasterJob()` and `BuildWorkerJob()` to pass `otelEnabled` to command builders
+- Conditional sidecar: metrics exporter sidecar is skipped when OTel is enabled
+
+### 5. Service Builder Updates (`internal/resources/service.go`)
+- Updated `BuildMasterService()` to conditionally exclude metrics port when OTel is enabled
+
+### 6. Validation Webhook Updates (`api/v2/locusttest_webhook.go`)
+- Added `validateOTelConfig()` - Validates endpoint is required when OTel is enabled
+- Integrated into `validateLocustTest()` for both create and update operations
+
+## Files Created
+| File | Purpose | LOC |
+|------|---------|-----|
+| `internal/resources/otel.go` | OTel helper functions | ~100 |
+| `internal/resources/otel_test.go` | OTel helper unit tests | ~270 |
+| `config/samples/locust_v2_locusttest_with_otel.yaml` | Sample CR with OTel config | ~40 |
+
+## Files Modified
+| File | Changes |
+|------|---------|
+| `internal/resources/command.go` | Added otelEnabled parameter, --otel flag support |
+| `internal/resources/command_test.go` | Added 6 OTel flag tests |
+| `internal/resources/env.go` | Integrated OTel env vars into BuildEnvVars() |
+| `internal/resources/job.go` | Conditional sidecar, otelEnabled to command builders |
+| `internal/resources/job_test.go` | Added 12 OTel tests |
+| `internal/resources/service.go` | Conditional metrics port exclusion |
+| `internal/resources/service_test.go` | Added 4 OTel tests |
+| `api/v2/locusttest_webhook.go` | Added validateOTelConfig() |
+| `api/v2/locusttest_webhook_test.go` | Added 10 OTel validation tests |
+
+## OTel Environment Variables
+
+| Variable | Source | Required |
+|----------|--------|----------|
+| `OTEL_TRACES_EXPORTER` | Fixed: "otlp" | Yes |
+| `OTEL_METRICS_EXPORTER` | Fixed: "otlp" | Yes |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `spec.observability.openTelemetry.endpoint` | Yes |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `spec.observability.openTelemetry.protocol` (default: "grpc") | Yes |
+| `OTEL_EXPORTER_OTLP_INSECURE` | `spec.observability.openTelemetry.insecure` | Only if true |
+| Custom vars | `spec.observability.openTelemetry.extraEnvVars` | No |
+
+## Behavioral Changes When OTel Enabled
+
+| Component | OTel Disabled | OTel Enabled |
+|-----------|---------------|--------------|
+| Master containers | 2 (locust + metrics-exporter) | 1 (locust only) |
+| Worker containers | 1 (locust only) | 1 (locust only) |
+| Service ports | 5557, 5558, metrics | 5557, 5558 (no metrics) |
+| Locust command | Standard flags | Includes --otel flag |
+| Environment | Kafka + user vars | Kafka + OTel + user vars |
+
+## Test Results
+- All unit tests pass (command: 10 tests, job: 45 tests, service: 9 tests, otel: 13 tests, webhook: 44 tests)
+- Build compiles successfully
+
+---

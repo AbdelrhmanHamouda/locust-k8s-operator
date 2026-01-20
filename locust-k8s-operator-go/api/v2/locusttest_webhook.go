@@ -169,7 +169,31 @@ func validateLocustTest(lt *LocustTest) (admission.Warnings, error) {
 		return nil, err
 	}
 
+	// Validate OTel configuration
+	if err := validateOTelConfig(lt); err != nil {
+		return nil, err
+	}
+
 	return nil, nil
+}
+
+// validateOTelConfig validates OpenTelemetry configuration.
+func validateOTelConfig(lt *LocustTest) error {
+	if lt.Spec.Observability == nil {
+		return nil
+	}
+
+	otelCfg := lt.Spec.Observability.OpenTelemetry
+	if otelCfg == nil {
+		return nil
+	}
+
+	// If OTel is enabled, endpoint is required
+	if otelCfg.Enabled && otelCfg.Endpoint == "" {
+		return fmt.Errorf("observability.openTelemetry.endpoint is required when OpenTelemetry is enabled")
+	}
+
+	return nil
 }
 
 // validateVolumes checks for volume name and mount path conflicts.
