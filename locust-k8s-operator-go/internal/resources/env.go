@@ -29,6 +29,11 @@ func BuildEnvFrom(lt *locustv2.LocustTest) []corev1.EnvFromSource {
 		return nil
 	}
 
+	// Return nil if there are no refs to process
+	if len(lt.Spec.Env.ConfigMapRefs) == 0 && len(lt.Spec.Env.SecretRefs) == 0 {
+		return nil
+	}
+
 	envFrom := make([]corev1.EnvFromSource, 0, len(lt.Spec.Env.ConfigMapRefs)+len(lt.Spec.Env.SecretRefs))
 
 	// Process ConfigMapRefs
