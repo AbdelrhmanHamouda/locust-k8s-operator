@@ -19,7 +19,7 @@ package resources
 import (
 	"testing"
 
-	locustv1 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v1"
+	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,19 +27,27 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func newTestLocustTest() *locustv1.LocustTest {
-	return &locustv1.LocustTest{
+const secretTLSCertsVolumeName = "secret-tls-certs"
+
+func newTestLocustTest() *locustv2.LocustTest {
+	return &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-test",
 			Namespace: "default",
 		},
-		Spec: locustv1.LocustTestSpec{
-			MasterCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerCommandSeed: "locust -f /lotest/src/test.py",
-			WorkerReplicas:    3,
-			Image:             "locustio/locust:latest",
-			ImagePullPolicy:   "Always",
-			ConfigMap:         "my-test-configmap",
+		Spec: locustv2.LocustTestSpec{
+			Image:           "locustio/locust:latest",
+			ImagePullPolicy: corev1.PullAlways,
+			Master: locustv2.MasterSpec{
+				Command: "locust -f /lotest/src/test.py",
+			},
+			Worker: locustv2.WorkerSpec{
+				Command:  "locust -f /lotest/src/test.py",
+				Replicas: 3,
+			},
+			TestFiles: &locustv2.TestFilesConfig{
+				ConfigMapRef: "my-test-configmap",
+			},
 		},
 	}
 }
@@ -133,7 +141,10 @@ func TestBuildMasterJob_WithTTL(t *testing.T) {
 
 func TestBuildMasterJob_WithImagePullSecrets(t *testing.T) {
 	lt := newTestLocustTest()
-	lt.Spec.ImagePullSecrets = []string{"my-registry-secret", "another-secret"}
+	lt.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{Name: "my-registry-secret"},
+		{Name: "another-secret"},
+	}
 	cfg := newTestConfig()
 
 	job := BuildMasterJob(lt, cfg)
@@ -146,7 +157,7 @@ func TestBuildMasterJob_WithImagePullSecrets(t *testing.T) {
 
 func TestBuildMasterJob_WithLibConfigMap(t *testing.T) {
 	lt := newTestLocustTest()
-	lt.Spec.LibConfigMap = "my-lib-configmap"
+	lt.Spec.TestFiles.LibConfigMapRef = "my-lib-configmap"
 	cfg := newTestConfig()
 
 	job := BuildMasterJob(lt, cfg)
@@ -213,13 +224,13 @@ func TestBuildWorkerJob(t *testing.T) {
 
 func TestBuildWorkerJob_Parallelism(t *testing.T) {
 	lt := newTestLocustTest()
-	lt.Spec.WorkerReplicas = 5
+	lt.Spec.Worker.Replicas = 5
 	cfg := newTestConfig()
 
 	job := BuildWorkerJob(lt, cfg)
 
 	require.NotNil(t, job.Spec.Parallelism)
-	assert.Equal(t, int32(5), *job.Spec.Parallelism, "Worker parallelism should equal WorkerReplicas")
+	assert.Equal(t, int32(5), *job.Spec.Parallelism, "Worker parallelism should equal Worker.Replicas")
 }
 
 func TestBuildWorkerJob_Containers(t *testing.T) {
@@ -267,10 +278,22 @@ func TestBuildResourceRequirements_MetricsExporter(t *testing.T) {
 
 func TestBuildAffinity_Disabled(t *testing.T) {
 	lt := newTestLocustTest()
-	lt.Spec.Affinity = &locustv1.LocustTestAffinity{
-		NodeAffinity: &locustv1.LocustTestNodeAffinity{
-			RequiredDuringSchedulingIgnoredDuringExecution: map[string]string{
-				"node-type": "performance",
+	lt.Spec.Scheduling = &locustv2.SchedulingConfig{
+		Affinity: &corev1.Affinity{
+			NodeAffinity: &corev1.NodeAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+					NodeSelectorTerms: []corev1.NodeSelectorTerm{
+						{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      "node-type",
+									Operator: corev1.NodeSelectorOpIn,
+									Values:   []string{"performance"},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -284,10 +307,22 @@ func TestBuildAffinity_Disabled(t *testing.T) {
 
 func TestBuildAffinity_Enabled(t *testing.T) {
 	lt := newTestLocustTest()
-	lt.Spec.Affinity = &locustv1.LocustTestAffinity{
-		NodeAffinity: &locustv1.LocustTestNodeAffinity{
-			RequiredDuringSchedulingIgnoredDuringExecution: map[string]string{
-				"node-type": "performance",
+	lt.Spec.Scheduling = &locustv2.SchedulingConfig{
+		Affinity: &corev1.Affinity{
+			NodeAffinity: &corev1.NodeAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+					NodeSelectorTerms: []corev1.NodeSelectorTerm{
+						{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      "node-type",
+									Operator: corev1.NodeSelectorOpIn,
+									Values:   []string{"performance"},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -310,12 +345,14 @@ func TestBuildAffinity_Enabled(t *testing.T) {
 
 func TestBuildTolerations_Disabled(t *testing.T) {
 	lt := newTestLocustTest()
-	lt.Spec.Tolerations = []locustv1.LocustTestToleration{
-		{
-			Key:      "dedicated",
-			Operator: "Equal",
-			Value:    "performance",
-			Effect:   "NoSchedule",
+	lt.Spec.Scheduling = &locustv2.SchedulingConfig{
+		Tolerations: []corev1.Toleration{
+			{
+				Key:      "dedicated",
+				Operator: corev1.TolerationOpEqual,
+				Value:    "performance",
+				Effect:   corev1.TaintEffectNoSchedule,
+			},
 		},
 	}
 	cfg := newTestConfig()
@@ -328,12 +365,14 @@ func TestBuildTolerations_Disabled(t *testing.T) {
 
 func TestBuildTolerations_Enabled(t *testing.T) {
 	lt := newTestLocustTest()
-	lt.Spec.Tolerations = []locustv1.LocustTestToleration{
-		{
-			Key:      "dedicated",
-			Operator: "Equal",
-			Value:    "performance",
-			Effect:   "NoSchedule",
+	lt.Spec.Scheduling = &locustv2.SchedulingConfig{
+		Tolerations: []corev1.Toleration{
+			{
+				Key:      "dedicated",
+				Operator: corev1.TolerationOpEqual,
+				Value:    "performance",
+				Effect:   corev1.TaintEffectNoSchedule,
+			},
 		},
 	}
 	cfg := newTestConfig()
@@ -350,11 +389,13 @@ func TestBuildTolerations_Enabled(t *testing.T) {
 
 func TestBuildTolerations_ExistsOperator(t *testing.T) {
 	lt := newTestLocustTest()
-	lt.Spec.Tolerations = []locustv1.LocustTestToleration{
-		{
-			Key:      "node.kubernetes.io/not-ready",
-			Operator: "Exists",
-			Effect:   "NoExecute",
+	lt.Spec.Scheduling = &locustv2.SchedulingConfig{
+		Tolerations: []corev1.Toleration{
+			{
+				Key:      "node.kubernetes.io/not-ready",
+				Operator: corev1.TolerationOpExists,
+				Effect:   corev1.TaintEffectNoExecute,
+			},
 		},
 	}
 	cfg := newTestConfig()
@@ -380,7 +421,7 @@ func TestBuildMasterJob_EmptyImagePullPolicy(t *testing.T) {
 
 func TestBuildMasterJob_NoConfigMap(t *testing.T) {
 	lt := newTestLocustTest()
-	lt.Spec.ConfigMap = ""
+	lt.Spec.TestFiles = nil // No test files config
 	cfg := newTestConfig()
 
 	job := BuildMasterJob(lt, cfg)
@@ -412,11 +453,9 @@ func TestBuildMasterJob_KafkaEnvVars(t *testing.T) {
 	assert.Equal(t, "secret", envMap["KAFKA_PASSWORD"])
 }
 
-func TestBuildAffinity_NilNodeAffinity(t *testing.T) {
+func TestBuildAffinity_NilScheduling(t *testing.T) {
 	lt := newTestLocustTest()
-	lt.Spec.Affinity = &locustv1.LocustTestAffinity{
-		NodeAffinity: nil,
-	}
+	lt.Spec.Scheduling = nil
 	cfg := newTestConfig()
 	cfg.EnableAffinityCRInjection = true
 
@@ -425,12 +464,10 @@ func TestBuildAffinity_NilNodeAffinity(t *testing.T) {
 	assert.Nil(t, job.Spec.Template.Spec.Affinity)
 }
 
-func TestBuildAffinity_EmptyRequirements(t *testing.T) {
+func TestBuildAffinity_NilAffinity(t *testing.T) {
 	lt := newTestLocustTest()
-	lt.Spec.Affinity = &locustv1.LocustTestAffinity{
-		NodeAffinity: &locustv1.LocustTestNodeAffinity{
-			RequiredDuringSchedulingIgnoredDuringExecution: map[string]string{},
-		},
+	lt.Spec.Scheduling = &locustv2.SchedulingConfig{
+		Affinity: nil,
 	}
 	cfg := newTestConfig()
 	cfg.EnableAffinityCRInjection = true
@@ -458,4 +495,167 @@ func TestBuildMasterJob_BackoffLimit(t *testing.T) {
 
 	require.NotNil(t, job.Spec.BackoffLimit)
 	assert.Equal(t, int32(0), *job.Spec.BackoffLimit)
+}
+
+func TestBuildMasterJob_WithEnvConfigMapRef(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Env = &locustv2.EnvConfig{
+		ConfigMapRefs: []locustv2.ConfigMapEnvSource{
+			{Name: "app-config", Prefix: "APP_"},
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+	require.Len(t, container.EnvFrom, 1)
+	assert.NotNil(t, container.EnvFrom[0].ConfigMapRef)
+	assert.Equal(t, "app-config", container.EnvFrom[0].ConfigMapRef.Name)
+	assert.Equal(t, "APP_", container.EnvFrom[0].Prefix)
+}
+
+func TestBuildMasterJob_WithEnvSecretRef(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Env = &locustv2.EnvConfig{
+		SecretRefs: []locustv2.SecretEnvSource{
+			{Name: "api-credentials"},
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+	require.Len(t, container.EnvFrom, 1)
+	assert.NotNil(t, container.EnvFrom[0].SecretRef)
+	assert.Equal(t, "api-credentials", container.EnvFrom[0].SecretRef.Name)
+}
+
+func TestBuildMasterJob_WithEnvVariables(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Env = &locustv2.EnvConfig{
+		Variables: []corev1.EnvVar{
+			{Name: "TARGET_HOST", Value: "https://example.com"},
+			{Name: "LOG_LEVEL", Value: "DEBUG"},
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+	envMap := make(map[string]string)
+	for _, env := range container.Env {
+		envMap[env.Name] = env.Value
+	}
+
+	// User vars should be present
+	assert.Equal(t, "https://example.com", envMap["TARGET_HOST"])
+	assert.Equal(t, "DEBUG", envMap["LOG_LEVEL"])
+
+	// Kafka vars should still be present
+	assert.Contains(t, envMap, "KAFKA_BOOTSTRAP_SERVERS")
+}
+
+func TestBuildMasterJob_WithSecretMount(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Env = &locustv2.EnvConfig{
+		SecretMounts: []locustv2.SecretMount{
+			{Name: "tls-certs", MountPath: "/etc/locust/certs", ReadOnly: true},
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	// Check volume exists
+	var secretVolumeFound bool
+	for _, v := range job.Spec.Template.Spec.Volumes {
+		if v.Name == secretTLSCertsVolumeName {
+			secretVolumeFound = true
+			assert.NotNil(t, v.Secret)
+			assert.Equal(t, "tls-certs", v.Secret.SecretName)
+		}
+	}
+	assert.True(t, secretVolumeFound, "Secret volume should exist")
+
+	// Check volume mount exists
+	container := job.Spec.Template.Spec.Containers[0]
+	var secretMountFound bool
+	for _, m := range container.VolumeMounts {
+		if m.Name == secretTLSCertsVolumeName {
+			secretMountFound = true
+			assert.Equal(t, "/etc/locust/certs", m.MountPath)
+			assert.True(t, m.ReadOnly)
+		}
+	}
+	assert.True(t, secretMountFound, "Secret volume mount should exist")
+}
+
+func TestBuildMasterJob_EnvCombinesKafkaAndUser(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Env = &locustv2.EnvConfig{
+		Variables: []corev1.EnvVar{
+			{Name: "USER_VAR", Value: "user-value"},
+		},
+	}
+	cfg := newTestConfig()
+	cfg.KafkaBootstrapServers = "kafka:9092"
+
+	job := BuildMasterJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+
+	// Should have 7 Kafka vars + 1 user var = 8 total
+	assert.Len(t, container.Env, 8)
+
+	// Kafka vars come first
+	assert.Equal(t, "KAFKA_BOOTSTRAP_SERVERS", container.Env[0].Name)
+	assert.Equal(t, "kafka:9092", container.Env[0].Value)
+
+	// User var comes last
+	assert.Equal(t, "USER_VAR", container.Env[7].Name)
+	assert.Equal(t, "user-value", container.Env[7].Value)
+}
+
+func TestBuildWorkerJob_WithEnvConfig(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Env = &locustv2.EnvConfig{
+		ConfigMapRefs: []locustv2.ConfigMapEnvSource{
+			{Name: "app-config"},
+		},
+		Variables: []corev1.EnvVar{
+			{Name: "TARGET_HOST", Value: "https://example.com"},
+		},
+		SecretMounts: []locustv2.SecretMount{
+			{Name: "tls-certs", MountPath: "/etc/certs"},
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildWorkerJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+
+	// EnvFrom should have ConfigMapRef
+	require.Len(t, container.EnvFrom, 1)
+	assert.Equal(t, "app-config", container.EnvFrom[0].ConfigMapRef.Name)
+
+	// Env should have Kafka + user vars
+	envMap := make(map[string]string)
+	for _, env := range container.Env {
+		envMap[env.Name] = env.Value
+	}
+	assert.Equal(t, "https://example.com", envMap["TARGET_HOST"])
+	assert.Contains(t, envMap, "KAFKA_BOOTSTRAP_SERVERS")
+
+	// Secret mount should exist
+	var secretMountFound bool
+	for _, m := range container.VolumeMounts {
+		if m.Name == secretTLSCertsVolumeName {
+			secretMountFound = true
+		}
+	}
+	assert.True(t, secretMountFound)
 }

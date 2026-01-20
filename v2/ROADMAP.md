@@ -374,7 +374,7 @@ Define v2 API with grouped configuration and new feature fields.
 
 ### Tasks
 
-- [ ] **7.1** Create v2 API scaffold
+- [x] **7.1** Create v2 API scaffold
   ```bash
   operator-sdk create api \
     --group locust \
@@ -383,26 +383,26 @@ Define v2 API with grouped configuration and new feature fields.
     --resource \
     --controller=false
   ```
-- [ ] **7.2** Define grouped specs in `api/v2/locusttest_types.go`
+- [x] **7.2** Define grouped specs in `api/v2/locusttest_types.go`
   - `MasterSpec` (command, resources, labels, annotations, autostart, autoquit, extraArgs)
   - `WorkerSpec` (command, replicas, resources, labels, annotations, extraArgs)
   - `TestFilesConfig` (configMapRef, libConfigMapRef, srcMountPath, libMountPath)
   - `SchedulingConfig` (affinity, tolerations, nodeSelector)
-- [ ] **7.3** Define new feature types
+- [x] **7.3** Define new feature types
   - `EnvConfig` (configMapRefs, secretRefs, variables, secretMounts)
   - `VolumeMount` with target field (master/worker/both)
   - `ObservabilityConfig` with `OpenTelemetryConfig`
-- [ ] **7.4** Define `LocustTestStatus` with phase and conditions
-- [ ] **7.5** Add kubebuilder markers
+- [x] **7.4** Define `LocustTestStatus` with phase and conditions
+- [x] **7.5** Add kubebuilder markers
   - `+kubebuilder:storageversion` on v2
   - Printer columns for phase, workers, age
   - `+kubebuilder:subresource:status`
-- [ ] **7.6** Generate manifests: `make manifests`
+- [x] **7.6** Generate manifests: `make manifests`
 
 ### Acceptance Criteria
-- [ ] v2 CRD generated with all new fields
-- [ ] v2 marked as storage version
-- [ ] Sample v2 CR validates against schema
+- [x] v2 CRD generated with all new fields
+- [x] v2 marked as storage version
+- [x] Sample v2 CR validates against schema
 
 ### Files to Create
 - `api/v2/locusttest_types.go`
@@ -422,12 +422,12 @@ Implement bidirectional conversion between v1 and v2 APIs.
 
 ### Tasks
 
-- [ ] **8.1** Mark v2 as Hub: `api/v2/locusttest_conversion.go`
+- [x] **8.1** Mark v2 as Hub: `api/v2/locusttest_conversion.go`
   - Implement `Hub()` method
-- [ ] **8.2** Implement v1 Spoke conversion: `api/v1/locusttest_conversion.go`
+- [x] **8.2** Implement v1 Spoke conversion: `api/v1/locusttest_conversion.go`
   - `ConvertTo()` - v1 → v2
   - `ConvertFrom()` - v2 → v1 (lossy for new fields)
-- [ ] **8.3** Create webhook scaffold
+- [x] **8.3** Create webhook scaffold
   ```bash
   operator-sdk create webhook \
     --group locust \
@@ -435,15 +435,15 @@ Implement bidirectional conversion between v1 and v2 APIs.
     --kind LocustTest \
     --conversion
   ```
-- [ ] **8.4** Configure webhook in `config/webhook/`
-- [ ] **8.5** Add deprecation warning marker to v1
-- [ ] **8.6** Write conversion tests
+- [x] **8.4** Configure webhook in `config/webhook/`
+- [x] **8.5** Add deprecation warning marker to v1
+- [x] **8.6** Write conversion tests
 
 ### Acceptance Criteria
-- [ ] v1 CR can be read as v2
-- [ ] v2 CR can be stored and read as v1 (with data loss warning)
-- [ ] Conversion tests pass
-- [ ] Deprecation warning appears when using v1
+- [x] v1 CR can be read as v2
+- [x] v2 CR can be stored and read as v1 (with data loss warning)
+- [x] Conversion tests pass
+- [x] Deprecation warning appears when using v1
 
 ### Files to Create
 - `api/v1/locusttest_conversion.go`
@@ -464,26 +464,26 @@ Implement status tracking with phase and conditions.
 
 ### Tasks
 
-- [ ] **9.1** Define condition constants in `api/v2/conditions.go`
+- [x] **9.1** Define condition constants in `api/v2/conditions.go`
   - `ConditionTypeReady`, `ConditionTypeWorkersConnected`, `ConditionTypeTestCompleted`
   - Reason constants
   - Phase constants (Pending, Running, Succeeded, Failed)
-- [ ] **9.2** Create status helpers in `internal/controller/status.go`
+- [x] **9.2** Create status helpers in `internal/controller/status.go`
   - `updatePhase()`
   - `setCondition()`
   - `setReady()`
-- [ ] **9.3** Update reconciler to track status
+- [x] **9.3** Update reconciler to track status
   - Set phase to Pending on create
   - Set phase to Running when Jobs start
   - Update conditions based on Job status
-- [ ] **9.4** Add Job status watching
-- [ ] **9.5** Write status update tests
+- [x] **9.4** Add Job status watching
+- [x] **9.5** Write status update tests
 
 ### Acceptance Criteria
-- [ ] `kubectl get locusttests` shows Phase column
-- [ ] Status reflects actual Job states
-- [ ] Conditions follow K8s conventions
-- [ ] Status updates don't trigger reconcile loops
+- [x] `kubectl get locusttests` shows Phase column
+- [x] Status reflects actual Job states
+- [x] Conditions follow K8s conventions
+- [x] Status updates don't trigger reconcile loops
 
 ### Files to Create
 - `api/v2/conditions.go`
@@ -495,33 +495,38 @@ Implement status tracking with phase and conditions.
 
 **Effort:** 1 day  
 **Priority:** P1 - Must Have  
-**Requirements:** §5.1.2 Environment Injection (Issue #149)
+**Requirements:** §5.1.2 Environment Injection (Issue #149)  
+**Status:** ✅ Complete (2026-01-20)
 
 ### Objective
 Enable ConfigMap and Secret injection into Locust pods.
 
 ### Tasks
 
-- [ ] **10.1** Update resource builders to handle `env` config
+- [x] **10.1** Update resource builders to handle `env` config
   - Process `configMapRefs` → `envFrom` with ConfigMapRef
   - Process `secretRefs` → `envFrom` with SecretRef
   - Process `variables` → individual `env` entries
-- [ ] **10.2** Implement secret file mounting
+- [x] **10.2** Implement secret file mounting
   - Process `secretMounts` → Volume + VolumeMount
-- [ ] **10.3** Add validation webhook
+- [x] **10.3** Add validation webhook
   - Ensure no conflicts with operator-managed paths
-- [ ] **10.4** Write tests for env injection
+- [x] **10.4** Write tests for env injection
 
 ### Acceptance Criteria
-- [ ] ConfigMap values available as env vars in pods
-- [ ] Secret values available as env vars in pods
-- [ ] Secrets mountable as files
-- [ ] Path conflicts rejected at validation
+- [x] ConfigMap values available as env vars in pods
+- [x] Secret values available as env vars in pods
+- [x] Secrets mountable as files
+- [x] Path conflicts rejected at validation
 
-### Files to Modify
-- `internal/resources/job.go`
-- `internal/resources/env.go` (new)
-- `api/v2/locusttest_webhook.go`
+### Files Created/Modified
+- `internal/resources/env.go` (new - 120 LOC)
+- `internal/resources/env_test.go` (new - 430 LOC)
+- `api/v2/locusttest_webhook.go` (new - 140 LOC)
+- `api/v2/locusttest_webhook_test.go` (new - 340 LOC)
+- `internal/resources/job.go` (modified)
+- `internal/resources/job_test.go` (modified - +7 tests)
+- `config/samples/locust_v2_locusttest_with_env.yaml` (new)
 
 ---
 
@@ -645,7 +650,7 @@ Update GitHub Actions for Go build and test.
   - Update test commands
   - Add coverage reporting
 - [ ] **14.2** Update Docker build
-  - Multi-stage Go build or `ko`
+  - Use `ko`
   - Multi-arch support (amd64, arm64)
 - [ ] **14.3** Update release workflow
   - GoReleaser or `ko` for releases

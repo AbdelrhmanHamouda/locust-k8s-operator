@@ -27,7 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	locustv1 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v1"
+	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 )
 
 var _ = Describe("LocustTest Controller Integration", func() {
@@ -60,18 +60,24 @@ var _ = Describe("LocustTest Controller Integration", func() {
 	})
 
 	// Helper to create a standard test LocustTest
-	createLocustTest := func(name string) *locustv1.LocustTest {
-		return &locustv1.LocustTest{
+	createLocustTest := func(name string) *locustv2.LocustTest {
+		return &locustv2.LocustTest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
 				Namespace: testNamespace,
 			},
-			Spec: locustv1.LocustTestSpec{
-				MasterCommandSeed: "locust -f /lotest/src/test.py",
-				WorkerCommandSeed: "locust -f /lotest/src/test.py",
-				WorkerReplicas:    3,
-				Image:             "locustio/locust:latest",
-				ConfigMap:         "test-configmap",
+			Spec: locustv2.LocustTestSpec{
+				Image: "locustio/locust:latest",
+				Master: locustv2.MasterSpec{
+					Command: "locust -f /lotest/src/test.py",
+				},
+				Worker: locustv2.WorkerSpec{
+					Command:  "locust -f /lotest/src/test.py",
+					Replicas: 3,
+				},
+				TestFiles: &locustv2.TestFilesConfig{
+					ConfigMapRef: "test-configmap",
+				},
 			},
 		}
 	}
@@ -144,7 +150,7 @@ var _ = Describe("LocustTest Controller Integration", func() {
 			Expect(k8sClient.Create(ctx, lt)).To(Succeed())
 
 			// Get the created LocustTest to get its UID
-			createdLT := &locustv1.LocustTest{}
+			createdLT := &locustv2.LocustTest{}
 			Eventually(func() error {
 				return k8sClient.Get(ctx, types.NamespacedName{
 					Name: "owner-ref-test", Namespace: testNamespace,
@@ -220,13 +226,11 @@ var _ = Describe("LocustTest Controller Integration", func() {
 	Describe("Create Flow - Edge Cases", func() {
 		It("should handle LocustTest with custom labels", func() {
 			lt := createLocustTest("custom-labels-test")
-			lt.Spec.Labels = &locustv1.PodLabels{
-				Master: map[string]string{
-					"custom-label": "master-value",
-				},
-				Worker: map[string]string{
-					"custom-label": "worker-value",
-				},
+			lt.Spec.Master.Labels = map[string]string{
+				"custom-label": "master-value",
+			}
+			lt.Spec.Worker.Labels = map[string]string{
+				"custom-label": "worker-value",
 			}
 			Expect(k8sClient.Create(ctx, lt)).To(Succeed())
 
@@ -253,13 +257,11 @@ var _ = Describe("LocustTest Controller Integration", func() {
 
 		It("should handle LocustTest with custom annotations", func() {
 			lt := createLocustTest("custom-annotations-test")
-			lt.Spec.Annotations = &locustv1.PodAnnotations{
-				Master: map[string]string{
-					"custom-annotation": "master-value",
-				},
-				Worker: map[string]string{
-					"custom-annotation": "worker-value",
-				},
+			lt.Spec.Master.Annotations = map[string]string{
+				"custom-annotation": "master-value",
+			}
+			lt.Spec.Worker.Annotations = map[string]string{
+				"custom-annotation": "worker-value",
 			}
 			Expect(k8sClient.Create(ctx, lt)).To(Succeed())
 
@@ -286,10 +288,22 @@ var _ = Describe("LocustTest Controller Integration", func() {
 
 		It("should handle LocustTest with affinity configuration", func() {
 			lt := createLocustTest("affinity-test")
-			lt.Spec.Affinity = &locustv1.LocustTestAffinity{
-				NodeAffinity: &locustv1.LocustTestNodeAffinity{
-					RequiredDuringSchedulingIgnoredDuringExecution: map[string]string{
-						"node-type": "performance",
+			lt.Spec.Scheduling = &locustv2.SchedulingConfig{
+				Affinity: &corev1.Affinity{
+					NodeAffinity: &corev1.NodeAffinity{
+						RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+							NodeSelectorTerms: []corev1.NodeSelectorTerm{
+								{
+									MatchExpressions: []corev1.NodeSelectorRequirement{
+										{
+											Key:      "node-type",
+											Operator: corev1.NodeSelectorOpIn,
+											Values:   []string{"performance"},
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			}
@@ -310,12 +324,14 @@ var _ = Describe("LocustTest Controller Integration", func() {
 
 		It("should handle LocustTest with tolerations", func() {
 			lt := createLocustTest("tolerations-test")
-			lt.Spec.Tolerations = []locustv1.LocustTestToleration{
-				{
-					Key:      "dedicated",
-					Operator: "Equal",
-					Value:    "performance",
-					Effect:   "NoSchedule",
+			lt.Spec.Scheduling = &locustv2.SchedulingConfig{
+				Tolerations: []corev1.Toleration{
+					{
+						Key:      "dedicated",
+						Operator: corev1.TolerationOpEqual,
+						Value:    "performance",
+						Effect:   corev1.TaintEffectNoSchedule,
+					},
 				},
 			}
 			Expect(k8sClient.Create(ctx, lt)).To(Succeed())
@@ -333,7 +349,7 @@ var _ = Describe("LocustTest Controller Integration", func() {
 
 		It("should handle LocustTest with single worker", func() {
 			lt := createLocustTest("single-worker-test")
-			lt.Spec.WorkerReplicas = 1
+			lt.Spec.Worker.Replicas = 1
 			Expect(k8sClient.Create(ctx, lt)).To(Succeed())
 
 			workerJob := &batchv1.Job{}
@@ -348,7 +364,7 @@ var _ = Describe("LocustTest Controller Integration", func() {
 
 		It("should handle LocustTest with maximum workers", func() {
 			lt := createLocustTest("max-workers-test")
-			lt.Spec.WorkerReplicas = 500 // Maximum allowed
+			lt.Spec.Worker.Replicas = 500 // Maximum allowed
 			Expect(k8sClient.Create(ctx, lt)).To(Succeed())
 
 			workerJob := &batchv1.Job{}
@@ -363,7 +379,10 @@ var _ = Describe("LocustTest Controller Integration", func() {
 
 		It("should handle LocustTest with imagePullSecrets", func() {
 			lt := createLocustTest("pull-secrets-test")
-			lt.Spec.ImagePullSecrets = []string{"my-registry-secret", "another-secret"}
+			lt.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+				{Name: "my-registry-secret"},
+				{Name: "another-secret"},
+			}
 			Expect(k8sClient.Create(ctx, lt)).To(Succeed())
 
 			masterJob := &batchv1.Job{}
@@ -397,12 +416,12 @@ var _ = Describe("LocustTest Controller Integration", func() {
 			originalResourceVersion := masterJob.ResourceVersion
 
 			// Update the CR spec
-			updatedLT := &locustv1.LocustTest{}
+			updatedLT := &locustv2.LocustTest{}
 			Expect(k8sClient.Get(ctx, types.NamespacedName{
 				Name: "update-noop-test", Namespace: testNamespace,
 			}, updatedLT)).To(Succeed())
 
-			updatedLT.Spec.WorkerReplicas = 10 // Change worker count
+			updatedLT.Spec.Worker.Replicas = 10 // Change worker count
 			Expect(k8sClient.Update(ctx, updatedLT)).To(Succeed())
 
 			// Wait a bit for potential reconciliation
@@ -428,7 +447,7 @@ var _ = Describe("LocustTest Controller Integration", func() {
 
 		It("should NOT modify worker Job when workerReplicas is changed", func() {
 			lt := createLocustTest("worker-update-noop-test")
-			lt.Spec.WorkerReplicas = 5
+			lt.Spec.Worker.Replicas = 5
 			Expect(k8sClient.Create(ctx, lt)).To(Succeed())
 
 			// Wait for worker Job
@@ -442,14 +461,28 @@ var _ = Describe("LocustTest Controller Integration", func() {
 			Expect(*workerJob.Spec.Parallelism).To(Equal(int32(5)))
 			originalUID := workerJob.UID
 
-			// Update workerReplicas
-			updatedLT := &locustv1.LocustTest{}
-			Expect(k8sClient.Get(ctx, types.NamespacedName{
-				Name: "worker-update-noop-test", Namespace: testNamespace,
-			}, updatedLT)).To(Succeed())
+			// Wait for status to be initialized
+			Eventually(func() string {
+				updatedLT := &locustv2.LocustTest{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name: "worker-update-noop-test", Namespace: testNamespace,
+				}, updatedLT); err != nil {
+					return ""
+				}
+				return updatedLT.Status.Phase
+			}, timeout, interval).Should(Equal(locustv2.PhaseRunning))
 
-			updatedLT.Spec.WorkerReplicas = 20
-			Expect(k8sClient.Update(ctx, updatedLT)).To(Succeed())
+			// Update workerReplicas using Eventually to handle concurrent status updates
+			Eventually(func() error {
+				updatedLT := &locustv2.LocustTest{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name: "worker-update-noop-test", Namespace: testNamespace,
+				}, updatedLT); err != nil {
+					return err
+				}
+				updatedLT.Spec.Worker.Replicas = 20
+				return k8sClient.Update(ctx, updatedLT)
+			}, timeout, interval).Should(Succeed())
 
 			// Worker Job should remain unchanged
 			Consistently(func() int32 {
@@ -486,14 +519,28 @@ var _ = Describe("LocustTest Controller Integration", func() {
 
 			originalUID := masterJob.UID
 
-			// Update masterCommandSeed
-			updatedLT := &locustv1.LocustTest{}
-			Expect(k8sClient.Get(ctx, types.NamespacedName{
-				Name: "master-cmd-update-noop-test", Namespace: testNamespace,
-			}, updatedLT)).To(Succeed())
+			// Wait for status to be initialized
+			Eventually(func() string {
+				updatedLT := &locustv2.LocustTest{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name: "master-cmd-update-noop-test", Namespace: testNamespace,
+				}, updatedLT); err != nil {
+					return ""
+				}
+				return updatedLT.Status.Phase
+			}, timeout, interval).Should(Equal(locustv2.PhaseRunning))
 
-			updatedLT.Spec.MasterCommandSeed = "locust -f /lotest/src/new_test.py"
-			Expect(k8sClient.Update(ctx, updatedLT)).To(Succeed())
+			// Update masterCommand using Eventually to handle concurrent status updates
+			Eventually(func() error {
+				updatedLT := &locustv2.LocustTest{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name: "master-cmd-update-noop-test", Namespace: testNamespace,
+				}, updatedLT); err != nil {
+					return err
+				}
+				updatedLT.Spec.Master.Command = "locust -f /lotest/src/new_test.py"
+				return k8sClient.Update(ctx, updatedLT)
+			}, timeout, interval).Should(Succeed())
 
 			// Master Job UID should remain unchanged
 			Consistently(func() types.UID {
@@ -532,14 +579,14 @@ var _ = Describe("LocustTest Controller Integration", func() {
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, types.NamespacedName{
 					Name: "delete-cr-test", Namespace: testNamespace,
-				}, &locustv1.LocustTest{})
+				}, &locustv2.LocustTest{})
 				return err != nil // Should be NotFound
 			}, timeout, interval).Should(BeTrue())
 		})
 
 		It("should handle deletion of non-existent LocustTest gracefully", func() {
 			// This tests that the reconciler handles NotFound errors
-			lt := &locustv1.LocustTest{
+			lt := &locustv2.LocustTest{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nonexistent-test",
 					Namespace: testNamespace,
@@ -559,24 +606,40 @@ var _ = Describe("LocustTest Controller Integration", func() {
 			lt := createLocustTest("idempotent-test")
 			Expect(k8sClient.Create(ctx, lt)).To(Succeed())
 
-			// Wait for resources
+			// Wait for resources and status to be updated
 			Eventually(func() error {
 				return k8sClient.Get(ctx, types.NamespacedName{
 					Name: "idempotent-test-master", Namespace: testNamespace,
 				}, &batchv1.Job{})
 			}, timeout, interval).Should(Succeed())
 
-			// Manually trigger another reconciliation by adding an annotation
-			updatedLT := &locustv1.LocustTest{}
-			Expect(k8sClient.Get(ctx, types.NamespacedName{
-				Name: "idempotent-test", Namespace: testNamespace,
-			}, updatedLT)).To(Succeed())
+			// Wait for status to be initialized
+			Eventually(func() string {
+				updatedLT := &locustv2.LocustTest{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name: "idempotent-test", Namespace: testNamespace,
+				}, updatedLT); err != nil {
+					return ""
+				}
+				return updatedLT.Status.Phase
+			}, timeout, interval).Should(Equal(locustv2.PhaseRunning))
 
-			if updatedLT.Annotations == nil {
-				updatedLT.Annotations = make(map[string]string)
-			}
-			updatedLT.Annotations["test-trigger"] = "reconcile"
-			Expect(k8sClient.Update(ctx, updatedLT)).To(Succeed())
+			// Manually trigger another reconciliation by adding an annotation
+			// Use Eventually to handle concurrent status updates
+			Eventually(func() error {
+				updatedLT := &locustv2.LocustTest{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name: "idempotent-test", Namespace: testNamespace,
+				}, updatedLT); err != nil {
+					return err
+				}
+
+				if updatedLT.Annotations == nil {
+					updatedLT.Annotations = make(map[string]string)
+				}
+				updatedLT.Annotations["test-trigger"] = "reconcile"
+				return k8sClient.Update(ctx, updatedLT)
+			}, timeout, interval).Should(Succeed())
 
 			// Should not fail - resources already exist
 			Consistently(func() error {
@@ -632,7 +695,7 @@ var _ = Describe("LocustTest Controller Integration", func() {
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, types.NamespacedName{
 					Name: "rapid-cycle-test", Namespace: testNamespace,
-				}, &locustv1.LocustTest{})
+				}, &locustv2.LocustTest{})
 				return err != nil
 			}, timeout, interval).Should(BeTrue())
 

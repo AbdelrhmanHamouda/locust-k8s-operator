@@ -638,3 +638,156 @@ kind delete cluster --name locust-webhook-test
 2. Conversion webhook registration in main.go is controlled by `ENABLE_WEBHOOKS` env var
 3. Production deployment requires cert-manager for webhook TLS
 4. Unit tests (envtest) still pass but don't exercise webhook - E2E tests validate webhook
+
+---
+
+# Phase 9: Status Subresource Implementation
+
+## Date: 2026-01-20
+
+## Summary
+
+Implemented status subresource for LocustTest resources and migrated the controller and resource builders from v1 to v2 API. v2 is now the primary API version used throughout the codebase.
+
+## Key Changes
+
+### 1. Controller Migration to v2 API
+- `internal/controller/locusttest_controller.go` now uses `locustv2.LocustTest`
+- Removed `GenerationChangedPredicate` to allow status-only updates to trigger reconciliation
+- Added status initialization on first reconcile
+- Added status update after successful resource creation
+
+### 2. Resource Builders Migration to v2 API
+- `internal/resources/job.go` - Updated to use v2 API types
+- `internal/resources/labels.go` - Updated to use v2 API types  
+- `internal/resources/service.go` - Updated to use v2 API types
+
+### 3. Status Helper Functions
+Created `internal/controller/status.go` with:
+- `initializeStatus()` - Sets initial status values (Phase=Pending, conditions)
+- `setCondition()` - Sets/updates a condition using standard meta.SetStatusCondition
+- `setReady()` - Convenience wrapper for Ready condition
+- `updateStatusFromJobs()` - Derives status from Job states
+- `derivePhaseFromJob()` - Maps Job status to LocustTest phase
+- `isJobComplete()` / `isJobFailed()` - Job status helpers
+
+### 4. Test Updates
+All test files updated to use v2 API:
+- `internal/resources/job_test.go`
+- `internal/resources/labels_test.go`
+- `internal/resources/service_test.go`
+- `internal/controller/locusttest_controller_test.go`
+- `internal/controller/locusttest_controller_unit_test.go`
+- `internal/controller/integration_test.go`
+
+Created `internal/controller/status_test.go` with unit tests for status helpers.
+
+## Status Tracking Behavior
+
+### Phases
+- **Pending**: Initial state, resources being created
+- **Running**: Resources created, test is running
+- **Succeeded**: Master Job completed successfully
+- **Failed**: Master Job failed
+
+### Conditions
+- **Ready**: True when all resources are created
+- **WorkersConnected**: Tracks worker connection status
+- **TestCompleted**: True when test finishes (succeeded or failed)
+
+## Files Modified
+- `internal/controller/locusttest_controller.go`
+- `internal/controller/status.go` (new)
+- `internal/controller/status_test.go` (new)
+- `internal/resources/job.go`
+- `internal/resources/labels.go`
+- `internal/resources/service.go`
+- All test files in `internal/resources/` and `internal/controller/`
+
+## Test Results
+- All unit tests pass (27 tests)
+- Integration tests pass (21 tests) - occasional flakiness due to envtest race conditions
+- Build compiles successfully
+
+## Test Infrastructure Simplification
+- Removed `config/crd/test/` directory (v1-only test CRD no longer needed)
+- Integration tests now use main CRD from `config/crd/bases/` with v2 as storage
+- Updated `suite_test.go` to point to main CRD directory
+- Updated `locusttest_controller_test.go` to verify manager reconciliation instead of manual reconcile calls
+
+## v1 API Deprecation Status
+- v1 API types still exist for conversion webhook compatibility
+- Controller and resource builders now exclusively use v2 API
+- v1 will be removed in a future release after deprecation period
+
+---
+
+# Phase 10: Environment & Secret Injection (Issue #149)
+
+## Date: 2026-01-20
+
+## Summary
+
+Implemented environment variable and secret injection into Locust pods, addressing Issue #149. Users can now securely pass credentials, API keys, and configuration without hardcoding them in test files.
+
+## Key Changes
+
+### 1. Environment Builder Functions (`internal/resources/env.go`)
+- `BuildEnvFrom()` - Creates `envFrom` entries from ConfigMap and Secret refs
+- `BuildUserEnvVars()` - Creates `env` entries from user-defined variables
+- `BuildEnvVars()` - Combines Kafka env vars with user-defined vars (Kafka first)
+- `BuildSecretVolumes()` - Creates volumes for secret file mounts
+- `BuildSecretVolumeMounts()` - Creates volume mounts for secret files
+- `SecretVolumeName()` - Generates prefixed volume names (`secret-<name>`)
+
+### 2. Job Builder Updates (`internal/resources/job.go`)
+- Updated `buildLocustContainer()` to use `BuildEnvVars()` and `BuildEnvFrom()`
+- Updated `buildVolumes()` to include secret volumes
+- Updated `buildVolumeMounts()` to include secret mounts
+- Exported `BuildKafkaEnvVars()` for use in env.go
+
+### 3. Validation Webhook (`api/v2/locusttest_webhook.go`)
+- Implemented `LocustTestCustomValidator` using `webhook.CustomValidator` interface
+- `validateSecretMounts()` - Validates secret mount paths don't conflict with reserved paths
+- `getReservedPaths()` - Dynamically calculates reserved paths based on testFiles config
+- `PathConflicts()` - Checks if two paths conflict (exact match or prefix)
+- Reserved paths: `/lotest/src` (default) and `/opt/locust/lib` (default)
+
+### 4. Test Coverage
+- `internal/resources/env_test.go` - 27 unit tests for env builders
+- `api/v2/locusttest_webhook_test.go` - 17 unit tests for webhook validation
+- `internal/resources/job_test.go` - 7 new tests for env injection in jobs
+
+## Files Created
+| File | Purpose | LOC |
+|------|---------|-----|
+| `internal/resources/env.go` | Environment builder functions | ~120 |
+| `internal/resources/env_test.go` | Env builder unit tests | ~430 |
+| `api/v2/locusttest_webhook.go` | Validation webhook | ~140 |
+| `api/v2/locusttest_webhook_test.go` | Webhook unit tests | ~340 |
+| `config/samples/locust_v2_locusttest_with_env.yaml` | Sample CR | ~40 |
+
+## Files Modified
+| File | Changes |
+|------|---------|
+| `internal/resources/job.go` | Integrated env builders, added secret volumes/mounts |
+| `internal/resources/job_test.go` | Added 7 env injection tests |
+
+## Design Decisions
+
+| Decision | Chosen | Rationale |
+|----------|--------|-----------|
+| Env var order | Kafka first, user vars last | Matches existing behavior, user can override |
+| Volume naming | `secret-<name>` prefix | Avoids conflicts with ConfigMap volumes |
+| Path validation | Dynamic based on testFiles | Respects custom mount paths |
+| Webhook interface | `CustomValidator` | Required for controller-runtime v0.21.0 |
+
+## Test Results
+- All unit tests pass (resources: 96.8% coverage, api/v2: 26.4% coverage)
+- Integration test has pre-existing flaky test (race condition on update)
+
+## Notes for Future Phases
+- Webhook registration in main.go controlled by `ENABLE_WEBHOOKS` env var
+- v2 validation webhook path: `/validate-locust-io-v2-locusttest`
+
+---

@@ -129,3 +129,36 @@ replacements:
           delimiter: '/'
           index: 1
           create: true
+  # [WEBHOOK] Inject CA bundle for ValidatingWebhookConfiguration
+  - source:
+      kind: Certificate
+      group: cert-manager.io
+      version: v1
+      name: serving-cert
+      fieldPath: .metadata.namespace
+    targets:
+      - select:
+          kind: ValidatingWebhookConfiguration
+          name: validating-webhook-configuration
+        fieldPaths:
+          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+        options:
+          delimiter: '/'
+          index: 0
+          create: true
+  - source:
+      kind: Certificate
+      group: cert-manager.io
+      version: v1
+      name: serving-cert
+      fieldPath: .metadata.name
+    targets:
+      - select:
+          kind: ValidatingWebhookConfiguration
+          name: validating-webhook-configuration
+        fieldPaths:
+          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+        options:
+          delimiter: '/'
+          index: 1
+          create: true

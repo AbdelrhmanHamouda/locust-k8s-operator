@@ -224,10 +224,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Setup webhooks (conversion)
+	// Setup webhooks (conversion and validation)
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		// v1 conversion webhook
 		if err := (&locustv1.LocustTest{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "LocustTest")
+			setupLog.Error(err, "unable to create webhook", "webhook", "LocustTest v1")
+			os.Exit(1)
+		}
+		// v2 validation webhook
+		if err := (&locustv2.LocustTest{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "LocustTest v2")
 			os.Exit(1)
 		}
 	}
