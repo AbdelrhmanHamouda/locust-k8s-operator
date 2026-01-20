@@ -78,14 +78,14 @@ var _ = Describe("OpenTelemetry", Ordered, func() {
 
 	It("should add --otel flag when enabled", func() {
 		Eventually(func() string {
-			args, _ := utils.GetJobContainerArgs(testNamespace, crName+"-master", "locust")
+			args, _ := utils.GetJobContainerArgs(testNamespace, crName+"-master", crName+"-master")
 			return args
 		}, 30*time.Second, time.Second).Should(ContainSubstring("--otel"))
 	})
 
 	It("should inject OTEL_* environment variables", func() {
 		Eventually(func() string {
-			env, _ := utils.GetJobContainerEnv(testNamespace, crName+"-master", "locust")
+			env, _ := utils.GetJobContainerEnv(testNamespace, crName+"-master", crName+"-master")
 			return env
 		}, 30*time.Second, time.Second).Should(ContainSubstring("OTEL_EXPORTER_OTLP_ENDPOINT"))
 	})
@@ -101,7 +101,7 @@ var _ = Describe("OpenTelemetry", Ordered, func() {
 		Eventually(func() string {
 			containers, _ := utils.GetJobContainerNames(testNamespace, crName+"-master")
 			return containers
-		}, 30*time.Second, time.Second).Should(Equal("locust"))
+		}, 30*time.Second, time.Second).Should(Equal(crName + "-master"))
 	})
 
 	It("should exclude metrics port from Service when OTel enabled", func() {

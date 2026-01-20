@@ -171,14 +171,14 @@ var _ = Describe("LocustTest", Ordered, func() {
 
 		It("should inject ConfigMap env vars via envFrom", func() {
 			Eventually(func() string {
-				envFrom, _ := utils.GetJobEnvFrom(testNamespace, crName+"-master", "locust")
+				envFrom, _ := utils.GetJobEnvFrom(testNamespace, crName+"-master", crName+"-master")
 				return envFrom
 			}, 30*time.Second, time.Second).Should(ContainSubstring("e2e-env-configmap"))
 		})
 
 		It("should inject inline env variables", func() {
 			Eventually(func() string {
-				env, _ := utils.GetJobContainerEnv(testNamespace, crName+"-master", "locust")
+				env, _ := utils.GetJobContainerEnv(testNamespace, crName+"-master", crName+"-master")
 				return env
 			}, 30*time.Second, time.Second).Should(ContainSubstring("E2E_TEST_VAR"))
 		})
@@ -213,7 +213,7 @@ var _ = Describe("LocustTest", Ordered, func() {
 			}, 30*time.Second, time.Second).Should(ContainSubstring("test-data"))
 
 			Eventually(func() string {
-				mounts, _ := utils.GetJobVolumeMounts(testNamespace, crName+"-master", "locust")
+				mounts, _ := utils.GetJobVolumeMounts(testNamespace, crName+"-master", crName+"-master")
 				return mounts
 			}, 30*time.Second, time.Second).Should(ContainSubstring("/data"))
 		})
@@ -229,7 +229,7 @@ var _ = Describe("LocustTest", Ordered, func() {
 			}, 30*time.Second, time.Second).Should(ContainSubstring("test-data"))
 
 			Eventually(func() string {
-				mounts, _ := utils.GetJobVolumeMounts(testNamespace, crName+"-worker", "locust")
+				mounts, _ := utils.GetJobVolumeMounts(testNamespace, crName+"-worker", crName+"-worker")
 				return mounts
 			}, 30*time.Second, time.Second).Should(ContainSubstring("/data"))
 		})
