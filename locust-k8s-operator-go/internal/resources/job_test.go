@@ -659,3 +659,138 @@ func TestBuildWorkerJob_WithEnvConfig(t *testing.T) {
 	}
 	assert.True(t, secretMountFound)
 }
+
+// ============================================
+// User Volume Tests
+// ============================================
+
+func TestBuildMasterJob_WithUserVolumes(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Volumes = []corev1.Volume{
+		{Name: "results", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+		{Name: "shared", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+	}
+	lt.Spec.VolumeMounts = []locustv2.TargetedVolumeMount{
+		{VolumeMount: corev1.VolumeMount{Name: "results", MountPath: "/results"}, Target: "master"},
+		{VolumeMount: corev1.VolumeMount{Name: "shared", MountPath: "/shared"}, Target: "both"},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	// Check volumes
+	volumeNames := make(map[string]bool)
+	for _, v := range job.Spec.Template.Spec.Volumes {
+		volumeNames[v.Name] = true
+	}
+	assert.True(t, volumeNames["results"], "results volume should be in master")
+	assert.True(t, volumeNames["shared"], "shared volume should be in master")
+
+	// Check mounts
+	container := job.Spec.Template.Spec.Containers[0]
+	mountPaths := make(map[string]bool)
+	for _, m := range container.VolumeMounts {
+		mountPaths[m.MountPath] = true
+	}
+	assert.True(t, mountPaths["/results"], "results mount should be in master")
+	assert.True(t, mountPaths["/shared"], "shared mount should be in master")
+}
+
+func TestBuildWorkerJob_WithUserVolumes(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Volumes = []corev1.Volume{
+		{Name: "results", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+		{Name: "shared", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+		{Name: "certs", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+	}
+	lt.Spec.VolumeMounts = []locustv2.TargetedVolumeMount{
+		{VolumeMount: corev1.VolumeMount{Name: "results", MountPath: "/results"}, Target: "master"},
+		{VolumeMount: corev1.VolumeMount{Name: "shared", MountPath: "/shared"}, Target: "both"},
+		{VolumeMount: corev1.VolumeMount{Name: "certs", MountPath: "/certs"}, Target: "worker"},
+	}
+	cfg := newTestConfig()
+
+	job := BuildWorkerJob(lt, cfg)
+
+	// Check volumes - worker should NOT have results
+	volumeNames := make(map[string]bool)
+	for _, v := range job.Spec.Template.Spec.Volumes {
+		volumeNames[v.Name] = true
+	}
+	assert.False(t, volumeNames["results"], "results volume should NOT be in worker")
+	assert.True(t, volumeNames["shared"], "shared volume should be in worker")
+	assert.True(t, volumeNames["certs"], "certs volume should be in worker")
+
+	// Check mounts
+	container := job.Spec.Template.Spec.Containers[0]
+	mountPaths := make(map[string]bool)
+	for _, m := range container.VolumeMounts {
+		mountPaths[m.MountPath] = true
+	}
+	assert.False(t, mountPaths["/results"], "results mount should NOT be in worker")
+	assert.True(t, mountPaths["/shared"], "shared mount should be in worker")
+	assert.True(t, mountPaths["/certs"], "certs mount should be in worker")
+}
+
+func TestBuildMasterJob_WithUserVolumeMounts_TargetWorker(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Volumes = []corev1.Volume{
+		{Name: "worker-only", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+	}
+	lt.Spec.VolumeMounts = []locustv2.TargetedVolumeMount{
+		{VolumeMount: corev1.VolumeMount{Name: "worker-only", MountPath: "/worker-data"}, Target: "worker"},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	// Master should NOT have worker-only volume
+	volumeNames := make(map[string]bool)
+	for _, v := range job.Spec.Template.Spec.Volumes {
+		volumeNames[v.Name] = true
+	}
+	assert.False(t, volumeNames["worker-only"], "worker-only volume should NOT be in master")
+
+	// Master should NOT have worker-only mount
+	container := job.Spec.Template.Spec.Containers[0]
+	mountPaths := make(map[string]bool)
+	for _, m := range container.VolumeMounts {
+		mountPaths[m.MountPath] = true
+	}
+	assert.False(t, mountPaths["/worker-data"], "worker-only mount should NOT be in master")
+}
+
+func TestBuildJob_UserVolumesWithSecretVolumes(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Env = &locustv2.EnvConfig{
+		SecretMounts: []locustv2.SecretMount{
+			{Name: "api-keys", MountPath: "/etc/api-keys"},
+		},
+	}
+	lt.Spec.Volumes = []corev1.Volume{
+		{Name: "user-data", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+	}
+	lt.Spec.VolumeMounts = []locustv2.TargetedVolumeMount{
+		{VolumeMount: corev1.VolumeMount{Name: "user-data", MountPath: "/data"}, Target: "both"},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	// Both secret and user volumes should exist
+	volumeNames := make(map[string]bool)
+	for _, v := range job.Spec.Template.Spec.Volumes {
+		volumeNames[v.Name] = true
+	}
+	assert.True(t, volumeNames["secret-api-keys"], "secret volume should exist")
+	assert.True(t, volumeNames["user-data"], "user volume should exist")
+
+	// Both mounts should exist
+	container := job.Spec.Template.Spec.Containers[0]
+	mountPaths := make(map[string]bool)
+	for _, m := range container.VolumeMounts {
+		mountPaths[m.MountPath] = true
+	}
+	assert.True(t, mountPaths["/etc/api-keys"], "secret mount should exist")
+	assert.True(t, mountPaths["/data"], "user mount should exist")
+}

@@ -22,6 +22,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -64,9 +65,8 @@ func TestValidateSecretMounts_NilEnv(t *testing.T) {
 		},
 	}
 
-	warnings, err := validateSecretMounts(lt)
+	err := validateSecretMounts(lt)
 	assert.NoError(t, err)
-	assert.Nil(t, warnings)
 }
 
 func TestValidateSecretMounts_EmptyMounts(t *testing.T) {
@@ -78,9 +78,8 @@ func TestValidateSecretMounts_EmptyMounts(t *testing.T) {
 		},
 	}
 
-	warnings, err := validateSecretMounts(lt)
+	err := validateSecretMounts(lt)
 	assert.NoError(t, err)
-	assert.Nil(t, warnings)
 }
 
 func TestValidateSecretMounts_ValidPath(t *testing.T) {
@@ -94,9 +93,8 @@ func TestValidateSecretMounts_ValidPath(t *testing.T) {
 		},
 	}
 
-	warnings, err := validateSecretMounts(lt)
+	err := validateSecretMounts(lt)
 	assert.NoError(t, err)
-	assert.Nil(t, warnings)
 }
 
 func TestValidateSecretMounts_ConflictDefault(t *testing.T) {
@@ -110,11 +108,10 @@ func TestValidateSecretMounts_ConflictDefault(t *testing.T) {
 		},
 	}
 
-	warnings, err := validateSecretMounts(lt)
+	err := validateSecretMounts(lt)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "conflicts with reserved path")
 	assert.Contains(t, err.Error(), "/lotest/src")
-	assert.Nil(t, warnings)
 }
 
 func TestValidateSecretMounts_ConflictLib(t *testing.T) {
@@ -128,7 +125,7 @@ func TestValidateSecretMounts_ConflictLib(t *testing.T) {
 		},
 	}
 
-	_, err := validateSecretMounts(lt)
+	err := validateSecretMounts(lt)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "conflicts with reserved path")
 	assert.Contains(t, err.Error(), "/opt/locust/lib")
@@ -145,7 +142,7 @@ func TestValidateSecretMounts_ConflictSubpath(t *testing.T) {
 		},
 	}
 
-	_, err := validateSecretMounts(lt)
+	err := validateSecretMounts(lt)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "conflicts with reserved path")
 }
@@ -165,7 +162,7 @@ func TestValidateSecretMounts_CustomTestFilesPath(t *testing.T) {
 		},
 	}
 
-	_, err := validateSecretMounts(lt)
+	err := validateSecretMounts(lt)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "/custom/src")
 }
@@ -187,10 +184,9 @@ func TestValidateSecretMounts_CustomPathAllowsDefault(t *testing.T) {
 		},
 	}
 
-	warnings, err := validateSecretMounts(lt)
+	err := validateSecretMounts(lt)
 	// Should pass because we're using custom path, not default
 	assert.NoError(t, err)
-	assert.Nil(t, warnings)
 }
 
 func TestGetReservedPaths_NoTestFiles(t *testing.T) {
@@ -364,4 +360,262 @@ func TestValidateCreate_WrongType(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "expected LocustTest")
 	assert.Nil(t, warnings)
+}
+
+// ============================================
+// Volume Validation Tests
+// ============================================
+
+func TestValidateVolumes_Empty(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Volumes:      nil,
+			VolumeMounts: nil,
+		},
+	}
+
+	err := validateVolumes(lt)
+	assert.NoError(t, err)
+}
+
+func TestValidateVolumes_ValidConfig(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Volumes: []corev1.Volume{
+				{Name: "test-results"},
+				{Name: "shared-data"},
+			},
+			VolumeMounts: []TargetedVolumeMount{
+				{VolumeMount: corev1.VolumeMount{Name: "test-results", MountPath: "/results"}, Target: "master"},
+				{VolumeMount: corev1.VolumeMount{Name: "shared-data", MountPath: "/shared"}, Target: "both"},
+			},
+		},
+	}
+
+	err := validateVolumes(lt)
+	assert.NoError(t, err)
+}
+
+func TestValidateVolumeName_Valid(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-test", Namespace: "default"},
+	}
+
+	assert.NoError(t, validateVolumeName(lt, "test-results"))
+	assert.NoError(t, validateVolumeName(lt, "shared-data"))
+	assert.NoError(t, validateVolumeName(lt, "custom-volume"))
+}
+
+func TestValidateVolumeName_SecretPrefix(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-test", Namespace: "default"},
+	}
+
+	err := validateVolumeName(lt, "secret-custom")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "uses reserved prefix")
+	assert.Contains(t, err.Error(), "secret-")
+}
+
+func TestValidateVolumeName_LibVolume(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-test", Namespace: "default"},
+	}
+
+	err := validateVolumeName(lt, "locust-lib")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "is reserved by the operator")
+}
+
+func TestValidateVolumeName_MasterConflict(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-test", Namespace: "default"},
+	}
+
+	err := validateVolumeName(lt, "my-test-master")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "conflicts with operator-generated name")
+}
+
+func TestValidateVolumeName_WorkerConflict(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-test", Namespace: "default"},
+	}
+
+	err := validateVolumeName(lt, "my-test-worker")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "conflicts with operator-generated name")
+}
+
+func TestValidateVolumes_PathConflict(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Volumes: []corev1.Volume{
+				{Name: "bad-volume"},
+			},
+			VolumeMounts: []TargetedVolumeMount{
+				{VolumeMount: corev1.VolumeMount{Name: "bad-volume", MountPath: "/lotest/src"}, Target: "both"},
+			},
+		},
+	}
+
+	err := validateVolumes(lt)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "conflicts with reserved path")
+}
+
+func TestValidateVolumes_UndefinedMount(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Volumes: []corev1.Volume{
+				{Name: "defined-volume"},
+			},
+			VolumeMounts: []TargetedVolumeMount{
+				{VolumeMount: corev1.VolumeMount{Name: "undefined-volume", MountPath: "/data"}, Target: "both"},
+			},
+		},
+	}
+
+	err := validateVolumes(lt)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "references undefined volume")
+}
+
+func TestValidateMountReferences_Valid(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Volumes: []corev1.Volume{
+				{Name: "vol1"},
+				{Name: "vol2"},
+			},
+			VolumeMounts: []TargetedVolumeMount{
+				{VolumeMount: corev1.VolumeMount{Name: "vol1", MountPath: "/data1"}},
+				{VolumeMount: corev1.VolumeMount{Name: "vol2", MountPath: "/data2"}},
+			},
+		},
+	}
+
+	err := validateMountReferences(lt)
+	assert.NoError(t, err)
+}
+
+func TestValidateMountReferences_Invalid(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Volumes: []corev1.Volume{
+				{Name: "vol1"},
+			},
+			VolumeMounts: []TargetedVolumeMount{
+				{VolumeMount: corev1.VolumeMount{Name: "vol1", MountPath: "/data1"}},
+				{VolumeMount: corev1.VolumeMount{Name: "missing", MountPath: "/data2"}},
+			},
+		},
+	}
+
+	err := validateMountReferences(lt)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "missing")
+}
+
+func TestValidateLocustTest_CombinedValidation(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Env: &EnvConfig{
+				SecretMounts: []SecretMount{
+					{Name: "valid-secret", MountPath: "/etc/certs"},
+				},
+			},
+			Volumes: []corev1.Volume{
+				{Name: "test-results"},
+			},
+			VolumeMounts: []TargetedVolumeMount{
+				{VolumeMount: corev1.VolumeMount{Name: "test-results", MountPath: "/results"}, Target: "master"},
+			},
+		},
+	}
+
+	warnings, err := validateLocustTest(lt)
+	assert.NoError(t, err)
+	assert.Nil(t, warnings)
+}
+
+func TestValidateLocustTest_SecretMountFailsFirst(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Env: &EnvConfig{
+				SecretMounts: []SecretMount{
+					{Name: "bad-secret", MountPath: "/lotest/src"},
+				},
+			},
+			Volumes: []corev1.Volume{
+				{Name: "secret-bad"}, // Also invalid but secret mount fails first
+			},
+		},
+	}
+
+	_, err := validateLocustTest(lt)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "secretMount path")
+}
+
+func TestValidateCreate_WithVolumes(t *testing.T) {
+	validator := &LocustTestCustomValidator{}
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Image: "locustio/locust:2.20.0",
+			Master: MasterSpec{
+				Command: "locust -f /lotest/src/locustfile.py",
+			},
+			Worker: WorkerSpec{
+				Command:  "locust -f /lotest/src/locustfile.py",
+				Replicas: 1,
+			},
+			Volumes: []corev1.Volume{
+				{Name: "test-results"},
+			},
+			VolumeMounts: []TargetedVolumeMount{
+				{VolumeMount: corev1.VolumeMount{Name: "test-results", MountPath: "/results"}, Target: "master"},
+			},
+		},
+	}
+
+	warnings, err := validator.ValidateCreate(context.Background(), lt)
+	require.NoError(t, err)
+	assert.Nil(t, warnings)
+}
+
+func TestValidateCreate_WithInvalidVolumeName(t *testing.T) {
+	validator := &LocustTestCustomValidator{}
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Image: "locustio/locust:2.20.0",
+			Master: MasterSpec{
+				Command: "locust -f /lotest/src/locustfile.py",
+			},
+			Worker: WorkerSpec{
+				Command:  "locust -f /lotest/src/locustfile.py",
+				Replicas: 1,
+			},
+			Volumes: []corev1.Volume{
+				{Name: "secret-custom"}, // Invalid: uses reserved prefix
+			},
+			VolumeMounts: []TargetedVolumeMount{
+				{VolumeMount: corev1.VolumeMount{Name: "secret-custom", MountPath: "/custom"}},
+			},
+		},
+	}
+
+	_, err := validator.ValidateCreate(context.Background(), lt)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "uses reserved prefix")
 }

@@ -791,3 +791,80 @@ Implemented environment variable and secret injection into Locust pods, addressi
 - v2 validation webhook path: `/validate-locust-io-v2-locusttest`
 
 ---
+
+# Phase 11: Volume Mounting (Issue #252)
+
+## Date: 2026-01-20
+
+## Summary
+
+Implemented arbitrary volume mounting to Locust master and/or worker pods with target filtering support. Users can now mount PVCs, emptyDir, hostPath, and other volume types with control over which pods receive the mounts.
+
+## Key Changes
+
+### 1. Volume Builder Functions (`internal/resources/volumes.go`)
+- `BuildUserVolumes()` - Returns user-defined volumes filtered by operational mode
+- `BuildUserVolumeMounts()` - Returns user-defined volume mounts filtered by mode
+- `shouldApplyMount()` - Checks if a mount applies to the given mode (master/worker/both)
+- `shouldIncludeVolume()` - Checks if a volume has any mounts for the given mode
+
+### 2. Job Builder Updates (`internal/resources/job.go`)
+- Updated `buildVolumes()` to accept `mode` parameter and include user volumes
+- Updated `buildVolumeMounts()` to accept `mode` parameter and include user mounts
+- Updated `buildLocustContainer()` to pass mode to volume mount builder
+- Updated `buildJob()` to pass mode through the call chain
+
+### 3. Validation Webhook Updates (`api/v2/locusttest_webhook.go`)
+- Added `validateVolumes()` - Validates volume names and mount paths
+- Added `validateVolumeName()` - Checks for reserved name conflicts (secret-*, locust-lib, <cr>-master/worker)
+- Added `validateMountPath()` - Checks for reserved path conflicts
+- Added `validateMountReferences()` - Ensures all mounts reference defined volumes
+- Updated `ValidateCreate/Update` to call combined `validateLocustTest()`
+
+### 4. Test Coverage
+- `internal/resources/volumes_test.go` - 17 unit tests for volume builders
+- `api/v2/locusttest_webhook_test.go` - 17 new tests for volume validation
+
+## Files Created
+| File | Purpose | LOC |
+|------|---------|-----|
+| `internal/resources/volumes.go` | Volume builder functions | ~90 |
+| `internal/resources/volumes_test.go` | Volume builder unit tests | ~320 |
+| `config/samples/locust_v2_locusttest_with_volumes.yaml` | Sample CR | ~45 |
+
+## Files Modified
+| File | Changes |
+|------|---------|
+| `internal/resources/job.go` | Added mode parameter, integrated user volumes |
+| `api/v2/locusttest_webhook.go` | Added volume validation functions |
+| `api/v2/locusttest_webhook_test.go` | Added 17 volume validation tests |
+
+## Target Filtering Behavior
+
+| Target | Applies To |
+|--------|------------|
+| `master` | Master pod only |
+| `worker` | Worker pods only |
+| `both` (default) | Both master and worker pods |
+
+## Reserved Resources
+
+### Reserved Volume Names
+| Pattern | Purpose |
+|---------|---------|
+| `<crName>-master` | Master ConfigMap volume |
+| `<crName>-worker` | Worker ConfigMap volume |
+| `locust-lib` | Library ConfigMap volume |
+| `secret-*` | Secret volumes from `env.secretMounts` |
+
+### Reserved Paths
+| Path | Purpose |
+|------|---------|
+| `/lotest/src` (or custom) | Test files ConfigMap |
+| `/opt/locust/lib` (or custom) | Library ConfigMap |
+
+## Test Results
+- All unit tests pass (volumes: 17 tests, webhook: 34 tests total)
+- Build compiles successfully
+
+---
