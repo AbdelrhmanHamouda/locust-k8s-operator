@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: e2e-env-configmap
+data:
+  TARGET_HOST: "http://example.com"
+  TEST_MODE: "e2e"

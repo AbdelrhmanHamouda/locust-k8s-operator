@@ -131,6 +131,27 @@ var _ = Describe("Manager", Ordered, func() {
 			} else {
 				fmt.Println("Failed to describe controller pod")
 			}
+
+			By("Fetching LocustTest CRs")
+			cmd = exec.Command("kubectl", "get", "locusttest", "-n", namespace, "-o", "yaml")
+			output, err := utils.Run(cmd)
+			if err == nil {
+				_, _ = fmt.Fprintf(GinkgoWriter, "LocustTest CRs:\n%s", output)
+			}
+
+			By("Fetching Jobs")
+			cmd = exec.Command("kubectl", "get", "jobs", "-n", namespace, "-o", "wide")
+			output, err = utils.Run(cmd)
+			if err == nil {
+				_, _ = fmt.Fprintf(GinkgoWriter, "Jobs:\n%s", output)
+			}
+
+			By("Fetching Services")
+			cmd = exec.Command("kubectl", "get", "services", "-n", namespace)
+			output, err = utils.Run(cmd)
+			if err == nil {
+				_, _ = fmt.Fprintf(GinkgoWriter, "Services:\n%s", output)
+			}
 		}
 	})
 
