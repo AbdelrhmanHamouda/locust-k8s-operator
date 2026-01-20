@@ -121,7 +121,7 @@ jobs:
           KO_DOCKER_REPO: lotest/locust-k8s-operator
         run: |
           CHART_VERSION=$(grep '^appVersion:' ../charts/locust-k8s-operator/Chart.yaml | awk '{print $2}' | tr -d '"')
-          ko build github.com/AbdelrhmanHamouda/locust-k8s-operator/cmd/main.go --local --bare --tags=${CHART_VERSION}
+          ko build ./cmd --local --bare --tags=${CHART_VERSION}
 
       - name: 📦 Load image into kind cluster
         if: steps.list-changed.outputs.changed == 'true'
