@@ -46,17 +46,20 @@ spec:
       {{- end }}
       {{- end }}
       # Pod security context - enforces non-root execution
+      # Ko uses distroless/static:nonroot which runs as UID 65532
       securityContext:
         runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
         seccompProfile:
           type: RuntimeDefault
       containers:
         - name: {{ include "locust-k8s-operator.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          # The Go binary entrypoint
-          command: ["/manager"]
           # Command-line arguments configure operator behavior
+          # Note: ko-built images have ENTRYPOINT set automatically to /ko-app/<binary-name>
           args:
             # Health probe endpoint (required, fixed port)
             - --health-probe-bind-address=:8081
