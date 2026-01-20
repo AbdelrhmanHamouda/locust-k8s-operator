@@ -1,6 +1,6 @@
 apiVersion: v2
 name: locust-k8s-operator
-description: Locust Kubernetes Operator
+description: Locust Kubernetes Operator - Go v2
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -15,10 +15,27 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 1.1.1
+version: 2.0.0
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "1.1.1"
+appVersion: "2.0.0"
+
+annotations:
+  artifacthub.io/changes: |
+    - kind: changed
+      description: Rewritten for Go operator with clean-slate design
+    - kind: changed
+      description: Updated health probes to /healthz and /readyz on port 8081
+    - kind: changed
+      description: Reduced default memory from 1Gi to 128Mi (Go binary)
+    - kind: added
+      description: Leader election support for HA deployments
+    - kind: added
+      description: Optional webhook configuration with cert-manager
+    - kind: added
+      description: Optional OTel Collector deployment
+    - kind: deprecated
+      description: Micronaut/JVM configuration removed (no longer applicable)

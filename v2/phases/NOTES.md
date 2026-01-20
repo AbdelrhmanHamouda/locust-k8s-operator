@@ -949,3 +949,94 @@ Implemented native OpenTelemetry integration for Locust, replacing the Prometheu
 - Build compiles successfully
 
 ---
+
+# Phase 13: Helm Chart Updates - Completion Notes
+
+**Date**: 2026-01-20
+
+Rewrote the Helm chart with a clean-slate design optimized for the Go operator, with backward compatibility shims for existing users.
+
+## Key Changes
+
+### 1. Chart.yaml Updates
+- Version bumped to `2.0.0`
+- AppVersion bumped to `"2.0.0"`
+- Added changelog annotations documenting breaking changes
+
+### 2. values.yaml Rewrite (~180 lines vs 144)
+- Removed Java-specific sections: `appPort`, `micronaut.*`, `livenessProbe`, `readinessProbe`
+- New flat structure with top-level feature toggles:
+  - `leaderElection.enabled` (default: true)
+  - `metrics.enabled` (default: false)
+  - `webhook.enabled` (default: false)
+- New `locustPods` section for Locust test pod configuration
+- New `otelCollector` section for optional OTel Collector deployment
+- New `kafka` section with simplified structure (deprecated)
+- Reduced default memory from 1Gi to 128Mi (Go binary)
+
+### 3. deployment.yaml Rewrite (~110 lines vs 155)
+- Container name: Uses chart name via `locust-k8s-operator.name` helper
+- Command: `["/manager"]` with configurable args
+- Fixed health probes: `/healthz` and `/readyz` on port 8081
+- Security context: `runAsNonRoot`, `seccompProfile`, `allowPrivilegeEscalation: false`
+- Environment variables via `locust-k8s-operator.envVars` helper
+- Conditional webhook volume mounts
+
+### 4. _helpers.tpl Additions (~360 lines added)
+- Backward compatibility helpers mapping old paths to new:
+  - `locust.podCpuRequest`, `locust.podMemRequest`, etc.
+  - `locust.affinityInjection`, `locust.tolerationsInjection`
+  - `locust.metricsExporter*` helpers
+  - `locust.kafka*` helpers
+- `locust-k8s-operator.envVars` helper generating all env vars
+
+### 5. RBAC Updates (serviceaccount-and-roles.yaml)
+- Added `locusttests/status` subresource permissions
+- Added `locusttests/finalizers` permissions
+- Added `coordination.k8s.io/leases` for leader election
+- Added `events` create/patch permissions
+- Proper apiGroups (`""` for core, `batch` for jobs)
+
+### 6. New Templates Created
+- `webhook.yaml` - ValidatingWebhookConfiguration, MutatingWebhookConfiguration, Service
+- `certificate.yaml` - cert-manager Issuer and Certificate
+- `otel-collector.yaml` - Deployment, ConfigMap, Service for OTel Collector
+
+## Files Summary
+
+| File | Action | Lines |
+|------|--------|-------|
+| `Chart.yaml` | Modified | +17 |
+| `values.yaml` | Rewritten | ~180 |
+| `templates/deployment.yaml` | Rewritten | ~110 |
+| `templates/_helpers.tpl` | Extended | ~420 |
+| `templates/serviceaccount-and-roles.yaml` | Modified | ~103 |
+| `templates/webhook.yaml` | Created | ~70 |
+| `templates/certificate.yaml` | Created | ~30 |
+| `templates/otel-collector.yaml` | Created | ~85 |
+
+## Backward Compatibility
+
+| Old Path | New Path | Status |
+|----------|----------|--------|
+| `config.loadGenerationPods.resource.cpuRequest` | `locustPods.resources.requests.cpu` | Mapped via helper |
+| `config.loadGenerationPods.affinity.enableCrInjection` | `locustPods.affinityInjection` | Mapped via helper |
+| `config.loadGenerationPods.kafka.*` | `kafka.*` | Mapped via helper |
+| `micronaut.*` | N/A | Removed (no Go equivalent) |
+| `appPort` | N/A | Removed (fixed at 8081) |
+
+## Verification Results
+
+- `helm lint charts/locust-k8s-operator` ✓ (0 errors)
+- `helm template test charts/locust-k8s-operator` ✓ (valid YAML)
+- `helm template test charts/locust-k8s-operator --set webhook.enabled=true` ✓
+- `helm template test charts/locust-k8s-operator --set otelCollector.enabled=true` ✓
+- Backward compat: `--set locustPods.resources.requests.cpu=500m` ✓
+
+## Notes for Future Phases
+
+1. Kind cluster integration test pending (Phase 15)
+2. Chart README should be created documenting new structure
+3. Migration guide for v1 → v2 chart users recommended
+
+---

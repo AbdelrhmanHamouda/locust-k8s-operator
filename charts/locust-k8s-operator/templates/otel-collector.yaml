@@ -1,0 +1,142 @@
+{{/*
+=============================================================================
+OPENTELEMETRY COLLECTOR (Optional)
+=============================================================================
+This template deploys an OpenTelemetry Collector alongside the operator.
+
+The OTel Collector receives telemetry data (traces, metrics) from Locust
+test pods and exports it to your observability backend (Jaeger, Prometheus,
+Grafana, etc.).
+
+When to use this:
+  - You want centralized telemetry collection for Locust tests
+  - You're using the OpenTelemetry integration in LocustTest CRs
+  - You don't have an existing OTel Collector in your cluster
+
+When NOT to use this:
+  - You already have an OTel Collector (point Locust to that instead)
+  - You're using the Prometheus metrics exporter sidecar (legacy approach)
+
+Configuration:
+  The collector config is provided via otelCollector.config in values.yaml.
+  See https://opentelemetry.io/docs/collector/configuration/ for options.
+
+Example LocustTest CR configuration to use this collector:
+  spec:
+    observability:
+      openTelemetry:
+        enabled: true
+        endpoint: "<release>-locust-k8s-operator-otel-collector:4317"
+        protocol: grpc
+=============================================================================
+*/}}
+
+{{- if .Values.otelCollector.enabled }}
+---
+# =============================================================================
+# ConfigMap - OTel Collector configuration
+# =============================================================================
+# Contains the collector pipeline configuration (receivers, processors, exporters).
+# Customize this in values.yaml under otelCollector.config
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "locust-k8s-operator.fullname" . }}-otel-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "locust-k8s-operator.labels" . | nindent 4 }}
+data:
+  otel-collector-config.yaml: |
+    {{- .Values.otelCollector.config | nindent 4 }}
+---
+# =============================================================================
+# Deployment - OTel Collector pod
+# =============================================================================
+# Runs the OpenTelemetry Collector container.
+# Receives telemetry on OTLP ports (4317 gRPC, 4318 HTTP).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "locust-k8s-operator.fullname" . }}-otel-collector
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "locust-k8s-operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: otel-collector
+spec:
+  replicas: {{ .Values.otelCollector.replicas | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "locust-k8s-operator.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: otel-collector
+  template:
+    metadata:
+      labels:
+        {{- include "locust-k8s-operator.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: otel-collector
+    spec:
+      # Security context - run as non-root
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: otel-collector
+          image: {{ .Values.otelCollector.image }}
+          args:
+            # Point to the config file mounted from ConfigMap
+            - --config=/conf/otel-collector-config.yaml
+          ports:
+            # OTLP gRPC receiver - preferred for high-throughput
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+            # OTLP HTTP receiver - alternative for HTTP-only environments
+            - name: otlp-http
+              containerPort: 4318
+              protocol: TCP
+          # Container security - principle of least privilege
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+          resources:
+            {{- toYaml .Values.otelCollector.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "locust-k8s-operator.fullname" . }}-otel-config
+---
+# =============================================================================
+# Service - Exposes OTel Collector to Locust pods
+# =============================================================================
+# Locust test pods send telemetry to this Service.
+# Use the Service DNS name as the OTEL_EXPORTER_OTLP_ENDPOINT in LocustTest CRs.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "locust-k8s-operator.fullname" . }}-otel-collector
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "locust-k8s-operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: otel-collector
+spec:
+  ports:
+    # gRPC port for OTLP
+    - name: otlp-grpc
+      port: 4317
+      targetPort: otlp-grpc
+      protocol: TCP
+    # HTTP port for OTLP
+    - name: otlp-http
+      port: 4318
+      targetPort: otlp-http
+      protocol: TCP
+  selector:
+    {{- include "locust-k8s-operator.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: otel-collector
+{{- end }}
