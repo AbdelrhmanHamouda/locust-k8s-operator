@@ -127,7 +127,7 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
         run: |
           CHART_VERSION=$(grep '^appVersion:' charts/locust-k8s-operator/Chart.yaml | awk '{print $2}' | tr -d '"')
-          kind load docker-image lotest/locust-k8s-operator:${CHART_VERSION}
+          kind load docker-image lotest/locust-k8s-operator:${CHART_VERSION} --name chart-testing
 
       - name: 🚀 Run chart-testing (install)
         run: ct install --target-branch ${{ github.event.repository.default_branch }} --config .github/ct.yaml --helm-extra-set-args "--set=image.pullPolicy=Never"
