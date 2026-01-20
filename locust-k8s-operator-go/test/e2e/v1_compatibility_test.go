@@ -35,7 +35,7 @@ var _ = Describe("v1 API Compatibility", Ordered, func() {
 
 	BeforeAll(func() {
 		var err error
-		testdataDir, err = filepath.Abs("testdata")
+		testdataDir, err = filepath.Abs("test/e2e/testdata")
 		Expect(err).NotTo(HaveOccurred())
 
 		By("ensuring test ConfigMap exists")
