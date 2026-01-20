@@ -1040,3 +1040,63 @@ Rewrote the Helm chart with a clean-slate design optimized for the Go operator, 
 3. Migration guide for v1 → v2 chart users recommended
 
 ---
+
+# Phase 14: CI/CD Pipeline - Completion Notes
+
+**Date**: 2026-01-20
+
+Rewrote GitHub Actions workflows to build, test, and release the Go operator, replacing Java/Gradle pipelines with Go tooling.
+
+## Key Changes
+
+### 1. ci.yaml Rewrite
+- Replaced Java `build` job with Go `build-go` job
+- Removed: JDK setup, Gradle wrapper validation, Gradle build, JaCoCo coverage, Codacy reporter, build artifacts upload
+- Added: Go setup, dependency download, golangci-lint, make build, make test, Codecov for Go
+- Updated `lint-test-helm` job to depend on `build-go`
+
+### 2. release.yaml Rewrite
+- Replaced Java/Jib image build with Go/ko build
+- Removed: JDK setup, Gradle setup, Jib Docker build
+- Added: Go setup, ko setup, ko build with multi-arch support (linux/amd64, linux/arm64)
+- Image tagged with both version tag and commit SHA
+
+### 3. Makefile CI Targets
+Added to `locust-k8s-operator-go/Makefile`:
+- `make ci` - Runs lint and test together
+- `make ci-coverage` - Runs tests and displays coverage summary
+
+### 4. Deleted Redundant Workflows
+- `.github/workflows/go-lint.yml` - Replaced by ci.yaml
+- `.github/workflows/go-test.yml` - Replaced by ci.yaml
+- `.github/workflows/integration-test.yml` - Java-specific
+
+### 5. Preserved Workflows
+- `.github/workflows/go-test-e2e.yml` - Separate E2E trigger
+- `.github/workflows/docs-preview.yml` - Unchanged
+- `.github/workflows/stale-issues.yaml` - Unchanged
+
+## Files Summary
+
+| File | Action | Description |
+|------|--------|-------------|
+| `.github/workflows/ci.yaml` | Rewritten | Go build, lint, test, coverage |
+| `.github/workflows/release.yaml` | Rewritten | ko build multi-arch |
+| `.github/workflows/go-lint.yml` | Deleted | Replaced by ci.yaml |
+| `.github/workflows/go-test.yml` | Deleted | Replaced by ci.yaml |
+| `.github/workflows/integration-test.yml` | Deleted | Java-specific |
+| `locust-k8s-operator-go/Makefile` | Modified | Added ci and ci-coverage targets |
+
+## Verification Results
+
+- `make test` ✓ (all tests pass)
+- `make ci-coverage` ✓ (52.3% total coverage)
+- `make build` ✓ (binary builds successfully)
+
+## Notes for Future Phases
+
+1. Pre-existing lint issue in `command_test.go` (goconst) - not related to CI/CD changes
+2. Release workflow requires pushing a tag to test image publishing
+3. ko builds use distroless base image automatically
+
+---

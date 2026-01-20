@@ -32,5 +32,6 @@ phases/
 | 11 - Volume Mounting | **Complete** | [phase-11-volume-mounting/](./phase-11-volume-mounting/) |
 | 12 - OpenTelemetry Support | **Complete** | [phase-12-opentelemetry-support/](./phase-12-opentelemetry-support/) |
 | 13 - Helm Chart Updates | **Complete** | [phase-13-helm-chart-updates/](./phase-13-helm-chart-updates/) |
+| 14 - CI/CD Pipeline | **Complete** | [phase-14-cicd-pipeline/](./phase-14-cicd-pipeline/) |
 
 See [../ROADMAP.md](../ROADMAP.md) for the full phase summary and dependencies.

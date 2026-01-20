@@ -8,69 +8,66 @@ on:
       - "*"
 
 jobs:
-  # Job to publish the Docker image.
-  Publish-image:
+  # ============================================
+  # Go Operator Docker Image
+  # ============================================
+  publish-image:
     name: 🐳 Publish image
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
+      packages: write
     env:
-      DOCKER_IMAGE: lotest/${{ github.event.repository.name }}
+      DOCKER_IMAGE: lotest/locust-k8s-operator
     steps:
-      # Step 1: Checks out the repository code.
       - name: 📂 Checkout repo
         uses: actions/checkout@v4
 
-      # Step 2: Sets up JDK 21.
-      - name: ☕ Set up JDK 21
-        uses: actions/setup-java@v4
+      - name: 🔧 Setup Go
+        uses: actions/setup-go@v5
         with:
-          java-version: 21
-          distribution: temurin
+          go-version-file: locust-k8s-operator-go/go.mod
 
-      # Step 3: Sets up Gradle.
-      - name: 🛠️ Setup Gradle
-        uses: gradle/gradle-build-action@v3.5.0
+      - name: 🔧 Setup ko
+        uses: ko-build/setup-ko@v0.6
 
-      # Step 4: Builds the Docker image using Jib.
-      - name: 📦 Build docker image
-        run: ./gradlew jibDockerBuild -i --image $DOCKER_IMAGE
-
-      # Step 5: Logs in to Docker Hub.
       - name: 🔐 Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Step 6: Pushes the image to the Docker repository.
-      - name: 🚢 Push image to repository
-        run: docker push --all-tags $DOCKER_IMAGE
+      - name: 📦 Build and push with ko
+        working-directory: locust-k8s-operator-go
+        env:
+          KO_DOCKER_REPO: ${{ env.DOCKER_IMAGE }}
+        run: |
+          ko build ./cmd/main.go \
+            --platform=linux/amd64,linux/arm64 \
+            --bare \
+            --tags=${{ github.ref_name }},latest,${{ github.sha }}
 
-  # Job to publish the Helm chart.
   helm-chart-release:
     name: 🌊 Publish Helm chart
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: write
     steps:
-      # Step 1: Checks out the repository code.
       - name: 📂 Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # Step 2: Configures Git with the user name and email.
       - name: ✍️ Configure Git
         run: |
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-      # Step 3: Installs Helm.
       - name: 🌊 Install Helm
         uses: azure/setup-helm@v4
         with:
-          version: v3.10.0
+          version: v3.14.0
 
-      # Step 4: Packages the Helm chart with the release version.
       - name: 📦 Custom packaging
         run: |
           VERSION=${{github.ref_name}}
@@ -78,7 +75,6 @@ jobs:
           mkdir -p .cr-release-packages
           helm package charts/locust-k8s-operator --app-version=${VERSION} --version=${VERSION} --destination=.cr-release-packages
 
-      # Step 5: Runs the chart-releaser to publish the chart.
       - name: 🎉 Run chart-releaser
         # switch back to helm/chart-releaser-action when https://github.com/helm/chart-releaser-action/pull/109 is merged
         # Waiting for a new release to include changes coming from https://github.com/helm/chart-releaser-action/commit/38cfeacdbbd62d13ec773fcdee1435ff5846c554
@@ -88,39 +84,34 @@ jobs:
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-  # Job to publish the documentation.
   docs-release:
     name: 📚 Publish documentation
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: write
     steps:
-      # Step 1: Checks out the repository code.
       - name: 📂 Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # Step 2: Sets up Python.
       - name: 🐍 Setup python
         uses: actions/setup-python@v5
         with:
           python-version: 3.x
 
-      # Step 3: Installs documentation dependencies.
       - name: 📦 Install dependencies
         run: |
           pip install \
           mkdocs-material \
           mkdocs-git-revision-date-localized-plugin
 
-      # Step 4: Builds the documentation.
       - name: 🚀 Build documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python -m mkdocs build
 
-      # Step 5: Deploys the documentation.
       - name: 🚀 Deploy documentation
         uses: peaceiris/actions-gh-pages@v4
         with:
