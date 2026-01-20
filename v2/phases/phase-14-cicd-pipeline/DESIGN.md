@@ -57,7 +57,7 @@ name: 🤖 CI Pipeline
 on:
   push:
     branches: [master, main]
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
 permissions: read-all
@@ -307,7 +307,7 @@ docker-build-ci: ## Build Docker image for CI (no push)
 on:
   push:
     branches: [master, main]
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 ```
 
