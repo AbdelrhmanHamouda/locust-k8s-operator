@@ -78,9 +78,18 @@ var _ = BeforeSuite(func() {
 			_, _ = fmt.Fprintf(GinkgoWriter, "WARNING: CertManager is already installed. Skipping installation...\n")
 		}
 	}
+
+	By("deploying the operator")
+	cmd = exec.Command("make", "deploy", fmt.Sprintf("IMG=%s", projectImage))
+	_, err = utils.Run(cmd)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to deploy the operator")
 })
 
 var _ = AfterSuite(func() {
+	By("undeploying the operator")
+	cmd := exec.Command("make", "undeploy")
+	_, _ = utils.Run(cmd)
+
 	// Teardown CertManager after the suite if not skipped and if it was not already installed
 	if !skipCertManagerInstall && !isCertManagerAlreadyInstalled {
 		_, _ = fmt.Fprintf(GinkgoWriter, "Uninstalling CertManager...\n")
