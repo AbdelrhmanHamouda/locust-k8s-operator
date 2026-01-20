@@ -27,7 +27,7 @@ const testCommandSeed = "locust -f /lotest/src/test.py"
 func TestBuildMasterCommand(t *testing.T) {
 	workerReplicas := int32(5)
 
-	cmd := BuildMasterCommand(testCommandSeed, workerReplicas)
+	cmd := BuildMasterCommand(testCommandSeed, workerReplicas, false)
 
 	// Verify all expected flags are present
 	assert.Contains(t, cmd, "locust")
@@ -47,7 +47,7 @@ func TestBuildMasterCommand_SplitsCorrectly(t *testing.T) {
 	seedWithExtraSpaces := "locust   -f   /lotest/src/test.py"
 	workerReplicas := int32(3)
 
-	cmd := BuildMasterCommand(seedWithExtraSpaces, workerReplicas)
+	cmd := BuildMasterCommand(seedWithExtraSpaces, workerReplicas, false)
 
 	// strings.Fields handles multiple spaces correctly
 	assert.Equal(t, "locust", cmd[0])
@@ -58,7 +58,7 @@ func TestBuildMasterCommand_SplitsCorrectly(t *testing.T) {
 func TestBuildWorkerCommand(t *testing.T) {
 	masterHost := "my-test-master"
 
-	cmd := BuildWorkerCommand(testCommandSeed, masterHost)
+	cmd := BuildWorkerCommand(testCommandSeed, masterHost, false)
 
 	// Verify all expected flags are present
 	assert.Contains(t, cmd, "locust")
@@ -72,7 +72,7 @@ func TestBuildWorkerCommand(t *testing.T) {
 func TestBuildWorkerCommand_MasterHostCorrect(t *testing.T) {
 	masterHost := "team-a-load-test-master"
 
-	cmd := BuildWorkerCommand(testCommandSeed, masterHost)
+	cmd := BuildWorkerCommand(testCommandSeed, masterHost, false)
 
 	// Find the master-host flag
 	found := false
@@ -83,4 +83,88 @@ func TestBuildWorkerCommand_MasterHostCorrect(t *testing.T) {
 		}
 	}
 	assert.True(t, found, "master-host flag should contain the correct master host")
+}
+
+// ===== OTel Flag Tests =====
+
+func TestBuildMasterCommand_OTelDisabled(t *testing.T) {
+	workerReplicas := int32(3)
+
+	cmd := BuildMasterCommand(testCommandSeed, workerReplicas, false)
+
+	// --otel flag should NOT be present
+	assert.NotContains(t, cmd, "--otel")
+}
+
+func TestBuildMasterCommand_OTelEnabled(t *testing.T) {
+	workerReplicas := int32(3)
+
+	cmd := BuildMasterCommand(testCommandSeed, workerReplicas, true)
+
+	// --otel flag should be present
+	assert.Contains(t, cmd, "--otel")
+}
+
+func TestBuildMasterCommand_OTelFlagPosition(t *testing.T) {
+	workerReplicas := int32(3)
+
+	cmd := BuildMasterCommand(testCommandSeed, workerReplicas, true)
+
+	// Find positions of --otel and --master
+	otelIndex := -1
+	masterIndex := -1
+	for i, arg := range cmd {
+		if arg == "--otel" {
+			otelIndex = i
+		}
+		if arg == "--master" {
+			masterIndex = i
+		}
+	}
+
+	// --otel should appear before --master
+	assert.NotEqual(t, -1, otelIndex, "--otel flag should be present")
+	assert.NotEqual(t, -1, masterIndex, "--master flag should be present")
+	assert.Less(t, otelIndex, masterIndex, "--otel should appear before --master")
+}
+
+func TestBuildWorkerCommand_OTelDisabled(t *testing.T) {
+	masterHost := "my-test-master"
+
+	cmd := BuildWorkerCommand(testCommandSeed, masterHost, false)
+
+	// --otel flag should NOT be present
+	assert.NotContains(t, cmd, "--otel")
+}
+
+func TestBuildWorkerCommand_OTelEnabled(t *testing.T) {
+	masterHost := "my-test-master"
+
+	cmd := BuildWorkerCommand(testCommandSeed, masterHost, true)
+
+	// --otel flag should be present
+	assert.Contains(t, cmd, "--otel")
+}
+
+func TestBuildWorkerCommand_OTelFlagPosition(t *testing.T) {
+	masterHost := "my-test-master"
+
+	cmd := BuildWorkerCommand(testCommandSeed, masterHost, true)
+
+	// Find positions of --otel and --worker
+	otelIndex := -1
+	workerIndex := -1
+	for i, arg := range cmd {
+		if arg == "--otel" {
+			otelIndex = i
+		}
+		if arg == "--worker" {
+			workerIndex = i
+		}
+	}
+
+	// --otel should appear before --worker
+	assert.NotEqual(t, -1, otelIndex, "--otel flag should be present")
+	assert.NotEqual(t, -1, workerIndex, "--worker flag should be present")
+	assert.Less(t, otelIndex, workerIndex, "--otel should appear before --worker")
 }

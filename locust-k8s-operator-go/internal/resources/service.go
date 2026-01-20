@@ -48,12 +48,14 @@ func BuildMasterService(lt *locustv2.LocustTest, cfg *config.OperatorConfig) *co
 		})
 	}
 
-	// Add metrics port
-	servicePorts = append(servicePorts, corev1.ServicePort{
-		Name:     MetricsPortName,
-		Protocol: corev1.ProtocolTCP,
-		Port:     cfg.MetricsExporterPort,
-	})
+	// Add metrics port ONLY if OTel is disabled (sidecar will be deployed)
+	if !IsOTelEnabled(lt) {
+		servicePorts = append(servicePorts, corev1.ServicePort{
+			Name:     MetricsPortName,
+			Protocol: corev1.ProtocolTCP,
+			Port:     cfg.MetricsExporterPort,
+		})
+	}
 
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{

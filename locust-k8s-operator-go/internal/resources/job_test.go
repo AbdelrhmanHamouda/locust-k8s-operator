@@ -794,3 +794,184 @@ func TestBuildJob_UserVolumesWithSecretVolumes(t *testing.T) {
 	assert.True(t, mountPaths["/etc/api-keys"], "secret mount should exist")
 	assert.True(t, mountPaths["/data"], "user mount should exist")
 }
+
+// ============================================
+// OTel Support Tests
+// ============================================
+
+func TestBuildMasterJob_OTelDisabled_HasSidecar(t *testing.T) {
+	lt := newTestLocustTest()
+	// No OTel config = disabled
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	containers := job.Spec.Template.Spec.Containers
+	assert.Len(t, containers, 2, "Master should have 2 containers (locust + metrics exporter) when OTel disabled")
+
+	containerNames := make([]string, len(containers))
+	for i, c := range containers {
+		containerNames[i] = c.Name
+	}
+	assert.Contains(t, containerNames, MetricsExporterContainerName)
+}
+
+func TestBuildMasterJob_OTelEnabled_NoSidecar(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Observability = &locustv2.ObservabilityConfig{
+		OpenTelemetry: &locustv2.OpenTelemetryConfig{
+			Enabled:  true,
+			Endpoint: "otel-collector:4317",
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	containers := job.Spec.Template.Spec.Containers
+	assert.Len(t, containers, 1, "Master should have 1 container only when OTel enabled")
+	assert.Equal(t, "my-test-master", containers[0].Name)
+}
+
+func TestBuildMasterJob_NoObservability_HasSidecar(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Observability = nil
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	containers := job.Spec.Template.Spec.Containers
+	assert.Len(t, containers, 2, "Master should have 2 containers when observability is nil")
+}
+
+func TestBuildWorkerJob_OTelEnabled_NoSidecar(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Observability = &locustv2.ObservabilityConfig{
+		OpenTelemetry: &locustv2.OpenTelemetryConfig{
+			Enabled:  true,
+			Endpoint: "otel-collector:4317",
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildWorkerJob(lt, cfg)
+
+	containers := job.Spec.Template.Spec.Containers
+	assert.Len(t, containers, 1, "Worker should always have 1 container")
+}
+
+func TestBuildMasterJob_OTelEnabled_HasEnvVars(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Observability = &locustv2.ObservabilityConfig{
+		OpenTelemetry: &locustv2.OpenTelemetryConfig{
+			Enabled:  true,
+			Endpoint: "otel-collector.monitoring:4317",
+			Protocol: "grpc",
+			Insecure: true,
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+	envMap := make(map[string]string)
+	for _, env := range container.Env {
+		envMap[env.Name] = env.Value
+	}
+
+	assert.Equal(t, "otlp", envMap["OTEL_TRACES_EXPORTER"])
+	assert.Equal(t, "otlp", envMap["OTEL_METRICS_EXPORTER"])
+	assert.Equal(t, "otel-collector.monitoring:4317", envMap["OTEL_EXPORTER_OTLP_ENDPOINT"])
+	assert.Equal(t, "grpc", envMap["OTEL_EXPORTER_OTLP_PROTOCOL"])
+	assert.Equal(t, "true", envMap["OTEL_EXPORTER_OTLP_INSECURE"])
+}
+
+func TestBuildWorkerJob_OTelEnabled_HasEnvVars(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Observability = &locustv2.ObservabilityConfig{
+		OpenTelemetry: &locustv2.OpenTelemetryConfig{
+			Enabled:  true,
+			Endpoint: "otel-collector:4317",
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildWorkerJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+	envMap := make(map[string]string)
+	for _, env := range container.Env {
+		envMap[env.Name] = env.Value
+	}
+
+	assert.Equal(t, "otlp", envMap["OTEL_TRACES_EXPORTER"])
+	assert.Equal(t, "otel-collector:4317", envMap["OTEL_EXPORTER_OTLP_ENDPOINT"])
+}
+
+func TestBuildMasterJob_OTelEnabled_CommandHasFlag(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Observability = &locustv2.ObservabilityConfig{
+		OpenTelemetry: &locustv2.OpenTelemetryConfig{
+			Enabled:  true,
+			Endpoint: "otel-collector:4317",
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+	assert.Contains(t, container.Args, "--otel", "Command should include --otel flag")
+}
+
+func TestBuildWorkerJob_OTelEnabled_CommandHasFlag(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Observability = &locustv2.ObservabilityConfig{
+		OpenTelemetry: &locustv2.OpenTelemetryConfig{
+			Enabled:  true,
+			Endpoint: "otel-collector:4317",
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildWorkerJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+	assert.Contains(t, container.Args, "--otel", "Command should include --otel flag")
+}
+
+func TestBuildMasterJob_OTelDisabled_CommandNoFlag(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Observability = nil
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+	assert.NotContains(t, container.Args, "--otel", "Command should NOT include --otel flag when disabled")
+}
+
+func TestBuildMasterJob_OTelEnabled_ExtraEnvVars(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Observability = &locustv2.ObservabilityConfig{
+		OpenTelemetry: &locustv2.OpenTelemetryConfig{
+			Enabled:  true,
+			Endpoint: "otel-collector:4317",
+			ExtraEnvVars: map[string]string{
+				"OTEL_RESOURCE_ATTRIBUTES": "service.name=locust-load-test",
+			},
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg)
+
+	container := job.Spec.Template.Spec.Containers[0]
+	envMap := make(map[string]string)
+	for _, env := range container.Env {
+		envMap[env.Name] = env.Value
+	}
+
+	assert.Equal(t, "service.name=locust-load-test", envMap["OTEL_RESOURCE_ATTRIBUTES"])
+}
