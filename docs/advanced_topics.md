@@ -13,7 +13,7 @@ tags:
 
 Basic configuration is not always enough to satisfy the performance test needs, for example when needing to work with Kafka and MSK. Below is a collection of topics of an advanced nature. This list will be keep growing as the tool matures more and more.
 
-## :material-apache-kafka: Kafka & AWS MSK configuration
+## :material-apache-kafka: Kafka & AWS MSK configuration {: #kafka-integration }
 
 Generally speaking, the usage of Kafka in a _locustfile_ is identical to how it would be used anywhere else within the cloud context. Thus, no special setup is needed for the purposes of performance testing with the _Operator_.  
 That being said, if an organization is using kafka in production, chances are that authenticated kafka is being used. One of the main providers of such managed service is _AWS_ in the form of _MSK_. For that end, the _Operator_ have an _out-of-the-box_ support for MSK.

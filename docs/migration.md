@@ -91,9 +91,9 @@ The v2 chart introduces a cleaner structure. Key changes:
 | N/A | `webhook.enabled` | New: Enable conversion webhook |
 | N/A | `leaderElection.enabled` | New: Enable leader election |
 
-### Resource Defaults
+### Operator Resource Defaults
 
-The Go operator requires significantly fewer resources:
+The Go operator controller requires significantly fewer resources than the Java version:
 
 ```yaml
 resources:
@@ -154,8 +154,16 @@ While v1 CRs continue to work, migrating to v2 format is recommended to access n
 | `labels.worker` | `worker.labels` | Grouped under worker |
 | `annotations.master` | `master.annotations` | Grouped under master |
 | `annotations.worker` | `worker.annotations` | Grouped under worker |
-| `affinity.nodeAffinity` | `scheduling.affinity` | Uses native K8s Affinity |
+| `affinity.nodeAffinity` | `scheduling.affinity` | Uses native K8s Affinity ⚠️[^1] |
 | `tolerations` | `scheduling.tolerations` | Uses native K8s Tolerations |
+| N/A | `master.resources` | New: Separate resource specs for master |
+| N/A | `worker.resources` | New: Separate resource specs for worker |
+| N/A | `master.extraArgs` | New: Additional CLI arguments for master |
+| N/A | `worker.extraArgs` | New: Additional CLI arguments for worker |
+| N/A | `master.autostart` | Auto-added during conversion (default: true) |
+| N/A | `master.autoquit` | Auto-added during conversion (enabled: true, timeout: 60s) |
+
+[^1]: **Affinity Conversion Note**: When converting v2 → v1, complex affinity rules may be simplified. Only `NodeSelectorOpIn` operators are preserved, and only the first value from multi-value expressions is kept. Pod affinity/anti-affinity and preferred scheduling rules are not preserved in v1.
 
 ### Example Transformation
 
@@ -200,6 +208,52 @@ While v1 CRs continue to work, migrating to v2 format is recommended to access n
       testFiles:
         configMapRef: test-scripts
     ```
+
+### Lossy Conversion Details
+
+!!! warning "V2-Only Fields Not Preserved in V1"
+    When reading v2 CRs as v1 (or during rollback to v1), the following v2-exclusive fields **will be lost**:
+
+    **Master/Worker Configuration:**
+    
+    - `master.resources` - Separate resource specs for master pod
+    - `worker.resources` - Separate resource specs for worker pod
+    - `master.extraArgs` - Additional CLI arguments for master
+    - `worker.extraArgs` - Additional CLI arguments for worker
+    - `master.autostart` - Autostart configuration
+    - `master.autoquit` - Autoquit configuration
+
+    **Test Files:**
+    
+    - `testFiles.srcMountPath` - Custom mount path for test files
+    - `testFiles.libMountPath` - Custom mount path for library files
+
+    **Scheduling:**
+    
+    - `scheduling.nodeSelector` - Node selector (v1 only supports nodeAffinity)
+    - Complex affinity rules (see warning above)
+
+    **Environment & Secrets:**
+    
+    - `env.configMapRefs` - ConfigMap environment injection
+    - `env.secretRefs` - Secret environment injection
+    - `env.variables` - Individual environment variables
+    - `env.secretMounts` - Secret file mounts
+
+    **Volumes:**
+    
+    - `volumes` - Volume definitions
+    - `volumeMounts` - Volume mounts with target selection
+
+    **Observability:**
+    
+    - `observability.openTelemetry` - OpenTelemetry configuration
+
+    **Status:**
+    
+    - All `status` subresource fields (v1 has no status implementation)
+
+    **Recommendation**: Before rolling back from v2 to v1, backup your v2 CRs to preserve this configuration.
 
 ---
 
