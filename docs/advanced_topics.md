@@ -228,6 +228,64 @@ The specification for tolerations is defined as follows
           effect: NoExecute
     ```
 
+### :material-label: Node Selector
+
+This allows generated resources to be scheduled on nodes with specific labels using Kubernetes node selector.
+
+#### Node Selector Options
+
+The specification for node selector is defined as follows:
+
+=== "v2 API"
+
+    ```yaml
+    apiVersion: locust.io/v2
+    kind: LocustTest
+    metadata:
+      name: my-test
+    spec:
+      image: locustio/locust:2.20.0
+      master:
+        command: "--locustfile /lotest/src/test.py --host https://example.com"
+      worker:
+        command: "--locustfile /lotest/src/test.py"
+        replicas: 3
+      scheduling:
+        nodeSelector:
+          <key>: <value>
+          <key>: <value>
+    ```
+
+=== "v2 API Example"
+
+    ```yaml
+    apiVersion: locust.io/v2
+    kind: LocustTest
+    metadata:
+      name: nodeselector-example
+    spec:
+      image: locustio/locust:2.20.0
+      master:
+        command: "--locustfile /lotest/src/test.py --host https://example.com"
+      worker:
+        command: "--locustfile /lotest/src/test.py"
+        replicas: 3
+      scheduling:
+        nodeSelector:
+          disktype: ssd
+          environment: performance
+    ```
+
+Node selector is the simplest way to constrain pods to nodes with specific labels. For more complex scheduling requirements, use [affinity rules](#affinity) or [tolerations](#taint-tolerations).
+
+!!! note "Node Selector vs Affinity"
+    Node selector is a simpler, label-based approach to node selection. Use affinity rules when you need more complex scheduling logic such as:
+    
+    - Multiple node selection criteria with OR logic
+    - Soft preferences (preferred rather than required)
+    - Pod affinity/anti-affinity rules
+
+---
 
 ## Resource Management
 
@@ -464,13 +522,11 @@ spec:
     openTelemetry:
       enabled: true
       endpoint: "otel-collector.monitoring:4317"
-      protocol: "grpc"  # or "http"
+      protocol: "grpc"  # or "http/protobuf"
       insecure: false
       extraEnvVars:
-        - name: OTEL_SERVICE_NAME
-          value: "my-load-test"
-        - name: OTEL_RESOURCE_ATTRIBUTES
-          value: "environment=staging,team=platform"
+        OTEL_SERVICE_NAME: "my-load-test"
+        OTEL_RESOURCE_ATTRIBUTES: "environment=staging,team=platform"
 ```
 
 ### OTel Environment Variables
@@ -482,7 +538,7 @@ When OpenTelemetry is enabled, the operator injects the following environment va
 | `OTEL_TRACES_EXPORTER` | Set to `otlp` |
 | `OTEL_METRICS_EXPORTER` | Set to `otlp` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | Your configured endpoint |
-| `OTEL_EXPORTER_OTLP_PROTOCOL` | `grpc` or `http` |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `grpc` or `http/protobuf` |
 | `OTEL_EXPORTER_OTLP_INSECURE` | Only set if `insecure: true` |
 
 ### OTel vs Metrics Sidecar

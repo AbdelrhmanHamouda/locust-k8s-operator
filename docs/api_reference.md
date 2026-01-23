@@ -36,7 +36,7 @@ The v2 API provides a cleaner, grouped configuration structure with new features
 |-------|------|----------|---------|-------------|
 | `image` | string | **Yes** | - | Container image for Locust pods (e.g., `locustio/locust:2.20.0`) |
 | `imagePullPolicy` | string | No | `IfNotPresent` | Image pull policy: `Always`, `IfNotPresent`, `Never` |
-| `imagePullSecrets` | []string | No | - | Names of secrets for pulling from private registries |
+| `imagePullSecrets` | []LocalObjectReference | No | - | Secrets for pulling from private registries (specify as `- name: secret-name`) |
 | `master` | [MasterSpec](#masterspec) | **Yes** | - | Master pod configuration |
 | `worker` | [WorkerSpec](#workerspec) | **Yes** | - | Worker pod configuration |
 | `testFiles` | [TestFilesConfig](#testfilesconfig) | No | - | ConfigMap references for test files |
@@ -146,9 +146,9 @@ The v2 API provides a cleaner, grouped configuration structure with new features
 |-------|------|----------|---------|-------------|
 | `enabled` | bool | No | `false` | Enable OpenTelemetry integration |
 | `endpoint` | string | Required if enabled | - | OTel collector endpoint (e.g., `otel-collector:4317`) |
-| `protocol` | string | No | `grpc` | Protocol: `grpc` or `http` |
+| `protocol` | string | No | `grpc` | Protocol: `grpc` or `http/protobuf` |
 | `insecure` | bool | No | `false` | Use insecure connection |
-| `extraEnvVars` | []corev1.EnvVar | No | - | Additional OTel environment variables |
+| `extraEnvVars` | map[string]string | No | - | Additional OTel environment variables |
 
 ### Status Fields
 
@@ -248,8 +248,8 @@ spec:
       endpoint: "otel-collector.monitoring:4317"
       protocol: "grpc"
       extraEnvVars:
-        - name: OTEL_SERVICE_NAME
-          value: "load-test"
+        OTEL_SERVICE_NAME: "load-test"
+        OTEL_RESOURCE_ATTRIBUTES: "environment=staging,team=platform"
 ```
 
 ---

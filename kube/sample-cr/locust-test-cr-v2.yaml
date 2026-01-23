@@ -1,0 +1,55 @@
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: demo-test
+  namespace: default
+spec:
+  image: locustio/locust:2.20.0
+  imagePullPolicy: IfNotPresent
+  
+  master:
+    command: "--locustfile /lotest/src/demo_test.py --host https://dummy.restapiexample.com --users 100 --spawn-rate 3 --run-time 3m"
+    autostart: true
+    autoquit:
+      enabled: true
+      timeout: 60
+    labels:
+      locust.io/role: "master"
+      myapp.com/testId: "abc-123"
+    annotations:
+      myapp.com/threads: "1000"
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1Gi"
+  
+  worker:
+    command: "--locustfile /lotest/src/demo_test.py"
+    replicas: 3
+    labels:
+      locust.io/role: "worker"
+    annotations:
+      myapp.com/version: "2.1.0"
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+  
+  testFiles:
+    configMapRef: demo-test-map
+    libConfigMapRef: demo-lib-map
+  
+  scheduling:
+    nodeSelector:
+      workload-type: testing
+    tolerations:
+      - key: taint-A
+        operator: Equal
+        value: ssd
+        effect: NoSchedule

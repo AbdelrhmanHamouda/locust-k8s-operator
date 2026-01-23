@@ -101,6 +101,7 @@ func buildJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, mode Operatio
 					Volumes:          buildVolumes(lt, nodeName, mode),
 					Affinity:         buildAffinity(lt, cfg),
 					Tolerations:      buildTolerations(lt, cfg),
+					NodeSelector:     buildNodeSelector(lt),
 				},
 			},
 		},
@@ -355,4 +356,14 @@ func buildTolerations(lt *locustv2.LocustTest, cfg *config.OperatorConfig) []cor
 
 	// v2 uses standard corev1.Toleration directly
 	return lt.Spec.Scheduling.Tolerations
+}
+
+// buildNodeSelector creates pod node selector from the CR spec.
+// Returns nil if no node selector is specified.
+func buildNodeSelector(lt *locustv2.LocustTest) map[string]string {
+	if lt.Spec.Scheduling == nil || len(lt.Spec.Scheduling.NodeSelector) == 0 {
+		return nil
+	}
+
+	return lt.Spec.Scheduling.NodeSelector
 }
