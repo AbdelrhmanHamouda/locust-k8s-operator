@@ -1,0 +1,112 @@
+{{/*
+=============================================================================
+WEBHOOK CONFIGURATION FOR LOCUST K8S OPERATOR
+=============================================================================
+This template creates admission webhooks for LocustTest CR validation.
+
+Webhooks provide:
+  1. ValidatingWebhook - Validates LocustTest CRs before they're persisted
+     - Ensures required fields are present
+     - Validates resource configurations
+     - Prevents invalid test configurations
+
+  2. MutatingWebhook - Handles API version conversion
+     - Converts between v1 and v2 API versions
+     - Applies default values
+
+Prerequisites:
+  - cert-manager installed (if webhook.certManager.enabled=true)
+  - Or manually created TLS certificates in the webhook-certs Secret
+
+The webhook Service routes traffic from the API server to the operator pod.
+=============================================================================
+*/}}
+
+{{- if .Values.webhook.enabled }}
+---
+# =============================================================================
+# ValidatingWebhookConfiguration - Validates LocustTest CRs
+# =============================================================================
+# Called by the API server before persisting CREATE/UPDATE operations.
+# Rejects invalid configurations with helpful error messages.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ include "locust-k8s-operator.fullname" . }}-validating
+  labels:
+    {{- include "locust-k8s-operator.labels" . | nindent 4 }}
+  {{- if .Values.webhook.certManager.enabled }}
+  # cert-manager will inject the CA bundle from the Certificate resource
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "locust-k8s-operator.fullname" . }}-serving-cert
+  {{- end }}
+webhooks:
+  - name: vlocusttest.kb.io
+    admissionReviewVersions: ["v1"]
+    clientConfig:
+      service:
+        name: {{ include "locust-k8s-operator.fullname" . }}-webhook
+        namespace: {{ .Release.Namespace }}
+        path: /validate-locust-io-v2-locusttest
+    rules:
+      - apiGroups: ["locust.io"]
+        apiVersions: ["v1", "v2"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["locusttests"]
+    # No side effects - webhook only validates, doesn't modify external state
+    sideEffects: None
+    # Fail closed - reject requests if webhook is unavailable
+    failurePolicy: Fail
+---
+# =============================================================================
+# MutatingWebhookConfiguration - API version conversion
+# =============================================================================
+# Handles conversion between v1 and v2 API versions.
+# Also applies default values to new resources.
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ include "locust-k8s-operator.fullname" . }}-mutating
+  labels:
+    {{- include "locust-k8s-operator.labels" . | nindent 4 }}
+  {{- if .Values.webhook.certManager.enabled }}
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "locust-k8s-operator.fullname" . }}-serving-cert
+  {{- end }}
+webhooks:
+  - name: mlocusttest.kb.io
+    admissionReviewVersions: ["v1"]
+    clientConfig:
+      service:
+        name: {{ include "locust-k8s-operator.fullname" . }}-webhook
+        namespace: {{ .Release.Namespace }}
+        path: /convert
+    rules:
+      - apiGroups: ["locust.io"]
+        apiVersions: ["v1", "v2"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["locusttests"]
+    sideEffects: None
+    failurePolicy: Fail
+---
+# =============================================================================
+# Webhook Service - Routes API server requests to operator
+# =============================================================================
+# The API server connects to this Service when calling webhooks.
+# Traffic is routed to the operator pod's webhook port (default: 9443).
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "locust-k8s-operator.fullname" . }}-webhook
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "locust-k8s-operator.labels" . | nindent 4 }}
+spec:
+  ports:
+    # API server always connects on 443, we forward to the webhook port
+    - port: 443
+      targetPort: webhook
+      protocol: TCP
+  selector:
+    {{- include "locust-k8s-operator.selectorLabels" . | nindent 4 }}
+{{- end }}

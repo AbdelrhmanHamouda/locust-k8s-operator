@@ -8,7 +8,7 @@ This document outlines the process for submitting pull requests to the Locust K8
 
 2. **Follow Coding Conventions**: Ensure your code follows the project's coding standards and conventions.
 
-3. **Write Tests**: All new features or bug fixes should be covered by appropriate tests. See the [integration testing guide](integration-testing.md) for details on integration testing.
+3. **Write Tests**: All new features or bug fixes should be covered by appropriate tests. See the [testing guide](integration-testing.md) for details on the testing setup.
 
 ## Pull Request Workflow
 
@@ -19,41 +19,81 @@ This document outlines the process for submitting pull requests to the Locust K8
    git checkout -b feature/your-feature-name
    ```
 
-3. **Make Your Changes**: Implement your changes, following the project's coding standards.
+3. **Make Your Changes**: Implement your changes in the `locust-k8s-operator-go/` directory, following Go coding standards.
 
 4. **Commit Your Changes**: Use the [Conventional Commits](https://www.conventionalcommits.org/) standard for commit messages. This is important as the commit messages directly influence the content of the CHANGELOG.md and version increments.
    
    Examples of good commit messages:
    ```
-   feat: add support for Locust worker autoscaling
-   fix: correct container resource allocation
-   docs: update installation instructions
+   feat: add support for OpenTelemetry metrics export
+   fix: correct volume mount path validation
+   docs: update API reference for v2 fields
+   refactor: simplify resource builder functions
+   test: add integration tests for env injection
    ```
 
-5. **Run Tests Locally**: Run both unit and integration tests to ensure your changes don't break existing functionality:
+5. **Run Tests Locally**: Run tests and linting to ensure your changes don't break existing functionality:
    ```bash
-   # Run unit tests
-   ./gradlew test
+   cd locust-k8s-operator
    
-   # Run integration tests
-   ./scripts/run-integration-test.sh
+   # Run all CI checks (lint + tests)
+   make ci
+   
+   # Or run individually:
+   make lint        # Run linter
+   make test        # Run unit + integration tests
+   make test-e2e    # Run E2E tests (requires Docker)
    ```
 
-6. **Submit Your Pull Request**: Push your branch to your fork and submit a pull request to the main repository.
+6. **Generate Manifests**: If you modified API types, regenerate manifests:
+   ```bash
+   make generate    # Generate DeepCopy methods
+   make manifests   # Generate CRDs, RBAC, webhooks
+   ```
+
+7. **Submit Your Pull Request**: Push your branch to your fork and submit a pull request to the main repository.
 
 ## Pull Request Requirements
 
-1. **Clean Build Dependencies**: Ensure any install or build dependencies are removed before the final build.
+### Code Quality
 
-2. **Documentation**: Update the documentation with details of changes to interfaces, configuration options, or other important aspects.
+- [ ] Code follows Go conventions and project style
+- [ ] No linting errors (`make lint` passes)
+- [ ] All tests pass (`make test` passes)
+- [ ] New code has appropriate test coverage (≥80% for new packages)
 
-3. **Commit Messages**: Ensure commit messages follow the Conventional Commits standard. This is critical for automated changelog generation and semantic versioning.
+### Documentation
 
-4. **Tests**:
-   - Write clean and well-structured tests.
-   - Ensure your changes don't cause regressions.
-   - All changes (within reason) should be covered by tests.
-   - Update existing tests if your changes represent breaking changes.
+- [ ] API changes are reflected in `docs/api_reference.md`
+- [ ] New features are documented in `docs/features.md` or `docs/advanced_topics.md`
+- [ ] Breaking changes are noted in the PR description
+- [ ] Helm chart updates include `docs/helm_deploy.md` changes
+
+### Commit Messages
+
+- [ ] Follow Conventional Commits standard
+- [ ] Each commit represents a logical unit of change
+- [ ] Commit messages are clear and descriptive
+
+### Tests
+
+- [ ] Unit tests for new/modified functions
+- [ ] Integration tests for controller behavior changes
+- [ ] Existing tests updated if behavior changes
+- [ ] No test regressions
+
+## CI Pipeline Checks
+
+The following checks run automatically on each PR:
+
+| Check         | Description                   | Command          |
+|---------------|-------------------------------|------------------|
+| **Lint**      | golangci-lint static analysis | `make lint`      |
+| **Test**      | Unit + integration tests      | `make test`      |
+| **Build**     | Binary compilation            | `make build`     |
+| **Manifests** | CRD/RBAC generation           | `make manifests` |
+
+All checks must pass before a PR can be merged.
 
 ## Review Process
 
@@ -63,11 +103,16 @@ This document outlines the process for submitting pull requests to the Locust K8
 
 3. **Feedback**: Maintainers may request changes or improvements to your PR.
 
-4. **Merge**: Once approved, a maintainer will merge your PR.
+4. **Merge**: Once approved and CI passes, a maintainer will merge your PR.
 
 ## After Your PR is Merged
 
-1. **Update Your Fork**: Keep your fork up to date with the main repository.
+1. **Update Your Fork**: Keep your fork up to date with the main repository:
+   ```bash
+   git checkout master
+   git pull upstream master
+   git push origin master
+   ```
 
 2. **Celebrate**: Thank you for contributing to the Locust K8s Operator project! Your efforts help make the project better for everyone.
 

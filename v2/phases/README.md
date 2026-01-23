@@ -31,5 +31,8 @@ phases/
 | 10 - Env & Secret Injection | **Complete** | [phase-10-env-secret-injection/](./phase-10-env-secret-injection/) |
 | 11 - Volume Mounting | **Complete** | [phase-11-volume-mounting/](./phase-11-volume-mounting/) |
 | 12 - OpenTelemetry Support | **Complete** | [phase-12-opentelemetry-support/](./phase-12-opentelemetry-support/) |
+| 13 - Helm Chart Updates | **Complete** | [phase-13-helm-chart-updates/](./phase-13-helm-chart-updates/) |
+| 14 - CI/CD Pipeline | **Complete** | [phase-14-cicd-pipeline/](./phase-14-cicd-pipeline/) |
+| 15 - E2E Tests (Kind) | **Complete** | [phase-15-e2e-tests/](./phase-15-e2e-tests/) |
 
 See [../ROADMAP.md](../ROADMAP.md) for the full phase summary and dependencies.

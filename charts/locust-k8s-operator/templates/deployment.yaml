@@ -1,8 +1,27 @@
+{{/*
+=============================================================================
+LOCUST K8S OPERATOR DEPLOYMENT
+=============================================================================
+This deployment runs the Go-based Locust K8s Operator controller.
+
+The operator watches for LocustTest custom resources and creates/manages:
+  - Master Job (single pod running Locust in master mode)
+  - Worker Jobs (multiple pods running Locust in worker mode)
+  - Services for master communication
+  - ConfigMaps for test files
+
+Key features:
+  - Leader election for HA deployments (multiple replicas)
+  - Health probes on port 8081 (/healthz, /readyz)
+  - Optional metrics endpoint for Prometheus scraping
+  - Optional webhook for CR validation and conversion
+=============================================================================
+*/}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "locust-k8s-operator.fullname" . }}
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "locust-k8s-operator.labels" . | nindent 4 }}
 spec:
@@ -26,120 +45,100 @@ spec:
         - name: {{ . }}
       {{- end }}
       {{- end }}
+      # Pod security context - enforces non-root execution
+      # Ko uses distroless/static:nonroot which runs as UID 65532
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-        - name: {{ .Chart.Name }}
+        - name: {{ include "locust-k8s-operator.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # Command-line arguments configure operator behavior
+          # Note: ko-built images have ENTRYPOINT set automatically to /ko-app/<binary-name>
+          args:
+            # Health probe endpoint (required, fixed port)
+            - --health-probe-bind-address=:8081
+            {{- if .Values.leaderElection.enabled }}
+            # Leader election ensures only one active controller in HA setups
+            - --leader-elect=true
+            {{- end }}
+            {{- if .Values.metrics.enabled }}
+            # Prometheus metrics endpoint
+            - --metrics-bind-address=:{{ .Values.metrics.port }}
+            {{- if .Values.metrics.secure }}
+            - --metrics-secure=true
+            {{- else }}
+            - --metrics-secure=false
+            {{- end }}
+            {{- end }}
+            {{- if .Values.webhook.enabled }}
+            # Webhook TLS certificate path (managed by cert-manager or manually)
+            - --webhook-cert-path=/tmp/k8s-webhook-server/serving-certs
+            {{- end }}
           ports:
-            - name: micronaut-port
-              containerPort: {{ .Values.appPort }}
+            # Health probe port - used by Kubernetes for liveness/readiness
+            - name: health
+              containerPort: 8081
+              protocol: TCP
+            {{- if .Values.metrics.enabled }}
+            # Prometheus metrics port
+            - name: metrics
+              containerPort: {{ .Values.metrics.port }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.webhook.enabled }}
+            # Webhook server port for admission control
+            - name: webhook
+              containerPort: {{ .Values.webhook.port }}
+              protocol: TCP
+            {{- end }}
+          # Container security context - principle of least privilege
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+          # Liveness probe - restart container if unhealthy
           livenessProbe:
-{{ toYaml .Values.livenessProbe | indent 12 }}
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          # Readiness probe - only receive traffic when ready
           readinessProbe:
-{{ toYaml .Values.readinessProbe | indent 12 }}
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          # Resource limits for the operator pod itself (not Locust test pods)
           resources:
-{{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.resources | nindent 12 }}
+          # Environment variables configure Locust test pod defaults
+          # See _helpers.tpl for the full list and backward compatibility mappings
           env:
-            - name: APP_SERVER_PORT
-              value: {{ .Values.appPort | quote}}
-            # K8s config
-            - name: K8S_NAMESPACE
-              value: {{ .Release.Namespace | quote }}
-            # Kafka config
-            - name: KAFKA_BOOTSTRAP_SERVERS
-              value: {{ .Values.config.loadGenerationPods.kafka.bootstrapServers | quote }}
-            - name: KAFKA_SECURITY_ENABLED
-              value: {{ .Values.config.loadGenerationPods.kafka.acl.enabled | quote }}
-            {{- if .Values.config.loadGenerationPods.kafka.acl.enabled }}
-            - name: KAFKA_SECURITY_PROTOCOL_CONFIG
-              value: {{ .Values.config.loadGenerationPods.kafka.acl.protocol | quote }}
-            - name: KAFKA_SASL_MECHANISM
-              value: {{ .Values.config.loadGenerationPods.kafka.sasl.mechanism | quote }}
-            - name: KAFKA_SASL_JAAS_CONFIG
-              value: {{ .Values.config.loadGenerationPods.kafka.sasl.jaas.config | quote }}
-            - name: KAFKA_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.config.loadGenerationPods.kafka.locustK8sKafkaUser.userName }}
-                  key: {{ .Values.config.loadGenerationPods.kafka.acl.secret.userKey }}
-            - name: KAFKA_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.config.loadGenerationPods.kafka.locustK8sKafkaUser.userName }}
-                  key: {{ .Values.config.loadGenerationPods.kafka.acl.secret.passwordKey }}
-            {{- end }}
-
-            # Load generation job config
-            - name: JOB_TTL_SECONDS_AFTER_FINISHED
-              value: {{ .Values.config.loadGenerationJobs.ttlSecondsAfterFinished | quote }}
-
-            # Load generation resource config
-            - name: POD_CPU_REQUEST
-              value: {{ .Values.config.loadGenerationPods.resource.cpuRequest | quote }}
-            - name: POD_MEM_REQUEST
-              value: {{ .Values.config.loadGenerationPods.resource.memRequest | quote }}
-            - name: POD_EPHEMERAL_REQUEST
-              value: {{ .Values.config.loadGenerationPods.resource.ephemeralRequest | quote }}
-            - name: POD_CPU_LIMIT
-              value: {{ .Values.config.loadGenerationPods.resource.cpuLimit | quote }}
-            - name: POD_MEM_LIMIT
-              value: {{ .Values.config.loadGenerationPods.resource.memLimit | quote }}
-            - name: POD_EPHEMERAL_LIMIT
-              value: {{ .Values.config.loadGenerationPods.resource.ephemeralLimit | quote }}
-            - name: ENABLE_AFFINITY_CR_INJECTION
-              value: {{ .Values.config.loadGenerationPods.affinity.enableCrInjection | quote }}
-            - name: ENABLE_TAINT_TOLERATIONS_CR_INJECTION
-              value: {{ .Values.config.loadGenerationPods.taintTolerations.enableCrInjection | quote }}
-
-            # Metrics Exporter config
-            - name: METRICS_EXPORTER_IMAGE
-              value: {{ .Values.config.loadGenerationPods.metricsExporter.image | quote }}
-            - name: METRICS_EXPORTER_PORT
-              value: {{ .Values.config.loadGenerationPods.metricsExporter.port | quote }}
-            - name: METRICS_EXPORTER_IMAGE_PULL_POLICY
-              value: "{{ .Values.config.loadGenerationPods.metricsExporter.pullPolicy | default .Values.image.pullPolicy }}"
-            - name: METRICS_EXPORTER_CPU_REQUEST
-              value: {{ .Values.config.loadGenerationPods.metricsExporter.resource.cpuRequest | quote }}
-            - name: METRICS_EXPORTER_MEM_REQUEST
-              value: {{ .Values.config.loadGenerationPods.metricsExporter.resource.memRequest | quote }}
-            - name: METRICS_EXPORTER_EPHEMERAL_REQUEST
-              value: {{ .Values.config.loadGenerationPods.metricsExporter.resource.ephemeralRequest | quote }}
-            - name: METRICS_EXPORTER_CPU_LIMIT
-              value: {{ .Values.config.loadGenerationPods.metricsExporter.resource.cpuLimit | quote }}
-            - name: METRICS_EXPORTER_MEM_LIMIT
-              value: {{ .Values.config.loadGenerationPods.metricsExporter.resource.memLimit | quote }}
-            - name: METRICS_EXPORTER_EPHEMERAL_LIMIT
-              value: {{ .Values.config.loadGenerationPods.metricsExporter.resource.ephemeralLimit | quote }}
-
-            # Metric config
-            - name: METRICS_ENABLE
-              value: {{ .Values.micronaut.metrics.enabled | quote }}
-            {{- if .Values.micronaut.metrics.enabled | quote }}
-            - name: METRICS_WEB_ENABLE
-              value: {{ .Values.micronaut.metrics.web.enabled | quote }}
-            - name: METRICS_JVM_ENABLE
-              value: {{ .Values.micronaut.metrics.jvm.enabled | quote }}
-            - name: METRICS_UPTIME_ENABLE
-              value: {{ .Values.micronaut.metrics.uptime.enabled | quote }}
-            - name: METRICS_PROCESSOR_ENABLE
-              value: {{ .Values.micronaut.metrics.processor.enabled | quote }}
-            - name: METRICS_FILES_ENABLE
-              value: {{ .Values.micronaut.metrics.files.enabled | quote }}
-            - name: METRICS_LOGBACK_ENABLE
-              value: {{ .Values.micronaut.metrics.logback.enabled | quote }}
-            - name: METRICS_EXECUTOR_ENABLE
-              value: {{ .Values.micronaut.metrics.executor.enabled | quote }}
-            - name: METRICS_PROMETHEUS_STEP
-              value: {{ .Values.micronaut.metrics.export.prometheus.step | quote }}
-
-            {{- end }}
-            {{- if .Values.environmentVariables }}
-            {{- range $key, $value := .Values.environmentVariables }}
-            - name: {{ $key }}
-              value: {{ $value | quote }}
-            {{- end }}
-            {{- end }}
-
+            {{- include "locust-k8s-operator.envVars" . | nindent 12 }}
+          {{- if .Values.webhook.enabled }}
+          # Webhook TLS certificates mounted from Secret
+          volumeMounts:
+            - name: webhook-certs
+              mountPath: /tmp/k8s-webhook-server/serving-certs
+              readOnly: true
+          {{- end }}
+      {{- if .Values.webhook.enabled }}
+      # Webhook certificate Secret (created by cert-manager or manually)
+      volumes:
+        - name: webhook-certs
+          secret:
+            secretName: {{ include "locust-k8s-operator.fullname" . }}-webhook-certs
+      {{- end }}
+      # Node scheduling constraints
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

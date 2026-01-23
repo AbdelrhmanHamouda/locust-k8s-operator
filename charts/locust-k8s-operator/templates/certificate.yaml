@@ -1,0 +1,76 @@
+{{/*
+=============================================================================
+TLS CERTIFICATES FOR WEBHOOK (cert-manager)
+=============================================================================
+This template creates cert-manager resources for automatic TLS certificate
+management for the admission webhooks.
+
+Resources created:
+  1. Issuer - A self-signed certificate issuer (namespace-scoped)
+  2. Certificate - The actual TLS certificate for the webhook Service
+
+The Certificate creates a Secret containing:
+  - tls.crt: The certificate
+  - tls.key: The private key
+  - ca.crt: The CA certificate (same as tls.crt for self-signed)
+
+cert-manager automatically:
+  - Creates the initial certificate
+  - Renews before expiration
+  - Updates the Secret
+
+Prerequisites:
+  - cert-manager must be installed in the cluster
+  - webhook.enabled and webhook.certManager.enabled must both be true
+
+Alternative (manual certificates):
+  If you don't use cert-manager, create the Secret manually:
+    kubectl create secret tls <fullname>-webhook-certs \
+      --cert=path/to/tls.crt \
+      --key=path/to/tls.key
+=============================================================================
+*/}}
+
+{{- if and .Values.webhook.enabled .Values.webhook.certManager.enabled }}
+---
+# =============================================================================
+# Issuer - Self-signed certificate issuer
+# =============================================================================
+# Creates a namespace-scoped issuer that can sign certificates.
+# For production, consider using a ClusterIssuer with Let's Encrypt or
+# your organization's PKI.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "locust-k8s-operator.fullname" . }}-selfsigned-issuer
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "locust-k8s-operator.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+# =============================================================================
+# Certificate - TLS certificate for webhook Service
+# =============================================================================
+# This certificate is used by the webhook server to serve HTTPS.
+# The API server validates this certificate when calling webhooks.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "locust-k8s-operator.fullname" . }}-serving-cert
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "locust-k8s-operator.labels" . | nindent 4 }}
+spec:
+  # DNS names that the certificate is valid for
+  # Must match the Service name used by the webhook
+  dnsNames:
+    - {{ include "locust-k8s-operator.fullname" . }}-webhook.{{ .Release.Namespace }}.svc
+    - {{ include "locust-k8s-operator.fullname" . }}-webhook.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: {{ include "locust-k8s-operator.fullname" . }}-selfsigned-issuer
+  # Secret where cert-manager stores the certificate
+  # This Secret is mounted into the operator pod
+  secretName: {{ include "locust-k8s-operator.fullname" . }}-webhook-certs
+{{- end }}

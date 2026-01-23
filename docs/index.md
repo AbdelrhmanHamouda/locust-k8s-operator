@@ -20,6 +20,7 @@ description: Enable performance testing for the modern era! Utilize the full pow
 </div>
 </div>
 
+
 <div class="badges-section">
   <div class="badges-container">
     <a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/actions/workflows/ci.yaml" target="_blank">
@@ -35,6 +36,44 @@ description: Enable performance testing for the modern era! Utilize the full pow
       <img src="https://img.shields.io/docker/pulls/lotest/locust-k8s-operator?style=flat&logo=docker&logoColor=green&label=Image%20Pulls&color=green" alt="Docker Pulls" class="badge">
     </a>
   </div>
+</div>
+
+## 🚀 Experience the Power of v2.0 { .text-center }
+
+<div class="grid cards" markdown>
+
+-   :material-rocket-launch:{ .lg .middle } __Rebuilt in Go__
+
+    ---
+
+    Experience **60x faster startup times** and a **4x smaller memory footprint**. The entire operator has been rewritten in Go for maximum efficiency and reliability.
+
+    [:octicons-arrow-right-24: Read the migration guide](migration.md)
+
+-   :material-eye-check:{ .lg .middle } __Native OpenTelemetry__
+
+    ---
+
+    Gain deep visibility with built-in tracing and metrics. No sidecars required—just pure, cloud-native observability.
+
+    [:octicons-arrow-right-24: Learn more](advanced_topics.md#opentelemetry)
+
+-   :material-key-variant:{ .lg .middle } __Secret Injection__
+
+    ---
+
+    Securely manage your test credentials with native Kubernetes Secret and ConfigMap injection directly into your test pods.
+
+    [:octicons-arrow-right-24: Learn more](advanced_topics.md#environment-injection)
+
+-   :material-harddisk:{ .lg .middle } __Volume Mounting__
+
+    ---
+
+    Mount any storage volume to your master and worker pods for flexible test data and configuration management.
+
+    [:octicons-arrow-right-24: Learn more](advanced_topics.md#volume-mounting)
+
 </div>
 
 

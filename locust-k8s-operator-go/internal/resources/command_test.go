@@ -23,6 +23,7 @@ import (
 )
 
 const testCommandSeed = "locust -f /lotest/src/test.py"
+const testMasterHost = "my-test-master"
 
 func TestBuildMasterCommand(t *testing.T) {
 	workerReplicas := int32(5)
@@ -56,7 +57,7 @@ func TestBuildMasterCommand_SplitsCorrectly(t *testing.T) {
 }
 
 func TestBuildWorkerCommand(t *testing.T) {
-	masterHost := "my-test-master"
+	masterHost := testMasterHost
 
 	cmd := BuildWorkerCommand(testCommandSeed, masterHost, false)
 
@@ -66,7 +67,7 @@ func TestBuildWorkerCommand(t *testing.T) {
 	assert.Contains(t, cmd, "/lotest/src/test.py")
 	assert.Contains(t, cmd, "--worker")
 	assert.Contains(t, cmd, "--master-port=5557")
-	assert.Contains(t, cmd, "--master-host=my-test-master")
+	assert.Contains(t, cmd, "--master-host="+testMasterHost)
 }
 
 func TestBuildWorkerCommand_MasterHostCorrect(t *testing.T) {
@@ -129,7 +130,7 @@ func TestBuildMasterCommand_OTelFlagPosition(t *testing.T) {
 }
 
 func TestBuildWorkerCommand_OTelDisabled(t *testing.T) {
-	masterHost := "my-test-master"
+	masterHost := testMasterHost
 
 	cmd := BuildWorkerCommand(testCommandSeed, masterHost, false)
 
@@ -138,7 +139,7 @@ func TestBuildWorkerCommand_OTelDisabled(t *testing.T) {
 }
 
 func TestBuildWorkerCommand_OTelEnabled(t *testing.T) {
-	masterHost := "my-test-master"
+	masterHost := testMasterHost
 
 	cmd := BuildWorkerCommand(testCommandSeed, masterHost, true)
 
@@ -147,7 +148,7 @@ func TestBuildWorkerCommand_OTelEnabled(t *testing.T) {
 }
 
 func TestBuildWorkerCommand_OTelFlagPosition(t *testing.T) {
-	masterHost := "my-test-master"
+	masterHost := testMasterHost
 
 	cmd := BuildWorkerCommand(testCommandSeed, masterHost, true)
 

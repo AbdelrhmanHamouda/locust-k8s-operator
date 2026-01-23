@@ -252,3 +252,127 @@ func UncommentCode(filename, target, prefix string) error {
 
 	return nil
 }
+
+// ApplyFromFile applies a Kubernetes resource from a YAML file
+func ApplyFromFile(namespace, path string) (string, error) {
+	cmd := exec.Command("kubectl", "apply", "-f", path, "-n", namespace)
+	return Run(cmd)
+}
+
+// DeleteFromFile deletes a Kubernetes resource from a YAML file
+func DeleteFromFile(namespace, path string) (string, error) {
+	cmd := exec.Command("kubectl", "delete", "-f", path, "-n", namespace, "--ignore-not-found")
+	return Run(cmd)
+}
+
+// WaitForResource waits for a resource to exist
+func WaitForResource(resourceType, namespace, name string, timeout string) error {
+	cmd := exec.Command("kubectl", "wait", resourceType, name,
+		"-n", namespace,
+		"--for=create",
+		"--timeout", timeout)
+	_, err := Run(cmd)
+	return err
+}
+
+// ResourceExists checks if a resource exists
+func ResourceExists(resourceType, namespace, name string) bool {
+	cmd := exec.Command("kubectl", "get", resourceType, name, "-n", namespace)
+	_, err := Run(cmd)
+	return err == nil
+}
+
+// GetResourceField retrieves a field from a resource using jsonpath
+func GetResourceField(resourceType, namespace, name, jsonpath string) (string, error) {
+	cmd := exec.Command("kubectl", "get", resourceType, name,
+		"-n", namespace, "-o", fmt.Sprintf("jsonpath={%s}", jsonpath))
+	output, err := Run(cmd)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(output), nil
+}
+
+// GetOwnerReferenceName retrieves the owner reference name from a resource
+func GetOwnerReferenceName(resourceType, namespace, name string) (string, error) {
+	return GetResourceField(resourceType, namespace, name, ".metadata.ownerReferences[0].name")
+}
+
+// GetJobContainerEnv retrieves environment variables from a Job's container
+func GetJobContainerEnv(namespace, jobName, containerName string) (string, error) {
+	jsonpath := fmt.Sprintf(".spec.template.spec.containers[?(@.name==\"%s\")].env[*].name", containerName)
+	return GetResourceField("job", namespace, jobName, jsonpath)
+}
+
+// GetJobContainerCommand retrieves the command from a Job's container
+func GetJobContainerCommand(namespace, jobName, containerName string) (string, error) {
+	jsonpath := fmt.Sprintf(".spec.template.spec.containers[?(@.name==\"%s\")].command", containerName)
+	return GetResourceField("job", namespace, jobName, jsonpath)
+}
+
+// GetJobContainerArgs retrieves the args from a Job's container
+func GetJobContainerArgs(namespace, jobName, containerName string) (string, error) {
+	jsonpath := fmt.Sprintf(".spec.template.spec.containers[?(@.name==\"%s\")].args", containerName)
+	return GetResourceField("job", namespace, jobName, jsonpath)
+}
+
+// GetJobContainerNames retrieves all container names from a Job
+func GetJobContainerNames(namespace, jobName string) (string, error) {
+	return GetResourceField("job", namespace, jobName, ".spec.template.spec.containers[*].name")
+}
+
+// GetServicePorts retrieves port names from a Service
+func GetServicePorts(namespace, serviceName string) (string, error) {
+	return GetResourceField("service", namespace, serviceName, ".spec.ports[*].name")
+}
+
+// GetJobEnvFrom retrieves envFrom configuration from a Job's container
+func GetJobEnvFrom(namespace, jobName, containerName string) (string, error) {
+	jsonpath := fmt.Sprintf(".spec.template.spec.containers[?(@.name==\"%s\")].envFrom", containerName)
+	return GetResourceField("job", namespace, jobName, jsonpath)
+}
+
+// GetJobVolumes retrieves volume names from a Job
+func GetJobVolumes(namespace, jobName string) (string, error) {
+	return GetResourceField("job", namespace, jobName, ".spec.template.spec.volumes[*].name")
+}
+
+// GetJobVolumeMounts retrieves volume mount paths from a Job's container
+func GetJobVolumeMounts(namespace, jobName, containerName string) (string, error) {
+	jsonpath := fmt.Sprintf(".spec.template.spec.containers[?(@.name==\"%s\")].volumeMounts[*].mountPath", containerName)
+	return GetResourceField("job", namespace, jobName, jsonpath)
+}
+
+// WaitForControllerReady waits for the controller-manager deployment to be ready
+func WaitForControllerReady(namespace string, timeout string) error {
+	_, _ = fmt.Fprintf(GinkgoWriter, "Waiting for controller-manager deployment to be ready...\n")
+	cmd := exec.Command("kubectl", "wait", "deployment",
+		"-l", "control-plane=controller-manager",
+		"-n", namespace,
+		"--for=condition=Available",
+		"--timeout", timeout)
+	_, err := Run(cmd)
+	return err
+}
+
+// WaitForWebhookReady waits for the webhook service endpoint to be ready
+func WaitForWebhookReady(namespace, serviceName string, timeout string) error {
+	_, _ = fmt.Fprintf(GinkgoWriter, "Waiting for webhook service endpoint to be ready...\n")
+	cmd := exec.Command("kubectl", "wait", "endpoints", serviceName,
+		"-n", namespace,
+		"--for=jsonpath={.subsets[0].addresses[0].ip}",
+		"--timeout", timeout)
+	_, err := Run(cmd)
+	return err
+}
+
+// WaitForCertificateReady waits for the serving certificate to be ready
+func WaitForCertificateReady(namespace, certName string, timeout string) error {
+	_, _ = fmt.Fprintf(GinkgoWriter, "Waiting for certificate %s to be ready...\n", certName)
+	cmd := exec.Command("kubectl", "wait", "certificate", certName,
+		"-n", namespace,
+		"--for=condition=Ready",
+		"--timeout", timeout)
+	_, err := Run(cmd)
+	return err
+}

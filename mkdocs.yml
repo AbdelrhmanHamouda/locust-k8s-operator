@@ -185,6 +185,8 @@ nav:
   - Deploy Operator with HELM: helm_deploy.md
   - Advanced topics: advanced_topics.md
   - Metrics & Dashboards: metrics_and_dashboards.md
+  - API Reference: api_reference.md
+  - Migration Guide: migration.md
   - Roadmap: roadmap.md
   - Contributing & Development:
       - Overview: contribute.md

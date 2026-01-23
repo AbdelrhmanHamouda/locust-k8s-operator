@@ -415,14 +415,17 @@ var _ = Describe("LocustTest Controller Integration", func() {
 			originalUID := masterJob.UID
 			originalResourceVersion := masterJob.ResourceVersion
 
-			// Update the CR spec
-			updatedLT := &locustv2.LocustTest{}
-			Expect(k8sClient.Get(ctx, types.NamespacedName{
-				Name: "update-noop-test", Namespace: testNamespace,
-			}, updatedLT)).To(Succeed())
-
-			updatedLT.Spec.Worker.Replicas = 10 // Change worker count
-			Expect(k8sClient.Update(ctx, updatedLT)).To(Succeed())
+			// Update the CR spec - retry on conflict
+			Eventually(func() error {
+				updatedLT := &locustv2.LocustTest{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name: "update-noop-test", Namespace: testNamespace,
+				}, updatedLT); err != nil {
+					return err
+				}
+				updatedLT.Spec.Worker.Replicas = 10 // Change worker count
+				return k8sClient.Update(ctx, updatedLT)
+			}, timeout, interval).Should(Succeed())
 
 			// Wait a bit for potential reconciliation
 			Consistently(func() string {

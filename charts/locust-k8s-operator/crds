@@ -1,1 +1,1 @@
-../../kube/crd
+../../locust-k8s-operator-go/config/crd/bases

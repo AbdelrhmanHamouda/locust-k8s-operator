@@ -1,252 +1,184 @@
-# Integration Testing Guide
+# Testing Guide
 
-This document describes the comprehensive integration testing setup for the Locust K8s Operator, which validates the complete end-to-end functionality beyond unit tests.
+This document describes the comprehensive testing setup for the Locust K8s Operator, covering unit tests, integration tests (envtest), and end-to-end tests.
 
 ## Overview
 
-The integration test suite performs the following workflow:
-1. **Build** - Creates the operator Docker image
-2. **Package** - Packages the Helm chart
-3. **Deploy** - Spins up a K8s cluster (K3s) and installs the operator
-4. **Test** - Deploys a LocustTest CR and validates operator behavior
-5. **Validate** - Ensures Locust master/workers are running correctly
-6. **Cleanup** - Removes all resources and tears down the environment
+The operator uses a multi-layered testing strategy:
 
-## Architecture
+| Test Type | Framework | Scope | Speed |
+|-----------|-----------|-------|-------|
+| **Unit Tests** | Go testing | Individual functions | Fast (~seconds) |
+| **Integration Tests** | envtest | Controller + API Server | Medium (~30s) |
+| **E2E Tests** | Ginkgo + Kind | Full cluster deployment | Slow (~5-10min) |
 
-### Test Framework
-- **Testing Framework**: JUnit 5 with Testcontainers
-- **Kubernetes Cluster**: K3s via Testcontainers for local development, KinD in CI environment
-- **Build System**: Gradle with custom integration test source set
-- **Container Management**: Docker with Jib plugin for image building
+## Test Structure
 
-### Test Structure
 ```
-src/integrationTest/
-├── java/com/locust/operator/
-│   └── LocustOperatorIntegrationTest.java    # Main integration test
-└── resources/
-    └── application-test.yml                   # Test configuration
+locust-k8s-operator-go/
+├── api/
+│   ├── v1/
+│   │   └── *_test.go              # v1 API tests
+│   └── v2/
+│       ├── *_test.go              # v2 API tests
+│       └── locusttest_webhook_test.go  # Webhook validation tests
+├── internal/
+│   ├── config/
+│   │   └── config_test.go         # Configuration tests
+│   ├── controller/
+│   │   ├── suite_test.go          # envtest setup
+│   │   ├── locusttest_controller_test.go  # Unit tests
+│   │   └── integration_test.go    # Integration tests
+│   └── resources/
+│       ├── job_test.go            # Job builder tests
+│       ├── service_test.go        # Service builder tests
+│       ├── labels_test.go         # Label builder tests
+│       ├── env_test.go            # Environment builder tests
+│       └── command_test.go        # Command builder tests
+└── test/
+    └── e2e/
+        ├── e2e_suite_test.go      # E2E test setup
+        └── e2e_test.go            # E2E test scenarios
 ```
 
 ## Prerequisites
 
-### Local Development
-- **Docker**: Running Docker daemon
-- **Java 21**: Required for building the operator
-- **Helm 3.x**: For chart packaging and installation
-- **Gradle**: Uses project's gradle wrapper
+- **Go 1.23+**: Required for running tests
+- **Docker**: Required for E2E tests (Kind)
+- **Kind**: Required for E2E tests
 
-### CI/CD (GitHub Actions)
-- Uses Ubuntu latest runner
-- Automatically installs all dependencies
-- Runs on PR and push to main branch
+## Running Tests
 
-## Running Integration Tests
+### Unit & Integration Tests (envtest)
 
-### Option 1: Using the Integration Test Script (Recommended)
+The primary test command runs both unit tests and integration tests using envtest:
+
 ```bash
-# Make script executable (first time only)
-chmod +x scripts/run-integration-test.sh
+# Run all tests with coverage
+make test
 
-# Run integration tests
-./scripts/run-integration-test.sh
+# Run tests with verbose output
+go test ./... -v
+
+# Run specific package tests
+go test ./internal/resources/... -v
+go test ./internal/controller/... -v
+go test ./api/v2/... -v
+
+# Run specific test by name
+go test ./internal/controller/... -v -run TestReconcile
+
+# Generate coverage report
+make test
+go tool cover -html=cover.out -o coverage.html
 ```
 
-The script performs several helpful functions:
-- Checks prerequisites (Docker, Helm, Java)
-- Cleans up previous runs and Docker resources
-- Runs the integration tests with proper error handling
-- Provides detailed error reporting and logs
-- Shows test results and report locations
+### E2E Tests (Kind)
 
-### Option 2: Using Gradle Directly
+End-to-end tests run against a real Kubernetes cluster using Kind:
+
 ```bash
-# Run integration tests
-./gradlew integrationTest -PrunIntegrationTests
+# Run E2E tests (creates Kind cluster automatically)
+make test-e2e
 
-# Run with verbose output
-./gradlew integrationTest -PrunIntegrationTests --info
+# Run E2E tests with verbose output
+KIND_CLUSTER=locust-test go test ./test/e2e/ -v -ginkgo.v
 
-# Run specific test class
-./gradlew integrationTest -PrunIntegrationTests --tests="LocustOperatorIntegrationTest"
+# Cleanup E2E test cluster
+make cleanup-test-e2e
 ```
 
-### Option 3: In CI/CD
-Integration tests run automatically in GitHub Actions:
-- On pull requests to `main` or `master`
-- On pushes to `main` or `master`
-- Can be triggered manually via `workflow_dispatch`
+### CI Pipeline
 
-## Test Scenarios
+All tests run automatically in GitHub Actions:
 
-### Test 1: Operator Deployment
-- Creates operator namespace
-- Installs operator via Helm chart
-- Validates operator deployment is ready
-- Verifies operator pod is running
+```bash
+# Run the same checks as CI locally
+make ci
 
-### Test 2: LocustTest Deployment
-- Creates test namespace and ConfigMap with simple Locust script
-- Deploys LocustTest custom resource
-- Validates master and worker deployments are created
-- Ensures all pods reach Running state
-
-### Test 3: LocustTest Execution
-- Verifies Locust master web interface starts
-- Checks master logs for successful initialization
-- Validates workers connect to master
-- Confirms test environment is functional
-
-### Test 4: Cleanup
-- Deletes LocustTest custom resource
-- Verifies all managed resources are cleaned up
-- Uninstalls operator
-- Validates complete cleanup
-
-## Configuration
-
-### Integration Test Configuration
-Located in `gradle/integration-test.gradle`:
-- Defines separate source set for integration tests
-- Configures dependencies (Testcontainers, Kubernetes client, etc.)
-- Sets up test reporting and timeouts
-- Links to main build pipeline
-
-### Test Application Configuration
-Located in `src/integrationTest/resources/application-test.yml`:
-- Configures logging levels for test visibility
-- Sets timeouts for different test phases
-- Defines resource locations and image names
-
-### CI Configuration
-Located in `.github/workflows/integration-test.yml`:
-- GitHub Actions workflow for automated testing
-- Includes caching for Gradle and Docker layers
-- Uploads test results as artifacts
-- Uses **KinD (Kubernetes in Docker)** cluster with custom configuration in `.github/kind-config.yaml`
-- Uses Helm 3.12.0 for chart installation
-
-## Sample LocustTest Resource
-
-The integration test creates this sample LocustTest CR:
-
-```yaml
-apiVersion: locust.io/v1
-kind: LocustTest
-metadata:
-  name: integration-test
-  namespace: locust-tests
-spec:
-  masterConfig:
-    replicas: 1
-    image: locustio/locust:2.15.1
-    resources:
-      requests:
-        memory: "128Mi"
-        cpu: "100m"
-      limits:
-        memory: "256Mi"
-        cpu: "200m"
-  workerConfig:
-    replicas: 2
-    image: locustio/locust:2.15.1
-    resources:
-      requests:
-        memory: "128Mi"
-        cpu: "100m"
-      limits:
-        memory: "256Mi"
-        cpu: "200m"
-  configMap: locust-test-scripts
+# This runs:
+# - make lint (golangci-lint)
+# - make test (unit + integration tests)
 ```
 
-## Test Reports and Artifacts
+## Test Fixtures
 
-### Local Testing
-- **HTML Report**: `build/reports/integration-tests/index.html`
-- **JUnit XML**: `build/test-results/integration-test/`
-- **Logs**: `/tmp/locust-integration-test-{timestamp}.log`
+Test fixtures and sample data are located in:
 
-### CI Testing
-- Test results uploaded as GitHub Actions artifacts
-- Available for download from the Actions run page
-- Includes both HTML reports and raw XML results
+- `internal/testdata/` - Test fixtures for unit tests
+- `config/samples/` - Sample CRs for integration/E2E tests
 
 ## Troubleshooting
 
 ### Common Issues
 
-#### Docker Permission Errors
+#### envtest Binary Issues
 ```bash
-# On Linux, ensure user is in docker group
-sudo usermod -aG docker $USER
-# Then logout and login again
+# Re-download envtest binaries
+make setup-envtest
+
+# Verify binaries are installed
+ls bin/k8s/
 ```
 
-#### K3s Container Startup Issues
-- Ensure Docker has enough resources (4GB+ RAM recommended)
-- Check Docker daemon is running: `docker info`
-- Verify no conflicting containers: `docker ps -a`
+#### Test Timeouts
+```bash
+# Increase timeout for slow systems
+go test ./... -v -timeout 10m
+```
 
-#### Helm Chart Packaging Failures
-- Ensure Helm is installed: `helm version`
-- Check chart syntax: `helm lint charts/locust-k8s-operator`
-- Verify chart dependencies: `helm dependency list charts/locust-k8s-operator`
+#### Kind Cluster Issues
+```bash
+# Check if cluster exists
+kind get clusters
 
-#### Integration Test Timeouts
-- Tests have generous timeouts but may need adjustment for slower systems
-- Modify timeouts in `application-test.yml` if needed
-- Check system resources during test execution
+# Delete and recreate
+kind delete cluster --name locust-k8s-operator-go-test-e2e
+make test-e2e
+```
 
 ### Debug Mode
-Enable debug logging by setting:
-```yaml
-logger:
-  levels:
-    com.locust: DEBUG
-    org.testcontainers: DEBUG
+
+Run tests with verbose logging:
+```bash
+# Verbose test output
+go test ./internal/controller/... -v -ginkgo.v
+
+# With debug logs from controller
+go test ./internal/controller/... -v -args -zap-log-level=debug
 ```
 
-### Manual Debugging
-If tests fail, you can manually inspect the K3s cluster:
-1. The test creates temporary kubeconfig files
-2. Look for log messages indicating kubeconfig location
-3. Use `kubectl` with the temporary kubeconfig to inspect cluster state
+## Writing New Tests
 
-## Performance Considerations
+### Guidelines
 
-### Resource Requirements
-- **Memory**: ~4GB available RAM recommended
-- **CPU**: 2+ cores for reasonable performance
-- **Disk**: ~10GB for images and temporary files
-- **Network**: Internet access for pulling images
+1. **Unit tests**: Test pure functions in isolation
+2. **Integration tests**: Test controller behavior with envtest
+3. **E2E tests**: Test user-facing scenarios in real cluster
 
-### Execution Time
-- Full test suite: ~10-15 minutes
-- Individual test phases:
-  - Cluster startup: ~2-3 minutes
-  - Image building: ~3-5 minutes
-  - Deployment validation: ~2-3 minutes
-  - Test execution: ~2-3 minutes
-  - Cleanup: ~1-2 minutes
+### Test Naming Conventions
 
-## Future Enhancements
+```go
+// Unit tests: Test<FunctionName>_<Scenario>
+func TestBuildMasterJob_WithEnvConfig(t *testing.T) {}
 
-### Planned Improvements
-- [ ] Multi-scenario testing (different LocustTest configurations)
-- [ ] Performance benchmarking integration
-- [ ] Integration with libConfigMap feature testing
-- [ ] Cross-platform testing (ARM64 support)
-- [ ] Parallel test execution for faster CI
+// Integration tests: Describe/Context/It
+Describe("LocustTest Controller", func() {
+    Context("When creating a LocustTest", func() {
+        It("Should create master Job", func() {})
+    })
+})
+```
 
-### Extension Points
-- Add custom test scenarios in separate test classes
-- Extend with custom Kubernetes resources validation
-- Integrate with monitoring and observability testing
-- Add chaos engineering tests for resilience validation
+### Adding Integration Tests
+
+1. Add test to `internal/controller/integration_test.go`
+2. Use `k8sClient` for Kubernetes operations
+3. Use `Eventually` for async assertions
+4. Clean up resources in `AfterEach`
 
 ## Related Documentation
-- [How It Works](how_does_it_work.md) - Operator architecture overview
-- [Contributing](contribute.md) - Development guidelines
-- [LibConfigMap Feature](https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/LIBCONFIGMAP_FEATURE_IMPLEMENTATION.md) - Feature implementation details
+
+- [Local Development](local-development.md) - Development setup
+- [Contributing](contribute.md) - Contribution guidelines
+- [Pull Request Process](pull-request-process.md) - PR workflow

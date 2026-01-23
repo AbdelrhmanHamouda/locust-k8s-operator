@@ -163,6 +163,16 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 lint-config: golangci-lint ## Verify golangci-lint linter configuration
 	$(GOLANGCI_LINT) config verify
 
+##@ CI
+
+.PHONY: ci
+ci: lint test ## Run all CI checks locally
+
+.PHONY: ci-coverage
+ci-coverage: test ## Generate coverage report for CI
+	@echo "Coverage report: cover.out"
+	@go tool cover -func=cover.out | tail -1
+
 ##@ Build
 
 .PHONY: build
