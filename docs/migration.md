@@ -12,41 +12,6 @@ tags:
 
 This guide helps existing users of the Locust Kubernetes Operator upgrade from v1 to v2. The v2 release is a complete rewrite in Go, bringing significant performance improvements and new features.
 
-## :rocket: What's New in v2.0 { .text-center }
-
-<div class="grid cards" markdown>
-
--   :material-language-go:{ .lg .middle } __Complete Go Rewrite__
-
-    ---
-
-    Rebuilt from the ground up in Go for **4x smaller memory footprint** (~64MB vs ~256MB) and **60x faster startup** (<1s vs ~60s). Native Kubernetes integration with controller-runtime.
-
--   :material-chart-timeline:{ .lg .middle } __Native OpenTelemetry__
-
-    ---
-
-    Export traces and metrics directly from Locust using native `--otel` flag. No sidecar required—configure endpoints and protocols directly in your CR.
-
-    [:octicons-arrow-right-24: Learn more](advanced_topics.md#opentelemetry-integration)
-
--   :material-key-variant:{ .lg .middle } __Secret & ConfigMap Injection__
-
-    ---
-
-    Securely inject credentials and configuration from Kubernetes Secrets and ConfigMaps as environment variables or file mounts.
-
-    [:octicons-arrow-right-24: Learn more](advanced_topics.md#environment-secret-injection)
-
--   :material-harddisk:{ .lg .middle } __Flexible Volume Mounting__
-
-    ---
-
-    Mount test data, certificates, and configs from PVCs, ConfigMaps, or Secrets. Target specific components (master, worker, or both).
-
-    [:octicons-arrow-right-24: Learn more](advanced_topics.md#volume-mounting)
-
-</div>
 
 ## Overview
 

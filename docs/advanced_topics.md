@@ -439,7 +439,7 @@ string. In this case, job definitions will not include the parameter.
 
 ---
 
-## :material-chart-timeline: OpenTelemetry Integration
+## :material-chart-timeline: OpenTelemetry Integration {: #opentelemetry }
 
 !!! info "New in v2.0"
     This feature is only available in the v2 API.
@@ -503,7 +503,7 @@ When OpenTelemetry is enabled:
 
 ---
 
-## :material-key: Environment & Secret Injection
+## :material-key: Environment & Secret Injection {: #environment-injection }
 
 !!! info "New in v2.0"
     This feature is only available in the v2 API.
@@ -583,7 +583,7 @@ The following paths are reserved and cannot be used for secret mounts:
 
 ---
 
-## :material-folder-multiple: Volume Mounting
+## :material-folder-multiple: Volume Mounting {: #volume-mounting }
 
 !!! info "New in v2.0"
     This feature is only available in the v2 API.
@@ -666,7 +666,7 @@ The following volume names are reserved:
 
 ---
 
-## :material-tune-vertical: Separate Resource Specs
+## :material-tune-vertical: Separate Resource Specs {: #separate-resource-specs }
 
 !!! info "New in v2.0"
     This feature is only available in the v2 API.
