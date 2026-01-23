@@ -32,7 +32,7 @@ import (
 func BuildMasterJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig) *batchv1.Job {
 	nodeName := NodeName(lt.Name, Master)
 	otelEnabled := IsOTelEnabled(lt)
-	command := BuildMasterCommand(lt.Spec.Master.Command, lt.Spec.Worker.Replicas, otelEnabled)
+	command := BuildMasterCommand(&lt.Spec.Master, lt.Spec.Worker.Replicas, otelEnabled)
 
 	return buildJob(lt, cfg, Master, nodeName, command)
 }
