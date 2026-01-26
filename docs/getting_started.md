@@ -41,7 +41,6 @@ class User(HttpUser): # (1)!
 
 A simple _custom resource_ for the previous test can be something like the following example;
 
-> To streamline this step, [_intensive-brew_](https://abdelrhmanhamouda.github.io/intensive-brew/) should be used. It is a simple cli tool that converts a declarative yaml into a compatible LocustTest kubernetes custom resource.
 
 === "v2 API (Recommended)"
 
@@ -258,10 +257,10 @@ kubectl create configmap demo-lib-map --from-file=lib/helpers.py --from-file=lib
     metadata:
       name: example-locusttest
     spec:
-      masterConfig:
-        replicas: 1
-      workerConfig:
-        replicas: 2
+      image: locustio/locust:2.20.0
+      masterCommandSeed: "--locustfile /lotest/src/my_test.py --host https://example.com"
+      workerCommandSeed: "--locustfile /lotest/src/my_test.py"
+      workerReplicas: 2
       configMap: demo-test-map    # Your test script ConfigMap
       libConfigMap: demo-lib-map   # Your lib files ConfigMap
     ```

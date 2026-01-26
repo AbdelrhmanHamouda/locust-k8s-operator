@@ -138,7 +138,7 @@ The following tables list the configurable parameters of the Locust Operator Hel
 | `crd.install` | Specifies whether to deploy the `LocustTest` CRD. | `true` |
 | `k8s.clusterRole.enabled` | Deploy with a cluster-wide role (`true`) or a namespaced role (`false`). | `true` |
 | `serviceAccount.create` | Specifies whether a service account should be created. | `true` |
-| `serviceAccount.name` | The name of the service account to use. If not set, a name is generated. | `default` |
+| `serviceAccount.name` | The name of the service account to use. If empty and `serviceAccount.create` is `true`, a name is generated using the release name. If `serviceAccount.create` is `false`, defaults to `default`. | `""` |
 | `serviceAccount.annotations` | Annotations to add to the service account. | `{}` |
 
 ### Operator Resources
@@ -196,8 +196,10 @@ Required when `webhook.enabled: true`:
 | `locustPods.metricsExporter.pullPolicy` | Image pull policy for the metrics exporter. | `IfNotPresent` |
 | `locustPods.metricsExporter.resources.requests.cpu` | CPU request for metrics exporter. | `100m` |
 | `locustPods.metricsExporter.resources.requests.memory` | Memory request for metrics exporter. | `64Mi` |
+| `locustPods.metricsExporter.resources.requests.ephemeralStorage` | Ephemeral storage request for metrics exporter. | `30M` |
 | `locustPods.metricsExporter.resources.limits.cpu` | CPU limit for metrics exporter. | `250m` |
 | `locustPods.metricsExporter.resources.limits.memory` | Memory limit for metrics exporter. | `128Mi` |
+| `locustPods.metricsExporter.resources.limits.ephemeralStorage` | Ephemeral storage limit for metrics exporter. | `50M` |
 
 !!! tip
     When using OpenTelemetry (`spec.observability.openTelemetry.enabled: true`), the metrics exporter sidecar is not deployed.

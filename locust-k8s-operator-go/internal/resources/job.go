@@ -32,7 +32,7 @@ import (
 func BuildMasterJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig) *batchv1.Job {
 	nodeName := NodeName(lt.Name, Master)
 	otelEnabled := IsOTelEnabled(lt)
-	command := BuildMasterCommand(lt.Spec.Master.Command, lt.Spec.Worker.Replicas, otelEnabled)
+	command := BuildMasterCommand(&lt.Spec.Master, lt.Spec.Worker.Replicas, otelEnabled)
 
 	return buildJob(lt, cfg, Master, nodeName, command)
 }
@@ -101,6 +101,7 @@ func buildJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, mode Operatio
 					Volumes:          buildVolumes(lt, nodeName, mode),
 					Affinity:         buildAffinity(lt, cfg),
 					Tolerations:      buildTolerations(lt, cfg),
+					NodeSelector:     buildNodeSelector(lt),
 				},
 			},
 		},
@@ -355,4 +356,14 @@ func buildTolerations(lt *locustv2.LocustTest, cfg *config.OperatorConfig) []cor
 
 	// v2 uses standard corev1.Toleration directly
 	return lt.Spec.Scheduling.Tolerations
+}
+
+// buildNodeSelector creates pod node selector from the CR spec.
+// Returns nil if no node selector is specified.
+func buildNodeSelector(lt *locustv2.LocustTest) map[string]string {
+	if lt.Spec.Scheduling == nil || len(lt.Spec.Scheduling.NodeSelector) == 0 {
+		return nil
+	}
+
+	return lt.Spec.Scheduling.NodeSelector
 }

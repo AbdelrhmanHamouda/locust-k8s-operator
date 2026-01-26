@@ -13,19 +13,19 @@ tags:
 
 <div class="grid cards" markdown>
 
--   :material-cloud-check: **Cloud Native & Kubernetes Integration**
+-   <a id="cloud-native"></a> :material-cloud-check: **Cloud Native & Kubernetes Integration**
 
     ---
 
     Leverage the full power of Kubernetes for distributed performance testing. The operator is designed to be cloud-native, enabling seamless deployment and scaling on any Kubernetes cluster.
 
--   :material-robot-happy: **Automation & CI/CD**
+-   <a id="automation"></a> :material-robot-happy: **Automation & CI/CD**
 
     ---
 
     Integrate performance testing directly into your CI/CD pipelines. Automate the deployment, execution, and teardown of your Locust tests for continuous performance validation.
 
--   :material-shield-check: **Governance & Resource Management**
+-   <a id="governance"></a> :material-shield-check: **Governance & Resource Management**
 
     ---
 
@@ -33,7 +33,7 @@ tags:
 
     [:octicons-arrow-right-24: Learn more](advanced_topics.md#resource-management)
 
--   :material-chart-bar: **Observability & Monitoring**
+-   <a id="observability"></a> :material-chart-bar: **Observability & Monitoring**
 
     ---
 

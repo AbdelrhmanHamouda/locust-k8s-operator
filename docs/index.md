@@ -56,7 +56,7 @@ description: Enable performance testing for the modern era! Utilize the full pow
 
     Gain deep visibility with built-in tracing and metrics. No sidecars required—just pure, cloud-native observability.
 
-    [:octicons-arrow-right-24: Learn more](advanced_topics.md#opentelemetry)
+    [:octicons-arrow-right-24: Learn more](advanced_topics.md#opentelemetry-integration)
 
 -   :material-key-variant:{ .lg .middle } __Secret Injection__
 
@@ -64,7 +64,7 @@ description: Enable performance testing for the modern era! Utilize the full pow
 
     Securely manage your test credentials with native Kubernetes Secret and ConfigMap injection directly into your test pods.
 
-    [:octicons-arrow-right-24: Learn more](advanced_topics.md#environment-injection)
+    [:octicons-arrow-right-24: Learn more](advanced_topics.md#environment-secret-injection)
 
 -   :material-harddisk:{ .lg .middle } __Volume Mounting__
 

@@ -13,7 +13,7 @@ tags:
 
 Basic configuration is not always enough to satisfy the performance test needs, for example when needing to work with Kafka and MSK. Below is a collection of topics of an advanced nature. This list will be keep growing as the tool matures more and more.
 
-## :material-apache-kafka: Kafka & AWS MSK configuration
+## :material-apache-kafka: Kafka & AWS MSK configuration {: #kafka-integration }
 
 Generally speaking, the usage of Kafka in a _locustfile_ is identical to how it would be used anywhere else within the cloud context. Thus, no special setup is needed for the purposes of performance testing with the _Operator_.  
 That being said, if an organization is using kafka in production, chances are that authenticated kafka is being used. One of the main providers of such managed service is _AWS_ in the form of _MSK_. For that end, the _Operator_ have an _out-of-the-box_ support for MSK.
@@ -228,6 +228,64 @@ The specification for tolerations is defined as follows
           effect: NoExecute
     ```
 
+### :material-label: Node Selector
+
+This allows generated resources to be scheduled on nodes with specific labels using Kubernetes node selector.
+
+#### Node Selector Options
+
+The specification for node selector is defined as follows:
+
+=== "v2 API"
+
+    ```yaml
+    apiVersion: locust.io/v2
+    kind: LocustTest
+    metadata:
+      name: my-test
+    spec:
+      image: locustio/locust:2.20.0
+      master:
+        command: "--locustfile /lotest/src/test.py --host https://example.com"
+      worker:
+        command: "--locustfile /lotest/src/test.py"
+        replicas: 3
+      scheduling:
+        nodeSelector:
+          <key>: <value>
+          <key>: <value>
+    ```
+
+=== "v2 API Example"
+
+    ```yaml
+    apiVersion: locust.io/v2
+    kind: LocustTest
+    metadata:
+      name: nodeselector-example
+    spec:
+      image: locustio/locust:2.20.0
+      master:
+        command: "--locustfile /lotest/src/test.py --host https://example.com"
+      worker:
+        command: "--locustfile /lotest/src/test.py"
+        replicas: 3
+      scheduling:
+        nodeSelector:
+          disktype: ssd
+          environment: performance
+    ```
+
+Node selector is the simplest way to constrain pods to nodes with specific labels. For more complex scheduling requirements, use [affinity rules](#affinity) or [tolerations](#taint-tolerations).
+
+!!! note "Node Selector vs Affinity"
+    Node selector is a simpler, label-based approach to node selection. Use affinity rules when you need more complex scheduling logic such as:
+    
+    - Multiple node selection criteria with OR logic
+    - Soft preferences (preferred rather than required)
+    - Pod affinity/anti-affinity rules
+
+---
 
 ## Resource Management
 
@@ -331,7 +389,7 @@ In some scenarios, particularly during performance-sensitive tests, you may want
 
 ---
 
-## :material-docker: Usage of a private image registry
+## :material-docker: Usage of a private image registry {: #private-image-registry }
 
 Images from a private image registry can be used through various methods as described in the [kubernetes documentation](https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry), one of those methods depends on setting `imagePullSecrets` for pods. This is supported in the operator by simply setting the `imagePullSecrets` option in the deployed custom resource. For example:
 
@@ -403,7 +461,7 @@ Kubernetes uses the image tag and pull policy to control when kubelet attempts t
       ...
     ```
 
-## :material-auto-fix: Automatic Cleanup for Finished Master and Worker Jobs
+## :material-auto-fix: Automatic Cleanup for Finished Master and Worker Jobs {: #automatic-cleanup }
 
 Once load tests finish, master and worker jobs remain available in Kubernetes.
 You can set up a time-to-live (TTL) value in the operator's Helm chart, so that
@@ -439,7 +497,7 @@ string. In this case, job definitions will not include the parameter.
 
 ---
 
-## :material-chart-timeline: OpenTelemetry Integration {: #opentelemetry }
+## :material-chart-timeline: OpenTelemetry Integration {: #opentelemetry-integration }
 
 !!! info "New in v2.0"
     This feature is only available in the v2 API.
@@ -464,13 +522,11 @@ spec:
     openTelemetry:
       enabled: true
       endpoint: "otel-collector.monitoring:4317"
-      protocol: "grpc"  # or "http"
+      protocol: "grpc"  # or "http/protobuf"
       insecure: false
       extraEnvVars:
-        - name: OTEL_SERVICE_NAME
-          value: "my-load-test"
-        - name: OTEL_RESOURCE_ATTRIBUTES
-          value: "environment=staging,team=platform"
+        OTEL_SERVICE_NAME: "my-load-test"
+        OTEL_RESOURCE_ATTRIBUTES: "environment=staging,team=platform"
 ```
 
 ### OTel Environment Variables
@@ -482,7 +538,7 @@ When OpenTelemetry is enabled, the operator injects the following environment va
 | `OTEL_TRACES_EXPORTER` | Set to `otlp` |
 | `OTEL_METRICS_EXPORTER` | Set to `otlp` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | Your configured endpoint |
-| `OTEL_EXPORTER_OTLP_PROTOCOL` | `grpc` or `http` |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `grpc` or `http/protobuf` |
 | `OTEL_EXPORTER_OTLP_INSECURE` | Only set if `insecure: true` |
 
 ### OTel vs Metrics Sidecar
@@ -503,7 +559,7 @@ When OpenTelemetry is enabled:
 
 ---
 
-## :material-key: Environment & Secret Injection {: #environment-injection }
+## :material-key: Environment & Secret Injection {: #environment-secret-injection }
 
 !!! info "New in v2.0"
     This feature is only available in the v2 API.

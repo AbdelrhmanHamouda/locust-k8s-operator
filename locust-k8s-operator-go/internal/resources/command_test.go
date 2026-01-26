@@ -19,16 +19,28 @@ package resources
 import (
 	"testing"
 
+	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/utils/ptr"
 )
 
 const testCommandSeed = "locust -f /lotest/src/test.py"
 const testMasterHost = "my-test-master"
 
+// Helper to create a default MasterSpec for testing
+func testMasterSpec() *locustv2.MasterSpec {
+	return &locustv2.MasterSpec{
+		Command:   testCommandSeed,
+		Autostart: ptr.To(true),
+		Autoquit:  &locustv2.AutoquitConfig{Enabled: true, Timeout: 60},
+	}
+}
+
 func TestBuildMasterCommand(t *testing.T) {
 	workerReplicas := int32(5)
+	masterSpec := testMasterSpec()
 
-	cmd := BuildMasterCommand(testCommandSeed, workerReplicas, false)
+	cmd := BuildMasterCommand(masterSpec, workerReplicas, false)
 
 	// Verify all expected flags are present
 	assert.Contains(t, cmd, "locust")
@@ -45,10 +57,13 @@ func TestBuildMasterCommand(t *testing.T) {
 }
 
 func TestBuildMasterCommand_SplitsCorrectly(t *testing.T) {
-	seedWithExtraSpaces := "locust   -f   /lotest/src/test.py"
+	masterSpec := &locustv2.MasterSpec{
+		Command:   "locust   -f   /lotest/src/test.py",
+		Autostart: ptr.To(true),
+	}
 	workerReplicas := int32(3)
 
-	cmd := BuildMasterCommand(seedWithExtraSpaces, workerReplicas, false)
+	cmd := BuildMasterCommand(masterSpec, workerReplicas, false)
 
 	// strings.Fields handles multiple spaces correctly
 	assert.Equal(t, "locust", cmd[0])
@@ -90,8 +105,9 @@ func TestBuildWorkerCommand_MasterHostCorrect(t *testing.T) {
 
 func TestBuildMasterCommand_OTelDisabled(t *testing.T) {
 	workerReplicas := int32(3)
+	masterSpec := testMasterSpec()
 
-	cmd := BuildMasterCommand(testCommandSeed, workerReplicas, false)
+	cmd := BuildMasterCommand(masterSpec, workerReplicas, false)
 
 	// --otel flag should NOT be present
 	assert.NotContains(t, cmd, "--otel")
@@ -99,8 +115,9 @@ func TestBuildMasterCommand_OTelDisabled(t *testing.T) {
 
 func TestBuildMasterCommand_OTelEnabled(t *testing.T) {
 	workerReplicas := int32(3)
+	masterSpec := testMasterSpec()
 
-	cmd := BuildMasterCommand(testCommandSeed, workerReplicas, true)
+	cmd := BuildMasterCommand(masterSpec, workerReplicas, true)
 
 	// --otel flag should be present
 	assert.Contains(t, cmd, "--otel")
@@ -108,8 +125,9 @@ func TestBuildMasterCommand_OTelEnabled(t *testing.T) {
 
 func TestBuildMasterCommand_OTelFlagPosition(t *testing.T) {
 	workerReplicas := int32(3)
+	masterSpec := testMasterSpec()
 
-	cmd := BuildMasterCommand(testCommandSeed, workerReplicas, true)
+	cmd := BuildMasterCommand(masterSpec, workerReplicas, true)
 
 	// Find positions of --otel and --master
 	otelIndex := -1
@@ -127,6 +145,68 @@ func TestBuildMasterCommand_OTelFlagPosition(t *testing.T) {
 	assert.NotEqual(t, -1, otelIndex, "--otel flag should be present")
 	assert.NotEqual(t, -1, masterIndex, "--master flag should be present")
 	assert.Less(t, otelIndex, masterIndex, "--otel should appear before --master")
+}
+
+// ===== Autostart/Autoquit Tests =====
+
+func TestBuildMasterCommand_AutostartDisabled(t *testing.T) {
+	masterSpec := &locustv2.MasterSpec{
+		Command:   testCommandSeed,
+		Autostart: ptr.To(false),
+	}
+
+	cmd := BuildMasterCommand(masterSpec, 3, false)
+
+	assert.NotContains(t, cmd, "--autostart")
+}
+
+func TestBuildMasterCommand_AutostartDefault(t *testing.T) {
+	// When Autostart is nil, default to true
+	masterSpec := &locustv2.MasterSpec{
+		Command: testCommandSeed,
+	}
+
+	cmd := BuildMasterCommand(masterSpec, 3, false)
+
+	assert.Contains(t, cmd, "--autostart")
+}
+
+func TestBuildMasterCommand_AutoquitDisabled(t *testing.T) {
+	masterSpec := &locustv2.MasterSpec{
+		Command:   testCommandSeed,
+		Autostart: ptr.To(true),
+		Autoquit:  &locustv2.AutoquitConfig{Enabled: false},
+	}
+
+	cmd := BuildMasterCommand(masterSpec, 3, false)
+
+	assert.NotContains(t, cmd, "--autoquit")
+}
+
+func TestBuildMasterCommand_AutoquitCustomTimeout(t *testing.T) {
+	masterSpec := &locustv2.MasterSpec{
+		Command:   testCommandSeed,
+		Autostart: ptr.To(true),
+		Autoquit:  &locustv2.AutoquitConfig{Enabled: true, Timeout: 120},
+	}
+
+	cmd := BuildMasterCommand(masterSpec, 3, false)
+
+	assert.Contains(t, cmd, "--autoquit")
+	assert.Contains(t, cmd, "120")
+	assert.NotContains(t, cmd, "60")
+}
+
+func TestBuildMasterCommand_AutoquitDefault(t *testing.T) {
+	// When Autoquit is nil, default to enabled with 60s timeout
+	masterSpec := &locustv2.MasterSpec{
+		Command: testCommandSeed,
+	}
+
+	cmd := BuildMasterCommand(masterSpec, 3, false)
+
+	assert.Contains(t, cmd, "--autoquit")
+	assert.Contains(t, cmd, "60")
 }
 
 func TestBuildWorkerCommand_OTelDisabled(t *testing.T) {

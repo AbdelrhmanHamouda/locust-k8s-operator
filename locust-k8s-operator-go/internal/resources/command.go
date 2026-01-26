@@ -19,13 +19,15 @@ package resources
 import (
 	"fmt"
 	"strings"
+
+	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 )
 
 // BuildMasterCommand constructs the command arguments for the master node.
-// Template: "{seed} [--otel] --master --master-port=5557 --expect-workers={N} --autostart --autoquit 60 --enable-rebalancing --only-summary"
-func BuildMasterCommand(commandSeed string, workerReplicas int32, otelEnabled bool) []string {
+// Uses MasterSpec configuration
+func BuildMasterCommand(masterSpec *locustv2.MasterSpec, workerReplicas int32, otelEnabled bool) []string {
 	var cmdParts []string
-	cmdParts = append(cmdParts, commandSeed)
+	cmdParts = append(cmdParts, masterSpec.Command)
 
 	// Add --otel flag if enabled (must come before other flags)
 	if otelEnabled {
@@ -36,8 +38,23 @@ func BuildMasterCommand(commandSeed string, workerReplicas int32, otelEnabled bo
 		"--master",
 		fmt.Sprintf("--master-port=%d", MasterPort),
 		fmt.Sprintf("--expect-workers=%d", workerReplicas),
-		"--autostart",
-		"--autoquit", "60",
+	)
+
+	// Add --autostart if enabled (default: true)
+	if masterSpec.Autostart == nil || *masterSpec.Autostart {
+		cmdParts = append(cmdParts, "--autostart")
+	}
+
+	// Add --autoquit if enabled (default: enabled with 60s timeout)
+	if masterSpec.Autoquit == nil || masterSpec.Autoquit.Enabled {
+		timeout := int32(60) // default
+		if masterSpec.Autoquit != nil && masterSpec.Autoquit.Timeout > 0 {
+			timeout = masterSpec.Autoquit.Timeout
+		}
+		cmdParts = append(cmdParts, "--autoquit", fmt.Sprintf("%d", timeout))
+	}
+
+	cmdParts = append(cmdParts,
 		"--enable-rebalancing",
 		"--only-summary",
 	)
