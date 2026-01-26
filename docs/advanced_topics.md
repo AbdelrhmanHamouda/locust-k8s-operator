@@ -389,7 +389,7 @@ In some scenarios, particularly during performance-sensitive tests, you may want
 
 ---
 
-## :material-docker: Usage of a private image registry
+## :material-docker: Usage of a private image registry {: #private-image-registry }
 
 Images from a private image registry can be used through various methods as described in the [kubernetes documentation](https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry), one of those methods depends on setting `imagePullSecrets` for pods. This is supported in the operator by simply setting the `imagePullSecrets` option in the deployed custom resource. For example:
 
@@ -461,7 +461,7 @@ Kubernetes uses the image tag and pull policy to control when kubelet attempts t
       ...
     ```
 
-## :material-auto-fix: Automatic Cleanup for Finished Master and Worker Jobs
+## :material-auto-fix: Automatic Cleanup for Finished Master and Worker Jobs {: #automatic-cleanup }
 
 Once load tests finish, master and worker jobs remain available in Kubernetes.
 You can set up a time-to-live (TTL) value in the operator's Helm chart, so that
@@ -497,7 +497,7 @@ string. In this case, job definitions will not include the parameter.
 
 ---
 
-## :material-chart-timeline: OpenTelemetry Integration {: #opentelemetry }
+## :material-chart-timeline: OpenTelemetry Integration {: #opentelemetry-integration }
 
 !!! info "New in v2.0"
     This feature is only available in the v2 API.
@@ -559,7 +559,7 @@ When OpenTelemetry is enabled:
 
 ---
 
-## :material-key: Environment & Secret Injection {: #environment-injection }
+## :material-key: Environment & Secret Injection {: #environment-secret-injection }
 
 !!! info "New in v2.0"
     This feature is only available in the v2 API.
