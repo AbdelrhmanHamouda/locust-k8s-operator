@@ -50,6 +50,8 @@ jobs:
   helm-chart-release:
     name: 🌊 Publish Helm chart
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [publish-image]
     permissions:
       contents: write
     steps:
@@ -76,9 +78,7 @@ jobs:
           helm package charts/locust-k8s-operator --app-version=${VERSION} --version=${VERSION} --destination=.cr-release-packages
 
       - name: 🎉 Run chart-releaser
-        # switch back to helm/chart-releaser-action when https://github.com/helm/chart-releaser-action/pull/109 is merged
-        # Waiting for a new release to include changes coming from https://github.com/helm/chart-releaser-action/commit/38cfeacdbbd62d13ec773fcdee1435ff5846c554
-        uses: askcloudarchitech/chart-releaser-action@skip-packaging-option
+        uses: helm/chart-releaser-action@v1
         with:
           skip_packaging: true
         env:
@@ -87,6 +87,7 @@ jobs:
   docs-release:
     name: 📚 Publish documentation
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
