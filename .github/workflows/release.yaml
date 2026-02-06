@@ -14,9 +14,9 @@ jobs:
   publish-image:
     name: 🐳 Publish image
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
-      packages: write
     env:
       DOCKER_IMAGE: lotest/locust-k8s-operator
     steps:
@@ -29,7 +29,7 @@ jobs:
           go-version-file: locust-k8s-operator-go/go.mod
 
       - name: 🔧 Setup ko
-        uses: ko-build/setup-ko@v0.6
+        uses: ko-build/setup-ko@v0.7
 
       - name: 🔐 Login to Docker Hub
         uses: docker/login-action@v3
@@ -42,7 +42,7 @@ jobs:
         env:
           KO_DOCKER_REPO: ${{ env.DOCKER_IMAGE }}
         run: |
-          ko build ./cmd/main.go \
+          ko build ./cmd \
             --platform=linux/amd64,linux/arm64 \
             --bare \
             --tags=${{ github.ref_name }},latest,${{ github.sha }}
