@@ -834,3 +834,291 @@ func TestCreateResource_SetControllerReferenceError(t *testing.T) {
 	err := reconciler.createResource(context.Background(), lt, svc, "Service")
 	assert.Error(t, err)
 }
+
+func TestReconcile_ExternalDeletion_MasterService(t *testing.T) {
+	lt := newTestLocustTestCR("my-test", "default")
+	reconciler, recorder := newTestReconciler(lt)
+	ctx := context.Background()
+
+	// First reconcile - creates resources and transitions to Running
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "my-test",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+
+	// Drain creation events from first reconcile
+	for i := 0; i < 3; i++ {
+		select {
+		case <-recorder.Events:
+			// Drain creation events (Service, Master Job, Worker Job)
+		default:
+		}
+	}
+
+	// Refetch CR to get updated status
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test",
+		Namespace: "default",
+	}, lt)
+	require.NoError(t, err)
+	assert.Equal(t, locustv2.PhaseRunning, lt.Status.Phase)
+
+	// Manually delete the master Service
+	masterService := &corev1.Service{}
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test-master",
+		Namespace: "default",
+	}, masterService)
+	require.NoError(t, err)
+	err = reconciler.Delete(ctx, masterService)
+	require.NoError(t, err)
+
+	// Second reconcile - should detect deletion and reset to Pending
+	result, err := reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "my-test",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+	assert.True(t, result.Requeue, "Should requeue after detecting deletion")
+
+	// Check that Warning event was recorded
+	select {
+	case event := <-recorder.Events:
+		assert.Contains(t, event, "Warning")
+		assert.Contains(t, event, "ResourceDeleted")
+		assert.Contains(t, event, "Service")
+		assert.Contains(t, event, "my-test-master")
+	default:
+		t.Fatal("Expected Warning event for external deletion")
+	}
+
+	// Refetch CR to check Phase was reset
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test",
+		Namespace: "default",
+	}, lt)
+	require.NoError(t, err)
+	assert.Equal(t, locustv2.PhasePending, lt.Status.Phase, "Phase should be reset to Pending")
+
+	// Third reconcile - should recreate the Service (self-healing)
+	_, err = reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "my-test",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+
+	// Verify Service exists again
+	masterService = &corev1.Service{}
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test-master",
+		Namespace: "default",
+	}, masterService)
+	assert.NoError(t, err, "Service should be recreated")
+
+	// Refetch CR to check Phase transitioned back to Running
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test",
+		Namespace: "default",
+	}, lt)
+	require.NoError(t, err)
+	assert.Equal(t, locustv2.PhaseRunning, lt.Status.Phase, "Phase should be Running after recreation")
+}
+
+func TestReconcile_ExternalDeletion_MasterJob(t *testing.T) {
+	lt := newTestLocustTestCR("my-test", "default")
+	reconciler, recorder := newTestReconciler(lt)
+	ctx := context.Background()
+
+	// First reconcile - creates resources and transitions to Running
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "my-test",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+
+	// Drain creation events from first reconcile
+	for i := 0; i < 3; i++ {
+		select {
+		case <-recorder.Events:
+			// Drain creation events (Service, Master Job, Worker Job)
+		default:
+		}
+	}
+
+	// Refetch CR to get updated status
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test",
+		Namespace: "default",
+	}, lt)
+	require.NoError(t, err)
+	assert.Equal(t, locustv2.PhaseRunning, lt.Status.Phase)
+
+	// Manually delete the master Job
+	masterJob := &batchv1.Job{}
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test-master",
+		Namespace: "default",
+	}, masterJob)
+	require.NoError(t, err)
+	err = reconciler.Delete(ctx, masterJob)
+	require.NoError(t, err)
+
+	// Second reconcile - should detect deletion and reset to Pending
+	result, err := reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "my-test",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+	assert.True(t, result.Requeue, "Should requeue after detecting deletion")
+
+	// Check that Warning event was recorded
+	select {
+	case event := <-recorder.Events:
+		assert.Contains(t, event, "Warning")
+		assert.Contains(t, event, "ResourceDeleted")
+		assert.Contains(t, event, "Job")
+		assert.Contains(t, event, "my-test-master")
+	default:
+		t.Fatal("Expected Warning event for external deletion")
+	}
+
+	// Refetch CR to check Phase was reset
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test",
+		Namespace: "default",
+	}, lt)
+	require.NoError(t, err)
+	assert.Equal(t, locustv2.PhasePending, lt.Status.Phase, "Phase should be reset to Pending")
+
+	// Third reconcile - should recreate the Job (self-healing)
+	_, err = reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "my-test",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+
+	// Verify Job exists again
+	masterJob = &batchv1.Job{}
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test-master",
+		Namespace: "default",
+	}, masterJob)
+	assert.NoError(t, err, "Master Job should be recreated")
+
+	// Refetch CR to check Phase transitioned back to Running
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test",
+		Namespace: "default",
+	}, lt)
+	require.NoError(t, err)
+	assert.Equal(t, locustv2.PhaseRunning, lt.Status.Phase, "Phase should be Running after recreation")
+}
+
+func TestReconcile_ExternalDeletion_WorkerJob(t *testing.T) {
+	lt := newTestLocustTestCR("my-test", "default")
+	reconciler, recorder := newTestReconciler(lt)
+	ctx := context.Background()
+
+	// First reconcile - creates resources and transitions to Running
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "my-test",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+
+	// Drain creation events from first reconcile
+	for i := 0; i < 3; i++ {
+		select {
+		case <-recorder.Events:
+			// Drain creation events (Service, Master Job, Worker Job)
+		default:
+		}
+	}
+
+	// Refetch CR to get updated status
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test",
+		Namespace: "default",
+	}, lt)
+	require.NoError(t, err)
+	assert.Equal(t, locustv2.PhaseRunning, lt.Status.Phase)
+
+	// Manually delete the worker Job
+	workerJob := &batchv1.Job{}
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test-worker",
+		Namespace: "default",
+	}, workerJob)
+	require.NoError(t, err)
+	err = reconciler.Delete(ctx, workerJob)
+	require.NoError(t, err)
+
+	// Second reconcile - should detect deletion and reset to Pending
+	result, err := reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "my-test",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+	assert.True(t, result.Requeue, "Should requeue after detecting deletion")
+
+	// Check that Warning event was recorded
+	select {
+	case event := <-recorder.Events:
+		assert.Contains(t, event, "Warning")
+		assert.Contains(t, event, "ResourceDeleted")
+		assert.Contains(t, event, "Job")
+		assert.Contains(t, event, "my-test-worker")
+	default:
+		t.Fatal("Expected Warning event for external deletion")
+	}
+
+	// Refetch CR to check Phase was reset
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test",
+		Namespace: "default",
+	}, lt)
+	require.NoError(t, err)
+	assert.Equal(t, locustv2.PhasePending, lt.Status.Phase, "Phase should be reset to Pending")
+
+	// Third reconcile - should recreate the Job (self-healing)
+	_, err = reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "my-test",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+
+	// Verify Job exists again
+	workerJob = &batchv1.Job{}
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test-worker",
+		Namespace: "default",
+	}, workerJob)
+	assert.NoError(t, err, "Worker Job should be recreated")
+
+	// Refetch CR to check Phase transitioned back to Running
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test",
+		Namespace: "default",
+	}, lt)
+	require.NoError(t, err)
+	assert.Equal(t, locustv2.PhaseRunning, lt.Status.Phase, "Phase should be Running after recreation")
+}
