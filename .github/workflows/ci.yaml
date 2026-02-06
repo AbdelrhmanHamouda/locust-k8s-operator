@@ -60,6 +60,15 @@ jobs:
           name: go-coverage
           fail_ci_if_error: false
 
+      - name: 📦 Upload Go test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-test-artifacts
+          path: |
+            locust-k8s-operator-go/cover.out
+          retention-days: 7
+
   # ============================================
   # Helm Chart Lint & Test
   # ============================================
@@ -132,6 +141,19 @@ jobs:
       - name: 🚀 Run chart-testing (install)
         run: ct install --target-branch ${{ github.event.repository.default_branch }} --config .github/ct.yaml --helm-extra-set-args "--set=image.pullPolicy=Never"
 
+      - name: 📦 Collect kind cluster logs on failure
+        if: failure() && steps.list-changed.outputs.changed == 'true'
+        run: kind export logs kind-logs --name chart-testing
+
+      - name: 📦 Upload Helm test artifacts on failure
+        if: failure() && steps.list-changed.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: helm-test-artifacts
+          path: |
+            kind-logs/
+          retention-days: 7
+
   docs-test:
     name: 📚 Test documentation
     runs-on: ubuntu-latest
@@ -160,3 +182,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python -m mkdocs build
+
+      - name: 📦 Upload docs build artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-build-artifacts
+          path: |
+            site/
+          retention-days: 7
