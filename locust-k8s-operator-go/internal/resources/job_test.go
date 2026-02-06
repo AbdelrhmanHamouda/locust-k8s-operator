@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -975,4 +976,182 @@ func TestBuildMasterJob_OTelEnabled_ExtraEnvVars(t *testing.T) {
 	}
 
 	assert.Equal(t, "service.name=locust-load-test", envMap["OTEL_RESOURCE_ATTRIBUTES"])
+}
+
+// ============================================
+// Integration Tests - ExtraArgs and Resource Precedence
+// ============================================
+
+func TestBuildMasterJob_WithExtraArgs(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Master.ExtraArgs = []string{"--csv=results", "--users=100"}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg, logr.Discard())
+
+	container := job.Spec.Template.Spec.Containers[0]
+	args := container.Args
+
+	// Verify extraArgs are present
+	assert.Contains(t, args, "--csv=results")
+	assert.Contains(t, args, "--users=100")
+
+	// Verify position: extraArgs should appear AFTER --only-summary
+	onlySummaryIndex := -1
+	csvIndex := -1
+	for i, arg := range args {
+		if arg == "--only-summary" {
+			onlySummaryIndex = i
+		}
+		if arg == "--csv=results" {
+			csvIndex = i
+		}
+	}
+	assert.Greater(t, csvIndex, onlySummaryIndex, "extraArgs should appear after operator-managed flags")
+}
+
+func TestBuildWorkerJob_WithExtraArgs(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Worker.ExtraArgs = []string{"--csv=results"}
+	cfg := newTestConfig()
+
+	job := BuildWorkerJob(lt, cfg, logr.Discard())
+
+	container := job.Spec.Template.Spec.Containers[0]
+	args := container.Args
+
+	// Verify extraArgs are present
+	assert.Contains(t, args, "--csv=results")
+}
+
+func TestBuildMasterJob_ExtraArgsNil(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Master.ExtraArgs = nil
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg, logr.Discard())
+
+	container := job.Spec.Template.Spec.Containers[0]
+	args := container.Args
+
+	// Verify command output matches current behavior
+	assert.Contains(t, args, "locust")
+	assert.Contains(t, args, "--master")
+	assert.Contains(t, args, "--only-summary")
+	assert.NotContains(t, args, "--csv=results")
+}
+
+func TestBuildMasterJob_WithCRResources(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Master.Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    mustParseQuantity("500m"),
+			corev1.ResourceMemory: mustParseQuantity("256Mi"),
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    mustParseQuantity("2000m"),
+			corev1.ResourceMemory: mustParseQuantity("2Gi"),
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg, logr.Discard())
+
+	container := job.Spec.Template.Spec.Containers[0]
+	resources := container.Resources
+
+	// Verify CR resources are used exactly (complete override)
+	assert.Equal(t, "500m", resources.Requests.Cpu().String())
+	assert.Equal(t, "256Mi", resources.Requests.Memory().String())
+	assert.Equal(t, "2", resources.Limits.Cpu().String())
+	assert.Equal(t, "2Gi", resources.Limits.Memory().String())
+
+	// Verify ephemeral storage NOT present (CR didn't specify it)
+	_, hasEphemeralRequest := resources.Requests[corev1.ResourceEphemeralStorage]
+	_, hasEphemeralLimit := resources.Limits[corev1.ResourceEphemeralStorage]
+	assert.False(t, hasEphemeralRequest, "CR resources should not include operator defaults for unspecified fields")
+	assert.False(t, hasEphemeralLimit, "CR resources should not include operator defaults for unspecified fields")
+}
+
+func TestBuildWorkerJob_WithCRResources(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Worker.Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    mustParseQuantity("250m"),
+			corev1.ResourceMemory: mustParseQuantity("128Mi"),
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    mustParseQuantity("1000m"),
+			corev1.ResourceMemory: mustParseQuantity("1Gi"),
+		},
+	}
+	cfg := newTestConfig()
+
+	job := BuildWorkerJob(lt, cfg, logr.Discard())
+
+	container := job.Spec.Template.Spec.Containers[0]
+	resources := container.Resources
+
+	// Verify worker CR resources are used
+	assert.Equal(t, "250m", resources.Requests.Cpu().String())
+	assert.Equal(t, "128Mi", resources.Requests.Memory().String())
+	assert.Equal(t, "1", resources.Limits.Cpu().String())
+	assert.Equal(t, "1Gi", resources.Limits.Memory().String())
+}
+
+func TestBuildMasterJob_NoCRResources_UsesDefaults(t *testing.T) {
+	lt := newTestLocustTest()
+	// Leave Resources empty (default)
+	lt.Spec.Master.Resources = corev1.ResourceRequirements{}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg, logr.Discard())
+
+	container := job.Spec.Template.Spec.Containers[0]
+	resources := container.Resources
+
+	// Verify operator defaults are used
+	assert.Equal(t, "250m", resources.Requests.Cpu().String())
+	assert.Equal(t, "128Mi", resources.Requests.Memory().String())
+	assert.Equal(t, "30M", resources.Requests.StorageEphemeral().String())
+	assert.Equal(t, "1", resources.Limits.Cpu().String())
+	assert.Equal(t, "1Gi", resources.Limits.Memory().String())
+	assert.Equal(t, "50M", resources.Limits.StorageEphemeral().String())
+}
+
+func TestBuildMasterJob_CRResources_WorkerUnaffected(t *testing.T) {
+	lt := newTestLocustTest()
+	// Set master resources only
+	lt.Spec.Master.Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    mustParseQuantity("500m"),
+			corev1.ResourceMemory: mustParseQuantity("256Mi"),
+		},
+	}
+	// Leave worker resources empty
+	lt.Spec.Worker.Resources = corev1.ResourceRequirements{}
+	cfg := newTestConfig()
+
+	masterJob := BuildMasterJob(lt, cfg, logr.Discard())
+	workerJob := BuildWorkerJob(lt, cfg, logr.Discard())
+
+	masterContainer := masterJob.Spec.Template.Spec.Containers[0]
+	workerContainer := workerJob.Spec.Template.Spec.Containers[0]
+
+	// Master uses CR resources
+	assert.Equal(t, "500m", masterContainer.Resources.Requests.Cpu().String())
+	assert.Equal(t, "256Mi", masterContainer.Resources.Requests.Memory().String())
+
+	// Worker uses operator defaults (independent)
+	assert.Equal(t, "250m", workerContainer.Resources.Requests.Cpu().String())
+	assert.Equal(t, "128Mi", workerContainer.Resources.Requests.Memory().String())
+}
+
+// Helper function for tests
+func mustParseQuantity(s string) resource.Quantity {
+	q, err := resource.ParseQuantity(s)
+	if err != nil {
+		panic(err)
+	}
+	return q
 }
