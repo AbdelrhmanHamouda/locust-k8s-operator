@@ -57,7 +57,8 @@ func TestLoadConfig_DefaultValues(t *testing.T) {
 		_ = os.Unsetenv(env)
 	}
 
-	cfg := LoadConfig()
+	cfg, err := LoadConfig()
+	require.NoError(t, err)
 
 	// Job configuration
 	assert.Nil(t, cfg.TTLSecondsAfterFinished, "TTL should be nil when not set")
@@ -110,7 +111,8 @@ func TestLoadConfig_EnvironmentOverrides(t *testing.T) {
 	t.Setenv("ENABLE_AFFINITY_CR_INJECTION", "true")
 	t.Setenv("ENABLE_TAINT_TOLERATIONS_CR_INJECTION", "true")
 
-	cfg := LoadConfig()
+	cfg, err := LoadConfig()
+	require.NoError(t, err)
 
 	// Verify overrides
 	require.NotNil(t, cfg.TTLSecondsAfterFinished)
@@ -131,7 +133,8 @@ func TestLoadConfig_EnvironmentOverrides(t *testing.T) {
 func TestLoadConfig_TTLSecondsAfterFinished_ZeroValue(t *testing.T) {
 	t.Setenv("JOB_TTL_SECONDS_AFTER_FINISHED", "0")
 
-	cfg := LoadConfig()
+	cfg, err := LoadConfig()
+	require.NoError(t, err)
 
 	// TTL of 0 should be a valid value (immediate cleanup)
 	require.NotNil(t, cfg.TTLSecondsAfterFinished)
@@ -147,7 +150,8 @@ func TestLoadConfig_KafkaConfiguration(t *testing.T) {
 	t.Setenv("KAFKA_SASL_MECHANISM", "PLAIN")
 	t.Setenv("KAFKA_SASL_JAAS_CONFIG", "org.apache.kafka.common.security.plain.PlainLoginModule required;")
 
-	cfg := LoadConfig()
+	cfg, err := LoadConfig()
+	require.NoError(t, err)
 
 	assert.Equal(t, "kafka.example.com:9092", cfg.KafkaBootstrapServers)
 	assert.True(t, cfg.KafkaSecurityEnabled)
@@ -169,7 +173,8 @@ func TestLoadConfig_MetricsExporterConfiguration(t *testing.T) {
 	t.Setenv("METRICS_EXPORTER_MEM_LIMIT", "512Mi")
 	t.Setenv("METRICS_EXPORTER_EPHEMERAL_LIMIT", "100M")
 
-	cfg := LoadConfig()
+	cfg, err := LoadConfig()
+	require.NoError(t, err)
 
 	assert.Equal(t, "myregistry/locust-exporter:v2.0.0", cfg.MetricsExporterImage)
 	assert.Equal(t, int32(8080), cfg.MetricsExporterPort)
@@ -294,4 +299,75 @@ func TestGetEnvInt32Ptr(t *testing.T) {
 		require.NotNil(t, result)
 		assert.Equal(t, int32(-5), *result)
 	})
+}
+
+// TestLoadConfig_ValidResourceQuantities tests that valid resource quantities pass validation
+func TestLoadConfig_ValidResourceQuantities(t *testing.T) {
+	t.Setenv("POD_CPU_REQUEST", "500m")
+	t.Setenv("POD_MEM_REQUEST", "256Mi")
+	t.Setenv("POD_CPU_LIMIT", "2000m")
+
+	cfg, err := LoadConfig()
+
+	require.NoError(t, err)
+	assert.Equal(t, "500m", cfg.PodCPURequest)
+	assert.Equal(t, "256Mi", cfg.PodMemRequest)
+	assert.Equal(t, "2000m", cfg.PodCPULimit)
+}
+
+// TestLoadConfig_InvalidResourceQuantity tests that invalid resource quantities return error
+func TestLoadConfig_InvalidResourceQuantity(t *testing.T) {
+	t.Setenv("POD_CPU_REQUEST", "garbage")
+
+	cfg, err := LoadConfig()
+
+	assert.Error(t, err)
+	assert.Nil(t, cfg)
+	assert.Contains(t, err.Error(), "POD_CPU_REQUEST")
+	assert.Contains(t, err.Error(), "garbage")
+}
+
+// TestLoadConfig_MultipleInvalidResources tests that multiple invalid values are all reported
+func TestLoadConfig_MultipleInvalidResources(t *testing.T) {
+	t.Setenv("POD_CPU_REQUEST", "invalid-cpu")
+	t.Setenv("POD_MEM_LIMIT", "bad-memory")
+	t.Setenv("METRICS_EXPORTER_CPU_REQUEST", "wrong")
+
+	cfg, err := LoadConfig()
+
+	assert.Error(t, err)
+	assert.Nil(t, cfg)
+	assert.Contains(t, err.Error(), "POD_CPU_REQUEST")
+	assert.Contains(t, err.Error(), "POD_MEM_LIMIT")
+	assert.Contains(t, err.Error(), "METRICS_EXPORTER_CPU_REQUEST")
+}
+
+// TestLoadConfig_EmptyResourceStrings tests that empty strings are treated as optional (not validated)
+func TestLoadConfig_EmptyResourceStrings(t *testing.T) {
+	// Clear all resource env vars to get empty defaults if any
+	envVars := []string{
+		"POD_CPU_REQUEST",
+		"POD_MEM_REQUEST",
+		"POD_EPHEMERAL_REQUEST",
+		"POD_CPU_LIMIT",
+		"POD_MEM_LIMIT",
+		"POD_EPHEMERAL_LIMIT",
+		"MASTER_POD_CPU_REQUEST",
+		"MASTER_POD_MEM_REQUEST",
+		"WORKER_POD_CPU_REQUEST",
+		"WORKER_POD_MEM_REQUEST",
+	}
+	for _, env := range envVars {
+		_ = os.Unsetenv(env)
+	}
+
+	// Set master/worker role-specific to empty explicitly
+	t.Setenv("MASTER_POD_CPU_REQUEST", "")
+	t.Setenv("WORKER_POD_CPU_REQUEST", "")
+
+	cfg, err := LoadConfig()
+
+	// Should succeed - empty strings are valid (mean "not set")
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
 }
