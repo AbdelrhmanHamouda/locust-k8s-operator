@@ -40,6 +40,22 @@ type OperatorConfig struct {
 	PodMemLimit                string
 	PodEphemeralStorageLimit   string
 
+	// Role-specific pod resource configuration for master/worker Locust containers.
+	// Empty string means "use unified Pod* resource values above".
+	// Set via Helm masterResources/workerResources values.
+	MasterCPURequest              string
+	MasterMemRequest              string
+	MasterEphemeralStorageRequest string
+	MasterCPULimit                string
+	MasterMemLimit                string
+	MasterEphemeralStorageLimit   string
+	WorkerCPURequest              string
+	WorkerMemRequest              string
+	WorkerEphemeralStorageRequest string
+	WorkerCPULimit                string
+	WorkerMemLimit                string
+	WorkerEphemeralStorageLimit   string
+
 	// Metrics exporter sidecar configuration
 	MetricsExporterImage                   string
 	MetricsExporterPort                    int32
@@ -83,6 +99,20 @@ func LoadConfig() (*OperatorConfig, error) {
 		PodMemLimit:                getEnv("POD_MEM_LIMIT", "1024Mi"),
 		PodEphemeralStorageLimit:   getEnv("POD_EPHEMERAL_LIMIT", "50M"),
 
+		// Role-specific pod resources (empty = use unified Pod* values above)
+		MasterCPURequest:              getEnv("MASTER_POD_CPU_REQUEST", ""),
+		MasterMemRequest:              getEnv("MASTER_POD_MEM_REQUEST", ""),
+		MasterEphemeralStorageRequest: getEnv("MASTER_POD_EPHEMERAL_REQUEST", ""),
+		MasterCPULimit:                getEnv("MASTER_POD_CPU_LIMIT", ""),
+		MasterMemLimit:                getEnv("MASTER_POD_MEM_LIMIT", ""),
+		MasterEphemeralStorageLimit:   getEnv("MASTER_POD_EPHEMERAL_LIMIT", ""),
+		WorkerCPURequest:              getEnv("WORKER_POD_CPU_REQUEST", ""),
+		WorkerMemRequest:              getEnv("WORKER_POD_MEM_REQUEST", ""),
+		WorkerEphemeralStorageRequest: getEnv("WORKER_POD_EPHEMERAL_REQUEST", ""),
+		WorkerCPULimit:                getEnv("WORKER_POD_CPU_LIMIT", ""),
+		WorkerMemLimit:                getEnv("WORKER_POD_MEM_LIMIT", ""),
+		WorkerEphemeralStorageLimit:   getEnv("WORKER_POD_EPHEMERAL_LIMIT", ""),
+
 		// Metrics exporter configuration
 		MetricsExporterImage:                   getEnv("METRICS_EXPORTER_IMAGE", "containersol/locust_exporter:v0.5.0"),
 		MetricsExporterPort:                    getEnvInt32("METRICS_EXPORTER_PORT", 9646),
@@ -125,6 +155,18 @@ func validateResourceQuantities(cfg *OperatorConfig) error {
 		"POD_CPU_LIMIT":                            cfg.PodCPULimit,
 		"POD_MEM_LIMIT":                            cfg.PodMemLimit,
 		"POD_EPHEMERAL_LIMIT":                      cfg.PodEphemeralStorageLimit,
+		"MASTER_POD_CPU_REQUEST":                   cfg.MasterCPURequest,
+		"MASTER_POD_MEM_REQUEST":                   cfg.MasterMemRequest,
+		"MASTER_POD_EPHEMERAL_REQUEST":             cfg.MasterEphemeralStorageRequest,
+		"MASTER_POD_CPU_LIMIT":                     cfg.MasterCPULimit,
+		"MASTER_POD_MEM_LIMIT":                     cfg.MasterMemLimit,
+		"MASTER_POD_EPHEMERAL_LIMIT":               cfg.MasterEphemeralStorageLimit,
+		"WORKER_POD_CPU_REQUEST":                   cfg.WorkerCPURequest,
+		"WORKER_POD_MEM_REQUEST":                   cfg.WorkerMemRequest,
+		"WORKER_POD_EPHEMERAL_REQUEST":             cfg.WorkerEphemeralStorageRequest,
+		"WORKER_POD_CPU_LIMIT":                     cfg.WorkerCPULimit,
+		"WORKER_POD_MEM_LIMIT":                     cfg.WorkerMemLimit,
+		"WORKER_POD_EPHEMERAL_LIMIT":               cfg.WorkerEphemeralStorageLimit,
 		"METRICS_EXPORTER_CPU_REQUEST":             cfg.MetricsExporterCPURequest,
 		"METRICS_EXPORTER_MEM_REQUEST":             cfg.MetricsExporterMemRequest,
 		"METRICS_EXPORTER_EPHEMERAL_REQUEST":       cfg.MetricsExporterEphemeralStorageRequest,

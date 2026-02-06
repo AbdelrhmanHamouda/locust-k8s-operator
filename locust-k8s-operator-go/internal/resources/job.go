@@ -312,8 +312,11 @@ func buildResourceRequirements(cfg *config.OperatorConfig, isMetricsExporter boo
 }
 
 // buildResourceRequirementsWithPrecedence implements resource precedence chain:
-// CR-level resources → Operator defaults.
-// CR resources are a COMPLETE OVERRIDE (not partial merge) - same as native K8s behavior.
+// Level 1: CR-level resources (complete override, same as native K8s)
+// Level 2: Role-specific operator config (from Helm masterResources/workerResources)
+// Level 3: Unified operator defaults (from Helm resources)
+// CR resources are a COMPLETE OVERRIDE (not partial merge).
+// Role-specific resources use FIELD-LEVEL FALLBACK to unified defaults.
 func buildResourceRequirementsWithPrecedence(
 	lt *locustv2.LocustTest,
 	cfg *config.OperatorConfig,
@@ -332,8 +335,51 @@ func buildResourceRequirementsWithPrecedence(
 		return *crResources // Complete override, return as-is
 	}
 
-	// Level 2: Operator defaults from config
-	return buildResourceRequirements(cfg, false)
+	// Level 2: Role-specific operator config (from Helm masterResources/workerResources)
+	// Each field independently falls through to Level 3 if empty.
+	// This builds a resource spec where non-empty role-specific fields override
+	// unified fields, and empty role-specific fields fall through to unified.
+	var cpuReq, memReq, ephReq, cpuLim, memLim, ephLim string
+	if mode == Master {
+		cpuReq = cfg.MasterCPURequest
+		memReq = cfg.MasterMemRequest
+		ephReq = cfg.MasterEphemeralStorageRequest
+		cpuLim = cfg.MasterCPULimit
+		memLim = cfg.MasterMemLimit
+		ephLim = cfg.MasterEphemeralStorageLimit
+	} else {
+		cpuReq = cfg.WorkerCPURequest
+		memReq = cfg.WorkerMemRequest
+		ephReq = cfg.WorkerEphemeralStorageRequest
+		cpuLim = cfg.WorkerCPULimit
+		memLim = cfg.WorkerMemLimit
+		ephLim = cfg.WorkerEphemeralStorageLimit
+	}
+
+	// Field-level fallback: empty role-specific → unified
+	if cpuReq == "" {
+		cpuReq = cfg.PodCPURequest
+	}
+	if memReq == "" {
+		memReq = cfg.PodMemRequest
+	}
+	if ephReq == "" {
+		ephReq = cfg.PodEphemeralStorageRequest
+	}
+	if cpuLim == "" {
+		cpuLim = cfg.PodCPULimit
+	}
+	if memLim == "" {
+		memLim = cfg.PodMemLimit
+	}
+	if ephLim == "" {
+		ephLim = cfg.PodEphemeralStorageLimit
+	}
+
+	return corev1.ResourceRequirements{
+		Requests: buildResourceList(cpuReq, memReq, ephReq),
+		Limits:   buildResourceList(cpuLim, memLim, ephLim),
+	}
 }
 
 // hasResourcesSpecified checks if ResourceRequirements has any non-empty fields.
