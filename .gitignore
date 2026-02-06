@@ -17,3 +17,11 @@ out/
 # mkdocs
 .docs-venv
 .cache
+
+# Agentic flows
+specs/
+.windsurf/
+.planning/
+.specify/
+CLAUDE.md
+GEMINI.md
