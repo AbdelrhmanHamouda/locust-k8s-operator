@@ -25,6 +25,11 @@ replicaCount: 1
 leaderElection:
   enabled: true
 
+# -- PodDisruptionBudget for HA deployments (requires replicaCount >= 2)
+podDisruptionBudget:
+  enabled: false
+  maxUnavailable: 1
+
 # -- Metrics endpoint (Prometheus)
 metrics:
   enabled: false  # Disabled by default, enable if scraping
@@ -37,10 +42,6 @@ webhook:
   port: 9443
   certManager:
     enabled: true  # Use cert-manager for TLS
-
-# -- CRD installation
-crd:
-  install: true
 
 # =============================================================================
 # Locust Test Pod Configuration (what the operator creates)

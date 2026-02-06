@@ -1,0 +1,36 @@
+{{/*
+=============================================================================
+POD DISRUPTION BUDGET FOR LOCUST K8S OPERATOR
+=============================================================================
+Optional PDB for High Availability deployments.
+
+When enabled (with replicaCount >= 2 and leader election), the PDB ensures
+at least one operator pod remains available during voluntary disruptions
+(node drains, upgrades, etc.).
+
+This prevents webhook unavailability during operator upgrades when
+failurePolicy: Fail is set on webhooks.
+
+Enable via:
+  podDisruptionBudget:
+    enabled: true
+  replicaCount: 2  # Must be >= 2 for PDB to be useful
+  leaderElection:
+    enabled: true   # Required for multi-replica operation
+=============================================================================
+*/}}
+
+{{- if .Values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "locust-k8s-operator.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "locust-k8s-operator.labels" . | nindent 4 }}
+spec:
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "locust-k8s-operator.selectorLabels" . | nindent 6 }}
+{{- end }}
