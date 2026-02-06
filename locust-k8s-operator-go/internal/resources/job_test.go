@@ -1155,3 +1155,129 @@ func mustParseQuantity(s string) resource.Quantity {
 	}
 	return q
 }
+
+// ============================================
+// Integration Tests - Helm Role-Specific Resources and 3-Level Precedence
+// ============================================
+
+func TestBuildMasterJob_WithHelmMasterResources(t *testing.T) {
+	lt := newTestLocustTest()
+	// NO CR resources (empty ResourceRequirements)
+	lt.Spec.Master.Resources = corev1.ResourceRequirements{}
+
+	cfg := newTestConfig()
+	// Set role-specific fields for master
+	cfg.MasterCPURequest = "500m"
+	cfg.MasterMemRequest = "512Mi"
+	cfg.MasterEphemeralStorageRequest = "" // Empty - should fall through to unified
+	cfg.MasterCPULimit = "2000m"
+	cfg.MasterMemLimit = "2Gi"
+	cfg.MasterEphemeralStorageLimit = "" // Empty - should fall through to unified
+	// Unified fields remain at default values (250m, 128Mi, 30M, 1000m, 1024Mi, 50M)
+
+	job := BuildMasterJob(lt, cfg, logr.Discard())
+
+	container := job.Spec.Template.Spec.Containers[0]
+	resources := container.Resources
+
+	// Assert container resources use master-specific values
+	assert.Equal(t, "500m", resources.Requests.Cpu().String())
+	assert.Equal(t, "512Mi", resources.Requests.Memory().String())
+	assert.Equal(t, "2", resources.Limits.Cpu().String())
+	assert.Equal(t, "2Gi", resources.Limits.Memory().String())
+
+	// Assert ephemeral storage falls back to unified values (master-specific ephemeral is empty)
+	assert.Equal(t, "30M", resources.Requests.StorageEphemeral().String())
+	assert.Equal(t, "50M", resources.Limits.StorageEphemeral().String())
+}
+
+func TestBuildWorkerJob_WithHelmWorkerResources(t *testing.T) {
+	lt := newTestLocustTest()
+	// NO CR resources
+	lt.Spec.Worker.Resources = corev1.ResourceRequirements{}
+
+	cfg := newTestConfig()
+	// Set role-specific fields for worker
+	cfg.WorkerCPURequest = "300m"
+	cfg.WorkerMemRequest = "256Mi"
+	cfg.WorkerCPULimit = "1500m"
+	cfg.WorkerMemLimit = "1536Mi"
+	// Unified fields remain at default values
+
+	workerJob := BuildWorkerJob(lt, cfg, logr.Discard())
+	masterJob := BuildMasterJob(lt, cfg, logr.Discard())
+
+	workerContainer := workerJob.Spec.Template.Spec.Containers[0]
+	workerResources := workerContainer.Resources
+
+	// Verify worker-specific resources used
+	assert.Equal(t, "300m", workerResources.Requests.Cpu().String())
+	assert.Equal(t, "256Mi", workerResources.Requests.Memory().String())
+	assert.Equal(t, "1500m", workerResources.Limits.Cpu().String())
+	assert.Equal(t, "1536Mi", workerResources.Limits.Memory().String())
+
+	// Build master job with same config, verify master uses unified (NOT worker values)
+	masterContainer := masterJob.Spec.Template.Spec.Containers[0]
+	masterResources := masterContainer.Resources
+
+	// Master should use unified defaults (not worker-specific)
+	assert.Equal(t, "250m", masterResources.Requests.Cpu().String())
+	assert.Equal(t, "128Mi", masterResources.Requests.Memory().String())
+}
+
+func TestBuildMasterJob_CROverridesHelmRoleSpecific(t *testing.T) {
+	lt := newTestLocustTest()
+	// Set CR resources
+	lt.Spec.Master.Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    mustParseQuantity("1000m"),
+			corev1.ResourceMemory: mustParseQuantity("1Gi"),
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    mustParseQuantity("3000m"),
+			corev1.ResourceMemory: mustParseQuantity("3Gi"),
+		},
+	}
+
+	cfg := newTestConfig()
+	// Set master-specific config fields
+	cfg.MasterCPURequest = "500m"
+	cfg.MasterMemRequest = "512Mi"
+	cfg.MasterCPULimit = "2000m"
+	cfg.MasterMemLimit = "2Gi"
+
+	job := BuildMasterJob(lt, cfg, logr.Discard())
+
+	container := job.Spec.Template.Spec.Containers[0]
+	resources := container.Resources
+
+	// Assert CR resources win (Level 1 > Level 2)
+	assert.Equal(t, "1", resources.Requests.Cpu().String())
+	assert.Equal(t, "1Gi", resources.Requests.Memory().String())
+	assert.Equal(t, "3", resources.Limits.Cpu().String())
+	assert.Equal(t, "3Gi", resources.Limits.Memory().String())
+}
+
+func TestBuildMasterJob_HelmRoleSpecific_PrecedenceOverUnified(t *testing.T) {
+	lt := newTestLocustTest()
+	// NO CR resources
+	lt.Spec.Master.Resources = corev1.ResourceRequirements{}
+
+	cfg := newTestConfig()
+	// Set master-specific: only CPU request
+	cfg.MasterCPURequest = "500m"
+	cfg.MasterMemRequest = "" // Empty - should fall through to unified
+	// Unified: PodCPURequest="250m", PodMemRequest="128Mi"
+
+	job := BuildMasterJob(lt, cfg, logr.Discard())
+
+	container := job.Spec.Template.Spec.Containers[0]
+	resources := container.Resources
+
+	// Assert CPU is "500m" (from master-specific)
+	assert.Equal(t, "500m", resources.Requests.Cpu().String())
+	// Assert memory is "128Mi" (falls through to unified)
+	assert.Equal(t, "128Mi", resources.Requests.Memory().String())
+	// Assert ephemeral is "30M" (falls through to unified)
+	assert.Equal(t, "30M", resources.Requests.StorageEphemeral().String())
+}

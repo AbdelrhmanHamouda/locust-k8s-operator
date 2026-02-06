@@ -371,3 +371,78 @@ func TestLoadConfig_EmptyResourceStrings(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 }
+
+// TestLoadConfig_RoleSpecificResourceDefaults tests that role-specific resource fields default to empty
+func TestLoadConfig_RoleSpecificResourceDefaults(t *testing.T) {
+	// Clear all MASTER_POD_* and WORKER_POD_* env vars
+	envVars := []string{
+		"MASTER_POD_CPU_REQUEST",
+		"MASTER_POD_MEM_REQUEST",
+		"MASTER_POD_EPHEMERAL_REQUEST",
+		"MASTER_POD_CPU_LIMIT",
+		"MASTER_POD_MEM_LIMIT",
+		"MASTER_POD_EPHEMERAL_LIMIT",
+		"WORKER_POD_CPU_REQUEST",
+		"WORKER_POD_MEM_REQUEST",
+		"WORKER_POD_EPHEMERAL_REQUEST",
+		"WORKER_POD_CPU_LIMIT",
+		"WORKER_POD_MEM_LIMIT",
+		"WORKER_POD_EPHEMERAL_LIMIT",
+	}
+	for _, env := range envVars {
+		_ = os.Unsetenv(env)
+	}
+
+	cfg, err := LoadConfig()
+
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	// Assert all 12 role-specific fields default to empty string
+	assert.Equal(t, "", cfg.MasterCPURequest)
+	assert.Equal(t, "", cfg.MasterMemRequest)
+	assert.Equal(t, "", cfg.MasterEphemeralStorageRequest)
+	assert.Equal(t, "", cfg.MasterCPULimit)
+	assert.Equal(t, "", cfg.MasterMemLimit)
+	assert.Equal(t, "", cfg.MasterEphemeralStorageLimit)
+	assert.Equal(t, "", cfg.WorkerCPURequest)
+	assert.Equal(t, "", cfg.WorkerMemRequest)
+	assert.Equal(t, "", cfg.WorkerEphemeralStorageRequest)
+	assert.Equal(t, "", cfg.WorkerCPULimit)
+	assert.Equal(t, "", cfg.WorkerMemLimit)
+	assert.Equal(t, "", cfg.WorkerEphemeralStorageLimit)
+}
+
+// TestLoadConfig_RoleSpecificResourceOverrides tests that role-specific env vars are loaded correctly
+func TestLoadConfig_RoleSpecificResourceOverrides(t *testing.T) {
+	// Set some role-specific env vars
+	t.Setenv("MASTER_POD_CPU_REQUEST", "500m")
+	t.Setenv("MASTER_POD_MEM_REQUEST", "512Mi")
+	t.Setenv("WORKER_POD_CPU_LIMIT", "2000m")
+
+	cfg, err := LoadConfig()
+
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	// Assert fields populated correctly
+	assert.Equal(t, "500m", cfg.MasterCPURequest)
+	assert.Equal(t, "512Mi", cfg.MasterMemRequest)
+	assert.Equal(t, "2000m", cfg.WorkerCPULimit)
+
+	// Assert unset fields remain empty string
+	assert.Equal(t, "", cfg.MasterEphemeralStorageRequest)
+	assert.Equal(t, "", cfg.MasterCPULimit)
+	assert.Equal(t, "", cfg.WorkerCPURequest)
+}
+
+// TestLoadConfig_InvalidRoleSpecificResource tests that invalid role-specific quantities return error
+func TestLoadConfig_InvalidRoleSpecificResource(t *testing.T) {
+	t.Setenv("MASTER_POD_CPU_REQUEST", "garbage")
+
+	cfg, err := LoadConfig()
+
+	assert.Error(t, err)
+	assert.Nil(t, cfg)
+	assert.Contains(t, err.Error(), "MASTER_POD_CPU_REQUEST")
+}
