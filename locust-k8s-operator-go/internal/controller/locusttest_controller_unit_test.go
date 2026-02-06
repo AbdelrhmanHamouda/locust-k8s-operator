@@ -183,9 +183,9 @@ done:
 	assert.Equal(t, 3, eventCount, "Expected 3 creation events")
 }
 
-func TestReconcile_NoOpOnUpdate(t *testing.T) {
+func TestReconcile_PendingPhaseCreatesResourcesRegardlessOfGeneration(t *testing.T) {
 	lt := newTestLocustTestCR("my-test", "default")
-	lt.Generation = 2 // Simulates an update
+	lt.Generation = 2 // Simulates an update while still in Pending phase
 	reconciler, _ := newTestReconciler(lt)
 
 	result, err := reconciler.Reconcile(context.Background(), ctrl.Request{
@@ -198,13 +198,21 @@ func TestReconcile_NoOpOnUpdate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, ctrl.Result{}, result)
 
-	// Verify no resources created
+	// Verify resources ARE created (fixes operator-restart edge case)
 	svc := &corev1.Service{}
 	err = reconciler.Get(context.Background(), types.NamespacedName{
 		Name:      "my-test-master",
 		Namespace: "default",
 	}, svc)
-	assert.True(t, apierrors.IsNotFound(err), "Service should not be created on update")
+	assert.NoError(t, err, "Service should be created even with generation > 1 when phase is Pending")
+
+	// Verify master Job created
+	masterJob := &batchv1.Job{}
+	err = reconciler.Get(context.Background(), types.NamespacedName{
+		Name:      "my-test-master",
+		Namespace: "default",
+	}, masterJob)
+	assert.NoError(t, err, "Master Job should be created")
 }
 
 func TestReconcile_OwnerReferences(t *testing.T) {
@@ -277,24 +285,20 @@ func TestReconcile_IdempotentCreate(t *testing.T) {
 
 func TestReconcile_WithDifferentGenerations(t *testing.T) {
 	tests := []struct {
-		name                  string
-		generation            int64
-		expectResourceCreated bool
+		name       string
+		generation int64
 	}{
 		{
-			name:                  "generation 1 creates resources",
-			generation:            1,
-			expectResourceCreated: true,
+			name:       "generation 1 pending creates resources",
+			generation: 1,
 		},
 		{
-			name:                  "generation 2 is NO-OP",
-			generation:            2,
-			expectResourceCreated: false,
+			name:       "generation 2 pending creates resources",
+			generation: 2,
 		},
 		{
-			name:                  "generation 10 is NO-OP",
-			generation:            10,
-			expectResourceCreated: false,
+			name:       "generation 10 pending creates resources",
+			generation: 10,
 		},
 	}
 
@@ -302,6 +306,7 @@ func TestReconcile_WithDifferentGenerations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			lt := newTestLocustTestCR("test-gen", "default")
 			lt.Generation = tt.generation
+			// Phase defaults to empty string (Pending) from newTestLocustTestCR
 			reconciler, _ := newTestReconciler(lt)
 
 			_, err := reconciler.Reconcile(context.Background(), ctrl.Request{
@@ -312,17 +317,13 @@ func TestReconcile_WithDifferentGenerations(t *testing.T) {
 			})
 			require.NoError(t, err)
 
+			// All pending CRs create resources regardless of generation
 			svc := &corev1.Service{}
 			err = reconciler.Get(context.Background(), types.NamespacedName{
 				Name:      "test-gen-master",
 				Namespace: "default",
 			}, svc)
-
-			if tt.expectResourceCreated {
-				assert.NoError(t, err, "Service should be created")
-			} else {
-				assert.True(t, apierrors.IsNotFound(err), "Service should not be created")
-			}
+			assert.NoError(t, err, "Service should be created for Pending phase regardless of generation")
 		})
 	}
 }

@@ -91,18 +91,16 @@ func (r *LocustTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return r.reconcileStatus(ctx, locustTest)
 	}
 
-	// NO-OP on spec updates - matching Java behavior
-	// Generation > 1 means the spec has been modified after creation
+	// Phase == Pending: create resources
+	// Log informational message if this is a spec update (generation > 1)
+	// The phase-based state machine handles this correctly — Pending always creates
 	if locustTest.Generation > 1 {
-		log.Info("LocustTest updated - NO-OP by design",
+		log.V(1).Info("Update operations on LocustTest are not supported by design",
 			"name", locustTest.Name,
 			"namespace", locustTest.Namespace)
-		log.Info("Update operations on LocustTest are not supported by design!",
-			"name", locustTest.Name)
-		return ctrl.Result{}, nil
 	}
 
-	// On initial creation (Phase is Pending)
+	// On initial creation or pending (Phase is Pending)
 	log.Info("LocustTest created",
 		"name", locustTest.Name,
 		"namespace", locustTest.Namespace)
