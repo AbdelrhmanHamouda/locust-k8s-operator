@@ -10,9 +10,10 @@ Webhooks provide:
      - Validates resource configurations
      - Prevents invalid test configurations
 
-  2. MutatingWebhook - Handles API version conversion
-     - Converts between v1 and v2 API versions
-     - Applies default values
+  2. CRD conversion is handled by spec.conversion.webhook on the CRD itself
+     - NOT via MutatingWebhookConfiguration (this was incorrect)
+     - Controller-runtime serves the /convert endpoint automatically
+     - The webhook Service routes traffic for both validation and conversion
 
 Prerequisites:
   - cert-manager installed (if webhook.certManager.enabled=true)
@@ -59,41 +60,12 @@ webhooks:
     failurePolicy: Fail
 ---
 # =============================================================================
-# MutatingWebhookConfiguration - API version conversion
-# =============================================================================
-# Handles conversion between v1 and v2 API versions.
-# Also applies default values to new resources.
-apiVersion: admissionregistration.k8s.io/v1
-kind: MutatingWebhookConfiguration
-metadata:
-  name: {{ include "locust-k8s-operator.fullname" . }}-mutating
-  labels:
-    {{- include "locust-k8s-operator.labels" . | nindent 4 }}
-  {{- if .Values.webhook.certManager.enabled }}
-  annotations:
-    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "locust-k8s-operator.fullname" . }}-serving-cert
-  {{- end }}
-webhooks:
-  - name: mlocusttest.kb.io
-    admissionReviewVersions: ["v1"]
-    clientConfig:
-      service:
-        name: {{ include "locust-k8s-operator.fullname" . }}-webhook
-        namespace: {{ .Release.Namespace }}
-        path: /convert
-    rules:
-      - apiGroups: ["locust.io"]
-        apiVersions: ["v1", "v2"]
-        operations: ["CREATE", "UPDATE"]
-        resources: ["locusttests"]
-    sideEffects: None
-    failurePolicy: Fail
----
-# =============================================================================
 # Webhook Service - Routes API server requests to operator
 # =============================================================================
 # The API server connects to this Service when calling webhooks.
 # Traffic is routed to the operator pod's webhook port (default: 9443).
+# This Service serves both validation webhook and conversion webhook.
+# The /convert endpoint for CRD conversion is registered by controller-runtime.
 apiVersion: v1
 kind: Service
 metadata:
