@@ -17,8 +17,12 @@ limitations under the License.
 package config
 
 import (
+	"fmt"
 	"os"
 	"strconv"
+	"strings"
+
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // OperatorConfig holds all operator configuration loaded from environment variables.
@@ -65,8 +69,9 @@ type OperatorConfig struct {
 
 // LoadConfig loads operator configuration from environment variables.
 // Default values match those in the Java operator's application.yml.
-func LoadConfig() *OperatorConfig {
-	return &OperatorConfig{
+// Returns error if any resource values are invalid Kubernetes quantities.
+func LoadConfig() (*OperatorConfig, error) {
+	cfg := &OperatorConfig{
 		// Job configuration
 		TTLSecondsAfterFinished: getEnvInt32Ptr("JOB_TTL_SECONDS_AFTER_FINISHED"),
 
@@ -102,6 +107,56 @@ func LoadConfig() *OperatorConfig {
 		EnableAffinityCRInjection:    getEnvBool("ENABLE_AFFINITY_CR_INJECTION", false),
 		EnableTolerationsCRInjection: getEnvBool("ENABLE_TAINT_TOLERATIONS_CR_INJECTION", false),
 	}
+
+	// Validate all resource quantities at startup
+	if err := validateResourceQuantities(cfg); err != nil {
+		return nil, fmt.Errorf("invalid operator configuration: %w", err)
+	}
+
+	return cfg, nil
+}
+
+// validateResourceQuantities validates all resource quantity strings in config.
+func validateResourceQuantities(cfg *OperatorConfig) error {
+	quantities := map[string]string{
+		"POD_CPU_REQUEST":                          cfg.PodCPURequest,
+		"POD_MEM_REQUEST":                          cfg.PodMemRequest,
+		"POD_EPHEMERAL_REQUEST":                    cfg.PodEphemeralStorageRequest,
+		"POD_CPU_LIMIT":                            cfg.PodCPULimit,
+		"POD_MEM_LIMIT":                            cfg.PodMemLimit,
+		"POD_EPHEMERAL_LIMIT":                      cfg.PodEphemeralStorageLimit,
+		"METRICS_EXPORTER_CPU_REQUEST":             cfg.MetricsExporterCPURequest,
+		"METRICS_EXPORTER_MEM_REQUEST":             cfg.MetricsExporterMemRequest,
+		"METRICS_EXPORTER_EPHEMERAL_REQUEST":       cfg.MetricsExporterEphemeralStorageRequest,
+		"METRICS_EXPORTER_CPU_LIMIT":               cfg.MetricsExporterCPULimit,
+		"METRICS_EXPORTER_MEM_LIMIT":               cfg.MetricsExporterMemLimit,
+		"METRICS_EXPORTER_EPHEMERAL_LIMIT":         cfg.MetricsExporterEphemeralStorageLimit,
+	}
+
+	var errs []error
+	for name, value := range quantities {
+		if value == "" {
+			continue // Empty string means "not set", which is valid
+		}
+		if _, err := resource.ParseQuantity(value); err != nil {
+			errs = append(errs, fmt.Errorf("invalid value for %s: %q is not a valid Kubernetes quantity", name, value))
+		}
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("resource validation failed:\n%s", formatErrors(errs))
+	}
+
+	return nil
+}
+
+// formatErrors formats a slice of errors for display.
+func formatErrors(errs []error) string {
+	var msgs []string
+	for _, err := range errs {
+		msgs = append(msgs, "  - "+err.Error())
+	}
+	return strings.Join(msgs, "\n")
 }
 
 // getEnv returns the value of an environment variable or a default value if not set.

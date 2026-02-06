@@ -119,7 +119,7 @@ func buildLocustContainer(lt *locustv2.LocustTest, name string, command []string
 		ImagePullPolicy: lt.Spec.ImagePullPolicy,
 		Args:            command,
 		Ports:           ports,
-		Resources:       buildResourceRequirements(cfg, false),
+		Resources:       buildResourceRequirementsWithPrecedence(lt, cfg, mode),
 		Env:             BuildEnvVars(lt, cfg),
 		EnvFrom:         BuildEnvFrom(lt),
 		VolumeMounts:    buildVolumeMounts(lt, name, mode),
@@ -311,19 +311,58 @@ func buildResourceRequirements(cfg *config.OperatorConfig, isMetricsExporter boo
 	}
 }
 
+// buildResourceRequirementsWithPrecedence implements resource precedence chain:
+// CR-level resources → Operator defaults.
+// CR resources are a COMPLETE OVERRIDE (not partial merge) - same as native K8s behavior.
+func buildResourceRequirementsWithPrecedence(
+	lt *locustv2.LocustTest,
+	cfg *config.OperatorConfig,
+	mode OperationalMode,
+) corev1.ResourceRequirements {
+	// Level 1: CR-level resources (highest precedence)
+	// CR resources are a COMPLETE OVERRIDE (not partial merge) — same as native K8s
+	var crResources *corev1.ResourceRequirements
+	if mode == Master {
+		crResources = &lt.Spec.Master.Resources
+	} else if mode == Worker {
+		crResources = &lt.Spec.Worker.Resources
+	}
+
+	if hasResourcesSpecified(crResources) {
+		return *crResources // Complete override, return as-is
+	}
+
+	// Level 2: Operator defaults from config
+	return buildResourceRequirements(cfg, false)
+}
+
+// hasResourcesSpecified checks if ResourceRequirements has any non-empty fields.
+// This distinguishes "user set resources to empty" vs "user didn't set resources at all".
+func hasResourcesSpecified(r *corev1.ResourceRequirements) bool {
+	if r == nil {
+		return false
+	}
+	return len(r.Requests) > 0 || len(r.Limits) > 0
+}
+
 // buildResourceList creates a ResourceList from CPU, memory, and ephemeral storage strings.
 // Empty strings are skipped (not added to the resource list).
+// Safe parsing is used (errors ignored) because values are pre-validated at operator startup.
 func buildResourceList(cpu, memory, ephemeral string) corev1.ResourceList {
 	resources := corev1.ResourceList{}
 
 	if cpu != "" {
-		resources[corev1.ResourceCPU] = resource.MustParse(cpu)
+		// Safe: Already validated at startup in LoadConfig
+		q, _ := resource.ParseQuantity(cpu)
+		resources[corev1.ResourceCPU] = q
 	}
 	if memory != "" {
-		resources[corev1.ResourceMemory] = resource.MustParse(memory)
+		q, _ := resource.ParseQuantity(memory)
+		resources[corev1.ResourceMemory] = q
 	}
 	if ephemeral != "" {
-		resources[corev1.ResourceEphemeralStorage] = resource.MustParse(ephemeral)
+		q, _ := resource.ParseQuantity(ephemeral)
+		resources[corev1.ResourceEphemeralStorage] = q
 	}
 
 	return resources

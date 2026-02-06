@@ -206,7 +206,11 @@ func main() {
 	}
 
 	// Load operator configuration
-	cfg := config.LoadConfig()
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		setupLog.Error(err, "Failed to load operator configuration")
+		os.Exit(1)
+	}
 	setupLog.Info("Operator configuration loaded",
 		"ttlSecondsAfterFinished", cfg.TTLSecondsAfterFinished,
 		"metricsExporterImage", cfg.MetricsExporterImage,

@@ -110,10 +110,12 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	// Setup reconciler with manager
+	operatorConfig, err := config.LoadConfig()
+	Expect(err).NotTo(HaveOccurred())
 	err = (&LocustTestReconciler{
 		Client:   k8sManager.GetClient(),
 		Scheme:   k8sManager.GetScheme(),
-		Config:   config.LoadConfig(),
+		Config:   operatorConfig,
 		Recorder: k8sManager.GetEventRecorderFor("locust-controller"),
 	}).SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
