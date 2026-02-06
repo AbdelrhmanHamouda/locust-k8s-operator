@@ -58,6 +58,30 @@ locustPods:
       memory: 1024Mi
       ephemeralStorage: 50M
 
+  # -- Role-specific resources for master Locust containers (overrides unified resources above)
+  # Leave empty {} to use unified resources for master
+  masterResources: {}
+  #   requests:
+  #     cpu: 500m
+  #     memory: 256Mi
+  #     ephemeralStorage: 30M
+  #   limits:
+  #     cpu: 2000m
+  #     memory: 2048Mi
+  #     ephemeralStorage: 50M
+
+  # -- Role-specific resources for worker Locust containers (overrides unified resources above)
+  # Leave empty {} to use unified resources for workers
+  workerResources: {}
+  #   requests:
+  #     cpu: 250m
+  #     memory: 128Mi
+  #     ephemeralStorage: 30M
+  #   limits:
+  #     cpu: 1000m
+  #     memory: 1024Mi
+  #     ephemeralStorage: 50M
+
   # -- Inject affinity/tolerations from CR spec
   affinityInjection: true
   tolerationsInjection: true

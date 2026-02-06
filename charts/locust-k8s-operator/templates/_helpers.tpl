@@ -380,6 +380,153 @@ Kafka Security Enabled - new path with fallback to old path
 
 {{/*
 =============================================================================
+SECTION 2.5: Role-Specific Resource Helpers
+=============================================================================
+These helpers return role-specific resources for master and worker pods.
+If masterResources/workerResources are set, they override the unified resources.
+If empty, the helper returns empty string, meaning "use unified resources".
+
+This implements a three-level precedence:
+  1. CR-level resources (highest precedence, in Go code)
+  2. Helm role-specific resources (these helpers)
+  3. Helm unified resources (fallback, in Section 2 helpers above)
+=============================================================================
+*/}}
+
+{{/*
+Master CPU Request - role-specific override
+*/}}
+{{- define "locust.masterCpuRequest" -}}
+{{- if and .Values.locustPods .Values.locustPods.masterResources .Values.locustPods.masterResources.requests }}
+{{- .Values.locustPods.masterResources.requests.cpu | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Master Memory Request - role-specific override
+*/}}
+{{- define "locust.masterMemRequest" -}}
+{{- if and .Values.locustPods .Values.locustPods.masterResources .Values.locustPods.masterResources.requests }}
+{{- .Values.locustPods.masterResources.requests.memory | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Master Ephemeral Storage Request - role-specific override
+*/}}
+{{- define "locust.masterEphemeralRequest" -}}
+{{- if and .Values.locustPods .Values.locustPods.masterResources .Values.locustPods.masterResources.requests }}
+{{- .Values.locustPods.masterResources.requests.ephemeralStorage | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Master CPU Limit - role-specific override
+*/}}
+{{- define "locust.masterCpuLimit" -}}
+{{- if and .Values.locustPods .Values.locustPods.masterResources .Values.locustPods.masterResources.limits }}
+{{- .Values.locustPods.masterResources.limits.cpu | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Master Memory Limit - role-specific override
+*/}}
+{{- define "locust.masterMemLimit" -}}
+{{- if and .Values.locustPods .Values.locustPods.masterResources .Values.locustPods.masterResources.limits }}
+{{- .Values.locustPods.masterResources.limits.memory | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Master Ephemeral Storage Limit - role-specific override
+*/}}
+{{- define "locust.masterEphemeralLimit" -}}
+{{- if and .Values.locustPods .Values.locustPods.masterResources .Values.locustPods.masterResources.limits }}
+{{- .Values.locustPods.masterResources.limits.ephemeralStorage | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Worker CPU Request - role-specific override
+*/}}
+{{- define "locust.workerCpuRequest" -}}
+{{- if and .Values.locustPods .Values.locustPods.workerResources .Values.locustPods.workerResources.requests }}
+{{- .Values.locustPods.workerResources.requests.cpu | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Worker Memory Request - role-specific override
+*/}}
+{{- define "locust.workerMemRequest" -}}
+{{- if and .Values.locustPods .Values.locustPods.workerResources .Values.locustPods.workerResources.requests }}
+{{- .Values.locustPods.workerResources.requests.memory | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Worker Ephemeral Storage Request - role-specific override
+*/}}
+{{- define "locust.workerEphemeralRequest" -}}
+{{- if and .Values.locustPods .Values.locustPods.workerResources .Values.locustPods.workerResources.requests }}
+{{- .Values.locustPods.workerResources.requests.ephemeralStorage | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Worker CPU Limit - role-specific override
+*/}}
+{{- define "locust.workerCpuLimit" -}}
+{{- if and .Values.locustPods .Values.locustPods.workerResources .Values.locustPods.workerResources.limits }}
+{{- .Values.locustPods.workerResources.limits.cpu | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Worker Memory Limit - role-specific override
+*/}}
+{{- define "locust.workerMemLimit" -}}
+{{- if and .Values.locustPods .Values.locustPods.workerResources .Values.locustPods.workerResources.limits }}
+{{- .Values.locustPods.workerResources.limits.memory | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Worker Ephemeral Storage Limit - role-specific override
+*/}}
+{{- define "locust.workerEphemeralLimit" -}}
+{{- if and .Values.locustPods .Values.locustPods.workerResources .Values.locustPods.workerResources.limits }}
+{{- .Values.locustPods.workerResources.limits.ephemeralStorage | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+=============================================================================
 SECTION 3: Environment Variables Helper
 =============================================================================
 Generates all environment variables for the operator container.
@@ -414,6 +561,70 @@ Categories:
   value: {{ include "locust.podMemLimit" . | quote }}
 - name: POD_EPHEMERAL_LIMIT
   value: {{ include "locust.podEphemeralLimit" . | quote }}
+# Role-specific resources for master Locust containers
+# Empty values mean "use unified resources" (backward compatible)
+{{- $masterCpuReq := include "locust.masterCpuRequest" . }}
+{{- if $masterCpuReq }}
+- name: MASTER_POD_CPU_REQUEST
+  value: {{ $masterCpuReq | quote }}
+{{- end }}
+{{- $masterMemReq := include "locust.masterMemRequest" . }}
+{{- if $masterMemReq }}
+- name: MASTER_POD_MEM_REQUEST
+  value: {{ $masterMemReq | quote }}
+{{- end }}
+{{- $masterEphemeralReq := include "locust.masterEphemeralRequest" . }}
+{{- if $masterEphemeralReq }}
+- name: MASTER_POD_EPHEMERAL_REQUEST
+  value: {{ $masterEphemeralReq | quote }}
+{{- end }}
+{{- $masterCpuLim := include "locust.masterCpuLimit" . }}
+{{- if $masterCpuLim }}
+- name: MASTER_POD_CPU_LIMIT
+  value: {{ $masterCpuLim | quote }}
+{{- end }}
+{{- $masterMemLim := include "locust.masterMemLimit" . }}
+{{- if $masterMemLim }}
+- name: MASTER_POD_MEM_LIMIT
+  value: {{ $masterMemLim | quote }}
+{{- end }}
+{{- $masterEphemeralLim := include "locust.masterEphemeralLimit" . }}
+{{- if $masterEphemeralLim }}
+- name: MASTER_POD_EPHEMERAL_LIMIT
+  value: {{ $masterEphemeralLim | quote }}
+{{- end }}
+# Role-specific resources for worker Locust containers
+# Empty values mean "use unified resources" (backward compatible)
+{{- $workerCpuReq := include "locust.workerCpuRequest" . }}
+{{- if $workerCpuReq }}
+- name: WORKER_POD_CPU_REQUEST
+  value: {{ $workerCpuReq | quote }}
+{{- end }}
+{{- $workerMemReq := include "locust.workerMemRequest" . }}
+{{- if $workerMemReq }}
+- name: WORKER_POD_MEM_REQUEST
+  value: {{ $workerMemReq | quote }}
+{{- end }}
+{{- $workerEphemeralReq := include "locust.workerEphemeralRequest" . }}
+{{- if $workerEphemeralReq }}
+- name: WORKER_POD_EPHEMERAL_REQUEST
+  value: {{ $workerEphemeralReq | quote }}
+{{- end }}
+{{- $workerCpuLim := include "locust.workerCpuLimit" . }}
+{{- if $workerCpuLim }}
+- name: WORKER_POD_CPU_LIMIT
+  value: {{ $workerCpuLim | quote }}
+{{- end }}
+{{- $workerMemLim := include "locust.workerMemLimit" . }}
+{{- if $workerMemLim }}
+- name: WORKER_POD_MEM_LIMIT
+  value: {{ $workerMemLim | quote }}
+{{- end }}
+{{- $workerEphemeralLim := include "locust.workerEphemeralLimit" . }}
+{{- if $workerEphemeralLim }}
+- name: WORKER_POD_EPHEMERAL_LIMIT
+  value: {{ $workerEphemeralLim | quote }}
+{{- end }}
 # Feature flags for pod scheduling
 # When enabled, the operator injects affinity/tolerations from the CR into pods
 - name: ENABLE_AFFINITY_CR_INJECTION
