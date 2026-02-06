@@ -130,8 +130,8 @@ func (r *LocustTestReconciler) createResources(ctx context.Context, lt *locustv2
 
 	// Build resources using resource builders from Phase 3
 	masterService := resources.BuildMasterService(lt, r.Config)
-	masterJob := resources.BuildMasterJob(lt, r.Config)
-	workerJob := resources.BuildWorkerJob(lt, r.Config)
+	masterJob := resources.BuildMasterJob(lt, r.Config, log)
+	workerJob := resources.BuildWorkerJob(lt, r.Config, log)
 
 	// Create master Service
 	if err := r.createResource(ctx, lt, masterService, "Service"); err != nil {

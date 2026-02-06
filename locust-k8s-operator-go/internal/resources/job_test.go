@@ -21,6 +21,7 @@ import (
 
 	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
+	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -82,7 +83,7 @@ func TestBuildMasterJob(t *testing.T) {
 	lt := newTestLocustTest()
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	require.NotNil(t, job)
 	assert.Equal(t, "my-test-master", job.Name)
@@ -93,7 +94,7 @@ func TestBuildMasterJob_Metadata(t *testing.T) {
 	lt := newTestLocustTest()
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	assert.Equal(t, "my-test-master", job.Name)
 	assert.Equal(t, "default", job.Namespace)
@@ -103,7 +104,7 @@ func TestBuildMasterJob_Parallelism(t *testing.T) {
 	lt := newTestLocustTest()
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	require.NotNil(t, job.Spec.Parallelism)
 	assert.Equal(t, int32(1), *job.Spec.Parallelism, "Master parallelism should always be 1")
@@ -113,7 +114,7 @@ func TestBuildMasterJob_Containers(t *testing.T) {
 	lt := newTestLocustTest()
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	containers := job.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 2, "Master should have 2 containers (locust + metrics exporter)")
@@ -133,7 +134,7 @@ func TestBuildMasterJob_WithTTL(t *testing.T) {
 	ttl := int32(3600)
 	cfg.TTLSecondsAfterFinished = &ttl
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	require.NotNil(t, job.Spec.TTLSecondsAfterFinished)
 	assert.Equal(t, int32(3600), *job.Spec.TTLSecondsAfterFinished)
@@ -147,7 +148,7 @@ func TestBuildMasterJob_WithImagePullSecrets(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	secrets := job.Spec.Template.Spec.ImagePullSecrets
 	assert.Len(t, secrets, 2)
@@ -160,7 +161,7 @@ func TestBuildMasterJob_WithLibConfigMap(t *testing.T) {
 	lt.Spec.TestFiles.LibConfigMapRef = "my-lib-configmap"
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	volumes := job.Spec.Template.Spec.Volumes
 	assert.Len(t, volumes, 2, "Should have 2 volumes (configmap + lib)")
@@ -191,7 +192,7 @@ func TestBuildMasterJob_Labels(t *testing.T) {
 	lt := newTestLocustTest()
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	labels := job.Spec.Template.Labels
 	assert.Equal(t, "my-test", labels[LabelApp])
@@ -203,7 +204,7 @@ func TestBuildMasterJob_Annotations(t *testing.T) {
 	lt := newTestLocustTest()
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	annotations := job.Spec.Template.Annotations
 	assert.Equal(t, "true", annotations[AnnotationPrometheusScrape])
@@ -215,7 +216,7 @@ func TestBuildWorkerJob(t *testing.T) {
 	lt := newTestLocustTest()
 	cfg := newTestConfig()
 
-	job := BuildWorkerJob(lt, cfg)
+	job := BuildWorkerJob(lt, cfg, logr.Discard())
 
 	require.NotNil(t, job)
 	assert.Equal(t, "my-test-worker", job.Name)
@@ -227,7 +228,7 @@ func TestBuildWorkerJob_Parallelism(t *testing.T) {
 	lt.Spec.Worker.Replicas = 5
 	cfg := newTestConfig()
 
-	job := BuildWorkerJob(lt, cfg)
+	job := BuildWorkerJob(lt, cfg, logr.Discard())
 
 	require.NotNil(t, job.Spec.Parallelism)
 	assert.Equal(t, int32(5), *job.Spec.Parallelism, "Worker parallelism should equal Worker.Replicas")
@@ -237,7 +238,7 @@ func TestBuildWorkerJob_Containers(t *testing.T) {
 	lt := newTestLocustTest()
 	cfg := newTestConfig()
 
-	job := BuildWorkerJob(lt, cfg)
+	job := BuildWorkerJob(lt, cfg, logr.Discard())
 
 	containers := job.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 1, "Worker should have 1 container only")
@@ -248,7 +249,7 @@ func TestBuildWorkerJob_NoPrometheusAnnotations(t *testing.T) {
 	lt := newTestLocustTest()
 	cfg := newTestConfig()
 
-	job := BuildWorkerJob(lt, cfg)
+	job := BuildWorkerJob(lt, cfg, logr.Discard())
 
 	annotations := job.Spec.Template.Annotations
 	assert.Empty(t, annotations[AnnotationPrometheusScrape])
@@ -300,7 +301,7 @@ func TestBuildAffinity_Disabled(t *testing.T) {
 	cfg := newTestConfig()
 	cfg.EnableAffinityCRInjection = false
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	assert.Nil(t, job.Spec.Template.Spec.Affinity, "Affinity should be nil when feature flag is disabled")
 }
@@ -329,7 +330,7 @@ func TestBuildAffinity_Enabled(t *testing.T) {
 	cfg := newTestConfig()
 	cfg.EnableAffinityCRInjection = true
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	require.NotNil(t, job.Spec.Template.Spec.Affinity)
 	require.NotNil(t, job.Spec.Template.Spec.Affinity.NodeAffinity)
@@ -358,7 +359,7 @@ func TestBuildTolerations_Disabled(t *testing.T) {
 	cfg := newTestConfig()
 	cfg.EnableTolerationsCRInjection = false
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	assert.Nil(t, job.Spec.Template.Spec.Tolerations, "Tolerations should be nil when feature flag is disabled")
 }
@@ -378,7 +379,7 @@ func TestBuildTolerations_Enabled(t *testing.T) {
 	cfg := newTestConfig()
 	cfg.EnableTolerationsCRInjection = true
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	require.Len(t, job.Spec.Template.Spec.Tolerations, 1)
 	assert.Equal(t, "dedicated", job.Spec.Template.Spec.Tolerations[0].Key)
@@ -401,7 +402,7 @@ func TestBuildTolerations_ExistsOperator(t *testing.T) {
 	cfg := newTestConfig()
 	cfg.EnableTolerationsCRInjection = true
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	require.Len(t, job.Spec.Template.Spec.Tolerations, 1)
 	assert.Equal(t, corev1.TolerationOpExists, job.Spec.Template.Spec.Tolerations[0].Operator)
@@ -413,7 +414,7 @@ func TestBuildMasterJob_EmptyImagePullPolicy(t *testing.T) {
 	lt.Spec.ImagePullPolicy = "" // Empty should default to IfNotPresent
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	container := job.Spec.Template.Spec.Containers[0]
 	assert.Equal(t, corev1.PullIfNotPresent, container.ImagePullPolicy)
@@ -424,7 +425,7 @@ func TestBuildMasterJob_NoConfigMap(t *testing.T) {
 	lt.Spec.TestFiles = nil // No test files config
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	assert.Empty(t, job.Spec.Template.Spec.Volumes)
 	assert.Empty(t, job.Spec.Template.Spec.Containers[0].VolumeMounts)
@@ -439,7 +440,7 @@ func TestBuildMasterJob_KafkaEnvVars(t *testing.T) {
 	cfg.KafkaUsername = "user"
 	cfg.KafkaPassword = "secret"
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	container := job.Spec.Template.Spec.Containers[0]
 	envMap := make(map[string]string)
@@ -459,7 +460,7 @@ func TestBuildAffinity_NilScheduling(t *testing.T) {
 	cfg := newTestConfig()
 	cfg.EnableAffinityCRInjection = true
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	assert.Nil(t, job.Spec.Template.Spec.Affinity)
 }
@@ -472,7 +473,7 @@ func TestBuildAffinity_NilAffinity(t *testing.T) {
 	cfg := newTestConfig()
 	cfg.EnableAffinityCRInjection = true
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	assert.Nil(t, job.Spec.Template.Spec.Affinity)
 }
@@ -481,7 +482,7 @@ func TestBuildMasterJob_Completions(t *testing.T) {
 	lt := newTestLocustTest()
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	// Master job should not have Completions set (nil means run to completion)
 	assert.Nil(t, job.Spec.Completions)
@@ -491,7 +492,7 @@ func TestBuildMasterJob_BackoffLimit(t *testing.T) {
 	lt := newTestLocustTest()
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	require.NotNil(t, job.Spec.BackoffLimit)
 	assert.Equal(t, int32(0), *job.Spec.BackoffLimit)
@@ -506,7 +507,7 @@ func TestBuildMasterJob_WithEnvConfigMapRef(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	container := job.Spec.Template.Spec.Containers[0]
 	require.Len(t, container.EnvFrom, 1)
@@ -524,7 +525,7 @@ func TestBuildMasterJob_WithEnvSecretRef(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	container := job.Spec.Template.Spec.Containers[0]
 	require.Len(t, container.EnvFrom, 1)
@@ -542,7 +543,7 @@ func TestBuildMasterJob_WithEnvVariables(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	container := job.Spec.Template.Spec.Containers[0]
 	envMap := make(map[string]string)
@@ -567,7 +568,7 @@ func TestBuildMasterJob_WithSecretMount(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	// Check volume exists
 	var secretVolumeFound bool
@@ -603,7 +604,7 @@ func TestBuildMasterJob_EnvCombinesKafkaAndUser(t *testing.T) {
 	cfg := newTestConfig()
 	cfg.KafkaBootstrapServers = "kafka:9092"
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	container := job.Spec.Template.Spec.Containers[0]
 
@@ -634,7 +635,7 @@ func TestBuildWorkerJob_WithEnvConfig(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildWorkerJob(lt, cfg)
+	job := BuildWorkerJob(lt, cfg, logr.Discard())
 
 	container := job.Spec.Template.Spec.Containers[0]
 
@@ -676,7 +677,7 @@ func TestBuildMasterJob_WithUserVolumes(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	// Check volumes
 	volumeNames := make(map[string]bool)
@@ -710,7 +711,7 @@ func TestBuildWorkerJob_WithUserVolumes(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildWorkerJob(lt, cfg)
+	job := BuildWorkerJob(lt, cfg, logr.Discard())
 
 	// Check volumes - worker should NOT have results
 	volumeNames := make(map[string]bool)
@@ -742,7 +743,7 @@ func TestBuildMasterJob_WithUserVolumeMounts_TargetWorker(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	// Master should NOT have worker-only volume
 	volumeNames := make(map[string]bool)
@@ -775,7 +776,7 @@ func TestBuildJob_UserVolumesWithSecretVolumes(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	// Both secret and user volumes should exist
 	volumeNames := make(map[string]bool)
@@ -804,7 +805,7 @@ func TestBuildMasterJob_OTelDisabled_HasSidecar(t *testing.T) {
 	// No OTel config = disabled
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	containers := job.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 2, "Master should have 2 containers (locust + metrics exporter) when OTel disabled")
@@ -826,7 +827,7 @@ func TestBuildMasterJob_OTelEnabled_NoSidecar(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	containers := job.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 1, "Master should have 1 container only when OTel enabled")
@@ -838,7 +839,7 @@ func TestBuildMasterJob_NoObservability_HasSidecar(t *testing.T) {
 	lt.Spec.Observability = nil
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	containers := job.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 2, "Master should have 2 containers when observability is nil")
@@ -854,7 +855,7 @@ func TestBuildWorkerJob_OTelEnabled_NoSidecar(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildWorkerJob(lt, cfg)
+	job := BuildWorkerJob(lt, cfg, logr.Discard())
 
 	containers := job.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 1, "Worker should always have 1 container")
@@ -872,7 +873,7 @@ func TestBuildMasterJob_OTelEnabled_HasEnvVars(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	container := job.Spec.Template.Spec.Containers[0]
 	envMap := make(map[string]string)
@@ -897,7 +898,7 @@ func TestBuildWorkerJob_OTelEnabled_HasEnvVars(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildWorkerJob(lt, cfg)
+	job := BuildWorkerJob(lt, cfg, logr.Discard())
 
 	container := job.Spec.Template.Spec.Containers[0]
 	envMap := make(map[string]string)
@@ -919,7 +920,7 @@ func TestBuildMasterJob_OTelEnabled_CommandHasFlag(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	container := job.Spec.Template.Spec.Containers[0]
 	assert.Contains(t, container.Args, "--otel", "Command should include --otel flag")
@@ -935,7 +936,7 @@ func TestBuildWorkerJob_OTelEnabled_CommandHasFlag(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildWorkerJob(lt, cfg)
+	job := BuildWorkerJob(lt, cfg, logr.Discard())
 
 	container := job.Spec.Template.Spec.Containers[0]
 	assert.Contains(t, container.Args, "--otel", "Command should include --otel flag")
@@ -946,7 +947,7 @@ func TestBuildMasterJob_OTelDisabled_CommandNoFlag(t *testing.T) {
 	lt.Spec.Observability = nil
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	container := job.Spec.Template.Spec.Containers[0]
 	assert.NotContains(t, container.Args, "--otel", "Command should NOT include --otel flag when disabled")
@@ -965,7 +966,7 @@ func TestBuildMasterJob_OTelEnabled_ExtraEnvVars(t *testing.T) {
 	}
 	cfg := newTestConfig()
 
-	job := BuildMasterJob(lt, cfg)
+	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	container := job.Spec.Template.Spec.Containers[0]
 	envMap := make(map[string]string)

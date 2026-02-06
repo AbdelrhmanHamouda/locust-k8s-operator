@@ -22,6 +22,7 @@ import (
 
 	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
+	"github.com/go-logr/logr"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -29,20 +30,20 @@ import (
 )
 
 // BuildMasterJob creates a Kubernetes Job for the Locust master node.
-func BuildMasterJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig) *batchv1.Job {
+func BuildMasterJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, logger logr.Logger) *batchv1.Job {
 	nodeName := NodeName(lt.Name, Master)
 	otelEnabled := IsOTelEnabled(lt)
-	command := BuildMasterCommand(&lt.Spec.Master, lt.Spec.Worker.Replicas, otelEnabled)
+	command := BuildMasterCommand(&lt.Spec.Master, lt.Spec.Worker.Replicas, otelEnabled, logger)
 
 	return buildJob(lt, cfg, Master, nodeName, command)
 }
 
 // BuildWorkerJob creates a Kubernetes Job for the Locust worker nodes.
-func BuildWorkerJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig) *batchv1.Job {
+func BuildWorkerJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, logger logr.Logger) *batchv1.Job {
 	nodeName := NodeName(lt.Name, Worker)
 	masterHost := NodeName(lt.Name, Master)
 	otelEnabled := IsOTelEnabled(lt)
-	command := BuildWorkerCommand(lt.Spec.Worker.Command, masterHost, otelEnabled)
+	command := BuildWorkerCommand(lt.Spec.Worker.Command, masterHost, otelEnabled, lt.Spec.Worker.ExtraArgs, logger)
 
 	return buildJob(lt, cfg, Worker, nodeName, command)
 }
