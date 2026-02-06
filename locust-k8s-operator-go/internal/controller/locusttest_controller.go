@@ -220,7 +220,29 @@ func (r *LocustTestReconciler) createResource(ctx context.Context, lt *locustv2.
 func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2.LocustTest) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 
-	// Don't update if already in terminal state
+	// Check for externally deleted Service
+	masterServiceName := lt.Name + "-master"
+	masterService := &corev1.Service{}
+	if err := r.Get(ctx, client.ObjectKey{Name: masterServiceName, Namespace: lt.Namespace}, masterService); err != nil {
+		if apierrors.IsNotFound(err) {
+			// Service was externally deleted — transition to Pending for recovery
+			log.Info("Master Service externally deleted, transitioning to Pending for recovery",
+				"service", masterServiceName)
+			r.Recorder.Event(lt, corev1.EventTypeWarning, "ResourceDeleted",
+				fmt.Sprintf("Master Service %s was deleted externally, will attempt recreation", masterServiceName))
+
+			// Reset to Pending to trigger resource recreation on next reconcile
+			lt.Status.Phase = locustv2.PhasePending
+			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
+			if err := r.Status().Update(ctx, lt); err != nil {
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{Requeue: true}, nil
+		}
+		return ctrl.Result{}, err
+	}
+
+	// Don't update if already in terminal state (unless resources are missing — handled above)
 	if lt.Status.Phase == locustv2.PhaseSucceeded || lt.Status.Phase == locustv2.PhaseFailed {
 		return ctrl.Result{}, nil
 	}
@@ -230,7 +252,17 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 	masterJobName := lt.Name + "-master"
 	if err := r.Get(ctx, client.ObjectKey{Name: masterJobName, Namespace: lt.Namespace}, masterJob); err != nil {
 		if apierrors.IsNotFound(err) {
-			// Job not found yet, requeue
+			// Job was externally deleted — same recovery pattern
+			log.Info("Master Job externally deleted, transitioning to Pending for recovery",
+				"job", masterJobName)
+			r.Recorder.Event(lt, corev1.EventTypeWarning, "ResourceDeleted",
+				fmt.Sprintf("Master Job %s was deleted externally, will attempt recreation", masterJobName))
+
+			lt.Status.Phase = locustv2.PhasePending
+			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
+			if err := r.Status().Update(ctx, lt); err != nil {
+				return ctrl.Result{}, err
+			}
 			return ctrl.Result{Requeue: true}, nil
 		}
 		return ctrl.Result{}, err
@@ -240,10 +272,21 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 	workerJob := &batchv1.Job{}
 	workerJobName := lt.Name + "-worker"
 	if err := r.Get(ctx, client.ObjectKey{Name: workerJobName, Namespace: lt.Namespace}, workerJob); err != nil {
-		if !apierrors.IsNotFound(err) {
-			return ctrl.Result{}, err
+		if apierrors.IsNotFound(err) {
+			// Worker Job externally deleted — recovery
+			log.Info("Worker Job externally deleted, transitioning to Pending for recovery",
+				"job", workerJobName)
+			r.Recorder.Event(lt, corev1.EventTypeWarning, "ResourceDeleted",
+				fmt.Sprintf("Worker Job %s was deleted externally, will attempt recreation", workerJobName))
+
+			lt.Status.Phase = locustv2.PhasePending
+			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
+			if err := r.Status().Update(ctx, lt); err != nil {
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{Requeue: true}, nil
 		}
-		workerJob = nil
+		return ctrl.Result{}, err
 	}
 
 	// Update status from Jobs
