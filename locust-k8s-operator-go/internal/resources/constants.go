@@ -33,7 +33,7 @@ const (
 // Mount path constants
 const (
 	// DefaultMountPath is the default path where ConfigMap is mounted.
-	DefaultMountPath = "/lotest/src/"
+	DefaultMountPath = "/lotest/src"
 	// LibMountPath is the path where the lib ConfigMap is mounted.
 	LibMountPath = "/opt/locust/lib"
 )

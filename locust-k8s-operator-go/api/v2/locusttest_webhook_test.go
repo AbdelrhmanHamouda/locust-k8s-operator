@@ -424,7 +424,7 @@ func TestValidateVolumeName_LibVolume(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "my-test", Namespace: "default"},
 	}
 
-	err := validateVolumeName(lt, "locust-lib")
+	err := validateVolumeName(lt, "lib")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "is reserved by the operator")
 }
