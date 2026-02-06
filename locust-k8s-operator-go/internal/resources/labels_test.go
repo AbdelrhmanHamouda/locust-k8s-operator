@@ -126,7 +126,7 @@ func TestBuildLabels_WithUserLabels(t *testing.T) {
 	assert.Empty(t, workerLabels["team"])
 }
 
-func TestBuildAnnotations_Master(t *testing.T) {
+func TestBuildAnnotations_Master_PrometheusWhenOTelDisabled(t *testing.T) {
 	lt := &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-test",
@@ -153,6 +153,42 @@ func TestBuildAnnotations_Master(t *testing.T) {
 	assert.Equal(t, "true", annotations[AnnotationPrometheusScrape])
 	assert.Equal(t, MetricsEndpointPath, annotations[AnnotationPrometheusPath])
 	assert.Equal(t, "9646", annotations[AnnotationPrometheusPort])
+}
+
+func TestBuildAnnotations_Master_NoPrometheusWhenOTelEnabled(t *testing.T) {
+	lt := &locustv2.LocustTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-test",
+			Namespace: "default",
+		},
+		Spec: locustv2.LocustTestSpec{
+			Image: "locustio/locust:latest",
+			Master: locustv2.MasterSpec{
+				Command: "locust -f /lotest/src/test.py",
+			},
+			Worker: locustv2.WorkerSpec{
+				Command:  "locust -f /lotest/src/test.py",
+				Replicas: 3,
+			},
+			Observability: &locustv2.ObservabilityConfig{
+				OpenTelemetry: &locustv2.OpenTelemetryConfig{
+					Enabled:  true,
+					Endpoint: "http://otel-collector:4317",
+				},
+			},
+		},
+	}
+
+	cfg := &config.OperatorConfig{
+		MetricsExporterPort: 9646,
+	}
+
+	annotations := BuildAnnotations(lt, Master, cfg)
+
+	// When OTel is enabled, Prometheus annotations should NOT be present
+	assert.Empty(t, annotations[AnnotationPrometheusScrape])
+	assert.Empty(t, annotations[AnnotationPrometheusPath])
+	assert.Empty(t, annotations[AnnotationPrometheusPort])
 }
 
 func TestBuildAnnotations_Worker(t *testing.T) {

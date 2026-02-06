@@ -146,29 +146,3 @@ func derivePhaseFromJob(job *batchv1.Job) string {
 
 	return locustv2.PhasePending
 }
-
-// isJobComplete checks if a Job has completed successfully.
-func isJobComplete(job *batchv1.Job) bool {
-	if job == nil {
-		return false
-	}
-	for _, condition := range job.Status.Conditions {
-		if condition.Type == batchv1.JobComplete && condition.Status == corev1.ConditionTrue {
-			return true
-		}
-	}
-	return false
-}
-
-// isJobFailed checks if a Job has failed.
-func isJobFailed(job *batchv1.Job) bool {
-	if job == nil {
-		return false
-	}
-	for _, condition := range job.Status.Conditions {
-		if condition.Type == batchv1.JobFailed && condition.Status == corev1.ConditionTrue {
-			return true
-		}
-	}
-	return false
-}

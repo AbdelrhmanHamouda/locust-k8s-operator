@@ -66,12 +66,14 @@ func getUserLabels(lt *locustv2.LocustTest, mode OperationalMode) map[string]str
 
 // BuildAnnotations constructs the annotations for a pod based on the LocustTest CR and mode.
 // Master pods include Prometheus scrape annotations; worker pods do not.
+// When OTel is enabled, Prometheus annotations are suppressed (Locust exports natively via OTLP).
 // Merges user-defined annotations from the CR spec.
 func BuildAnnotations(lt *locustv2.LocustTest, mode OperationalMode, cfg *config.OperatorConfig) map[string]string {
 	annotations := make(map[string]string)
 
-	// Master pods get Prometheus annotations
-	if mode == Master {
+	// Master pods get Prometheus annotations ONLY if OTel is disabled
+	// When OTel is enabled, Locust exports metrics natively via OTLP — no sidecar or scrape annotations needed
+	if mode == Master && !IsOTelEnabled(lt) {
 		annotations[AnnotationPrometheusScrape] = "true"
 		annotations[AnnotationPrometheusPath] = MetricsEndpointPath
 		annotations[AnnotationPrometheusPort] = fmt.Sprintf("%d", cfg.MetricsExporterPort)
