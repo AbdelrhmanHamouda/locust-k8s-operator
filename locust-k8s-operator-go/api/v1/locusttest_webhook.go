@@ -18,12 +18,7 @@ package v1
 
 import (
 	ctrl "sigs.k8s.io/controller-runtime"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
-
-// log is for logging in this package.
-// locusttestlog is available for future webhook logging needs
-var _ = logf.Log.WithName("locusttest-resource")
 
 // SetupWebhookWithManager registers the webhook for LocustTest with the manager.
 func (r *LocustTest) SetupWebhookWithManager(mgr ctrl.Manager) error {

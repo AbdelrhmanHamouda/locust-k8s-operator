@@ -489,3 +489,218 @@ func TestBuildEnvFrom_IntegrationWithFullSpec(t *testing.T) {
 	mounts := BuildSecretVolumeMounts(lt)
 	assert.Len(t, mounts, 1)
 }
+
+// ===== OTel Integration Tests =====
+
+func TestBuildEnvVars_WithOTel_Enabled(t *testing.T) {
+	lt := &locustv2.LocustTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-lt",
+			Namespace: "default",
+		},
+		Spec: locustv2.LocustTestSpec{
+			Image: "locustio/locust:2.32.0",
+			Master: locustv2.MasterSpec{
+				Command: "locust -f /lotest/src/locustfile.py",
+			},
+			Worker: locustv2.WorkerSpec{
+				Command:  "locust -f /lotest/src/locustfile.py",
+				Replicas: 3,
+			},
+			Env: &locustv2.EnvConfig{
+				Variables: []corev1.EnvVar{
+					{Name: "USER_VAR", Value: "user-value"},
+				},
+			},
+			Observability: &locustv2.ObservabilityConfig{
+				OpenTelemetry: &locustv2.OpenTelemetryConfig{
+					Enabled:  true,
+					Endpoint: "otel-collector.monitoring:4317",
+					Protocol: "grpc",
+					Insecure: true,
+					ExtraEnvVars: map[string]string{
+						"OTEL_RESOURCE_ATTRIBUTES": "service.name=locust-test",
+					},
+				},
+			},
+		},
+	}
+
+	cfg := &config.OperatorConfig{
+		KafkaBootstrapServers: "kafka:9092",
+		KafkaSecurityEnabled:  false,
+	}
+
+	result := BuildEnvVars(lt, cfg)
+
+	// Should have: 7 Kafka + 5 OTel (traces, metrics, endpoint, protocol, insecure) + 1 extra OTel + 1 user = 14
+	assert.Len(t, result, 14)
+
+	// Convert to map for easier assertions
+	envMap := make(map[string]string)
+	for _, ev := range result {
+		envMap[ev.Name] = ev.Value
+	}
+
+	// Verify Kafka env vars present
+	assert.Equal(t, "kafka:9092", envMap[EnvKafkaBootstrapServers])
+
+	// Verify OTel env vars present and correct
+	assert.Equal(t, "otlp", envMap["OTEL_TRACES_EXPORTER"])
+	assert.Equal(t, "otlp", envMap["OTEL_METRICS_EXPORTER"])
+	assert.Equal(t, "otel-collector.monitoring:4317", envMap["OTEL_EXPORTER_OTLP_ENDPOINT"])
+	assert.Equal(t, "grpc", envMap["OTEL_EXPORTER_OTLP_PROTOCOL"])
+	assert.Equal(t, "true", envMap["OTEL_EXPORTER_OTLP_INSECURE"])
+	assert.Equal(t, "service.name=locust-test", envMap["OTEL_RESOURCE_ATTRIBUTES"])
+
+	// Verify user env vars present
+	assert.Equal(t, "user-value", envMap["USER_VAR"])
+}
+
+func TestBuildEnvVars_WithOTel_Disabled(t *testing.T) {
+	lt := &locustv2.LocustTest{
+		Spec: locustv2.LocustTestSpec{
+			Env: &locustv2.EnvConfig{
+				Variables: []corev1.EnvVar{
+					{Name: "USER_VAR", Value: "user-value"},
+				},
+			},
+			Observability: &locustv2.ObservabilityConfig{
+				OpenTelemetry: &locustv2.OpenTelemetryConfig{
+					Enabled: false,
+				},
+			},
+		},
+	}
+
+	cfg := &config.OperatorConfig{
+		KafkaBootstrapServers: "kafka:9092",
+	}
+
+	result := BuildEnvVars(lt, cfg)
+
+	// Should have: 7 Kafka + 1 user = 8 (no OTel vars)
+	assert.Len(t, result, 8)
+
+	// Convert to map for easier assertions
+	envMap := make(map[string]string)
+	for _, ev := range result {
+		envMap[ev.Name] = ev.Value
+	}
+
+	// Verify no OTel env vars present
+	_, hasOTelTraces := envMap["OTEL_TRACES_EXPORTER"]
+	_, hasOTelMetrics := envMap["OTEL_METRICS_EXPORTER"]
+	_, hasOTelEndpoint := envMap["OTEL_EXPORTER_OTLP_ENDPOINT"]
+
+	assert.False(t, hasOTelTraces, "OTEL_TRACES_EXPORTER should not be present when OTel disabled")
+	assert.False(t, hasOTelMetrics, "OTEL_METRICS_EXPORTER should not be present when OTel disabled")
+	assert.False(t, hasOTelEndpoint, "OTEL_EXPORTER_OTLP_ENDPOINT should not be present when OTel disabled")
+
+	// Verify Kafka and user vars still present
+	assert.Equal(t, "kafka:9092", envMap[EnvKafkaBootstrapServers])
+	assert.Equal(t, "user-value", envMap["USER_VAR"])
+}
+
+func TestBuildEnvVars_WithOTel_NoObservabilityConfig(t *testing.T) {
+	lt := &locustv2.LocustTest{
+		Spec: locustv2.LocustTestSpec{
+			Env: &locustv2.EnvConfig{
+				Variables: []corev1.EnvVar{
+					{Name: "USER_VAR", Value: "user-value"},
+				},
+			},
+			// No Observability config at all
+		},
+	}
+
+	cfg := &config.OperatorConfig{
+		KafkaBootstrapServers: "kafka:9092",
+	}
+
+	result := BuildEnvVars(lt, cfg)
+
+	// Should have: 7 Kafka + 1 user = 8 (no OTel vars)
+	assert.Len(t, result, 8)
+
+	// Convert to map for easier assertions
+	envMap := make(map[string]string)
+	for _, ev := range result {
+		envMap[ev.Name] = ev.Value
+	}
+
+	// Verify no OTel env vars present
+	_, hasOTelTraces := envMap["OTEL_TRACES_EXPORTER"]
+	assert.False(t, hasOTelTraces, "OTEL_TRACES_EXPORTER should not be present when no Observability config")
+}
+
+func TestBuildEnvVars_OTel_HTTPProtocol(t *testing.T) {
+	lt := &locustv2.LocustTest{
+		Spec: locustv2.LocustTestSpec{
+			Observability: &locustv2.ObservabilityConfig{
+				OpenTelemetry: &locustv2.OpenTelemetryConfig{
+					Enabled:  true,
+					Endpoint: "http://jaeger:4318/v1/traces",
+					Protocol: "http/protobuf",
+				},
+			},
+		},
+	}
+
+	cfg := &config.OperatorConfig{
+		KafkaBootstrapServers: "kafka:9092",
+	}
+
+	result := BuildEnvVars(lt, cfg)
+
+	// Find the protocol env var
+	envMap := make(map[string]string)
+	for _, ev := range result {
+		envMap[ev.Name] = ev.Value
+	}
+
+	// Verify HTTP protocol is set correctly
+	assert.Equal(t, "http/protobuf", envMap["OTEL_EXPORTER_OTLP_PROTOCOL"])
+	assert.Equal(t, "http://jaeger:4318/v1/traces", envMap["OTEL_EXPORTER_OTLP_ENDPOINT"])
+}
+
+func TestBuildEnvVars_OTel_EnvVarOrder(t *testing.T) {
+	lt := &locustv2.LocustTest{
+		Spec: locustv2.LocustTestSpec{
+			Env: &locustv2.EnvConfig{
+				Variables: []corev1.EnvVar{
+					{Name: "USER_VAR", Value: "user-value"},
+				},
+			},
+			Observability: &locustv2.ObservabilityConfig{
+				OpenTelemetry: &locustv2.OpenTelemetryConfig{
+					Enabled:  true,
+					Endpoint: "otel-collector:4317",
+				},
+			},
+		},
+	}
+
+	cfg := &config.OperatorConfig{
+		KafkaBootstrapServers: "kafka:9092",
+	}
+
+	result := BuildEnvVars(lt, cfg)
+
+	// Verify order: Kafka vars first, then OTel vars, then user vars last
+	// First 7 should be Kafka
+	assert.Equal(t, EnvKafkaBootstrapServers, result[0].Name)
+
+	// OTel vars come after Kafka (at indices 7-10: traces, metrics, endpoint, protocol)
+	otelVarNames := []string{}
+	for i := 7; i <= 10; i++ {
+		otelVarNames = append(otelVarNames, result[i].Name)
+	}
+	assert.Contains(t, otelVarNames, "OTEL_TRACES_EXPORTER")
+	assert.Contains(t, otelVarNames, "OTEL_METRICS_EXPORTER")
+	assert.Contains(t, otelVarNames, "OTEL_EXPORTER_OTLP_ENDPOINT")
+	assert.Contains(t, otelVarNames, "OTEL_EXPORTER_OTLP_PROTOCOL")
+
+	// User var should be last
+	assert.Equal(t, "USER_VAR", result[len(result)-1].Name)
+}
