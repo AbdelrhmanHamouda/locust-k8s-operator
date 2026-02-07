@@ -273,13 +273,20 @@ type LocustTestStatus struct {
 	// Phase is the current lifecycle phase of the test.
 	// +kubebuilder:validation:Enum=Pending;Running;Succeeded;Failed
 	// +optional
-	Phase string `json:"phase,omitempty"`
+	Phase Phase `json:"phase,omitempty"`
+
+	// ObservedGeneration is the most recent generation observed by the controller.
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
 	// ExpectedWorkers is the number of workers expected to connect.
 	// +optional
 	ExpectedWorkers int32 `json:"expectedWorkers,omitempty"`
 
-	// ConnectedWorkers is the current number of connected workers.
+	// ConnectedWorkers is the approximate number of connected workers,
+	// derived from the worker Job's Active pod count (Job.Status.Active).
+	// This is an approximation as Kubernetes Job.Status.Active may lag behind
+	// actual Locust worker connections.
 	// +optional
 	ConnectedWorkers int32 `json:"connectedWorkers,omitempty"`
 

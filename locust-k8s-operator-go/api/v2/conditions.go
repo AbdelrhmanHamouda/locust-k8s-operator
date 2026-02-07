@@ -49,10 +49,13 @@ const (
 	ReasonTestFailed     = "TestFailed"
 )
 
+// Phase represents the current lifecycle phase of a LocustTest.
+type Phase string
+
 // Phase constants for LocustTest status.
 const (
-	PhasePending   = "Pending"
-	PhaseRunning   = "Running"
-	PhaseSucceeded = "Succeeded"
-	PhaseFailed    = "Failed"
+	PhasePending   Phase = "Pending"
+	PhaseRunning   Phase = "Running"
+	PhaseSucceeded Phase = "Succeeded"
+	PhaseFailed    Phase = "Failed"
 )

@@ -163,6 +163,7 @@ func (r *LocustTestReconciler) createResources(ctx context.Context, lt *locustv2
 
 	// Update status after successful resource creation
 	lt.Status.Phase = locustv2.PhaseRunning
+	lt.Status.ObservedGeneration = lt.Generation
 	now := metav1.Now()
 	lt.Status.StartTime = &now
 	r.setReady(lt, true, locustv2.ReasonResourcesCreated, "All resources created")
@@ -233,6 +234,7 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 
 			// Reset to Pending to trigger resource recreation on next reconcile
 			lt.Status.Phase = locustv2.PhasePending
+			lt.Status.ObservedGeneration = lt.Generation
 			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
 			if err := r.Status().Update(ctx, lt); err != nil {
 				return ctrl.Result{}, err
@@ -259,6 +261,7 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 				fmt.Sprintf("Master Job %s was deleted externally, will attempt recreation", masterJobName))
 
 			lt.Status.Phase = locustv2.PhasePending
+			lt.Status.ObservedGeneration = lt.Generation
 			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
 			if err := r.Status().Update(ctx, lt); err != nil {
 				return ctrl.Result{}, err
@@ -280,6 +283,7 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 				fmt.Sprintf("Worker Job %s was deleted externally, will attempt recreation", workerJobName))
 
 			lt.Status.Phase = locustv2.PhasePending
+			lt.Status.ObservedGeneration = lt.Generation
 			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
 			if err := r.Status().Update(ctx, lt); err != nil {
 				return ctrl.Result{}, err

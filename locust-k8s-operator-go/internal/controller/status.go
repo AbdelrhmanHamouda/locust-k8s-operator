@@ -81,9 +81,20 @@ func (r *LocustTestReconciler) updateStatusFromJobs(
 	// Determine phase from master Job status
 	newPhase := derivePhaseFromJob(masterJob)
 
-	// Update phase if changed
+	// Update phase if changed and emit events
 	if lt.Status.Phase != newPhase {
+		oldPhase := lt.Status.Phase
 		lt.Status.Phase = newPhase
+
+		// Emit event for significant transitions (CORE-26)
+		switch newPhase {
+		case locustv2.PhaseRunning:
+			r.Recorder.Event(lt, corev1.EventTypeNormal, "TestStarted", "Load test execution started")
+		case locustv2.PhaseSucceeded:
+			r.Recorder.Event(lt, corev1.EventTypeNormal, "TestCompleted", "Load test completed successfully")
+		case locustv2.PhaseFailed:
+			r.Recorder.Event(lt, corev1.EventTypeWarning, "TestFailed", "Load test execution failed")
+		}
 
 		// Set timestamps
 		if newPhase == locustv2.PhaseRunning && lt.Status.StartTime == nil {
@@ -106,6 +117,8 @@ func (r *LocustTestReconciler) updateStatusFromJobs(
 					"Test failed")
 			}
 		}
+
+		_ = oldPhase // Keep variable to document this is a phase transition
 	}
 
 	// Update worker connection status (approximation from worker Job)
@@ -120,11 +133,14 @@ func (r *LocustTestReconciler) updateStatusFromJobs(
 		}
 	}
 
+	// Update ObservedGeneration (CORE-25)
+	lt.Status.ObservedGeneration = lt.Generation
+
 	return r.Status().Update(ctx, lt)
 }
 
 // derivePhaseFromJob determines the LocustTest phase from Job status.
-func derivePhaseFromJob(job *batchv1.Job) string {
+func derivePhaseFromJob(job *batchv1.Job) locustv2.Phase {
 	if job == nil {
 		return locustv2.PhasePending
 	}

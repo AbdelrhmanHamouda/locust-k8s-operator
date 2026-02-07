@@ -68,16 +68,12 @@ const (
 const (
 	// BackoffLimit is the number of retries before marking a job as failed.
 	BackoffLimit = 0
-	// RestartPolicyNever indicates pods should not restart.
-	RestartPolicyNever = "Never"
 	// MasterReplicaCount is the fixed replica count for master (always 1).
 	MasterReplicaCount = 1
 )
 
 // Container constants
 const (
-	// LocustContainerName is the name of the main Locust container.
-	LocustContainerName = "locust"
 	// MetricsExporterContainerName is the name of the metrics exporter sidecar.
 	MetricsExporterContainerName = "locust-metrics-exporter"
 	// LibVolumeName is the name of the lib volume.
