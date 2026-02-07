@@ -239,6 +239,7 @@ kubectl create configmap demo-lib-map --from-file=lib/helpers.py --from-file=lib
     metadata:
       name: example-locusttest
     spec:
+      image: locustio/locust:2.20.0
       testFiles:
         configMapRef: demo-test-map    # Your test script ConfigMap
         libConfigMapRef: demo-lib-map   # Your lib files ConfigMap

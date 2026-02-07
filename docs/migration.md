@@ -99,7 +99,7 @@ The Go operator controller requires significantly fewer resources than the Java 
 resources:
   limits:
     memory: 128Mi
-    cpu: 100m
+    cpu: 500m
   requests:
     memory: 64Mi
     cpu: 10m

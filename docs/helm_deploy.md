@@ -15,12 +15,13 @@ This guide provides comprehensive instructions for deploying the Locust Kubernet
 
 ## :material-run-fast: Quick Start
 
-For experienced users, here are the essential commands to get the operator running in the `default` namespace:
+For experienced users, here are the essential commands to get the operator running:
 
 ```bash
 helm repo add locust-k8s-operator https://abdelrhmanhamouda.github.io/locust-k8s-operator/
 helm repo update
-helm install locust-operator locust-k8s-operator/locust-k8s-operator
+helm install locust-operator locust-k8s-operator/locust-k8s-operator \
+  --namespace locust-system --create-namespace
 ```
 
 ## :material-download-box-outline: Installation
@@ -50,10 +51,11 @@ You can install the chart with a release name of your choice (e.g., `locust-oper
 
 **Default Installation:**
 
-To install the chart with the default configuration into the currently active namespace, run:
+To install the chart with the default configuration, run:
 
 ```bash
-helm install locust-operator locust-k8s-operator/locust-k8s-operator
+helm install locust-operator locust-k8s-operator/locust-k8s-operator \
+  --namespace locust-system --create-namespace
 ```
 
 **Installation with a Custom Values File:**
