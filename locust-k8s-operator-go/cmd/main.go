@@ -19,6 +19,7 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -57,137 +58,26 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 }
 
-// nolint:gocyclo
 func main() {
-	var metricsAddr string
-	var metricsCertPath, metricsCertName, metricsCertKey string
-	var webhookCertPath, webhookCertName, webhookCertKey string
-	var enableLeaderElection bool
-	var probeAddr string
-	var secureMetrics bool
-	var enableHTTP2 bool
-	var tlsOpts []func(*tls.Config)
-	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
-		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
-	flag.BoolVar(&secureMetrics, "metrics-secure", true,
-		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
-	flag.StringVar(&webhookCertPath, "webhook-cert-path", "", "The directory that contains the webhook certificate.")
-	flag.StringVar(&webhookCertName, "webhook-cert-name", "tls.crt", "The name of the webhook certificate file.")
-	flag.StringVar(&webhookCertKey, "webhook-cert-key", "tls.key", "The name of the webhook key file.")
-	flag.StringVar(&metricsCertPath, "metrics-cert-path", "",
-		"The directory that contains the metrics server certificate.")
-	flag.StringVar(&metricsCertName, "metrics-cert-name", "tls.crt", "The name of the metrics server certificate file.")
-	flag.StringVar(&metricsCertKey, "metrics-cert-key", "tls.key", "The name of the metrics server key file.")
-	flag.BoolVar(&enableHTTP2, "enable-http2", false,
-		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
-	opts := zap.Options{
-		Development: true,
-	}
-	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
+	// Parse command-line flags and setup logging
+	flags := parseFlags()
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&flags.zapOpts)))
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	// Create TLS options
+	tlsOpts := configureTLS(flags.enableHTTP2)
 
-	// if the enable-http2 flag is false (the default), http/2 should be disabled
-	// due to its vulnerabilities. More specifically, disabling http/2 will
-	// prevent from being vulnerable to the HTTP/2 Stream Cancellation and
-	// Rapid Reset CVEs. For more information see:
-	// - https://github.com/advisories/GHSA-qppj-fm5r-hxr3
-	// - https://github.com/advisories/GHSA-4374-p667-p6c8
-	disableHTTP2 := func(c *tls.Config) {
-		setupLog.Info("disabling http/2")
-		c.NextProtos = []string{"http/1.1"}
-	}
+	// Setup certificate watchers and servers
+	webhookServer, webhookCertWatcher := setupWebhookServer(flags, tlsOpts)
+	metricsServerOptions, metricsCertWatcher := setupMetricsServer(flags, tlsOpts)
 
-	if !enableHTTP2 {
-		tlsOpts = append(tlsOpts, disableHTTP2)
-	}
-
-	// Create watchers for metrics and webhooks certificates
-	var metricsCertWatcher, webhookCertWatcher *certwatcher.CertWatcher
-
-	// Initial webhook TLS options
-	webhookTLSOpts := tlsOpts
-
-	if len(webhookCertPath) > 0 {
-		setupLog.Info("Initializing webhook certificate watcher using provided certificates",
-			"webhook-cert-path", webhookCertPath, "webhook-cert-name", webhookCertName, "webhook-cert-key", webhookCertKey)
-
-		var err error
-		webhookCertWatcher, err = certwatcher.New(
-			filepath.Join(webhookCertPath, webhookCertName),
-			filepath.Join(webhookCertPath, webhookCertKey),
-		)
-		if err != nil {
-			setupLog.Error(err, "Failed to initialize webhook certificate watcher")
-			os.Exit(1)
-		}
-
-		webhookTLSOpts = append(webhookTLSOpts, func(config *tls.Config) {
-			config.GetCertificate = webhookCertWatcher.GetCertificate
-		})
-	}
-
-	webhookServer := webhook.NewServer(webhook.Options{
-		TLSOpts: webhookTLSOpts,
-	})
-
-	// Metrics endpoint is enabled in 'config/default/kustomization.yaml'. The Metrics options configure the server.
-	// More info:
-	// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/metrics/server
-	// - https://book.kubebuilder.io/reference/metrics.html
-	metricsServerOptions := metricsserver.Options{
-		BindAddress:   metricsAddr,
-		SecureServing: secureMetrics,
-		TLSOpts:       tlsOpts,
-	}
-
-	if secureMetrics {
-		// FilterProvider is used to protect the metrics endpoint with authn/authz.
-		// These configurations ensure that only authorized users and service accounts
-		// can access the metrics endpoint. The RBAC are configured in 'config/rbac/kustomization.yaml'. More info:
-		// https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/metrics/filters#WithAuthenticationAndAuthorization
-		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
-	}
-
-	// If the certificate is not specified, controller-runtime will automatically
-	// generate self-signed certificates for the metrics server. While convenient for development and testing,
-	// this setup is not recommended for production.
-	//
-	// TODO(user): If you enable certManager, uncomment the following lines:
-	// - [METRICS-WITH-CERTS] at config/default/kustomization.yaml to generate and use certificates
-	// managed by cert-manager for the metrics server.
-	// - [PROMETHEUS-WITH-CERTS] at config/prometheus/kustomization.yaml for TLS certification.
-	if len(metricsCertPath) > 0 {
-		setupLog.Info("Initializing metrics certificate watcher using provided certificates",
-			"metrics-cert-path", metricsCertPath, "metrics-cert-name", metricsCertName, "metrics-cert-key", metricsCertKey)
-
-		var err error
-		metricsCertWatcher, err = certwatcher.New(
-			filepath.Join(metricsCertPath, metricsCertName),
-			filepath.Join(metricsCertPath, metricsCertKey),
-		)
-		if err != nil {
-			setupLog.Error(err, "Failed to initialize metrics certificate watcher")
-			os.Exit(1)
-		}
-
-		metricsServerOptions.TLSOpts = append(metricsServerOptions.TLSOpts, func(config *tls.Config) {
-			config.GetCertificate = metricsCertWatcher.GetCertificate
-		})
-	}
-
+	// Create manager
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsServerOptions,
 		WebhookServer:          webhookServer,
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "287d0e48.io",
+		HealthProbeBindAddress: flags.probeAddr,
+		LeaderElection:         flags.enableLeaderElection,
+		LeaderElectionID:       "locust-k8s-operator.locust.io",
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
@@ -205,44 +95,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Load operator configuration
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		setupLog.Error(err, "Failed to load operator configuration")
-		os.Exit(1)
-	}
-	setupLog.Info("Operator configuration loaded",
-		"ttlSecondsAfterFinished", cfg.TTLSecondsAfterFinished,
-		"metricsExporterImage", cfg.MetricsExporterImage,
-		"affinityInjection", cfg.EnableAffinityCRInjection,
-		"tolerationsInjection", cfg.EnableTolerationsCRInjection)
-
-	// Setup LocustTest reconciler
-	if err := (&controller.LocustTestReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Config:   cfg,
-		Recorder: mgr.GetEventRecorderFor("locusttest-controller"),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "LocustTest")
+	// Setup controllers and webhooks
+	if err := setupControllers(mgr); err != nil {
+		setupLog.Error(err, "failed to setup controllers")
 		os.Exit(1)
 	}
 
-	// Setup webhooks (conversion and validation)
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		// v1 conversion webhook
-		if err := (&locustv1.LocustTest{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "LocustTest v1")
-			os.Exit(1)
-		}
-		// v2 validation webhook
-		if err := (&locustv2.LocustTest{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "LocustTest v2")
-			os.Exit(1)
-		}
-	}
-	// +kubebuilder:scaffold:builder
-
+	// Add certificate watchers to manager
 	if metricsCertWatcher != nil {
 		setupLog.Info("Adding metrics certificate watcher to manager")
 		if err := mgr.Add(metricsCertWatcher); err != nil {
@@ -259,18 +118,219 @@ func main() {
 		}
 	}
 
-	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up health check")
-		os.Exit(1)
-	}
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up ready check")
+	// Setup health checks
+	if err := setupHealthChecks(mgr); err != nil {
+		setupLog.Error(err, "failed to setup health checks")
 		os.Exit(1)
 	}
 
+	// Start manager
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+// flagConfig holds all command-line flag values
+type flagConfig struct {
+	metricsAddr           string
+	metricsCertPath       string
+	metricsCertName       string
+	metricsCertKey        string
+	webhookCertPath       string
+	webhookCertName       string
+	webhookCertKey        string
+	probeAddr             string
+	enableLeaderElection  bool
+	secureMetrics         bool
+	enableHTTP2           bool
+	zapOpts               zap.Options
+}
+
+// parseFlags parses command-line flags and returns configuration
+func parseFlags() *flagConfig {
+	cfg := &flagConfig{}
+
+	flag.StringVar(&cfg.metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
+		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
+	flag.StringVar(&cfg.probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.BoolVar(&cfg.enableLeaderElection, "leader-elect", false,
+		"Enable leader election for controller manager. "+
+			"Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&cfg.secureMetrics, "metrics-secure", true,
+		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
+	flag.StringVar(&cfg.webhookCertPath, "webhook-cert-path", "", "The directory that contains the webhook certificate.")
+	flag.StringVar(&cfg.webhookCertName, "webhook-cert-name", "tls.crt", "The name of the webhook certificate file.")
+	flag.StringVar(&cfg.webhookCertKey, "webhook-cert-key", "tls.key", "The name of the webhook key file.")
+	flag.StringVar(&cfg.metricsCertPath, "metrics-cert-path", "",
+		"The directory that contains the metrics server certificate.")
+	flag.StringVar(&cfg.metricsCertName, "metrics-cert-name", "tls.crt", "The name of the metrics server certificate file.")
+	flag.StringVar(&cfg.metricsCertKey, "metrics-cert-key", "tls.key", "The name of the metrics server key file.")
+	flag.BoolVar(&cfg.enableHTTP2, "enable-http2", false,
+		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
+
+	cfg.zapOpts = zap.Options{
+		Development: true,
+	}
+	cfg.zapOpts.BindFlags(flag.CommandLine)
+	flag.Parse()
+
+	return cfg
+}
+
+// configureTLS creates TLS options based on HTTP/2 setting
+func configureTLS(enableHTTP2 bool) []func(*tls.Config) {
+	var tlsOpts []func(*tls.Config)
+
+	// if the enable-http2 flag is false (the default), http/2 should be disabled
+	// due to its vulnerabilities. More specifically, disabling http/2 will
+	// prevent from being vulnerable to the HTTP/2 Stream Cancellation and
+	// Rapid Reset CVEs. For more information see:
+	// - https://github.com/advisories/GHSA-qppj-fm5r-hxr3
+	// - https://github.com/advisories/GHSA-4374-p667-p6c8
+	if !enableHTTP2 {
+		disableHTTP2 := func(c *tls.Config) {
+			setupLog.Info("disabling http/2")
+			c.NextProtos = []string{"http/1.1"}
+		}
+		tlsOpts = append(tlsOpts, disableHTTP2)
+	}
+
+	return tlsOpts
+}
+
+// setupWebhookServer creates webhook server with optional certificate watcher
+func setupWebhookServer(flags *flagConfig, tlsOpts []func(*tls.Config)) (webhook.Server, *certwatcher.CertWatcher) {
+	webhookTLSOpts := tlsOpts
+	var webhookCertWatcher *certwatcher.CertWatcher
+
+	if len(flags.webhookCertPath) > 0 {
+		setupLog.Info("Initializing webhook certificate watcher using provided certificates",
+			"webhook-cert-path", flags.webhookCertPath,
+			"webhook-cert-name", flags.webhookCertName,
+			"webhook-cert-key", flags.webhookCertKey)
+
+		var err error
+		webhookCertWatcher, err = certwatcher.New(
+			filepath.Join(flags.webhookCertPath, flags.webhookCertName),
+			filepath.Join(flags.webhookCertPath, flags.webhookCertKey),
+		)
+		if err != nil {
+			setupLog.Error(err, "Failed to initialize webhook certificate watcher")
+			os.Exit(1)
+		}
+
+		webhookTLSOpts = append(webhookTLSOpts, func(config *tls.Config) {
+			config.GetCertificate = webhookCertWatcher.GetCertificate
+		})
+	}
+
+	return webhook.NewServer(webhook.Options{
+		TLSOpts: webhookTLSOpts,
+	}), webhookCertWatcher
+}
+
+// setupMetricsServer creates metrics server options with optional certificate watcher
+func setupMetricsServer(flags *flagConfig, tlsOpts []func(*tls.Config)) (metricsserver.Options, *certwatcher.CertWatcher) {
+	// Metrics endpoint is enabled in 'config/default/kustomization.yaml'. The Metrics options configure the server.
+	// More info:
+	// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/metrics/server
+	// - https://book.kubebuilder.io/reference/metrics.html
+	metricsServerOptions := metricsserver.Options{
+		BindAddress:   flags.metricsAddr,
+		SecureServing: flags.secureMetrics,
+		TLSOpts:       tlsOpts,
+	}
+
+	if flags.secureMetrics {
+		// FilterProvider is used to protect the metrics endpoint with authn/authz.
+		// These configurations ensure that only authorized users and service accounts
+		// can access the metrics endpoint. The RBAC are configured in 'config/rbac/kustomization.yaml'. More info:
+		// https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/metrics/filters#WithAuthenticationAndAuthorization
+		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
+	}
+
+	var metricsCertWatcher *certwatcher.CertWatcher
+
+	// If the certificate is not specified, controller-runtime will automatically
+	// generate self-signed certificates for the metrics server. While convenient for development and testing,
+	// this setup is not recommended for production.
+	//
+	// TODO(user): If you enable certManager, uncomment the following lines:
+	// - [METRICS-WITH-CERTS] at config/default/kustomization.yaml to generate and use certificates
+	// managed by cert-manager for the metrics server.
+	// - [PROMETHEUS-WITH-CERTS] at config/prometheus/kustomization.yaml for TLS certification.
+	if len(flags.metricsCertPath) > 0 {
+		setupLog.Info("Initializing metrics certificate watcher using provided certificates",
+			"metrics-cert-path", flags.metricsCertPath,
+			"metrics-cert-name", flags.metricsCertName,
+			"metrics-cert-key", flags.metricsCertKey)
+
+		var err error
+		metricsCertWatcher, err = certwatcher.New(
+			filepath.Join(flags.metricsCertPath, flags.metricsCertName),
+			filepath.Join(flags.metricsCertPath, flags.metricsCertKey),
+		)
+		if err != nil {
+			setupLog.Error(err, "Failed to initialize metrics certificate watcher")
+			os.Exit(1)
+		}
+
+		metricsServerOptions.TLSOpts = append(metricsServerOptions.TLSOpts, func(config *tls.Config) {
+			config.GetCertificate = metricsCertWatcher.GetCertificate
+		})
+	}
+
+	return metricsServerOptions, metricsCertWatcher
+}
+
+// setupControllers registers controllers and webhooks with the manager
+func setupControllers(mgr ctrl.Manager) error {
+	// Load operator configuration
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load operator configuration: %w", err)
+	}
+	setupLog.Info("Operator configuration loaded",
+		"ttlSecondsAfterFinished", cfg.TTLSecondsAfterFinished,
+		"metricsExporterImage", cfg.MetricsExporterImage,
+		"affinityInjection", cfg.EnableAffinityCRInjection,
+		"tolerationsInjection", cfg.EnableTolerationsCRInjection)
+
+	// Setup LocustTest reconciler
+	if err := (&controller.LocustTestReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Config:   cfg,
+		Recorder: mgr.GetEventRecorderFor("locusttest-controller"),
+	}).SetupWithManager(mgr); err != nil {
+		return fmt.Errorf("unable to create controller LocustTest: %w", err)
+	}
+
+	// Setup webhooks (conversion and validation)
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		// v1 conversion webhook
+		if err := (&locustv1.LocustTest{}).SetupWebhookWithManager(mgr); err != nil {
+			return fmt.Errorf("unable to create webhook LocustTest v1: %w", err)
+		}
+		// v2 validation webhook
+		if err := (&locustv2.LocustTest{}).SetupWebhookWithManager(mgr); err != nil {
+			return fmt.Errorf("unable to create webhook LocustTest v2: %w", err)
+		}
+	}
+	// +kubebuilder:scaffold:builder
+
+	return nil
+}
+
+// setupHealthChecks adds health and readiness checks to the manager
+func setupHealthChecks(mgr ctrl.Manager) error {
+	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		return fmt.Errorf("unable to set up health check: %w", err)
+	}
+	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		return fmt.Errorf("unable to set up ready check: %w", err)
+	}
+	return nil
 }
