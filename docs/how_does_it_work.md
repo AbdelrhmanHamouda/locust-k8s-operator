@@ -58,14 +58,16 @@ The operator maintains rich status information:
 
 ```yaml
 status:
-  phase: Running          # Pending, Running, Succeeded, Failed
-  masterJob: test-master
-  workerJob: test-worker
+  phase: Running
+  expectedWorkers: 5
+  connectedWorkers: 5
+  startTime: "2026-01-15T10:00:00Z"
   conditions:
     - type: Ready
       status: "True"
-    - type: WorkersConnected
-      status: "True"
+      lastTransitionTime: "2026-01-15T10:00:05Z"
+      reason: AllWorkersConnected
+      message: "All 5 workers connected to master"
 ```
 
 ## Demo
