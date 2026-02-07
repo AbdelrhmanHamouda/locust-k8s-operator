@@ -133,9 +133,15 @@ For local development and testing, Kind (Kubernetes in Docker) is the recommende
 
 4. **Verify the Deployment**
 
+   !!! note "Development vs Production Namespaces"
+       The `make deploy` command generates a namespace based on your project name. For production deployments, use the `locust-system` namespace as documented in the [Helm Deployment Guide](helm_deploy.md).
+
    ```bash
-   kubectl get pods -n locust-k8s-operator-go-system
-   kubectl logs -f -n locust-k8s-operator-go-system deployment/locust-k8s-operator-go-controller-manager
+   # Check pods in the generated namespace
+   kubectl get pods -A | grep locust
+
+   # Follow operator logs
+   kubectl logs -f -n <namespace> deployment/<deployment-name>
    ```
 
 5. **Test with a Sample CR**
