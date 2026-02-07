@@ -790,3 +790,123 @@ func TestValidateCreate_WithOTelEnabledNoEndpoint(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "endpoint is required")
 }
+
+// ============================================
+// Update Validation Tests
+// ============================================
+
+func TestValidateUpdate_Invalid(t *testing.T) {
+	validator := &LocustTestCustomValidator{}
+
+	oldLt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+		Spec: LocustTestSpec{
+			Image: "locustio/locust:2.20.0",
+			Master: MasterSpec{
+				Command: "locust -f /lotest/src/locustfile.py",
+			},
+			Worker: WorkerSpec{
+				Command:  "locust -f /lotest/src/locustfile.py",
+				Replicas: 1,
+			},
+		},
+	}
+
+	t.Run("InvalidSecretMountPath", func(t *testing.T) {
+		newLt := oldLt.DeepCopy()
+		newLt.Spec.Env = &EnvConfig{
+			SecretMounts: []SecretMount{
+				{Name: "bad-secret", MountPath: "/lotest/src"},
+			},
+		}
+
+		_, err := validator.ValidateUpdate(context.Background(), oldLt, newLt)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "conflicts with reserved path")
+	})
+
+	t.Run("InvalidVolumeName", func(t *testing.T) {
+		newLt := oldLt.DeepCopy()
+		newLt.Spec.Volumes = []corev1.Volume{
+			{Name: "secret-my-volume"}, // Uses reserved prefix
+		}
+		newLt.Spec.VolumeMounts = []TargetedVolumeMount{
+			{VolumeMount: corev1.VolumeMount{Name: "secret-my-volume", MountPath: "/custom"}},
+		}
+
+		_, err := validator.ValidateUpdate(context.Background(), oldLt, newLt)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "uses reserved prefix")
+	})
+
+	t.Run("OTelEnabledNoEndpoint", func(t *testing.T) {
+		newLt := oldLt.DeepCopy()
+		newLt.Spec.Observability = &ObservabilityConfig{
+			OpenTelemetry: &OpenTelemetryConfig{
+				Enabled:  true,
+				Endpoint: "", // Missing endpoint
+			},
+		}
+
+		_, err := validator.ValidateUpdate(context.Background(), oldLt, newLt)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "endpoint is required")
+	})
+}
+
+// ============================================
+// Boundary Tests
+// ============================================
+
+func TestValidateCreate_LongCRName(t *testing.T) {
+	validator := &LocustTestCustomValidator{}
+
+	t.Run("NameTooLong", func(t *testing.T) {
+		// Create a name that would exceed 63 chars when "-worker" is added
+		// 57 chars + "-worker" (7 chars) = 64 chars > 63 limit
+		longName := "a123456789-123456789-123456789-123456789-123456789-123456"
+		require.Equal(t, 57, len(longName), "Test name should be 57 chars")
+
+		lt := &LocustTest{
+			ObjectMeta: metav1.ObjectMeta{Name: longName, Namespace: "default"},
+			Spec: LocustTestSpec{
+				Image: "locustio/locust:2.20.0",
+				Master: MasterSpec{
+					Command: "locust -f /lotest/src/locustfile.py",
+				},
+				Worker: WorkerSpec{
+					Command:  "locust -f /lotest/src/locustfile.py",
+					Replicas: 1,
+				},
+			},
+		}
+
+		_, err := validator.ValidateCreate(context.Background(), lt)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "too long")
+		assert.Contains(t, err.Error(), "63 characters")
+	})
+
+	t.Run("NameAtLimit", func(t *testing.T) {
+		// 56 chars + "-worker" (7 chars) = 63 chars (exactly at limit)
+		maxName := "a123456789-123456789-123456789-123456789-123456789-12345"
+		require.Equal(t, 56, len(maxName), "Test name should be 56 chars")
+
+		lt := &LocustTest{
+			ObjectMeta: metav1.ObjectMeta{Name: maxName, Namespace: "default"},
+			Spec: LocustTestSpec{
+				Image: "locustio/locust:2.20.0",
+				Master: MasterSpec{
+					Command: "locust -f /lotest/src/locustfile.py",
+				},
+				Worker: WorkerSpec{
+					Command:  "locust -f /lotest/src/locustfile.py",
+					Replicas: 1,
+				},
+			},
+		}
+
+		_, err := validator.ValidateCreate(context.Background(), lt)
+		require.NoError(t, err)
+	})
+}

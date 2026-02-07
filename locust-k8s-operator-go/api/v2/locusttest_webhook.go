@@ -159,6 +159,11 @@ func PathConflicts(path1, path2 string) bool {
 
 // validateLocustTest runs all validation checks.
 func validateLocustTest(lt *LocustTest) (admission.Warnings, error) {
+	// Validate CR name length
+	if err := validateCRName(lt); err != nil {
+		return nil, err
+	}
+
 	// Validate secret mounts
 	if err := validateSecretMounts(lt); err != nil {
 		return nil, err
@@ -175,6 +180,24 @@ func validateLocustTest(lt *LocustTest) (admission.Warnings, error) {
 	}
 
 	return nil, nil
+}
+
+// validateCRName validates that the CR name won't cause generated resource names to exceed K8s limits.
+// Kubernetes resource names (including Jobs) must be <= 63 characters (DNS label limit).
+// The operator generates names like "{cr-name}-worker", so we need to ensure total length fits.
+func validateCRName(lt *LocustTest) error {
+	const maxNameSuffixLen = 7 // "-worker" is the longest suffix
+	const maxK8sNameLen = 63   // Kubernetes DNS label limit
+
+	if len(lt.Name)+maxNameSuffixLen > maxK8sNameLen {
+		return fmt.Errorf(
+			"name %q is too long: generated Job names would exceed 63 characters (max CR name length is %d)",
+			lt.Name,
+			maxK8sNameLen-maxNameSuffixLen,
+		)
+	}
+
+	return nil
 }
 
 // validateOTelConfig validates OpenTelemetry configuration.
