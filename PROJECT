@@ -8,7 +8,7 @@ layout:
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
-projectName: locust-k8s-operator-go
+projectName: locust-k8s-operator
 repo: github.com/AbdelrhmanHamouda/locust-k8s-operator
 resources:
 - api:

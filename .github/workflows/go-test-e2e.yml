@@ -4,16 +4,24 @@ on:
   push:
     branches: [main, master]
     paths:
-      - 'locust-k8s-operator-go/**'
+      - 'cmd/**'
+      - 'api/**'
+      - 'internal/**'
+      - 'test/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Makefile'
   pull_request:
     paths:
-      - 'locust-k8s-operator-go/**'
+      - 'cmd/**'
+      - 'api/**'
+      - 'internal/**'
+      - 'test/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Makefile'
 
 permissions: read-all
-
-defaults:
-  run:
-    working-directory: locust-k8s-operator-go
 
 jobs:
   test-e2e:
@@ -27,7 +35,7 @@ jobs:
       - name: 🔧 Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: locust-k8s-operator-go/go.mod
+          go-version-file: go.mod
 
       - name: ☸️ Create Kind cluster
         uses: helm/kind-action@v1.12.0
@@ -48,5 +56,5 @@ jobs:
         with:
           name: e2e-test-artifacts
           path: |
-            locust-k8s-operator-go/cover.out
+            cover.out
           retention-days: 7

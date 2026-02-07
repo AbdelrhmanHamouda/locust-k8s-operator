@@ -21,9 +21,6 @@ jobs:
     name: 🏗️ Build Go Operator
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    defaults:
-      run:
-        working-directory: locust-k8s-operator-go
     steps:
       - name: 📂 Checkout repo
         uses: actions/checkout@v4
@@ -34,7 +31,7 @@ jobs:
       - name: 🔧 Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: locust-k8s-operator-go/go.mod
+          go-version-file: go.mod
 
       - name: 📥 Download dependencies
         run: go mod download
@@ -43,7 +40,6 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: v2.1.0
-          working-directory: locust-k8s-operator-go
 
       - name: 🛠️ Build
         run: make build
@@ -55,7 +51,7 @@ jobs:
         if: always()
         uses: codecov/codecov-action@v5
         with:
-          files: locust-k8s-operator-go/cover.out
+          files: cover.out
           flags: go-unit-tests
           name: go-coverage
           fail_ci_if_error: false
@@ -66,7 +62,7 @@ jobs:
         with:
           name: go-test-artifacts
           path: |
-            locust-k8s-operator-go/cover.out
+            cover.out
           retention-days: 7
 
   # ============================================
@@ -117,7 +113,7 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
         uses: actions/setup-go@v5
         with:
-          go-version-file: locust-k8s-operator-go/go.mod
+          go-version-file: go.mod
 
       - name: 🛠️ Install ko
         if: steps.list-changed.outputs.changed == 'true'
@@ -125,11 +121,10 @@ jobs:
 
       - name: 🐳 Build operator image with ko
         if: steps.list-changed.outputs.changed == 'true'
-        working-directory: locust-k8s-operator-go
         env:
           KO_DOCKER_REPO: lotest/locust-k8s-operator
         run: |
-          CHART_VERSION=$(grep '^appVersion:' ../charts/locust-k8s-operator/Chart.yaml | awk '{print $2}' | tr -d '"')
+          CHART_VERSION=$(grep '^appVersion:' charts/locust-k8s-operator/Chart.yaml | awk '{print $2}' | tr -d '"')
           ko build ./cmd --local --bare --tags=${CHART_VERSION}
 
       - name: 📦 Load image into kind cluster
