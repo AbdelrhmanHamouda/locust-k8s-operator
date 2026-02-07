@@ -63,8 +63,8 @@ receivers:
 exporters:
   prometheus:
     endpoint: 0.0.0.0:8889
-  jaeger:
-    endpoint: jaeger-collector:14250
+  otlphttp:
+    endpoint: http://jaeger-collector:4318
     tls:
       insecure: true
 
@@ -75,7 +75,7 @@ service:
       exporters: [prometheus]
     traces:
       receivers: [otlp]
-      exporters: [jaeger]
+      exporters: [otlphttp]
 ```
 
 !!! tip
@@ -183,7 +183,7 @@ If using the Prometheus Operator, create a ServiceMonitor to automatically disco
     ```yaml
     metrics:
       enabled: true
-      secure: true  # HTTPS metrics (default)
+      secure: true  # Enable HTTPS metrics (default: false)
     ```
 
 !!! warning "Production TLS"
