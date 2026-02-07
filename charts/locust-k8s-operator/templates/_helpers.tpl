@@ -665,6 +665,7 @@ Categories:
 {{- end }}
 # Kafka configuration (DEPRECATED - kept for backward compatibility)
 # Consider using OpenTelemetry for metrics export instead
+{{- if .Values.kafka.enabled }}
 - name: KAFKA_BOOTSTRAP_SERVERS
   value: {{ include "locust.kafkaBootstrapServers" . | quote }}
 - name: KAFKA_SECURITY_ENABLED
@@ -703,6 +704,7 @@ Categories:
     secretKeyRef:
       name: {{ .Values.config.loadGenerationPods.kafka.locustK8sKafkaUser.userName }}
       key: {{ .Values.config.loadGenerationPods.kafka.acl.secret.passwordKey }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

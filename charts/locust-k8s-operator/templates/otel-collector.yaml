@@ -70,6 +70,8 @@ spec:
       app.kubernetes.io/component: otel-collector
   template:
     metadata:
+      annotations:
+        checksum/otel-config: {{ .Values.otelCollector.config | sha256sum }}
       labels:
         {{- include "locust-k8s-operator.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: otel-collector
@@ -94,12 +96,30 @@ spec:
             - name: otlp-http
               containerPort: 4318
               protocol: TCP
+            # Health check endpoint
+            - name: health
+              containerPort: 13133
+              protocol: TCP
           # Container security - principle of least privilege
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
             readOnlyRootFilesystem: true
+          # Liveness probe - restart if unhealthy
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 13133
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          # Readiness probe - only receive traffic when ready
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+            initialDelaySeconds: 5
+            periodSeconds: 10
           resources:
             {{- toYaml .Values.otelCollector.resources | nindent 12 }}
           volumeMounts:
