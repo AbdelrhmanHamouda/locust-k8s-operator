@@ -112,8 +112,8 @@ var _ = Describe("LocustTest Controller", func() {
 				if err != nil {
 					return ""
 				}
-				return lt.Status.Phase
-			}, timeout, interval).Should(Equal(locustv2.PhaseRunning))
+				return string(lt.Status.Phase)
+			}, timeout, interval).Should(Equal(string(locustv2.PhaseRunning)))
 		})
 	})
 })

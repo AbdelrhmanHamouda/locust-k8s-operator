@@ -472,8 +472,8 @@ var _ = Describe("LocustTest Controller Integration", func() {
 				}, updatedLT); err != nil {
 					return ""
 				}
-				return updatedLT.Status.Phase
-			}, timeout, interval).Should(Equal(locustv2.PhaseRunning))
+				return string(updatedLT.Status.Phase)
+			}, timeout, interval).Should(Equal(string(locustv2.PhaseRunning)))
 
 			// Update workerReplicas using Eventually to handle concurrent status updates
 			Eventually(func() error {
@@ -530,8 +530,8 @@ var _ = Describe("LocustTest Controller Integration", func() {
 				}, updatedLT); err != nil {
 					return ""
 				}
-				return updatedLT.Status.Phase
-			}, timeout, interval).Should(Equal(locustv2.PhaseRunning))
+				return string(updatedLT.Status.Phase)
+			}, timeout, interval).Should(Equal(string(locustv2.PhaseRunning)))
 
 			// Update masterCommand using Eventually to handle concurrent status updates
 			Eventually(func() error {
@@ -624,8 +624,8 @@ var _ = Describe("LocustTest Controller Integration", func() {
 				}, updatedLT); err != nil {
 					return ""
 				}
-				return updatedLT.Status.Phase
-			}, timeout, interval).Should(Equal(locustv2.PhaseRunning))
+				return string(updatedLT.Status.Phase)
+			}, timeout, interval).Should(Equal(string(locustv2.PhaseRunning)))
 
 			// Manually trigger another reconciliation by adding an annotation
 			// Use Eventually to handle concurrent status updates

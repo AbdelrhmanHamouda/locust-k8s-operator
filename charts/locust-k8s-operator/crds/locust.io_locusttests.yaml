@@ -3606,13 +3606,22 @@ spec:
                 - type
                 x-kubernetes-list-type: map
               connectedWorkers:
-                description: ConnectedWorkers is the current number of connected workers.
+                description: |-
+                  ConnectedWorkers is the approximate number of connected workers,
+                  derived from the worker Job's Active pod count (Job.Status.Active).
+                  This is an approximation as Kubernetes Job.Status.Active may lag behind
+                  actual Locust worker connections.
                 format: int32
                 type: integer
               expectedWorkers:
                 description: ExpectedWorkers is the number of workers expected to
                   connect.
                 format: int32
+                type: integer
+              observedGeneration:
+                description: ObservedGeneration is the most recent generation observed
+                  by the controller.
+                format: int64
                 type: integer
               phase:
                 description: Phase is the current lifecycle phase of the test.
