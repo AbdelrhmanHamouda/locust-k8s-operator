@@ -1,3 +1,34 @@
 # More info: https://docs.docker.com/engine/reference/builder/#dockerignore-file
-# Ignore build and test binaries.
+
+# Test files
+test/
+*_test.go
+
+# Documentation
+docs/
+*.md
+LICENSE
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+
+# CI
+.github/
+.golangci.yml
+
+# Build artifacts
 bin/
+cover.out
+coverage.out
+
+# Planning
+.planning/
+
+# Python
+venv/
+__pycache__/

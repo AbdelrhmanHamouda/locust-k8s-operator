@@ -432,6 +432,8 @@ func buildTolerations(lt *locustv2.LocustTest, cfg *config.OperatorConfig) []cor
 
 // buildNodeSelector creates pod node selector from the CR spec.
 // Returns nil if no node selector is specified.
+// Note: Map iteration order is non-deterministic in Go, but the Kubernetes
+// API server handles consistent serialization of label/selector maps.
 func buildNodeSelector(lt *locustv2.LocustTest) map[string]string {
 	if lt.Spec.Scheduling == nil || len(lt.Spec.Scheduling.NodeSelector) == 0 {
 		return nil

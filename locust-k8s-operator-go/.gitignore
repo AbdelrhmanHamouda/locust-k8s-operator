@@ -25,3 +25,10 @@ go.work
 *.swp
 *.swo
 *~
+
+# Test coverage
+cover.out
+coverage.out
+
+# Python virtual environment
+venv/

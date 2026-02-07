@@ -36,19 +36,11 @@ rules:
   resources:
   - locusttests
   verbs:
-  - create
-  - delete
   - get
   - list
   - patch
   - update
   - watch
-- apiGroups:
-  - locust.io
-  resources:
-  - locusttests/finalizers
-  verbs:
-  - update
 - apiGroups:
   - locust.io
   resources:

@@ -20,4 +20,13 @@ resources:
   kind: LocustTest
   path: github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: io
+  group: locust
+  kind: LocustTest
+  path: github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2
+  version: v2
 version: "3"
