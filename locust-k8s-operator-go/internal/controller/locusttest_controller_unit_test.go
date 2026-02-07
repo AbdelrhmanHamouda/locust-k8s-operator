@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -448,13 +449,13 @@ done:
 	workerJobEventFound := false
 
 	for _, event := range events {
-		if contains(event, "Service") && contains(event, "event-test-master") {
+		if strings.Contains(event, "Service") && strings.Contains(event, "event-test-master") {
 			serviceEventFound = true
 		}
-		if contains(event, "Job") && contains(event, "event-test-master") {
+		if strings.Contains(event, "Job") && strings.Contains(event, "event-test-master") {
 			masterJobEventFound = true
 		}
-		if contains(event, "Job") && contains(event, "event-test-worker") {
+		if strings.Contains(event, "Job") && strings.Contains(event, "event-test-worker") {
 			workerJobEventFound = true
 		}
 	}
@@ -599,20 +600,6 @@ func TestReconcile_MultipleNamespaces(t *testing.T) {
 		Namespace: "namespace-b",
 	}, svc2)
 	assert.NoError(t, err)
-}
-
-// contains checks if a string contains a substring
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
-}
-
-func containsHelper(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
 
 // errorClient is a fake client that returns errors for testing error paths.

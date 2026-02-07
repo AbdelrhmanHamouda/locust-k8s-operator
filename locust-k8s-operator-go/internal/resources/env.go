@@ -17,6 +17,8 @@ limitations under the License.
 package resources
 
 import (
+	"strconv"
+
 	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
 	corev1 "k8s.io/api/core/v1"
@@ -74,6 +76,19 @@ func BuildUserEnvVars(lt *locustv2.LocustTest) []corev1.EnvVar {
 	result := make([]corev1.EnvVar, len(lt.Spec.Env.Variables))
 	copy(result, lt.Spec.Env.Variables)
 	return result
+}
+
+// BuildKafkaEnvVars creates the Kafka environment variables for the Locust container.
+func BuildKafkaEnvVars(cfg *config.OperatorConfig) []corev1.EnvVar {
+	return []corev1.EnvVar{
+		{Name: EnvKafkaBootstrapServers, Value: cfg.KafkaBootstrapServers},
+		{Name: EnvKafkaSecurityEnabled, Value: strconv.FormatBool(cfg.KafkaSecurityEnabled)},
+		{Name: EnvKafkaSecurityProtocol, Value: cfg.KafkaSecurityProtocol},
+		{Name: EnvKafkaSaslMechanism, Value: cfg.KafkaSaslMechanism},
+		{Name: EnvKafkaSaslJaasConfig, Value: cfg.KafkaSaslJaasConfig},
+		{Name: EnvKafkaUsername, Value: cfg.KafkaUsername},
+		{Name: EnvKafkaPassword, Value: cfg.KafkaPassword},
+	}
 }
 
 // BuildEnvVars combines Kafka env vars, OTel env vars, and user-defined env vars.

@@ -18,7 +18,6 @@ package resources
 
 import (
 	"fmt"
-	"strconv"
 
 	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
@@ -261,19 +260,6 @@ func buildVolumeMounts(lt *locustv2.LocustTest, nodeName string, mode Operationa
 	}
 
 	return mounts
-}
-
-// BuildKafkaEnvVars creates the Kafka environment variables for the Locust container.
-func BuildKafkaEnvVars(cfg *config.OperatorConfig) []corev1.EnvVar {
-	return []corev1.EnvVar{
-		{Name: EnvKafkaBootstrapServers, Value: cfg.KafkaBootstrapServers},
-		{Name: EnvKafkaSecurityEnabled, Value: strconv.FormatBool(cfg.KafkaSecurityEnabled)},
-		{Name: EnvKafkaSecurityProtocol, Value: cfg.KafkaSecurityProtocol},
-		{Name: EnvKafkaSaslMechanism, Value: cfg.KafkaSaslMechanism},
-		{Name: EnvKafkaSaslJaasConfig, Value: cfg.KafkaSaslJaasConfig},
-		{Name: EnvKafkaUsername, Value: cfg.KafkaUsername},
-		{Name: EnvKafkaPassword, Value: cfg.KafkaPassword},
-	}
 }
 
 // buildResourceRequirements creates resource requirements for containers.
