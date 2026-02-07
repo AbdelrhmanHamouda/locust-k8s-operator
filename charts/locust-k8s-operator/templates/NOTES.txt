@@ -1,0 +1,115 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your Locust K8s Operator has been deployed to namespace {{ .Release.Namespace }}.
+
+=============================================================================
+NEXT STEPS
+=============================================================================
+
+1. Verify the operator is running:
+
+   kubectl get deployment {{ include "locust-k8s-operator.fullname" . }} -n {{ .Release.Namespace }}
+   kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "locust-k8s-operator.name" . }}
+
+2. Check operator logs:
+
+   kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "locust-k8s-operator.name" . }} --tail=50 -f
+
+3. Create a LocustTest custom resource:
+
+   cat <<EOF | kubectl apply -f -
+   apiVersion: locust.io/v1alpha1
+   kind: LocustTest
+   metadata:
+     name: example-test
+     namespace: {{ .Release.Namespace }}
+   spec:
+     masterCommand: locust
+     workerCommand: locust
+     locustfile:
+       name: my-locustfile
+       content: |
+         from locust import HttpUser, task, between
+
+         class QuickstartUser(HttpUser):
+             wait_time = between(1, 2)
+
+             @task
+             def hello_world(self):
+                 self.client.get("/")
+     workers: 3
+     image:
+       name: locustio/locust:latest
+       pullPolicy: IfNotPresent
+   EOF
+
+4. Monitor the LocustTest status:
+
+   kubectl get locusttest example-test -n {{ .Release.Namespace }} -w
+   kubectl describe locusttest example-test -n {{ .Release.Namespace }}
+
+5. Check created resources (Job, Service):
+
+   kubectl get jobs,services -n {{ .Release.Namespace }} -l locust.io/test-name=example-test
+
+{{- if .Values.webhook.enabled }}
+
+=============================================================================
+WEBHOOK CONFIGURATION
+=============================================================================
+
+Webhook is ENABLED. Ensure cert-manager is installed and the webhook
+certificate is properly configured.
+
+Check webhook certificate:
+   kubectl get certificate {{ include "locust-k8s-operator.fullname" . }}-webhook-cert -n {{ .Release.Namespace }}
+
+{{- end }}
+
+{{- if .Values.otelCollector.enabled }}
+
+=============================================================================
+OPENTELEMETRY COLLECTOR
+=============================================================================
+
+OTel Collector is ENABLED at:
+   Service: {{ include "locust-k8s-operator.fullname" . }}-otel-collector.{{ .Release.Namespace }}.svc.cluster.local
+   gRPC Port: 4317
+   HTTP Port: 4318
+
+To use OTel in your LocustTest, add:
+   spec:
+     observability:
+       openTelemetry:
+         enabled: true
+         endpoint: "{{ include "locust-k8s-operator.fullname" . }}-otel-collector.{{ .Release.Namespace }}.svc.cluster.local:4317"
+         protocol: grpc
+
+{{- end }}
+
+{{- if .Values.metrics.enabled }}
+
+=============================================================================
+METRICS
+=============================================================================
+
+Operator metrics are exposed on port {{ .Values.metrics.port }}.
+{{- if .Values.metrics.secure }}
+Metrics endpoint is secured (HTTPS).
+{{- else }}
+Metrics endpoint is unsecured (HTTP).
+{{- end }}
+
+To scrape with Prometheus, add the following ServiceMonitor or PodMonitor.
+
+{{- end }}
+
+=============================================================================
+DOCUMENTATION
+=============================================================================
+
+For more information, visit:
+   Home: {{ .Chart.Home | default "https://github.com/AbdelrhmanHamouda/locust-k8s-operator" }}
+   CRD API Reference: See charts/locust-k8s-operator/crds/locust.io_locusttests.yaml
+
+Happy load testing! 🚀

@@ -21,6 +21,20 @@ resources:
 # -- Replica count (increase to 2+ with leader election for HA)
 replicaCount: 1
 
+# -- Override the name of the chart
+nameOverride: ""
+
+# -- Override the full name of the release
+fullnameOverride: ""
+
+# -- Additional environment variables for the operator container
+extraEnv: []
+#  - name: LOG_LEVEL
+#    value: debug
+
+# -- Termination grace period for operator pods (seconds)
+terminationGracePeriodSeconds: 10
+
 # -- Leader election for HA deployments
 leaderElection:
   enabled: true
@@ -122,6 +136,9 @@ otelCollector:
       memory: 256Mi
   # -- OTel Collector configuration (YAML)
   config: |
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
     receivers:
       otlp:
         protocols:
@@ -135,6 +152,7 @@ otelCollector:
       debug:
         verbosity: detailed
     service:
+      extensions: [health_check]
       pipelines:
         metrics:
           receivers: [otlp]
@@ -151,6 +169,23 @@ serviceAccount:
   annotations: {}
 
 podAnnotations: {}
+
+# -- Pod security context (runs as non-root)
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container security context (principle of least privilege)
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  readOnlyRootFilesystem: true
+
 nodeSelector: {}
 tolerations: []
 affinity: {}
