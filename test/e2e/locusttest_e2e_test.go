@@ -29,7 +29,7 @@ import (
 )
 
 var _ = Describe("LocustTest", Ordered, func() {
-	const testNamespace = "locust-k8s-operator-go-system"
+	const testNamespace = "locust-k8s-operator-system"
 	var testdataDir string
 
 	BeforeAll(func() {

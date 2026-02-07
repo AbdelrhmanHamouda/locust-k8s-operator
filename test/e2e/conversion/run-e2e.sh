@@ -38,7 +38,7 @@ pass "Cluster is reachable"
 
 # Verify operator is running
 info "Checking operator deployment..."
-kubectl wait --for=condition=Available deployment/locust-k8s-operator-go-controller-manager -n locust-k8s-operator-go-system --timeout=60s || fail "Operator not running"
+kubectl wait --for=condition=Available deployment/locust-k8s-operator-controller-manager -n locust-k8s-operator-system --timeout=60s || fail "Operator not running"
 pass "Operator is running"
 
 # Verify storage version

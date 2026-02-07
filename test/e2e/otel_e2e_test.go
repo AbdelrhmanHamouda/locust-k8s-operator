@@ -29,7 +29,7 @@ import (
 )
 
 var _ = Describe("OpenTelemetry", Ordered, func() {
-	const testNamespace = "locust-k8s-operator-go-system"
+	const testNamespace = "locust-k8s-operator-system"
 	const crName = "e2e-test-otel"
 	var testdataDir string
 

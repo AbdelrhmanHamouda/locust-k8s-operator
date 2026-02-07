@@ -39,7 +39,7 @@ var (
 
 	// projectImage is the name of the image which will be build and loaded
 	// with the code source changes to be tested.
-	projectImage = "example.com/locust-k8s-operator-go:v0.0.1"
+	projectImage = "example.com/locust-k8s-operator:v0.0.1"
 )
 
 // TestE2E runs the end-to-end (e2e) test suite for the project. These tests execute in an isolated,
@@ -48,7 +48,7 @@ var (
 // CertManager.
 func TestE2E(t *testing.T) {
 	RegisterFailHandler(Fail)
-	_, _ = fmt.Fprintf(GinkgoWriter, "Starting locust-k8s-operator-go integration test suite\n")
+	_, _ = fmt.Fprintf(GinkgoWriter, "Starting locust-k8s-operator integration test suite\n")
 	RunSpecs(t, "e2e suite")
 }
 
@@ -87,15 +87,15 @@ var _ = BeforeSuite(func() {
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to deploy the operator")
 
 	By("waiting for the controller-manager deployment to be ready")
-	err = utils.WaitForControllerReady("locust-k8s-operator-go-system", "5m")
+	err = utils.WaitForControllerReady("locust-k8s-operator-system", "5m")
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Controller-manager deployment not ready")
 
 	By("waiting for the webhook certificate to be ready")
-	err = utils.WaitForCertificateReady("locust-k8s-operator-go-system", "locust-k8s-operator-go-serving-cert", "2m")
+	err = utils.WaitForCertificateReady("locust-k8s-operator-system", "locust-k8s-operator-serving-cert", "2m")
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Webhook certificate not ready")
 
 	By("waiting for the webhook service endpoint to be ready")
-	err = utils.WaitForWebhookReady("locust-k8s-operator-go-system", "locust-k8s-operator-go-webhook-service", "2m")
+	err = utils.WaitForWebhookReady("locust-k8s-operator-system", "locust-k8s-operator-webhook-service", "2m")
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Webhook service endpoint not ready")
 })
 

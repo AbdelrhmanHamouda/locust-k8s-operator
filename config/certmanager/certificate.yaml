@@ -29,5 +29,5 @@ spec:
   - webhook-service.system.svc.cluster.local
   issuerRef:
     kind: Issuer
-    name: locust-k8s-operator-go-selfsigned-issuer
+    name: locust-k8s-operator-selfsigned-issuer
   secretName: webhook-server-cert
