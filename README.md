@@ -24,11 +24,11 @@ Docs: [github.io/locust-k8s-operator/](https://abdelrhmanhamouda.github.io/locus
 
 The operator has been completely rewritten in Go, bringing significant improvements:
 
-| Improvement   | Before (Java)     | After (Go)   |
-|---------------|-------------------|--------------|
-| **Memory**    | ~256MB            | ~64MB        |
-| **Startup**   | ~60s              | <1s          |
-| **Framework** | Java Operator SDK | Operator SDK |
+| Improvement   | Before (Java)     | After (Go)          |
+|---------------|-------------------|---------------------|
+| **Memory**    | ~256MB            | ~64MB               |
+| **Startup**   | ~60s              | <1s                 |
+| **Framework** | Java Operator SDK | controller-runtime  |
 
 ### New Features in v2.0
 
