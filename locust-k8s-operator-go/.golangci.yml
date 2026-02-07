@@ -7,9 +7,12 @@ linters:
     - copyloopvar
     - dupl
     - errcheck
+    - errorlint
+    - exhaustive
     - ginkgolinter
     - goconst
     - gocyclo
+    - gosec
     - govet
     - ineffassign
     - lll
@@ -22,6 +25,15 @@ linters:
     - unparam
     - unused
   settings:
+    errorlint:
+      errorf: true
+      errorf-multi: true
+      asserts: true
+      comparison: true
+    exhaustive:
+      check:
+        - switch
+      default-signifies-exhaustive: false
     revive:
       rules:
         - name: comment-spacings

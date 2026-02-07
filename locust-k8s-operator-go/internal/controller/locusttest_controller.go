@@ -75,11 +75,11 @@ func (r *LocustTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		r.initializeStatus(locustTest)
 		if err := r.Status().Update(ctx, locustTest); err != nil {
 			log.Error(err, "Failed to initialize status")
-			return ctrl.Result{}, err
+			return ctrl.Result{}, fmt.Errorf("failed to initialize status: %w", err)
 		}
 		// Re-fetch after status update to get the latest resource version
 		if err := r.Get(ctx, req.NamespacedName, locustTest); err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, fmt.Errorf("failed to re-fetch LocustTest after status update: %w", err)
 		}
 	}
 
@@ -158,7 +158,7 @@ func (r *LocustTestReconciler) createResources(ctx context.Context, lt *locustv2
 	// Refetch to get latest resource version before status update
 	if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
 		log.Error(err, "Failed to refetch LocustTest before status update")
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("failed to refetch LocustTest before status update: %w", err)
 	}
 
 	// Update status after successful resource creation
@@ -170,7 +170,7 @@ func (r *LocustTestReconciler) createResources(ctx context.Context, lt *locustv2
 
 	if err := r.Status().Update(ctx, lt); err != nil {
 		log.Error(err, "Failed to update status after resource creation")
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("failed to update status after resource creation: %w", err)
 	}
 
 	return ctrl.Result{}, nil
@@ -237,11 +237,11 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 			lt.Status.ObservedGeneration = lt.Generation
 			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
 			if err := r.Status().Update(ctx, lt); err != nil {
-				return ctrl.Result{}, err
+				return ctrl.Result{}, fmt.Errorf("failed to update status after detecting Service deletion: %w", err)
 			}
 			return ctrl.Result{Requeue: true}, nil
 		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("failed to get master Service: %w", err)
 	}
 
 	// Don't update if already in terminal state (unless resources are missing — handled above)
@@ -264,11 +264,11 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 			lt.Status.ObservedGeneration = lt.Generation
 			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
 			if err := r.Status().Update(ctx, lt); err != nil {
-				return ctrl.Result{}, err
+				return ctrl.Result{}, fmt.Errorf("failed to update status after detecting master Job deletion: %w", err)
 			}
 			return ctrl.Result{Requeue: true}, nil
 		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("failed to get master Job: %w", err)
 	}
 
 	// Fetch worker Job for worker count
@@ -286,17 +286,17 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 			lt.Status.ObservedGeneration = lt.Generation
 			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
 			if err := r.Status().Update(ctx, lt); err != nil {
-				return ctrl.Result{}, err
+				return ctrl.Result{}, fmt.Errorf("failed to update status after detecting worker Job deletion: %w", err)
 			}
 			return ctrl.Result{Requeue: true}, nil
 		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("failed to get worker Job: %w", err)
 	}
 
 	// Update status from Jobs
 	if err := r.updateStatusFromJobs(ctx, lt, masterJob, workerJob); err != nil {
 		log.Error(err, "Failed to update status from Jobs")
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("failed to update status from Jobs: %w", err)
 	}
 
 	return ctrl.Result{}, nil

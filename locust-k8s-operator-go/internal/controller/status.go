@@ -94,6 +94,8 @@ func (r *LocustTestReconciler) updateStatusFromJobs(
 			r.Recorder.Event(lt, corev1.EventTypeNormal, "TestCompleted", "Load test completed successfully")
 		case locustv2.PhaseFailed:
 			r.Recorder.Event(lt, corev1.EventTypeWarning, "TestFailed", "Load test execution failed")
+		case locustv2.PhasePending:
+			// No event for Pending - it's the initial state or recovery state
 		}
 
 		// Set timestamps
@@ -136,7 +138,10 @@ func (r *LocustTestReconciler) updateStatusFromJobs(
 	// Update ObservedGeneration (CORE-25)
 	lt.Status.ObservedGeneration = lt.Generation
 
-	return r.Status().Update(ctx, lt)
+	if err := r.Status().Update(ctx, lt); err != nil {
+		return fmt.Errorf("failed to update status from Jobs: %w", err)
+	}
+	return nil
 }
 
 // derivePhaseFromJob determines the LocustTest phase from Job status.

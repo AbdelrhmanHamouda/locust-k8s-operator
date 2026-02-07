@@ -54,6 +54,7 @@ func TestE2E(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	By("building the manager(Operator) image")
+	//nolint:gosec,lll // Test code with known safe projectImage
 	cmd := exec.Command("make", "docker-build", fmt.Sprintf("IMG=%s", projectImage))
 	_, err := utils.Run(cmd)
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to build the manager(Operator) image")
@@ -80,6 +81,7 @@ var _ = BeforeSuite(func() {
 	}
 
 	By("deploying the operator")
+	//nolint:gosec,lll // Test code with known safe projectImage
 	cmd = exec.Command("make", "deploy", fmt.Sprintf("IMG=%s", projectImage))
 	_, err = utils.Run(cmd)
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to deploy the operator")
