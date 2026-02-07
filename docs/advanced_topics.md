@@ -15,10 +15,26 @@ Basic configuration is not always enough to satisfy the performance test needs, 
 
 ## :material-apache-kafka: Kafka & AWS MSK configuration {: #kafka-integration }
 
-Generally speaking, the usage of Kafka in a _locustfile_ is identical to how it would be used anywhere else within the cloud context. Thus, no special setup is needed for the purposes of performance testing with the _Operator_.  
-That being said, if an organization is using kafka in production, chances are that authenticated kafka is being used. One of the main providers of such managed service is _AWS_ in the form of _MSK_. For that end, the _Operator_ have an _out-of-the-box_ support for MSK.
+Generally speaking, the usage of Kafka in a _locustfile_ is identical to how it would be used anywhere else within the cloud context. Thus, no special setup is needed for the purposes of performance testing with the _Operator_.
+That being said, if an organization is using kafka in production, chances are that authenticated kafka is being used. One of the main providers of such managed service is _AWS_ in the form of _MSK_. For that end, the _Operator_ provides an _out-of-the-box_ support for MSK through a two-level configuration model.
 
-To enable performance testing with _MSK_, a central/global Kafka user can be created by the "cloud admin" or "the team" responsible for the _Operator_ deployment within the organization. The _Operator_ can then be easily configured to inject the configuration of that user as environment variables in all generated resources. Those variables can be used by the test to establish authentication with the kafka broker.
+### Two-Level Configuration Model
+
+The operator supports two approaches to Kafka configuration, which can be used independently or combined:
+
+**1. Operator-Level Configuration (Centralized Management)**
+
+The "cloud admin" or team responsible for the _Operator_ deployment can configure Kafka credentials once during operator installation via Helm values. The operator automatically injects these credentials as environment variables into all generated Locust pods. This centralized approach means CR creators don't need to know or manage Kafka credentials - they're handled transparently by the operator.
+
+**2. Per-Test Configuration (Test-Specific Override)**
+
+Individual tests can override the operator-level configuration by specifying `spec.env.variables` in their LocustTest CR. This allows specific tests to use different Kafka clusters, credentials, or configurations when needed.
+
+**Configuration Priority**: Per-test variables specified in the CR override operator-level configuration. This allows centralized management as the default while maintaining flexibility for special cases.
+
+### Available Environment Variables
+
+When Kafka configuration is enabled (either at operator-level or per-test), the following environment variables are available to the test:
 
 | Variable Name                    | Description                                                                      |
 |:---------------------------------|:---------------------------------------------------------------------------------|
@@ -403,7 +419,7 @@ Images from a private image registry can be used through various methods as desc
     spec:
       image: ghcr.io/mycompany/locust:latest # (1)!
       imagePullSecrets: # (2)!
-        - gcr-secret
+        - name: gcr-secret
       master:
         command: "--locustfile /lotest/src/test.py --host https://example.com"
       worker:
@@ -422,7 +438,7 @@ Images from a private image registry can be used through various methods as desc
     spec:
       image: ghcr.io/mycompany/locust:latest
       imagePullSecrets:
-        - gcr-secret
+        - name: gcr-secret
       ...
     ```
 
