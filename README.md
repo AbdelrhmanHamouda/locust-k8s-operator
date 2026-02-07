@@ -1,7 +1,7 @@
 <div align="center" style="margin: 2rem 0;">
-  <img src="docs/assets/images/logo.gif" 
-       alt="Locust Kubernetes Operator Logo" 
-       width="120" 
+  <img src="docs/assets/images/logo.gif"
+       alt="Locust Kubernetes Operator Logo"
+       width="120"
        height="120"
        style="border-radius: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-bottom: 0.1rem;">
 </div>
@@ -20,7 +20,7 @@ Docs: [github.io/locust-k8s-operator/](https://abdelrhmanhamouda.github.io/locus
 
 -----------------------------
 
-## 🎉 v2.0 - Complete Go Rewrite
+## v2.0 - Complete Go Rewrite
 
 The operator has been completely rewritten in Go, bringing significant improvements:
 
@@ -28,7 +28,7 @@ The operator has been completely rewritten in Go, bringing significant improveme
 |---------------|-------------------|---------------------|
 | **Memory**    | ~256MB            | ~64MB               |
 | **Startup**   | ~60s              | <1s                 |
-| **Framework** | Java Operator SDK | controller-runtime  |
+| **Framework** | Java Operator SDK | Operator SDK / controller-runtime |
 
 ### New Features in v2.0
 
@@ -38,7 +38,7 @@ The operator has been completely rewritten in Go, bringing significant improveme
 - **Separate Resource Specs** - Independent resource configuration for master and worker pods
 - **Enhanced Status** - Phase tracking, conditions, and worker connection status
 
-📖 **[Migration Guide](https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/)** for existing v1 users
+**[Migration Guide](https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/)** for existing v1 users
 
 -----------------------------
 
@@ -51,26 +51,69 @@ The operator has been completely rewritten in Go, bringing significant improveme
 
 ![](docs/assets/images/run-anywhere.png)
 
-## At a glance
+## At a Glance
 
-The _Operator_ is designed to unlock seamless & effortless distributed performance testing in the **_cloud_** and enable **_continues
-integration for CI / CD_**. By design, the entire system is cloud native and focuses on automation and CI practices. One strong feature
-about the system is its ability to **horizontally scale** to meet any required performance demands.
+The Operator is designed to unlock seamless and effortless distributed performance testing in the cloud and enable continuous integration for CI/CD. By design, the entire system is cloud native and focuses on automation and CI practices. One strong feature about the system is its ability to horizontally scale to meet any required performance demands.
 
 ## Documentation
-All the documentation for this project and how to use it is available through [github.io/locust-k8s-operator/](https://abdelrhmanhamouda.github.io/locust-k8s-operator/). 
 
+All documentation for this project is available at [github.io/locust-k8s-operator/](https://abdelrhmanhamouda.github.io/locust-k8s-operator/).
 
-## Project status
+## Quick Start
 
-The project is **_actively_** maintained and is under continues development and improvement. If you have any request or want to chat, kindly
-open a ticket. If you wish to contribute code and / or ideas, kindly check the contribution section.
+### Prerequisites
+
+- **Go 1.24+** for local development
+- **Docker** for building container images
+- **kubectl** configured for your cluster
+- **Helm 3.x** for chart installation
+- **Kind** (optional, for local E2E testing)
+
+### Installation
+
+Install the operator using Helm:
+
+```bash
+helm repo add locust-k8s-operator https://abdelrhmanhamouda.github.io/locust-k8s-operator
+helm install locust-operator locust-k8s-operator/locust-k8s-operator
+```
+
+Or from the repository:
+
+```bash
+helm install locust-operator charts/locust-k8s-operator/
+```
+
+### Development
+
+```bash
+# Install CRDs
+make install
+
+# Run operator locally (against configured cluster)
+make run
+
+# Run tests
+make test
+
+# Run E2E tests (requires Kind)
+make test-e2e
+
+# Build and push operator image
+make docker-build docker-push IMG=<your-registry>/locust-operator:tag
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup.
+
+## Project Status
+
+The project is actively maintained and under continuous development and improvement. If you have any request or want to chat, kindly open a ticket. If you wish to contribute code and/or ideas, kindly check the contribution section.
 
 ## Contribute
 
-There's plenty to do, come say hi in [the issues](https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues)! 👋
+There's plenty to do, come say hi in [the issues](https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues)!
 
-Also check out the [CONTRIBUTING.MD](CONTRIBUTING.md) 🤓
+Also check out [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
