@@ -140,8 +140,8 @@ info "Checking if reconciler created Jobs for e2e-test-v2..."
 sleep 2
 
 # Check jobs for e2e-test-v2 (created via v2 API, should have jobs)
-MASTER_JOB=$(kubectl get jobs -l performance-test-name=e2e-test-v2,app=locust-master -o name 2>/dev/null | head -1)
-WORKER_JOB=$(kubectl get jobs -l performance-test-name=e2e-test-v2,app=locust-worker -o name 2>/dev/null | head -1)
+MASTER_JOB=$(kubectl get jobs -l performance-test-pod-name=e2e-test-v2-master -o name 2>/dev/null | head -1)
+WORKER_JOB=$(kubectl get jobs -l performance-test-pod-name=e2e-test-v2-worker -o name 2>/dev/null | head -1)
 
 if [ -z "$MASTER_JOB" ]; then
     fail "Master Job not created for e2e-test-v2"
