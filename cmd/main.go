@@ -134,18 +134,18 @@ func main() {
 
 // flagConfig holds all command-line flag values
 type flagConfig struct {
-	metricsAddr           string
-	metricsCertPath       string
-	metricsCertName       string
-	metricsCertKey        string
-	webhookCertPath       string
-	webhookCertName       string
-	webhookCertKey        string
-	probeAddr             string
-	enableLeaderElection  bool
-	secureMetrics         bool
-	enableHTTP2           bool
-	zapOpts               zap.Options
+	metricsAddr          string
+	metricsCertPath      string
+	metricsCertName      string
+	metricsCertKey       string
+	webhookCertPath      string
+	webhookCertName      string
+	webhookCertKey       string
+	probeAddr            string
+	enableLeaderElection bool
+	secureMetrics        bool
+	enableHTTP2          bool
+	zapOpts              zap.Options
 }
 
 // parseFlags parses command-line flags and returns configuration
