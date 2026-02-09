@@ -34,7 +34,7 @@ var _ = Describe("LocustTest", Ordered, func() {
 
 	BeforeAll(func() {
 		var err error
-		testdataDir, err = filepath.Abs("test/e2e/testdata")
+		testdataDir, err = filepath.Abs("testdata")
 		Expect(err).NotTo(HaveOccurred())
 
 		By("applying test ConfigMaps")
