@@ -165,7 +165,8 @@ func parseFlags() *flagConfig {
 	flag.StringVar(&cfg.webhookCertKey, "webhook-cert-key", "tls.key", "The name of the webhook key file.")
 	flag.StringVar(&cfg.metricsCertPath, "metrics-cert-path", "",
 		"The directory that contains the metrics server certificate.")
-	flag.StringVar(&cfg.metricsCertName, "metrics-cert-name", "tls.crt", "The name of the metrics server certificate file.")
+	flag.StringVar(&cfg.metricsCertName, "metrics-cert-name", "tls.crt",
+		"The name of the metrics server certificate file.")
 	flag.StringVar(&cfg.metricsCertKey, "metrics-cert-key", "tls.key", "The name of the metrics server key file.")
 	flag.BoolVar(&cfg.enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
@@ -232,7 +233,7 @@ func setupWebhookServer(flags *flagConfig, tlsOpts []func(*tls.Config)) (webhook
 }
 
 // setupMetricsServer creates metrics server options with optional certificate watcher
-func setupMetricsServer(flags *flagConfig, tlsOpts []func(*tls.Config)) (metricsserver.Options, *certwatcher.CertWatcher) {
+func setupMetricsServer(flags *flagConfig, tlsOpts []func(*tls.Config)) (metricsserver.Options, *certwatcher.CertWatcher) { //nolint:lll
 	// Metrics endpoint is enabled in 'config/default/kustomization.yaml'. The Metrics options configure the server.
 	// More info:
 	// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/metrics/server
