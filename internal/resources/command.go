@@ -44,10 +44,10 @@ var operatorManagedFlags = map[string]bool{
 func detectFlagConflicts(extraArgs []string) []string {
 	var conflicts []string
 	for _, arg := range extraArgs {
-		// Check if arg starts with a known operator-managed flag
+		// Check if arg matches a known operator-managed flag
 		// Handle both "--flag=value" and "--flag value" forms
 		for flag := range operatorManagedFlags {
-			if strings.HasPrefix(arg, flag) {
+			if arg == flag || strings.HasPrefix(arg, flag+"=") {
 				conflicts = append(conflicts, arg)
 				break
 			}

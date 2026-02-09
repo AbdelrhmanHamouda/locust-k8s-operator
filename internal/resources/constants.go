@@ -77,7 +77,7 @@ const (
 	// MetricsExporterContainerName is the name of the metrics exporter sidecar.
 	MetricsExporterContainerName = "locust-metrics-exporter"
 	// LibVolumeName is the name of the lib volume.
-	LibVolumeName = "lib"
+	LibVolumeName = "locust-lib"
 )
 
 // Exporter environment variable constants

@@ -552,10 +552,10 @@ func TestReconcile_WithLibConfigMap(t *testing.T) {
 	// Should have 2 volumes: configmap and lib
 	assert.Len(t, job.Spec.Template.Spec.Volumes, 2)
 
-	// Find lib volume (LibVolumeName constant is "lib")
+	// Find lib volume (LibVolumeName constant is "locust-lib")
 	var libVolumeFound bool
 	for _, v := range job.Spec.Template.Spec.Volumes {
-		if v.Name == "lib" {
+		if v.Name == "locust-lib" {
 			libVolumeFound = true
 			assert.Equal(t, "locust-lib", v.ConfigMap.Name)
 		}

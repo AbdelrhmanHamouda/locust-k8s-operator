@@ -164,8 +164,10 @@ func (r *LocustTestReconciler) createResources(ctx context.Context, lt *locustv2
 	// Update status after successful resource creation
 	lt.Status.Phase = locustv2.PhaseRunning
 	lt.Status.ObservedGeneration = lt.Generation
-	now := metav1.Now()
-	lt.Status.StartTime = &now
+	if lt.Status.StartTime == nil {
+		now := metav1.Now()
+		lt.Status.StartTime = &now
+	}
 	r.setReady(lt, true, locustv2.ReasonResourcesCreated, "All resources created")
 
 	if err := r.Status().Update(ctx, lt); err != nil {

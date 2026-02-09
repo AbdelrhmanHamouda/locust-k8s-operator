@@ -40,6 +40,7 @@ jobs:
       - name: ☸️ Create Kind cluster
         uses: helm/kind-action@v1.12.0
         with:
+          cluster_name: locust-k8s-operator-test-e2e
           wait: 120s
 
       - name: 🔍 Verify go mod tidy

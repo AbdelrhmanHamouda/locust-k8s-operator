@@ -117,6 +117,7 @@ func (r *LocustTestReconciler) updateStatusFromJobs(
 				r.setCondition(lt, locustv2.ConditionTypeTestCompleted,
 					metav1.ConditionTrue, locustv2.ReasonTestFailed,
 					"Test failed")
+				r.setReady(lt, false, locustv2.ReasonResourcesFailed, "Test failed")
 			}
 		}
 
@@ -130,6 +131,11 @@ func (r *LocustTestReconciler) updateStatusFromJobs(
 		if lt.Status.ConnectedWorkers >= lt.Status.ExpectedWorkers {
 			r.setCondition(lt, locustv2.ConditionTypeWorkersConnected,
 				metav1.ConditionTrue, locustv2.ReasonAllWorkersConnected,
+				fmt.Sprintf("%d/%d workers connected",
+					lt.Status.ConnectedWorkers, lt.Status.ExpectedWorkers))
+		} else {
+			r.setCondition(lt, locustv2.ConditionTypeWorkersConnected,
+				metav1.ConditionFalse, locustv2.ReasonWorkersMissing,
 				fmt.Sprintf("%d/%d workers connected",
 					lt.Status.ConnectedWorkers, lt.Status.ExpectedWorkers))
 		}

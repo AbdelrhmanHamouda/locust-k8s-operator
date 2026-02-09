@@ -40,7 +40,7 @@ const (
 // Reserved volume name constants
 const (
 	reservedVolumeNamePrefix = "secret-"
-	libVolumeName            = "lib"
+	libVolumeName            = "locust-lib"
 )
 
 // LocustTestCustomValidator handles validation for LocustTest resources.
