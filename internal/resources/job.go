@@ -311,9 +311,10 @@ func buildResourceRequirementsWithPrecedence(
 	// Level 1: CR-level resources (highest precedence)
 	// CR resources are a COMPLETE OVERRIDE (not partial merge) — same as native K8s
 	var crResources *corev1.ResourceRequirements
-	if mode == Master {
+	switch mode {
+	case Master:
 		crResources = &lt.Spec.Master.Resources
-	} else if mode == Worker {
+	case Worker:
 		crResources = &lt.Spec.Worker.Resources
 	}
 

@@ -194,7 +194,7 @@ func validateResourceQuantities(cfg *OperatorConfig) error {
 
 // formatErrors formats a slice of errors for display.
 func formatErrors(errs []error) string {
-	var msgs []string
+	msgs := make([]string, 0, len(errs))
 	for _, err := range errs {
 		msgs = append(msgs, "  - "+err.Error())
 	}

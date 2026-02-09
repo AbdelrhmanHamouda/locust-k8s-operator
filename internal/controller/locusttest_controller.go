@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"time"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -238,7 +239,7 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 			if err := r.Status().Update(ctx, lt); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to update status after detecting Service deletion: %w", err)
 			}
-			return ctrl.Result{Requeue: true}, nil
+			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 		return ctrl.Result{}, fmt.Errorf("failed to get master Service: %w", err)
 	}
@@ -265,7 +266,7 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 			if err := r.Status().Update(ctx, lt); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to update status after detecting master Job deletion: %w", err)
 			}
-			return ctrl.Result{Requeue: true}, nil
+			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 		return ctrl.Result{}, fmt.Errorf("failed to get master Job: %w", err)
 	}
@@ -287,7 +288,7 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 			if err := r.Status().Update(ctx, lt); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to update status after detecting worker Job deletion: %w", err)
 			}
-			return ctrl.Result{Requeue: true}, nil
+			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 		return ctrl.Result{}, fmt.Errorf("failed to get worker Job: %w", err)
 	}

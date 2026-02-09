@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -871,7 +872,7 @@ func TestReconcile_ExternalDeletion_MasterService(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	assert.True(t, result.Requeue, "Should requeue after detecting deletion")
+	assert.Greater(t, result.RequeueAfter, time.Duration(0), "Should requeue after detecting deletion")
 
 	// Check that Warning event was recorded
 	select {
@@ -967,7 +968,7 @@ func TestReconcile_ExternalDeletion_MasterJob(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	assert.True(t, result.Requeue, "Should requeue after detecting deletion")
+	assert.Greater(t, result.RequeueAfter, time.Duration(0), "Should requeue after detecting deletion")
 
 	// Check that Warning event was recorded
 	select {
@@ -1063,7 +1064,7 @@ func TestReconcile_ExternalDeletion_WorkerJob(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	assert.True(t, result.Requeue, "Should requeue after detecting deletion")
+	assert.Greater(t, result.RequeueAfter, time.Duration(0), "Should requeue after detecting deletion")
 
 	// Check that Warning event was recorded
 	select {
