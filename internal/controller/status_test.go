@@ -581,7 +581,7 @@ func TestDerivePhaseFromJob_TypeSafety(t *testing.T) {
 			assert.Equal(t, tt.expectedPhase, phase)
 
 			// Verify it's the typed Phase type
-			var _ locustv2.Phase = phase
+			var _ locustv2.Phase = phase //nolint:staticcheck
 		})
 	}
 }
