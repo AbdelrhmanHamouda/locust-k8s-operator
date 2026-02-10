@@ -8,7 +8,7 @@ spec:
   imagePullPolicy: IfNotPresent
   
   master:
-    command: "locust -f /lotest/src/locustfile.py"
+    command: "--locustfile /lotest/src/locustfile.py"
     autostart: true
     autoquit:
       enabled: true
@@ -22,9 +22,9 @@ spec:
       limits:
         cpu: "1000m"
         memory: "1Gi"
-  
+
   worker:
-    command: "locust -f /lotest/src/locustfile.py"
+    command: "--locustfile /lotest/src/locustfile.py"
     replicas: 5
     labels:
       role: worker

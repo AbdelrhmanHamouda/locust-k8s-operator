@@ -8,10 +8,10 @@ spec:
   imagePullPolicy: IfNotPresent
   
   master:
-    command: "locust -f /lotest/src/locustfile.py"
-  
+    command: "--locustfile /lotest/src/locustfile.py"
+
   worker:
-    command: "locust -f /lotest/src/locustfile.py"
+    command: "--locustfile /lotest/src/locustfile.py"
     replicas: 2
   
   testFiles:
