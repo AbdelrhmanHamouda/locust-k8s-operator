@@ -81,7 +81,7 @@ func BuildMasterCommand(masterSpec *locustv2.MasterSpec, workerReplicas int32, o
 	// Add --autoquit if enabled (default: enabled with 60s timeout)
 	if masterSpec.Autoquit == nil || masterSpec.Autoquit.Enabled {
 		timeout := int32(60) // default
-		if masterSpec.Autoquit != nil && masterSpec.Autoquit.Timeout > 0 {
+		if masterSpec.Autoquit != nil && masterSpec.Autoquit.Timeout >= 0 {
 			timeout = masterSpec.Autoquit.Timeout
 		}
 		cmdParts = append(cmdParts, "--autoquit", fmt.Sprintf("%d", timeout))

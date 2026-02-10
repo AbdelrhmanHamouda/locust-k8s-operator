@@ -44,8 +44,11 @@ func BuildLabels(lt *locustv2.LocustTest, mode OperationalMode) map[string]strin
 		LabelTestName:  lt.Name,
 	}
 
-	// Merge user-defined labels
+	// Merge user-defined labels, protecting operator-critical labels
 	for k, v := range getUserLabels(lt, mode) {
+		if k == LabelPodName || k == LabelManagedBy {
+			continue
+		}
 		labels[k] = v
 	}
 
