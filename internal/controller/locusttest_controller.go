@@ -238,6 +238,16 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 			lt.Status.Phase = locustv2.PhasePending
 			lt.Status.ObservedGeneration = lt.Generation
 			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
+
+			// Re-fetch CR to get latest resource version before status update (STAB-01)
+			if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to re-fetch LocustTest: %w", err)
+			}
+			// Re-apply status changes after re-fetch
+			lt.Status.Phase = locustv2.PhasePending
+			lt.Status.ObservedGeneration = lt.Generation
+			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
+
 			if err := r.Status().Update(ctx, lt); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to update status after detecting Service deletion: %w", err)
 			}
@@ -265,6 +275,16 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 			lt.Status.Phase = locustv2.PhasePending
 			lt.Status.ObservedGeneration = lt.Generation
 			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
+
+			// Re-fetch CR to get latest resource version before status update (STAB-01)
+			if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to re-fetch LocustTest: %w", err)
+			}
+			// Re-apply status changes after re-fetch
+			lt.Status.Phase = locustv2.PhasePending
+			lt.Status.ObservedGeneration = lt.Generation
+			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
+
 			if err := r.Status().Update(ctx, lt); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to update status after detecting master Job deletion: %w", err)
 			}
@@ -287,6 +307,16 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 			lt.Status.Phase = locustv2.PhasePending
 			lt.Status.ObservedGeneration = lt.Generation
 			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
+
+			// Re-fetch CR to get latest resource version before status update (STAB-01)
+			if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to re-fetch LocustTest: %w", err)
+			}
+			// Re-apply status changes after re-fetch
+			lt.Status.Phase = locustv2.PhasePending
+			lt.Status.ObservedGeneration = lt.Generation
+			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
+
 			if err := r.Status().Update(ctx, lt); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to update status after detecting worker Job deletion: %w", err)
 			}
