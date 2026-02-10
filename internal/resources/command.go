@@ -60,7 +60,8 @@ func detectFlagConflicts(extraArgs []string) []string {
 // Uses MasterSpec configuration and appends extraArgs after operator-managed flags.
 func BuildMasterCommand(masterSpec *locustv2.MasterSpec, workerReplicas int32, otelEnabled bool, logger logr.Logger) []string {
 	var cmdParts []string
-	cmdParts = append(cmdParts, masterSpec.Command)
+	// Split command seed into individual args at append time
+	cmdParts = append(cmdParts, strings.Fields(masterSpec.Command)...)
 
 	// Add --otel flag if enabled (must come before other flags)
 	if otelEnabled {
@@ -103,15 +104,15 @@ func BuildMasterCommand(masterSpec *locustv2.MasterSpec, workerReplicas int32, o
 		cmdParts = append(cmdParts, masterSpec.ExtraArgs...)
 	}
 
-	cmd := strings.Join(cmdParts, " ")
-	return strings.Fields(cmd)
+	return cmdParts
 }
 
 // BuildWorkerCommand constructs the command arguments for worker nodes.
 // Template: "{seed} [--otel] --worker --master-port=5557 --master-host={master-name} [extraArgs...]"
 func BuildWorkerCommand(commandSeed string, masterHost string, otelEnabled bool, extraArgs []string, logger logr.Logger) []string {
 	var cmdParts []string
-	cmdParts = append(cmdParts, commandSeed)
+	// Split command seed into individual args at append time
+	cmdParts = append(cmdParts, strings.Fields(commandSeed)...)
 
 	// Add --otel flag if enabled (must come before other flags)
 	if otelEnabled {
@@ -136,6 +137,5 @@ func BuildWorkerCommand(commandSeed string, masterHost string, otelEnabled bool,
 		cmdParts = append(cmdParts, extraArgs...)
 	}
 
-	cmd := strings.Join(cmdParts, " ")
-	return strings.Fields(cmd)
+	return cmdParts
 }
