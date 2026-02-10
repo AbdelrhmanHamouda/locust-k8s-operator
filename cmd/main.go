@@ -172,7 +172,7 @@ func parseFlags() *flagConfig {
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
 
 	cfg.zapOpts = zap.Options{
-		Development: true,
+		Development: false,
 	}
 	cfg.zapOpts.BindFlags(flag.CommandLine)
 	flag.Parse()
