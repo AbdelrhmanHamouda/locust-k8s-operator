@@ -1281,3 +1281,43 @@ func TestBuildMasterJob_HelmRoleSpecific_PrecedenceOverUnified(t *testing.T) {
 	// Assert ephemeral is "30M" (falls through to unified)
 	assert.Equal(t, "30M", resources.Requests.StorageEphemeral().String())
 }
+
+// ============================================
+// SecurityContext Tests
+// ============================================
+
+func TestBuildMasterJob_HasSecurityContext(t *testing.T) {
+	lt := newTestLocustTest()
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg, logr.Discard())
+
+	// Verify SecurityContext is set
+	require.NotNil(t, job.Spec.Template.Spec.SecurityContext, "SecurityContext should be set")
+
+	// Verify RunAsNonRoot is true
+	require.NotNil(t, job.Spec.Template.Spec.SecurityContext.RunAsNonRoot, "RunAsNonRoot should be set")
+	assert.True(t, *job.Spec.Template.Spec.SecurityContext.RunAsNonRoot, "RunAsNonRoot should be true")
+
+	// Verify SeccompProfile is RuntimeDefault
+	require.NotNil(t, job.Spec.Template.Spec.SecurityContext.SeccompProfile, "SeccompProfile should be set")
+	assert.Equal(t, corev1.SeccompProfileTypeRuntimeDefault, job.Spec.Template.Spec.SecurityContext.SeccompProfile.Type, "SeccompProfile should be RuntimeDefault")
+}
+
+func TestBuildWorkerJob_HasSecurityContext(t *testing.T) {
+	lt := newTestLocustTest()
+	cfg := newTestConfig()
+
+	job := BuildWorkerJob(lt, cfg, logr.Discard())
+
+	// Verify SecurityContext is set
+	require.NotNil(t, job.Spec.Template.Spec.SecurityContext, "SecurityContext should be set")
+
+	// Verify RunAsNonRoot is true
+	require.NotNil(t, job.Spec.Template.Spec.SecurityContext.RunAsNonRoot, "RunAsNonRoot should be set")
+	assert.True(t, *job.Spec.Template.Spec.SecurityContext.RunAsNonRoot, "RunAsNonRoot should be true")
+
+	// Verify SeccompProfile is RuntimeDefault
+	require.NotNil(t, job.Spec.Template.Spec.SecurityContext.SeccompProfile, "SeccompProfile should be set")
+	assert.Equal(t, corev1.SeccompProfileTypeRuntimeDefault, job.Spec.Template.Spec.SecurityContext.SeccompProfile.Type, "SeccompProfile should be RuntimeDefault")
+}
