@@ -20,9 +20,7 @@ jobs:
   build-go:
     name: 🏗️ Build Go Operator
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: locust-k8s-operator-go
+    timeout-minutes: 30
     steps:
       - name: 📂 Checkout repo
         uses: actions/checkout@v4
@@ -33,7 +31,7 @@ jobs:
       - name: 🔧 Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: locust-k8s-operator-go/go.mod
+          go-version-file: go.mod
 
       - name: 📥 Download dependencies
         run: go mod download
@@ -42,7 +40,6 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: v2.1.0
-          working-directory: locust-k8s-operator-go
 
       - name: 🛠️ Build
         run: make build
@@ -54,10 +51,19 @@ jobs:
         if: always()
         uses: codecov/codecov-action@v5
         with:
-          files: locust-k8s-operator-go/cover.out
+          files: cover.out
           flags: go-unit-tests
           name: go-coverage
           fail_ci_if_error: false
+
+      - name: 📦 Upload Go test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-test-artifacts
+          path: |
+            cover.out
+          retention-days: 7
 
   # ============================================
   # Helm Chart Lint & Test
@@ -65,8 +71,7 @@ jobs:
   lint-test-helm:
     name: 🌊 Lint & Test chart
     runs-on: ubuntu-latest
-    needs:
-      - build-go
+    timeout-minutes: 30
     steps:
       - name: 📂 Checkout
         uses: actions/checkout@v4
@@ -108,7 +113,7 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
         uses: actions/setup-go@v5
         with:
-          go-version-file: locust-k8s-operator-go/go.mod
+          go-version-file: go.mod
 
       - name: 🛠️ Install ko
         if: steps.list-changed.outputs.changed == 'true'
@@ -116,11 +121,10 @@ jobs:
 
       - name: 🐳 Build operator image with ko
         if: steps.list-changed.outputs.changed == 'true'
-        working-directory: locust-k8s-operator-go
         env:
           KO_DOCKER_REPO: lotest/locust-k8s-operator
         run: |
-          CHART_VERSION=$(grep '^appVersion:' ../charts/locust-k8s-operator/Chart.yaml | awk '{print $2}' | tr -d '"')
+          CHART_VERSION=$(grep '^appVersion:' charts/locust-k8s-operator/Chart.yaml | awk '{print $2}' | tr -d '"')
           ko build ./cmd --local --bare --tags=${CHART_VERSION}
 
       - name: 📦 Load image into kind cluster
@@ -132,11 +136,23 @@ jobs:
       - name: 🚀 Run chart-testing (install)
         run: ct install --target-branch ${{ github.event.repository.default_branch }} --config .github/ct.yaml --helm-extra-set-args "--set=image.pullPolicy=Never"
 
+      - name: 📦 Collect kind cluster logs on failure
+        if: failure() && steps.list-changed.outputs.changed == 'true'
+        run: kind export logs kind-logs --name chart-testing
+
+      - name: 📦 Upload Helm test artifacts on failure
+        if: failure() && steps.list-changed.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: helm-test-artifacts
+          path: |
+            kind-logs/
+          retention-days: 7
+
   docs-test:
     name: 📚 Test documentation
     runs-on: ubuntu-latest
-    needs:
-      - lint-test-helm
+    timeout-minutes: 15
     steps:
       - name: 📂 Checkout
         uses: actions/checkout@v4
@@ -161,3 +177,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python -m mkdocs build
+
+      - name: 📦 Upload docs build artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-build-artifacts
+          path: |
+            site/
+          retention-days: 7

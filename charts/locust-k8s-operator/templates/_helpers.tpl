@@ -38,11 +38,15 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 If release name contains chart name it will be used as a full name.
 */}}
 {{- define "locust-k8s-operator.fullname" -}}
-{{- $name := default .Chart.Name }}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name := default .Chart.Name .Values.nameOverride }}
 {{- if contains $name .Release.Name }}
 {{- .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- else }}
 {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
 {{- end }}
 {{- end }}
 
@@ -98,10 +102,10 @@ These helpers map old v1.x chart value paths to new v2.x paths.
 This allows users upgrading from v1.x to continue using their existing
 values.yaml files while migrating to the new structure.
 
-Priority order:
-  1. New path (locustPods.*, kafka.*, etc.)
-  2. Old path (config.loadGenerationPods.*, etc.)
-  3. Default value
+Priority order (checks leaf values, not just parent keys):
+  1. New path value exists → use it
+  2. Old path value exists → use it (backward compat)
+  3. Neither → use hardcoded default
 
 Example - both of these work:
   # New (recommended)
@@ -122,10 +126,10 @@ Example - both of these work:
 Pod CPU Request - new path with fallback to old path
 */}}
 {{- define "locust.podCpuRequest" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.resources.requests.cpu | default "250m" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.resource.cpuRequest | default "250m" }}
+{{- if and .Values.locustPods .Values.locustPods.resources .Values.locustPods.resources.requests .Values.locustPods.resources.requests.cpu }}
+{{- .Values.locustPods.resources.requests.cpu }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.resource .Values.config.loadGenerationPods.resource.cpuRequest }}
+{{- .Values.config.loadGenerationPods.resource.cpuRequest }}
 {{- else }}
 {{- "250m" }}
 {{- end }}
@@ -135,10 +139,10 @@ Pod CPU Request - new path with fallback to old path
 Pod Memory Request - new path with fallback to old path
 */}}
 {{- define "locust.podMemRequest" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.resources.requests.memory | default "128Mi" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.resource.memRequest | default "128Mi" }}
+{{- if and .Values.locustPods .Values.locustPods.resources .Values.locustPods.resources.requests .Values.locustPods.resources.requests.memory }}
+{{- .Values.locustPods.resources.requests.memory }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.resource .Values.config.loadGenerationPods.resource.memRequest }}
+{{- .Values.config.loadGenerationPods.resource.memRequest }}
 {{- else }}
 {{- "128Mi" }}
 {{- end }}
@@ -148,10 +152,10 @@ Pod Memory Request - new path with fallback to old path
 Pod Ephemeral Storage Request - new path with fallback to old path
 */}}
 {{- define "locust.podEphemeralRequest" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.resources.requests.ephemeralStorage | default "30M" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.resource.ephemeralRequest | default "30M" }}
+{{- if and .Values.locustPods .Values.locustPods.resources .Values.locustPods.resources.requests .Values.locustPods.resources.requests.ephemeralStorage }}
+{{- .Values.locustPods.resources.requests.ephemeralStorage }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.resource .Values.config.loadGenerationPods.resource.ephemeralRequest }}
+{{- .Values.config.loadGenerationPods.resource.ephemeralRequest }}
 {{- else }}
 {{- "30M" }}
 {{- end }}
@@ -161,10 +165,10 @@ Pod Ephemeral Storage Request - new path with fallback to old path
 Pod CPU Limit - new path with fallback to old path
 */}}
 {{- define "locust.podCpuLimit" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.resources.limits.cpu | default "1000m" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.resource.cpuLimit | default "1000m" }}
+{{- if and .Values.locustPods .Values.locustPods.resources .Values.locustPods.resources.limits .Values.locustPods.resources.limits.cpu }}
+{{- .Values.locustPods.resources.limits.cpu }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.resource .Values.config.loadGenerationPods.resource.cpuLimit }}
+{{- .Values.config.loadGenerationPods.resource.cpuLimit }}
 {{- else }}
 {{- "1000m" }}
 {{- end }}
@@ -174,10 +178,10 @@ Pod CPU Limit - new path with fallback to old path
 Pod Memory Limit - new path with fallback to old path
 */}}
 {{- define "locust.podMemLimit" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.resources.limits.memory | default "1024Mi" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.resource.memLimit | default "1024Mi" }}
+{{- if and .Values.locustPods .Values.locustPods.resources .Values.locustPods.resources.limits .Values.locustPods.resources.limits.memory }}
+{{- .Values.locustPods.resources.limits.memory }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.resource .Values.config.loadGenerationPods.resource.memLimit }}
+{{- .Values.config.loadGenerationPods.resource.memLimit }}
 {{- else }}
 {{- "1024Mi" }}
 {{- end }}
@@ -187,10 +191,10 @@ Pod Memory Limit - new path with fallback to old path
 Pod Ephemeral Storage Limit - new path with fallback to old path
 */}}
 {{- define "locust.podEphemeralLimit" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.resources.limits.ephemeralStorage | default "50M" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.resource.ephemeralLimit | default "50M" }}
+{{- if and .Values.locustPods .Values.locustPods.resources .Values.locustPods.resources.limits .Values.locustPods.resources.limits.ephemeralStorage }}
+{{- .Values.locustPods.resources.limits.ephemeralStorage }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.resource .Values.config.loadGenerationPods.resource.ephemeralLimit }}
+{{- .Values.config.loadGenerationPods.resource.ephemeralLimit }}
 {{- else }}
 {{- "50M" }}
 {{- end }}
@@ -200,10 +204,10 @@ Pod Ephemeral Storage Limit - new path with fallback to old path
 Affinity Injection - new path with fallback to old path
 */}}
 {{- define "locust.affinityInjection" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.affinityInjection | default true }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.affinity.enableCrInjection | default true }}
+{{- if and .Values.locustPods (hasKey .Values.locustPods "affinityInjection") }}
+{{- .Values.locustPods.affinityInjection }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.affinity (hasKey .Values.config.loadGenerationPods.affinity "enableCrInjection") }}
+{{- .Values.config.loadGenerationPods.affinity.enableCrInjection }}
 {{- else }}
 {{- true }}
 {{- end }}
@@ -213,10 +217,10 @@ Affinity Injection - new path with fallback to old path
 Tolerations Injection - new path with fallback to old path
 */}}
 {{- define "locust.tolerationsInjection" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.tolerationsInjection | default true }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.taintTolerations.enableCrInjection | default true }}
+{{- if and .Values.locustPods (hasKey .Values.locustPods "tolerationsInjection") }}
+{{- .Values.locustPods.tolerationsInjection }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.taintTolerations (hasKey .Values.config.loadGenerationPods.taintTolerations "enableCrInjection") }}
+{{- .Values.config.loadGenerationPods.taintTolerations.enableCrInjection }}
 {{- else }}
 {{- true }}
 {{- end }}
@@ -226,10 +230,10 @@ Tolerations Injection - new path with fallback to old path
 TTL Seconds After Finished - new path with fallback to old path
 */}}
 {{- define "locust.ttlSecondsAfterFinished" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.ttlSecondsAfterFinished | default "" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationJobs.ttlSecondsAfterFinished | default "" }}
+{{- if and .Values.locustPods .Values.locustPods.ttlSecondsAfterFinished }}
+{{- .Values.locustPods.ttlSecondsAfterFinished }}
+{{- else if and .Values.config .Values.config.loadGenerationJobs .Values.config.loadGenerationJobs.ttlSecondsAfterFinished }}
+{{- .Values.config.loadGenerationJobs.ttlSecondsAfterFinished }}
 {{- else }}
 {{- "" }}
 {{- end }}
@@ -239,10 +243,10 @@ TTL Seconds After Finished - new path with fallback to old path
 Metrics Exporter Image - new path with fallback to old path
 */}}
 {{- define "locust.metricsExporterImage" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.metricsExporter.image | default "containersol/locust_exporter:v0.5.0" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.metricsExporter.image | default "containersol/locust_exporter:v0.5.0" }}
+{{- if and .Values.locustPods .Values.locustPods.metricsExporter .Values.locustPods.metricsExporter.image }}
+{{- .Values.locustPods.metricsExporter.image }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.metricsExporter .Values.config.loadGenerationPods.metricsExporter.image }}
+{{- .Values.config.loadGenerationPods.metricsExporter.image }}
 {{- else }}
 {{- "containersol/locust_exporter:v0.5.0" }}
 {{- end }}
@@ -252,10 +256,10 @@ Metrics Exporter Image - new path with fallback to old path
 Metrics Exporter Port - new path with fallback to old path
 */}}
 {{- define "locust.metricsExporterPort" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.metricsExporter.port | default 9646 }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.metricsExporter.port | default 9646 }}
+{{- if and .Values.locustPods .Values.locustPods.metricsExporter .Values.locustPods.metricsExporter.port }}
+{{- .Values.locustPods.metricsExporter.port }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.metricsExporter .Values.config.loadGenerationPods.metricsExporter.port }}
+{{- .Values.config.loadGenerationPods.metricsExporter.port }}
 {{- else }}
 {{- 9646 }}
 {{- end }}
@@ -265,10 +269,10 @@ Metrics Exporter Port - new path with fallback to old path
 Metrics Exporter Pull Policy - new path with fallback to old path
 */}}
 {{- define "locust.metricsExporterPullPolicy" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.metricsExporter.pullPolicy | default "IfNotPresent" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.metricsExporter.pullPolicy | default "IfNotPresent" }}
+{{- if and .Values.locustPods .Values.locustPods.metricsExporter .Values.locustPods.metricsExporter.pullPolicy }}
+{{- .Values.locustPods.metricsExporter.pullPolicy }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.metricsExporter .Values.config.loadGenerationPods.metricsExporter.pullPolicy }}
+{{- .Values.config.loadGenerationPods.metricsExporter.pullPolicy }}
 {{- else }}
 {{- "IfNotPresent" }}
 {{- end }}
@@ -278,10 +282,10 @@ Metrics Exporter Pull Policy - new path with fallback to old path
 Metrics Exporter CPU Request
 */}}
 {{- define "locust.metricsExporterCpuRequest" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.metricsExporter.resources.requests.cpu | default "100m" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.metricsExporter.resource.cpuRequest | default "100m" }}
+{{- if and .Values.locustPods .Values.locustPods.metricsExporter .Values.locustPods.metricsExporter.resources .Values.locustPods.metricsExporter.resources.requests .Values.locustPods.metricsExporter.resources.requests.cpu }}
+{{- .Values.locustPods.metricsExporter.resources.requests.cpu }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.metricsExporter .Values.config.loadGenerationPods.metricsExporter.resource .Values.config.loadGenerationPods.metricsExporter.resource.cpuRequest }}
+{{- .Values.config.loadGenerationPods.metricsExporter.resource.cpuRequest }}
 {{- else }}
 {{- "100m" }}
 {{- end }}
@@ -291,10 +295,10 @@ Metrics Exporter CPU Request
 Metrics Exporter Memory Request
 */}}
 {{- define "locust.metricsExporterMemRequest" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.metricsExporter.resources.requests.memory | default "64Mi" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.metricsExporter.resource.memRequest | default "64Mi" }}
+{{- if and .Values.locustPods .Values.locustPods.metricsExporter .Values.locustPods.metricsExporter.resources .Values.locustPods.metricsExporter.resources.requests .Values.locustPods.metricsExporter.resources.requests.memory }}
+{{- .Values.locustPods.metricsExporter.resources.requests.memory }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.metricsExporter .Values.config.loadGenerationPods.metricsExporter.resource .Values.config.loadGenerationPods.metricsExporter.resource.memRequest }}
+{{- .Values.config.loadGenerationPods.metricsExporter.resource.memRequest }}
 {{- else }}
 {{- "64Mi" }}
 {{- end }}
@@ -304,10 +308,10 @@ Metrics Exporter Memory Request
 Metrics Exporter Ephemeral Request
 */}}
 {{- define "locust.metricsExporterEphemeralRequest" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.metricsExporter.resources.requests.ephemeralStorage | default "30M" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.metricsExporter.resource.ephemeralRequest | default "30M" }}
+{{- if and .Values.locustPods .Values.locustPods.metricsExporter .Values.locustPods.metricsExporter.resources .Values.locustPods.metricsExporter.resources.requests .Values.locustPods.metricsExporter.resources.requests.ephemeralStorage }}
+{{- .Values.locustPods.metricsExporter.resources.requests.ephemeralStorage }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.metricsExporter .Values.config.loadGenerationPods.metricsExporter.resource .Values.config.loadGenerationPods.metricsExporter.resource.ephemeralRequest }}
+{{- .Values.config.loadGenerationPods.metricsExporter.resource.ephemeralRequest }}
 {{- else }}
 {{- "30M" }}
 {{- end }}
@@ -317,10 +321,10 @@ Metrics Exporter Ephemeral Request
 Metrics Exporter CPU Limit
 */}}
 {{- define "locust.metricsExporterCpuLimit" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.metricsExporter.resources.limits.cpu | default "250m" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.metricsExporter.resource.cpuLimit | default "250m" }}
+{{- if and .Values.locustPods .Values.locustPods.metricsExporter .Values.locustPods.metricsExporter.resources .Values.locustPods.metricsExporter.resources.limits .Values.locustPods.metricsExporter.resources.limits.cpu }}
+{{- .Values.locustPods.metricsExporter.resources.limits.cpu }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.metricsExporter .Values.config.loadGenerationPods.metricsExporter.resource .Values.config.loadGenerationPods.metricsExporter.resource.cpuLimit }}
+{{- .Values.config.loadGenerationPods.metricsExporter.resource.cpuLimit }}
 {{- else }}
 {{- "250m" }}
 {{- end }}
@@ -330,10 +334,10 @@ Metrics Exporter CPU Limit
 Metrics Exporter Memory Limit
 */}}
 {{- define "locust.metricsExporterMemLimit" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.metricsExporter.resources.limits.memory | default "128Mi" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.metricsExporter.resource.memLimit | default "128Mi" }}
+{{- if and .Values.locustPods .Values.locustPods.metricsExporter .Values.locustPods.metricsExporter.resources .Values.locustPods.metricsExporter.resources.limits .Values.locustPods.metricsExporter.resources.limits.memory }}
+{{- .Values.locustPods.metricsExporter.resources.limits.memory }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.metricsExporter .Values.config.loadGenerationPods.metricsExporter.resource .Values.config.loadGenerationPods.metricsExporter.resource.memLimit }}
+{{- .Values.config.loadGenerationPods.metricsExporter.resource.memLimit }}
 {{- else }}
 {{- "128Mi" }}
 {{- end }}
@@ -343,10 +347,10 @@ Metrics Exporter Memory Limit
 Metrics Exporter Ephemeral Limit
 */}}
 {{- define "locust.metricsExporterEphemeralLimit" -}}
-{{- if .Values.locustPods }}
-{{- .Values.locustPods.metricsExporter.resources.limits.ephemeralStorage | default "50M" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.metricsExporter.resource.ephemeralLimit | default "50M" }}
+{{- if and .Values.locustPods .Values.locustPods.metricsExporter .Values.locustPods.metricsExporter.resources .Values.locustPods.metricsExporter.resources.limits .Values.locustPods.metricsExporter.resources.limits.ephemeralStorage }}
+{{- .Values.locustPods.metricsExporter.resources.limits.ephemeralStorage }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.metricsExporter .Values.config.loadGenerationPods.metricsExporter.resource .Values.config.loadGenerationPods.metricsExporter.resource.ephemeralLimit }}
+{{- .Values.config.loadGenerationPods.metricsExporter.resource.ephemeralLimit }}
 {{- else }}
 {{- "50M" }}
 {{- end }}
@@ -356,10 +360,10 @@ Metrics Exporter Ephemeral Limit
 Kafka Bootstrap Servers - new path with fallback to old path
 */}}
 {{- define "locust.kafkaBootstrapServers" -}}
-{{- if .Values.kafka }}
-{{- .Values.kafka.bootstrapServers | default "localhost:9092" }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.kafka.bootstrapServers | default "localhost:9092" }}
+{{- if and .Values.kafka .Values.kafka.bootstrapServers }}
+{{- .Values.kafka.bootstrapServers }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.kafka .Values.config.loadGenerationPods.kafka.bootstrapServers }}
+{{- .Values.config.loadGenerationPods.kafka.bootstrapServers }}
 {{- else }}
 {{- "localhost:9092" }}
 {{- end }}
@@ -369,12 +373,159 @@ Kafka Bootstrap Servers - new path with fallback to old path
 Kafka Security Enabled - new path with fallback to old path
 */}}
 {{- define "locust.kafkaSecurityEnabled" -}}
-{{- if .Values.kafka }}
-{{- .Values.kafka.security.enabled | default false }}
-{{- else if .Values.config }}
-{{- .Values.config.loadGenerationPods.kafka.acl.enabled | default false }}
+{{- if and .Values.kafka .Values.kafka.security (hasKey .Values.kafka.security "enabled") }}
+{{- .Values.kafka.security.enabled }}
+{{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.kafka .Values.config.loadGenerationPods.kafka.acl (hasKey .Values.config.loadGenerationPods.kafka.acl "enabled") }}
+{{- .Values.config.loadGenerationPods.kafka.acl.enabled }}
 {{- else }}
 {{- false }}
+{{- end }}
+{{- end }}
+
+{{/*
+=============================================================================
+SECTION 2.5: Role-Specific Resource Helpers
+=============================================================================
+These helpers return role-specific resources for master and worker pods.
+If masterResources/workerResources are set, they override the unified resources.
+If empty, the helper returns empty string, meaning "use unified resources".
+
+This implements a three-level precedence:
+  1. CR-level resources (highest precedence, in Go code)
+  2. Helm role-specific resources (these helpers)
+  3. Helm unified resources (fallback, in Section 2 helpers above)
+=============================================================================
+*/}}
+
+{{/*
+Master CPU Request - role-specific override
+*/}}
+{{- define "locust.masterCpuRequest" -}}
+{{- if and .Values.locustPods .Values.locustPods.masterResources .Values.locustPods.masterResources.requests }}
+{{- .Values.locustPods.masterResources.requests.cpu | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Master Memory Request - role-specific override
+*/}}
+{{- define "locust.masterMemRequest" -}}
+{{- if and .Values.locustPods .Values.locustPods.masterResources .Values.locustPods.masterResources.requests }}
+{{- .Values.locustPods.masterResources.requests.memory | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Master Ephemeral Storage Request - role-specific override
+*/}}
+{{- define "locust.masterEphemeralRequest" -}}
+{{- if and .Values.locustPods .Values.locustPods.masterResources .Values.locustPods.masterResources.requests }}
+{{- .Values.locustPods.masterResources.requests.ephemeralStorage | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Master CPU Limit - role-specific override
+*/}}
+{{- define "locust.masterCpuLimit" -}}
+{{- if and .Values.locustPods .Values.locustPods.masterResources .Values.locustPods.masterResources.limits }}
+{{- .Values.locustPods.masterResources.limits.cpu | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Master Memory Limit - role-specific override
+*/}}
+{{- define "locust.masterMemLimit" -}}
+{{- if and .Values.locustPods .Values.locustPods.masterResources .Values.locustPods.masterResources.limits }}
+{{- .Values.locustPods.masterResources.limits.memory | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Master Ephemeral Storage Limit - role-specific override
+*/}}
+{{- define "locust.masterEphemeralLimit" -}}
+{{- if and .Values.locustPods .Values.locustPods.masterResources .Values.locustPods.masterResources.limits }}
+{{- .Values.locustPods.masterResources.limits.ephemeralStorage | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Worker CPU Request - role-specific override
+*/}}
+{{- define "locust.workerCpuRequest" -}}
+{{- if and .Values.locustPods .Values.locustPods.workerResources .Values.locustPods.workerResources.requests }}
+{{- .Values.locustPods.workerResources.requests.cpu | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Worker Memory Request - role-specific override
+*/}}
+{{- define "locust.workerMemRequest" -}}
+{{- if and .Values.locustPods .Values.locustPods.workerResources .Values.locustPods.workerResources.requests }}
+{{- .Values.locustPods.workerResources.requests.memory | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Worker Ephemeral Storage Request - role-specific override
+*/}}
+{{- define "locust.workerEphemeralRequest" -}}
+{{- if and .Values.locustPods .Values.locustPods.workerResources .Values.locustPods.workerResources.requests }}
+{{- .Values.locustPods.workerResources.requests.ephemeralStorage | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Worker CPU Limit - role-specific override
+*/}}
+{{- define "locust.workerCpuLimit" -}}
+{{- if and .Values.locustPods .Values.locustPods.workerResources .Values.locustPods.workerResources.limits }}
+{{- .Values.locustPods.workerResources.limits.cpu | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Worker Memory Limit - role-specific override
+*/}}
+{{- define "locust.workerMemLimit" -}}
+{{- if and .Values.locustPods .Values.locustPods.workerResources .Values.locustPods.workerResources.limits }}
+{{- .Values.locustPods.workerResources.limits.memory | default "" }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Worker Ephemeral Storage Limit - role-specific override
+*/}}
+{{- define "locust.workerEphemeralLimit" -}}
+{{- if and .Values.locustPods .Values.locustPods.workerResources .Values.locustPods.workerResources.limits }}
+{{- .Values.locustPods.workerResources.limits.ephemeralStorage | default "" }}
+{{- else }}
+{{- "" }}
 {{- end }}
 {{- end }}
 
@@ -414,6 +565,70 @@ Categories:
   value: {{ include "locust.podMemLimit" . | quote }}
 - name: POD_EPHEMERAL_LIMIT
   value: {{ include "locust.podEphemeralLimit" . | quote }}
+# Role-specific resources for master Locust containers
+# Empty values mean "use unified resources" (backward compatible)
+{{- $masterCpuReq := include "locust.masterCpuRequest" . }}
+{{- if $masterCpuReq }}
+- name: MASTER_POD_CPU_REQUEST
+  value: {{ $masterCpuReq | quote }}
+{{- end }}
+{{- $masterMemReq := include "locust.masterMemRequest" . }}
+{{- if $masterMemReq }}
+- name: MASTER_POD_MEM_REQUEST
+  value: {{ $masterMemReq | quote }}
+{{- end }}
+{{- $masterEphemeralReq := include "locust.masterEphemeralRequest" . }}
+{{- if $masterEphemeralReq }}
+- name: MASTER_POD_EPHEMERAL_REQUEST
+  value: {{ $masterEphemeralReq | quote }}
+{{- end }}
+{{- $masterCpuLim := include "locust.masterCpuLimit" . }}
+{{- if $masterCpuLim }}
+- name: MASTER_POD_CPU_LIMIT
+  value: {{ $masterCpuLim | quote }}
+{{- end }}
+{{- $masterMemLim := include "locust.masterMemLimit" . }}
+{{- if $masterMemLim }}
+- name: MASTER_POD_MEM_LIMIT
+  value: {{ $masterMemLim | quote }}
+{{- end }}
+{{- $masterEphemeralLim := include "locust.masterEphemeralLimit" . }}
+{{- if $masterEphemeralLim }}
+- name: MASTER_POD_EPHEMERAL_LIMIT
+  value: {{ $masterEphemeralLim | quote }}
+{{- end }}
+# Role-specific resources for worker Locust containers
+# Empty values mean "use unified resources" (backward compatible)
+{{- $workerCpuReq := include "locust.workerCpuRequest" . }}
+{{- if $workerCpuReq }}
+- name: WORKER_POD_CPU_REQUEST
+  value: {{ $workerCpuReq | quote }}
+{{- end }}
+{{- $workerMemReq := include "locust.workerMemRequest" . }}
+{{- if $workerMemReq }}
+- name: WORKER_POD_MEM_REQUEST
+  value: {{ $workerMemReq | quote }}
+{{- end }}
+{{- $workerEphemeralReq := include "locust.workerEphemeralRequest" . }}
+{{- if $workerEphemeralReq }}
+- name: WORKER_POD_EPHEMERAL_REQUEST
+  value: {{ $workerEphemeralReq | quote }}
+{{- end }}
+{{- $workerCpuLim := include "locust.workerCpuLimit" . }}
+{{- if $workerCpuLim }}
+- name: WORKER_POD_CPU_LIMIT
+  value: {{ $workerCpuLim | quote }}
+{{- end }}
+{{- $workerMemLim := include "locust.workerMemLimit" . }}
+{{- if $workerMemLim }}
+- name: WORKER_POD_MEM_LIMIT
+  value: {{ $workerMemLim | quote }}
+{{- end }}
+{{- $workerEphemeralLim := include "locust.workerEphemeralLimit" . }}
+{{- if $workerEphemeralLim }}
+- name: WORKER_POD_EPHEMERAL_LIMIT
+  value: {{ $workerEphemeralLim | quote }}
+{{- end }}
 # Feature flags for pod scheduling
 # When enabled, the operator injects affinity/tolerations from the CR into pods
 - name: ENABLE_AFFINITY_CR_INJECTION
@@ -450,6 +665,7 @@ Categories:
 {{- end }}
 # Kafka configuration (DEPRECATED - kept for backward compatibility)
 # Consider using OpenTelemetry for metrics export instead
+{{- if .Values.kafka.enabled }}
 - name: KAFKA_BOOTSTRAP_SERVERS
   value: {{ include "locust.kafkaBootstrapServers" . | quote }}
 - name: KAFKA_SECURITY_ENABLED
@@ -488,6 +704,7 @@ Categories:
     secretKeyRef:
       name: {{ .Values.config.loadGenerationPods.kafka.locustK8sKafkaUser.userName }}
       key: {{ .Values.config.loadGenerationPods.kafka.acl.secret.passwordKey }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

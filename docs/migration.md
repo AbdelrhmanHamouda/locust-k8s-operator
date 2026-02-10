@@ -23,7 +23,7 @@ The v2 operator was rewritten from Java to Go for several key reasons:
 |--------|-----------|---------|
 | **Memory footprint** | ~256MB | ~64MB |
 | **Startup time** | ~60 seconds | <1 second |
-| **Framework** | Java Operator SDK | controller-runtime |
+| **Framework** | Java Operator SDK | Operator SDK / controller-runtime |
 | **Ecosystem alignment** | Minority | Majority of K8s operators |
 
 ### What Changes for Users
@@ -99,7 +99,7 @@ The Go operator controller requires significantly fewer resources than the Java 
 resources:
   limits:
     memory: 128Mi
-    cpu: 100m
+    cpu: 500m
   requests:
     memory: 64Mi
     cpu: 10m

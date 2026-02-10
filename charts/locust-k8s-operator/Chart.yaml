@@ -23,6 +23,14 @@ version: 2.0.0
 # It is recommended to use it with quotes.
 appVersion: "2.0.0"
 
+kubeVersion: ">= 1.25.0-0"
+home: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
+sources:
+  - https://github.com/AbdelrhmanHamouda/locust-k8s-operator
+maintainers:
+  - name: AbdelrhmanHamouda
+    url: https://github.com/AbdelrhmanHamouda
+
 annotations:
   artifacthub.io/changes: |
     - kind: changed

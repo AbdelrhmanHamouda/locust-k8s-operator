@@ -15,7 +15,7 @@ The operator uses a multi-layered testing strategy:
 ## Test Structure
 
 ```
-locust-k8s-operator-go/
+locust-k8s-operator/
 ├── api/
 │   ├── v1/
 │   │   └── *_test.go              # v1 API tests
@@ -133,7 +133,7 @@ go test ./... -v -timeout 10m
 kind get clusters
 
 # Delete and recreate
-kind delete cluster --name locust-k8s-operator-go-test-e2e
+kind delete cluster --name locust-k8s-operator-test-e2e
 make test-e2e
 ```
 

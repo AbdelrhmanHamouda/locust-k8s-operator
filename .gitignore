@@ -1,19 +1,50 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/*
+Dockerfile.cross
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+
+# Kubernetes Generated files - skip generated files, except for vendored files
+!vendor/**/zz_generated.*
+
+# Editor and IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Test coverage
+cover.out
+coverage.out
+
+# Python virtual environment
+venv/
+
+# OS
 Thumbs.db
 .DS_Store
-.gradle
-build/
-target/
-out/
-.micronaut/
-.idea
-*.iml
-*.ipr
-*.iws
-.project
-.settings
-.classpath
-.factorypath
 
 # mkdocs
 .docs-venv
 .cache
+
+# Agentic flows
+specs/
+.windsurf/
+.planning/
+.specify/
+CLAUDE.md
+GEMINI.md

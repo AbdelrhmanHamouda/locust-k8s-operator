@@ -1,0 +1,46 @@
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: e2e-test-scheduling
+spec:
+  master:
+    command: "-f /lotest/src/locustfile.py"
+  worker:
+    replicas: 2
+    command: "-f /lotest/src/locustfile.py"
+  image: locustio/locust:latest
+  testFiles:
+    configMapRef: e2e-test-configmap
+  scheduling:
+    nodeSelector:
+      workload-type: performance-testing
+      tier: compute
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/arch
+              operator: In
+              values:
+              - amd64
+              - arm64
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: performance-test-name
+                operator: In
+                values:
+                - e2e-test-scheduling
+            topologyKey: kubernetes.io/hostname
+    tolerations:
+    - key: "performance-testing"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+    - key: "high-load"
+      operator: "Exists"
+      effect: "PreferNoSchedule"

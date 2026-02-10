@@ -11,7 +11,7 @@ repo_url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
 
 # Copyright
 copyright: >
-  Copyright &copy; 2025 Abdelrhman Hamouda –
+  Copyright &copy; 2026 Abdelrhman Hamouda –
   <a href="#__consent">Change cookie settings</a>
 
 # Plugins
@@ -187,7 +187,6 @@ nav:
   - Metrics & Dashboards: metrics_and_dashboards.md
   - API Reference: api_reference.md
   - Migration Guide: migration.md
-  - Roadmap: roadmap.md
   - Contributing & Development:
       - Overview: contribute.md
       - Integration Testing: integration-testing.md

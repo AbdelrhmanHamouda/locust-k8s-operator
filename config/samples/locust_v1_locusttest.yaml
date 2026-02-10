@@ -1,0 +1,9 @@
+apiVersion: locust.io/v1
+kind: LocustTest
+metadata:
+  labels:
+    app.kubernetes.io/name: locust-k8s-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: locusttest-sample
+spec:
+  # TODO(user): Add fields here

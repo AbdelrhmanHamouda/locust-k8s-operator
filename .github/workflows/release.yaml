@@ -14,9 +14,9 @@ jobs:
   publish-image:
     name: 🐳 Publish image
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
-      packages: write
     env:
       DOCKER_IMAGE: lotest/locust-k8s-operator
     steps:
@@ -26,10 +26,10 @@ jobs:
       - name: 🔧 Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: locust-k8s-operator-go/go.mod
+          go-version-file: go.mod
 
       - name: 🔧 Setup ko
-        uses: ko-build/setup-ko@v0.6
+        uses: ko-build/setup-ko@v0.7
 
       - name: 🔐 Login to Docker Hub
         uses: docker/login-action@v3
@@ -38,11 +38,10 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: 📦 Build and push with ko
-        working-directory: locust-k8s-operator-go
         env:
           KO_DOCKER_REPO: ${{ env.DOCKER_IMAGE }}
         run: |
-          ko build ./cmd/main.go \
+          ko build ./cmd \
             --platform=linux/amd64,linux/arm64 \
             --bare \
             --tags=${{ github.ref_name }},latest,${{ github.sha }}
@@ -50,6 +49,8 @@ jobs:
   helm-chart-release:
     name: 🌊 Publish Helm chart
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [publish-image]
     permissions:
       contents: write
     steps:
@@ -76,9 +77,7 @@ jobs:
           helm package charts/locust-k8s-operator --app-version=${VERSION} --version=${VERSION} --destination=.cr-release-packages
 
       - name: 🎉 Run chart-releaser
-        # switch back to helm/chart-releaser-action when https://github.com/helm/chart-releaser-action/pull/109 is merged
-        # Waiting for a new release to include changes coming from https://github.com/helm/chart-releaser-action/commit/38cfeacdbbd62d13ec773fcdee1435ff5846c554
-        uses: askcloudarchitech/chart-releaser-action@skip-packaging-option
+        uses: helm/chart-releaser-action@v1
         with:
           skip_packaging: true
         env:
@@ -87,6 +86,7 @@ jobs:
   docs-release:
     name: 📚 Publish documentation
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:

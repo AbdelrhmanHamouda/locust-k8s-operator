@@ -4,19 +4,30 @@ on:
   push:
     branches: [main, master]
     paths:
-      - 'locust-k8s-operator-go/**'
+      - 'cmd/**'
+      - 'api/**'
+      - 'internal/**'
+      - 'test/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Makefile'
   pull_request:
     paths:
-      - 'locust-k8s-operator-go/**'
+      - 'cmd/**'
+      - 'api/**'
+      - 'internal/**'
+      - 'test/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Makefile'
 
-defaults:
-  run:
-    working-directory: locust-k8s-operator-go
+permissions: read-all
 
 jobs:
   test-e2e:
     name: 🎯 Run E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: 📥 Clone the code
         uses: actions/checkout@v4
@@ -24,18 +35,27 @@ jobs:
       - name: 🔧 Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: locust-k8s-operator-go/go.mod
+          go-version-file: go.mod
 
-      - name: ☸️ Install the latest version of kind
-        run: |
-          curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
-          chmod +x ./kind
-          sudo mv ./kind /usr/local/bin/kind
+      - name: ☸️ Create Kind cluster
+        uses: helm/kind-action@v1.12.0
+        with:
+          cluster_name: locust-k8s-operator-test-e2e
+          wait: 120s
 
-      - name: ✔️ Verify kind installation
-        run: kind version
-
-      - name: 🎯 Running Test e2e
+      - name: 🔍 Verify go mod tidy
         run: |
           go mod tidy
-          make test-e2e
+          git diff --exit-code -- go.mod go.sum
+
+      - name: 🎯 Run E2E tests
+        run: make test-e2e
+
+      - name: 📦 Upload E2E test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-artifacts
+          path: |
+            cover.out
+          retention-days: 7

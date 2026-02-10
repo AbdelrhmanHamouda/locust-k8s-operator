@@ -45,15 +45,12 @@ spec:
         - name: {{ . }}
       {{- end }}
       {{- end }}
+      # Termination grace period for graceful shutdown
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       # Pod security context - enforces non-root execution
       # Ko uses distroless/static:nonroot which runs as UID 65532
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 65532
-        runAsGroup: 65532
-        fsGroup: 65532
-        seccompProfile:
-          type: RuntimeDefault
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ include "locust-k8s-operator.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -99,10 +96,7 @@ spec:
             {{- end }}
           # Container security context - principle of least privilege
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-            readOnlyRootFilesystem: true
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           # Liveness probe - restart container if unhealthy
           livenessProbe:
             httpGet:
@@ -124,9 +118,15 @@ spec:
           # See _helpers.tpl for the full list and backward compatibility mappings
           env:
             {{- include "locust-k8s-operator.envVars" . | nindent 12 }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           {{- if .Values.webhook.enabled }}
-          # Webhook TLS certificates mounted from Secret
+          # /tmp emptyDir allows controller-runtime webhook server to create temp files
+          # with readOnlyRootFilesystem: true. Webhook certs overlay at subdirectory.
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             - name: webhook-certs
               mountPath: /tmp/k8s-webhook-server/serving-certs
               readOnly: true
@@ -134,6 +134,8 @@ spec:
       {{- if .Values.webhook.enabled }}
       # Webhook certificate Secret (created by cert-manager or manually)
       volumes:
+        - name: tmp
+          emptyDir: {}
         - name: webhook-certs
           secret:
             secretName: {{ include "locust-k8s-operator.fullname" . }}-webhook-certs

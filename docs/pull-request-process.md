@@ -19,7 +19,7 @@ This document outlines the process for submitting pull requests to the Locust K8
    git checkout -b feature/your-feature-name
    ```
 
-3. **Make Your Changes**: Implement your changes in the `locust-k8s-operator-go/` directory, following Go coding standards.
+3. **Make Your Changes**: Implement your changes, following Go coding standards.
 
 4. **Commit Your Changes**: Use the [Conventional Commits](https://www.conventionalcommits.org/) standard for commit messages. This is important as the commit messages directly influence the content of the CHANGELOG.md and version increments.
    

@@ -18,12 +18,31 @@ resources:
     cpu: 10m
     memory: 64Mi
 
-# -- Replica count (use with leader election for HA)
-replicaCount: 2
+# -- Replica count (increase to 2+ with leader election for HA)
+replicaCount: 1
+
+# -- Override the name of the chart
+nameOverride: ""
+
+# -- Override the full name of the release
+fullnameOverride: ""
+
+# -- Additional environment variables for the operator container
+extraEnv: []
+#  - name: LOG_LEVEL
+#    value: debug
+
+# -- Termination grace period for operator pods (seconds)
+terminationGracePeriodSeconds: 10
 
 # -- Leader election for HA deployments
 leaderElection:
   enabled: true
+
+# -- PodDisruptionBudget for HA deployments (requires replicaCount >= 2)
+podDisruptionBudget:
+  enabled: false
+  maxUnavailable: 1
 
 # -- Metrics endpoint (Prometheus)
 metrics:
@@ -37,10 +56,6 @@ webhook:
   port: 9443
   certManager:
     enabled: true  # Use cert-manager for TLS
-
-# -- CRD installation
-crd:
-  install: true
 
 # =============================================================================
 # Locust Test Pod Configuration (what the operator creates)
@@ -57,6 +72,30 @@ locustPods:
       cpu: 1000m
       memory: 1024Mi
       ephemeralStorage: 50M
+
+  # -- Role-specific resources for master Locust containers (overrides unified resources above)
+  # Leave empty {} to use unified resources for master
+  masterResources: {}
+  #   requests:
+  #     cpu: 500m
+  #     memory: 256Mi
+  #     ephemeralStorage: 30M
+  #   limits:
+  #     cpu: 2000m
+  #     memory: 2048Mi
+  #     ephemeralStorage: 50M
+
+  # -- Role-specific resources for worker Locust containers (overrides unified resources above)
+  # Leave empty {} to use unified resources for workers
+  workerResources: {}
+  #   requests:
+  #     cpu: 250m
+  #     memory: 128Mi
+  #     ephemeralStorage: 30M
+  #   limits:
+  #     cpu: 1000m
+  #     memory: 1024Mi
+  #     ephemeralStorage: 50M
 
   # -- Inject affinity/tolerations from CR spec
   affinityInjection: true
@@ -97,6 +136,9 @@ otelCollector:
       memory: 256Mi
   # -- OTel Collector configuration (YAML)
   config: |
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
     receivers:
       otlp:
         protocols:
@@ -110,6 +152,7 @@ otelCollector:
       debug:
         verbosity: detailed
     service:
+      extensions: [health_check]
       pipelines:
         metrics:
           receivers: [otlp]
@@ -126,6 +169,23 @@ serviceAccount:
   annotations: {}
 
 podAnnotations: {}
+
+# -- Pod security context (runs as non-root)
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container security context (principle of least privilege)
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  readOnlyRootFilesystem: true
+
 nodeSelector: {}
 tolerations: []
 affinity: {}
