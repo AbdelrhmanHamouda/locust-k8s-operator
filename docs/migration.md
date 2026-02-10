@@ -61,6 +61,17 @@ kubectl get locusttests -A -o yaml > locusttests-backup.yaml
 helm get values locust-operator -n <namespace> > values-backup.yaml
 ```
 
+!!! danger "Critical: Webhook Required for v1 API Compatibility"
+    If you have existing v1 `LocustTest` CRs, the conversion webhook is **required** for them to continue working after upgrading to v2. Without it, v1 CRs will fail CRD schema validation.
+
+    You **must**:
+
+    1. Install [cert-manager](https://cert-manager.io/docs/installation/) before upgrading
+    2. Enable the webhook during upgrade: `--set webhook.enabled=true`
+    3. Verify the webhook is running after upgrade
+
+    If you only use v2 CRs (or are starting fresh), the webhook is optional.
+
 ---
 
 ## Step 1: Update Helm Chart
@@ -71,11 +82,17 @@ helm get values locust-operator -n <namespace> > values-backup.yaml
 # Update Helm repository
 helm repo update locust-k8s-operator
 
-# Upgrade to v2
+# Upgrade to v2 (with webhook for v1 CR compatibility)
 helm upgrade locust-operator locust-k8s-operator/locust-k8s-operator \
   --namespace locust-system \
-  --version 2.0.0
+  --version 2.0.0 \
+  --set webhook.enabled=true
+
+# If you don't need v1 API compatibility, you can omit --set webhook.enabled=true
 ```
+
+!!! note "CRD Upgrade"
+    Helm automatically upgrades the CRD when using `helm upgrade`. The v2 CRD includes conversion webhook configuration when webhooks are enabled, allowing the API server to convert between v1 and v2 formats transparently.
 
 ### New Helm Values
 
@@ -98,7 +115,7 @@ The Go operator controller requires significantly fewer resources than the Java 
 ```yaml
 resources:
   limits:
-    memory: 128Mi
+    memory: 256Mi
     cpu: 500m
   requests:
     memory: 64Mi
