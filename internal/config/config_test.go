@@ -17,12 +17,24 @@ limitations under the License.
 package config
 
 import (
+	"bytes"
+	"log"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// captureLogOutput captures log output during test execution.
+func captureLogOutput(t *testing.T, fn func()) string {
+	t.Helper()
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer log.SetOutput(os.Stderr)
+	fn()
+	return buf.String()
+}
 
 func TestLoadConfig_DefaultValues(t *testing.T) {
 	// Clear any existing env vars that might interfere
@@ -445,4 +457,37 @@ func TestLoadConfig_InvalidRoleSpecificResource(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, cfg)
 	assert.Contains(t, err.Error(), "MASTER_POD_CPU_REQUEST")
+}
+
+func TestGetEnvBool_WarnsOnInvalidValue(t *testing.T) {
+	t.Setenv("TEST_BOOL_WARN", "notabool")
+	output := captureLogOutput(t, func() {
+		result := getEnvBool("TEST_BOOL_WARN", true)
+		assert.True(t, result, "Should return default on invalid value")
+	})
+	assert.Contains(t, output, "WARNING")
+	assert.Contains(t, output, "TEST_BOOL_WARN")
+	assert.Contains(t, output, "notabool")
+}
+
+func TestGetEnvInt32_WarnsOnInvalidValue(t *testing.T) {
+	t.Setenv("TEST_INT_WARN", "notanumber")
+	output := captureLogOutput(t, func() {
+		result := getEnvInt32("TEST_INT_WARN", 42)
+		assert.Equal(t, int32(42), result, "Should return default on invalid value")
+	})
+	assert.Contains(t, output, "WARNING")
+	assert.Contains(t, output, "TEST_INT_WARN")
+	assert.Contains(t, output, "notanumber")
+}
+
+func TestGetEnvInt32Ptr_WarnsOnInvalidValue(t *testing.T) {
+	t.Setenv("TEST_PTR_WARN", "invalid")
+	output := captureLogOutput(t, func() {
+		result := getEnvInt32Ptr("TEST_PTR_WARN")
+		assert.Nil(t, result, "Should return nil on invalid value")
+	})
+	assert.Contains(t, output, "WARNING")
+	assert.Contains(t, output, "TEST_PTR_WARN")
+	assert.Contains(t, output, "invalid")
 }
