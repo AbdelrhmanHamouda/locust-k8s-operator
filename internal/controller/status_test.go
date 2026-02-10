@@ -631,3 +631,82 @@ func TestUpdateStatusFromJobs_WorkersConnectedCondition(t *testing.T) {
 	assert.Equal(t, locustv2.ReasonAllWorkersConnected, workersCond.Reason)
 	assert.Contains(t, workersCond.Message, "5/5 workers connected")
 }
+
+// TestUpdateStatusFromJobs_SpecDriftedCondition verifies SpecDrifted condition is set when Generation > 1.
+func TestUpdateStatusFromJobs_SpecDriftedCondition(t *testing.T) {
+	lt := &locustv2.LocustTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Namespace:  "default",
+			Generation: 3, // Simulating spec edits
+		},
+		Spec: locustv2.LocustTestSpec{
+			Worker: locustv2.WorkerSpec{
+				Replicas: 5,
+			},
+		},
+		Status: locustv2.LocustTestStatus{
+			Phase:              locustv2.PhaseRunning,
+			ObservedGeneration: 1,
+			ExpectedWorkers:    5,
+		},
+	}
+
+	masterJob := &batchv1.Job{
+		Status: batchv1.JobStatus{
+			Active: 1,
+		},
+	}
+
+	reconciler, _ := newTestReconciler(lt)
+	ctx := context.Background()
+
+	// Call updateStatusFromJobs
+	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil)
+	require.NoError(t, err)
+
+	// Verify SpecDrifted condition exists with ConditionTrue
+	specDriftedCond := findCondition(lt.Status.Conditions, locustv2.ConditionTypeSpecDrifted)
+	require.NotNil(t, specDriftedCond)
+	assert.Equal(t, metav1.ConditionTrue, specDriftedCond.Status)
+	assert.Equal(t, locustv2.ReasonSpecChangeIgnored, specDriftedCond.Reason)
+	assert.Contains(t, specDriftedCond.Message, "Delete and recreate")
+}
+
+// TestUpdateStatusFromJobs_NoSpecDriftedOnGeneration1 verifies SpecDrifted condition is NOT set when Generation == 1.
+func TestUpdateStatusFromJobs_NoSpecDriftedOnGeneration1(t *testing.T) {
+	lt := &locustv2.LocustTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Namespace:  "default",
+			Generation: 1, // No spec edits
+		},
+		Spec: locustv2.LocustTestSpec{
+			Worker: locustv2.WorkerSpec{
+				Replicas: 5,
+			},
+		},
+		Status: locustv2.LocustTestStatus{
+			Phase:              locustv2.PhaseRunning,
+			ObservedGeneration: 1,
+			ExpectedWorkers:    5,
+		},
+	}
+
+	masterJob := &batchv1.Job{
+		Status: batchv1.JobStatus{
+			Active: 1,
+		},
+	}
+
+	reconciler, _ := newTestReconciler(lt)
+	ctx := context.Background()
+
+	// Call updateStatusFromJobs
+	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil)
+	require.NoError(t, err)
+
+	// Verify SpecDrifted condition does NOT exist
+	specDriftedCond := findCondition(lt.Status.Conditions, locustv2.ConditionTypeSpecDrifted)
+	assert.Nil(t, specDriftedCond)
+}

@@ -26,6 +26,9 @@ const (
 
 	// ConditionTypeTestCompleted indicates the test has finished.
 	ConditionTypeTestCompleted = "TestCompleted"
+
+	// ConditionTypeSpecDrifted indicates the CR spec was modified after creation but changes are ignored.
+	ConditionTypeSpecDrifted = "SpecDrifted"
 )
 
 // Condition reasons for Ready condition.
@@ -47,6 +50,11 @@ const (
 	ReasonTestInProgress = "TestInProgress"
 	ReasonTestSucceeded  = "TestSucceeded"
 	ReasonTestFailed     = "TestFailed"
+)
+
+// Condition reasons for SpecDrifted condition.
+const (
+	ReasonSpecChangeIgnored = "SpecChangeIgnored"
 )
 
 // Phase represents the current lifecycle phase of a LocustTest.

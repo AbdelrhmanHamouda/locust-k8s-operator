@@ -39,10 +39,23 @@ The Locust K8s Operator is built using **Go** with the [controller-runtime](http
 
 ### Immutable Tests
 
-Tests are **immutable by design**. Updates to a LocustTest CR after creation are ignored. To change test parameters, delete and recreate the CR. This ensures:
+Tests are **immutable by design**. Once a LocustTest CR is created, updates to its `spec` are **ignored** by the operator. The operator sets a `SpecDrifted` condition on the CR to indicate when spec changes have been detected but not applied.
 
-- Predictable behavior
-- Clean test isolation
+To change test parameters (image, commands, replicas, etc.), **delete and recreate** the CR:
+
+```bash
+# Delete the existing test
+kubectl delete locusttest <test-name>
+
+# Edit your CR YAML with the desired changes, then re-apply
+kubectl apply -f locusttest-cr.yaml
+```
+
+This design ensures:
+
+- **Predictable behavior** — each test run uses exactly the configuration it was created with
+- **Clean test isolation** — no mid-flight configuration drift
+- **Simple lifecycle** — create, run, observe, delete
 
 ### Owner References
 

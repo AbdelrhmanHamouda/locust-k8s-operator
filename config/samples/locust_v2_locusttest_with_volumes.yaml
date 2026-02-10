@@ -9,10 +9,10 @@ spec:
   image: locustio/locust:2.20.0
   
   master:
-    command: "locust -f /lotest/src/locustfile.py"
-  
+    command: "--locustfile /lotest/src/locustfile.py"
+
   worker:
-    command: "locust -f /lotest/src/locustfile.py"
+    command: "--locustfile /lotest/src/locustfile.py"
     replicas: 2
   
   testFiles:

@@ -280,10 +280,21 @@ kubectl create configmap demo-lib-map --from-file=lib/helpers.py --from-file=lib
 ### :material-play-circle-outline: Step 5: Start the test by deploying the _LocustTest_ custom resource.
 
 Deploying a _custom resource_, signals to the _Operator_ the desire to start a test and thus the _Operator_ starts creating and scheduling
-all needed resources.  
+all needed resources.
 To do that, deploy the custom resource following this template `kubectl apply -f <valid_cr>.yaml`:
 
 - `kubectl apply -f locusttest-cr.yaml`
+
+!!! warning "Tests are immutable"
+    LocustTest CRs are **immutable after creation**. If you need to change test parameters (image, command, replicas, etc.), delete the CR and recreate it:
+
+    ```bash
+    kubectl delete -f locusttest-cr.yaml
+    # Edit locusttest-cr.yaml with your changes
+    kubectl apply -f locusttest-cr.yaml
+    ```
+
+    See [How does it work](how_does_it_work.md#immutable-tests) for more details on this design decision.
 
 #### Step 5.1: Check cluster for running resources
 
@@ -295,6 +306,27 @@ The Operator will create the following resources in the cluster for each valid c
 - A kubernetes _service_ for the _master_ node so it is reachable by other _worker_ nodes.
 - A kubernetes _Job_ to manage the _master_ node.
 - A kubernetes _Job_ to manage the _worker_ node.
+
+#### Step 5.2: Access the Locust web UI
+
+The Locust web UI allows you to monitor test progress, view statistics, and control test execution in real time.
+
+The web UI runs on port **8089** of the master pod. To access it, use `kubectl port-forward`:
+
+```bash
+kubectl port-forward job/<test-name>-master 8089:8089
+```
+
+For the example above, this would be:
+
+```bash
+kubectl port-forward job/demo-test-master 8089:8089
+```
+
+Then open [http://localhost:8089](http://localhost:8089) in your browser.
+
+!!! tip "Using autostart"
+    When `master.autostart` is enabled (the default), the test begins automatically without interaction via the web UI. The web UI is still useful for monitoring progress and viewing real-time statistics.
 
 ### :material-delete-outline: Step 6: Clear resources after test run
 

@@ -9,17 +9,17 @@ image:
   pullPolicy: IfNotPresent
   pullSecrets: []
 
-# -- Operator pod resources (Go binary is lightweight)
+# -- Operator pod resources (Go operator with controller-runtime)
 resources:
   limits:
     cpu: 500m
-    memory: 128Mi
+    memory: 256Mi
   requests:
     cpu: 10m
     memory: 64Mi
 
-# -- Replica count (increase to 2+ with leader election for HA)
-replicaCount: 1
+# -- Replica count (HA default (leader election enabled); set to 1 for single-replica)
+replicaCount: 2
 
 # -- Override the name of the chart
 nameOverride: ""
@@ -41,7 +41,7 @@ leaderElection:
 
 # -- PodDisruptionBudget for HA deployments (requires replicaCount >= 2)
 podDisruptionBudget:
-  enabled: false
+  enabled: true
   maxUnavailable: 1
 
 # -- Metrics endpoint (Prometheus)

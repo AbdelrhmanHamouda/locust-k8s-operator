@@ -24,6 +24,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 )
@@ -121,7 +123,8 @@ func (r *LocustTestReconciler) updateStatusFromJobs(
 			}
 		}
 
-		_ = oldPhase // Keep variable to document this is a phase transition
+		log := logf.FromContext(ctx)
+		log.Info("Phase transition", "from", string(oldPhase), "to", string(newPhase), "locustTest", lt.Name)
 	}
 
 	// Update worker connection status (approximation from worker Job)
@@ -143,6 +146,21 @@ func (r *LocustTestReconciler) updateStatusFromJobs(
 
 	// Update ObservedGeneration (CORE-25)
 	lt.Status.ObservedGeneration = lt.Generation
+
+	// Set SpecDrifted condition when spec was modified on an immutable test (STAB-03)
+	if lt.Generation > 1 && lt.Status.Phase != locustv2.PhasePending {
+		r.setCondition(lt, locustv2.ConditionTypeSpecDrifted,
+			metav1.ConditionTrue, locustv2.ReasonSpecChangeIgnored,
+			"Spec changes after creation are ignored. Delete and recreate the CR to apply changes.")
+	}
+
+	// Re-fetch CR to get latest resource version and prevent conflicts (STAB-01)
+	latestLT := lt.DeepCopy()
+	if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
+		return fmt.Errorf("failed to re-fetch LocustTest before status update: %w", err)
+	}
+	// Apply our computed status changes to the freshly fetched object
+	lt.Status = latestLT.Status
 
 	if err := r.Status().Update(ctx, lt); err != nil {
 		return fmt.Errorf("failed to update status from Jobs: %w", err)

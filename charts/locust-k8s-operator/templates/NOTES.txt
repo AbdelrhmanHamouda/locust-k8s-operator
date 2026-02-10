@@ -18,29 +18,20 @@ NEXT STEPS
 3. Create a LocustTest custom resource:
 
    cat <<EOF | kubectl apply -f -
-   apiVersion: locust.io/v1alpha1
+   apiVersion: locust.io/v2
    kind: LocustTest
    metadata:
      name: example-test
      namespace: {{ .Release.Namespace }}
    spec:
-     masterCommand: locust
-     workerCommand: locust
-     locustfile:
-       name: my-locustfile
-       content: |
-         from locust import HttpUser, task, between
-
-         class QuickstartUser(HttpUser):
-             wait_time = between(1, 2)
-
-             @task
-             def hello_world(self):
-                 self.client.get("/")
-     workers: 3
-     image:
-       name: locustio/locust:latest
-       pullPolicy: IfNotPresent
+     image: locustio/locust:2.32.0
+     master:
+       command: "--locustfile /lotest/src/locustfile.py --host https://example.com"
+     worker:
+       command: "--locustfile /lotest/src/locustfile.py"
+       replicas: 3
+     testFiles:
+       configMapRef: my-locust-tests
    EOF
 
 4. Monitor the LocustTest status:
@@ -51,6 +42,15 @@ NEXT STEPS
 5. Check created resources (Job, Service):
 
    kubectl get jobs,services -n {{ .Release.Namespace }} -l locust.io/test-name=example-test
+
+6. Access the Locust web UI:
+
+   The web UI (port 8089) is not exposed via the master Service by default.
+   Use kubectl port-forward to access it:
+
+   kubectl port-forward -n {{ .Release.Namespace }} job/example-test-master 8089:8089
+
+   Then open http://localhost:8089 in your browser.
 
 {{- if .Values.webhook.enabled }}
 

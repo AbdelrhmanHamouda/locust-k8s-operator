@@ -102,6 +102,12 @@ func buildJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, mode Operatio
 					Affinity:         buildAffinity(lt, cfg),
 					Tolerations:      buildTolerations(lt, cfg),
 					NodeSelector:     buildNodeSelector(lt),
+					SecurityContext: &corev1.PodSecurityContext{
+						RunAsNonRoot: boolPtr(true),
+						SeccompProfile: &corev1.SeccompProfile{
+							Type: corev1.SeccompProfileTypeRuntimeDefault,
+						},
+					},
 				},
 			},
 		},
@@ -441,4 +447,9 @@ func buildNodeSelector(lt *locustv2.LocustTest) map[string]string {
 	}
 
 	return lt.Spec.Scheduling.NodeSelector
+}
+
+// boolPtr returns a pointer to a bool value.
+func boolPtr(b bool) *bool {
+	return &b
 }
