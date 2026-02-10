@@ -515,6 +515,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Kafka &amp; AWS MSK configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#two-level-configuration-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two-Level Configuration Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1069,33 +1097,6 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../roadmap/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Roadmap
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
     
     
       
@@ -1252,9 +1253,17 @@
 <h1 id="advanced-topics">Advanced topics<a class="headerlink" href="#advanced-topics" title="Anchor link to this section for reference">⚓</a></h1>
 <p>Basic configuration is not always enough to satisfy the performance test needs, for example when needing to work with Kafka and MSK. Below is a collection of topics of an advanced nature. This list will be keep growing as the tool matures more and more.</p>
 <h2 id="kafka-integration"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.54 12.97c-.68 0-1.3.25-1.78.67l-1.29-.75c.09-.29.13-.6.13-.92s-.04-.63-.1-.92l1.23-.73c.48.44 1.12.68 1.81.68 1.49 0 2.7-1.19 2.7-2.68s-1.21-2.69-2.7-2.69-2.7 1.21-2.7 2.7c0 .17.02.37.05.55l-1.25.72c-.43-.45-1-.78-1.64-.95V7.26a2.705 2.705 0 0 0 1.88-2.57C11.88 3.2 10.67 2 9.18 2S6.5 3.2 6.5 4.69c0 1.2.76 2.21 1.84 2.57v1.4a3.42 3.42 0 0 0-2.58 3.31c0 1.6 1.1 2.94 2.58 3.31v1.45A2.69 2.69 0 0 0 6.5 19.3c0 1.49 1.19 2.7 2.68 2.7s2.7-1.21 2.7-2.7c0-1.2-.79-2.22-1.88-2.57v-1.44c.64-.16 1.2-.49 1.64-.94l1.26.73c-.04.19-.06.38-.06.58 0 1.49 1.21 2.7 2.7 2.7s2.7-1.21 2.7-2.7-1.21-2.69-2.7-2.69m0-5.97c.74 0 1.33.59 1.33 1.32s-.59 1.34-1.33 1.34-1.33-.6-1.33-1.34S14.8 7 15.54 7M7.85 4.69c0-.74.59-1.34 1.33-1.34s1.32.6 1.32 1.34-.58 1.34-1.32 1.34-1.33-.6-1.33-1.34M10.5 19.3c0 .74-.58 1.34-1.32 1.34s-1.33-.6-1.33-1.34.59-1.34 1.33-1.34 1.32.6 1.32 1.34m-1.32-5.41a1.92 1.92 0 1 1 .001-3.841 1.92 1.92 0 0 1-.001 3.841M15.54 17c-.74 0-1.33-.6-1.33-1.34s.59-1.33 1.33-1.33 1.33.6 1.33 1.33S16.28 17 15.54 17"/></svg></span> Kafka &amp; AWS MSK configuration<a class="headerlink" href="#kafka-integration" title="Anchor link to this section for reference">⚓</a></h2>
-<p>Generally speaking, the usage of Kafka in a <em>locustfile</em> is identical to how it would be used anywhere else within the cloud context. Thus, no special setup is needed for the purposes of performance testing with the <em>Operator</em>.<br />
-That being said, if an organization is using kafka in production, chances are that authenticated kafka is being used. One of the main providers of such managed service is <em>AWS</em> in the form of <em>MSK</em>. For that end, the <em>Operator</em> have an <em>out-of-the-box</em> support for MSK.</p>
-<p>To enable performance testing with <em>MSK</em>, a central/global Kafka user can be created by the "cloud admin" or "the team" responsible for the <em>Operator</em> deployment within the organization. The <em>Operator</em> can then be easily configured to inject the configuration of that user as environment variables in all generated resources. Those variables can be used by the test to establish authentication with the kafka broker.</p>
+<p>Generally speaking, the usage of Kafka in a <em>locustfile</em> is identical to how it would be used anywhere else within the cloud context. Thus, no special setup is needed for the purposes of performance testing with the <em>Operator</em>.
+That being said, if an organization is using kafka in production, chances are that authenticated kafka is being used. One of the main providers of such managed service is <em>AWS</em> in the form of <em>MSK</em>. For that end, the <em>Operator</em> provides an <em>out-of-the-box</em> support for MSK through a two-level configuration model.</p>
+<h3 id="two-level-configuration-model">Two-Level Configuration Model<a class="headerlink" href="#two-level-configuration-model" title="Anchor link to this section for reference">⚓</a></h3>
+<p>The operator supports two approaches to Kafka configuration, which can be used independently or combined:</p>
+<p><strong>1. Operator-Level Configuration (Centralized Management)</strong></p>
+<p>The "cloud admin" or team responsible for the <em>Operator</em> deployment can configure Kafka credentials once during operator installation via Helm values. The operator automatically injects these credentials as environment variables into all generated Locust pods. This centralized approach means CR creators don't need to know or manage Kafka credentials - they're handled transparently by the operator.</p>
+<p><strong>2. Per-Test Configuration (Test-Specific Override)</strong></p>
+<p>Individual tests can override the operator-level configuration by specifying <code>spec.env.variables</code> in their LocustTest CR. This allows specific tests to use different Kafka clusters, credentials, or configurations when needed.</p>
+<p><strong>Configuration Priority</strong>: Per-test variables specified in the CR override operator-level configuration. This allows centralized management as the default while maintaining flexibility for special cases.</p>
+<h3 id="available-environment-variables">Available Environment Variables<a class="headerlink" href="#available-environment-variables" title="Anchor link to this section for reference">⚓</a></h3>
+<p>When Kafka configuration is enabled (either at operator-level or per-test), the following environment variables are available to the test:</p>
 <table>
 <thead>
 <tr>
@@ -1630,7 +1639,7 @@ declared affinity labels <strong>must</strong> be present on nodes in order for 
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ghcr.io/mycompany/locust:latest</span><span class="w"> </span><span class="c1"># (1)!</span>
 <span class="w">  </span><span class="nt">imagePullSecrets</span><span class="p">:</span><span class="w"> </span><span class="c1"># (2)!</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gcr-secret</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gcr-secret</span>
 <span class="w">  </span><span class="nt">master</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;--locustfile</span><span class="nv"> </span><span class="s">/lotest/src/test.py</span><span class="nv"> </span><span class="s">--host</span><span class="nv"> </span><span class="s">https://example.com&quot;</span>
 <span class="w">  </span><span class="nt">worker</span><span class="p">:</span>
@@ -1648,7 +1657,7 @@ declared affinity labels <strong>must</strong> be present on nodes in order for 
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ghcr.io/mycompany/locust:latest</span>
 <span class="w">  </span><span class="nt">imagePullSecrets</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gcr-secret</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gcr-secret</span>
 <span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
 </code></pre></div>
 </div>
@@ -2067,7 +2076,7 @@ string. In this case, job definitions will not include the parameter.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="January 26, 2026 22:36:25 UTC">January 26, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="February 10, 2026 11:45:58 UTC">February 10, 2026</span>
   </span>
 
     
@@ -2145,7 +2154,7 @@ string. In this case, job definitions will not include the parameter.</p>
       <div class="md-copyright">
   
     <div class="md-copyright__highlight">
-      Copyright &copy; 2025 Abdelrhman Hamouda – <a href="#__consent">Change cookie settings</a>
+      Copyright &copy; 2026 Abdelrhman Hamouda – <a href="#__consent">Change cookie settings</a>
 
     </div>
   
