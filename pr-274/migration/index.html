@@ -1176,17 +1176,35 @@ kubectl<span class="w"> </span>get<span class="w"> </span>locusttests<span class
 <span class="c1"># Export operator Helm values</span>
 helm<span class="w"> </span>get<span class="w"> </span>values<span class="w"> </span>locust-operator<span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span>&gt;<span class="w"> </span>values-backup.yaml
 </code></pre></div>
+<div class="admonition danger">
+<p class="admonition-title">Critical: Webhook Required for v1 API Compatibility</p>
+<p>If you have existing v1 <code>LocustTest</code> CRs, the conversion webhook is <strong>required</strong> for them to continue working after upgrading to v2. Without it, v1 CRs will fail CRD schema validation.</p>
+<p>You <strong>must</strong>:</p>
+<ol>
+<li>Install <a href="https://cert-manager.io/docs/installation/">cert-manager</a> before upgrading</li>
+<li>Enable the webhook during upgrade: <code>--set webhook.enabled=true</code></li>
+<li>Verify the webhook is running after upgrade</li>
+</ol>
+<p>If you only use v2 CRs (or are starting fresh), the webhook is optional.</p>
+</div>
 <hr />
 <h2 id="step-1-update-helm-chart">Step 1: Update Helm Chart<a class="headerlink" href="#step-1-update-helm-chart" title="Anchor link to this section for reference">⚓</a></h2>
 <h3 id="upgrade-command">Upgrade Command<a class="headerlink" href="#upgrade-command" title="Anchor link to this section for reference">⚓</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Update Helm repository</span>
 helm<span class="w"> </span>repo<span class="w"> </span>update<span class="w"> </span>locust-k8s-operator
 
-<span class="c1"># Upgrade to v2</span>
+<span class="c1"># Upgrade to v2 (with webhook for v1 CR compatibility)</span>
 helm<span class="w"> </span>upgrade<span class="w"> </span>locust-operator<span class="w"> </span>locust-k8s-operator/locust-k8s-operator<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--namespace<span class="w"> </span>locust-system<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--version<span class="w"> </span><span class="m">2</span>.0.0
+<span class="w">  </span>--version<span class="w"> </span><span class="m">2</span>.0.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--set<span class="w"> </span>webhook.enabled<span class="o">=</span><span class="nb">true</span>
+
+<span class="c1"># If you don&#39;t need v1 API compatibility, you can omit --set webhook.enabled=true</span>
 </code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">CRD Upgrade</p>
+<p>Helm automatically upgrades the CRD when using <code>helm upgrade</code>. The v2 CRD includes conversion webhook configuration when webhooks are enabled, allowing the API server to convert between v1 and v2 formats transparently.</p>
+</div>
 <h3 id="new-helm-values">New Helm Values<a class="headerlink" href="#new-helm-values" title="Anchor link to this section for reference">⚓</a></h3>
 <p>The v2 chart introduces a cleaner structure. Key changes:</p>
 <table>
@@ -1239,7 +1257,7 @@ helm<span class="w"> </span>upgrade<span class="w"> </span>locust-operator<span 
 <p>The Go operator controller requires significantly fewer resources than the Java version:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">resources</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">limits</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">128Mi</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">256Mi</span>
 <span class="w">    </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500m</span>
 <span class="w">  </span><span class="nt">requests</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">64Mi</span>
@@ -1588,7 +1606,7 @@ helm<span class="w"> </span>install<span class="w"> </span>locust-operator<span 
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="February 10, 2026 11:45:58 UTC">February 10, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="February 10, 2026 21:43:03 UTC">February 10, 2026</span>
   </span>
 
     

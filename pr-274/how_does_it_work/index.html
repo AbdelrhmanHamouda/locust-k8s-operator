@@ -817,10 +817,19 @@
 </code></pre></div>
 <h2 id="key-design-decisions">Key Design Decisions<a class="headerlink" href="#key-design-decisions" title="Anchor link to this section for reference">⚓</a></h2>
 <h3 id="immutable-tests">Immutable Tests<a class="headerlink" href="#immutable-tests" title="Anchor link to this section for reference">⚓</a></h3>
-<p>Tests are <strong>immutable by design</strong>. Updates to a LocustTest CR after creation are ignored. To change test parameters, delete and recreate the CR. This ensures:</p>
+<p>Tests are <strong>immutable by design</strong>. Once a LocustTest CR is created, updates to its <code>spec</code> are <strong>ignored</strong> by the operator. The operator sets a <code>SpecDrifted</code> condition on the CR to indicate when spec changes have been detected but not applied.</p>
+<p>To change test parameters (image, commands, replicas, etc.), <strong>delete and recreate</strong> the CR:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Delete the existing test</span>
+kubectl<span class="w"> </span>delete<span class="w"> </span>locusttest<span class="w"> </span>&lt;test-name&gt;
+
+<span class="c1"># Edit your CR YAML with the desired changes, then re-apply</span>
+kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>locusttest-cr.yaml
+</code></pre></div>
+<p>This design ensures:</p>
 <ul>
-<li>Predictable behavior</li>
-<li>Clean test isolation</li>
+<li><strong>Predictable behavior</strong> — each test run uses exactly the configuration it was created with</li>
+<li><strong>Clean test isolation</strong> — no mid-flight configuration drift</li>
+<li><strong>Simple lifecycle</strong> — create, run, observe, delete</li>
 </ul>
 <h3 id="owner-references">Owner References<a class="headerlink" href="#owner-references" title="Anchor link to this section for reference">⚓</a></h3>
 <p>All created resources (Jobs, Services) have owner references pointing to the LocustTest CR. This enables:</p>
@@ -873,7 +882,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="February 10, 2026 11:45:58 UTC">February 10, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="February 10, 2026 21:43:03 UTC">February 10, 2026</span>
   </span>
 
     
