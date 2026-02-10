@@ -296,6 +296,27 @@ The Operator will create the following resources in the cluster for each valid c
 - A kubernetes _Job_ to manage the _master_ node.
 - A kubernetes _Job_ to manage the _worker_ node.
 
+#### Step 5.2: Access the Locust web UI
+
+The Locust web UI allows you to monitor test progress, view statistics, and control test execution in real time.
+
+The web UI runs on port **8089** of the master pod. To access it, use `kubectl port-forward`:
+
+```bash
+kubectl port-forward job/<test-name>-master 8089:8089
+```
+
+For the example above, this would be:
+
+```bash
+kubectl port-forward job/demo-test-master 8089:8089
+```
+
+Then open [http://localhost:8089](http://localhost:8089) in your browser.
+
+!!! tip "Using autostart"
+    When `master.autostart` is enabled (the default), the test begins automatically without interaction via the web UI. The web UI is still useful for monitoring progress and viewing real-time statistics.
+
 ### :material-delete-outline: Step 6: Clear resources after test run
 
 In order to remove the cluster resources after a test run, simply remove the custom resource and the _Operator_ will react to this event by
