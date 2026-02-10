@@ -37,7 +37,7 @@ The project is **_actively_** maintained and is under continuous development and
 
 The operator is built with **Go** using the [controller-runtime](https://github.com/kubernetes-sigs/controller-runtime) framework. Key technologies:
 
-- **Language**: Go 1.23+
+- **Language**: Go 1.24+
 - **Framework**: controller-runtime / Operator SDK
 - **Testing**: envtest, Ginkgo, Kind
 - **Build**: Make, Docker

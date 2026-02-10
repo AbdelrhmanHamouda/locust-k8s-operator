@@ -43,7 +43,7 @@ locust-k8s-operator/
 
 ## Prerequisites
 
-- **Go 1.23+**: Required for running tests
+- **Go 1.24+**: Required for running tests
 - **Docker**: Required for E2E tests (Kind)
 - **Kind**: Required for E2E tests
 

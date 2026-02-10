@@ -137,7 +137,6 @@ The following tables list the configurable parameters of the Locust Operator Hel
 
 | Parameter | Description | Default |
 |---|---|---|
-| `crd.install` | Specifies whether to deploy the `LocustTest` CRD. | `true` |
 | `k8s.clusterRole.enabled` | Deploy with a cluster-wide role (`true`) or a namespaced role (`false`). | `true` |
 | `serviceAccount.create` | Specifies whether a service account should be created. | `true` |
 | `serviceAccount.name` | The name of the service account to use. If empty and `serviceAccount.create` is `true`, a name is generated using the release name. If `serviceAccount.create` is `false`, defaults to `default`. | `""` |
@@ -149,7 +148,7 @@ The Go operator requires significantly fewer resources than the Java version:
 
 | Parameter | Description | Default |
 |---|---|---|
-| `resources.limits.memory` | Operator memory limit. | `128Mi` |
+| `resources.limits.memory` | Operator memory limit. | `256Mi` |
 | `resources.limits.cpu` | Operator CPU limit. | `500m` |
 | `resources.requests.memory` | Operator memory request. | `64Mi` |
 | `resources.requests.cpu` | Operator CPU request. | `10m` |
