@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -207,16 +208,25 @@ func setupWebhookServer(flags *flagConfig, tlsOpts []func(*tls.Config)) (webhook
 	var webhookCertWatcher *certwatcher.CertWatcher
 
 	if len(flags.webhookCertPath) > 0 {
-		setupLog.Info("Initializing webhook certificate watcher using provided certificates",
-			"webhook-cert-path", flags.webhookCertPath,
-			"webhook-cert-name", flags.webhookCertName,
-			"webhook-cert-key", flags.webhookCertKey)
+		certFile := filepath.Join(flags.webhookCertPath, flags.webhookCertName)
+		keyFile := filepath.Join(flags.webhookCertPath, flags.webhookCertKey)
+
+		setupLog.Info("Waiting for webhook certificate files",
+			"cert", certFile, "key", keyFile)
+
+		// Poll until both cert files exist (cert-manager may still be issuing)
+		for {
+			_, certErr := os.Stat(certFile)
+			_, keyErr := os.Stat(keyFile)
+			if certErr == nil && keyErr == nil {
+				break
+			}
+			setupLog.Info("Webhook certificate files not ready, retrying in 1s...")
+			time.Sleep(time.Second)
+		}
 
 		var err error
-		webhookCertWatcher, err = certwatcher.New(
-			filepath.Join(flags.webhookCertPath, flags.webhookCertName),
-			filepath.Join(flags.webhookCertPath, flags.webhookCertKey),
-		)
+		webhookCertWatcher, err = certwatcher.New(certFile, keyFile)
 		if err != nil {
 			setupLog.Error(err, "Failed to initialize webhook certificate watcher")
 			os.Exit(1)

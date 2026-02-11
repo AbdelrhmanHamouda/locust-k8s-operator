@@ -139,6 +139,7 @@ spec:
         - name: webhook-certs
           secret:
             secretName: {{ include "locust-k8s-operator.fullname" . }}-webhook-certs
+            optional: true
       {{- end }}
       # Node scheduling constraints
       {{- with .Values.nodeSelector }}
