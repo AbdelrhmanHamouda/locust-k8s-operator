@@ -1,6 +1,7 @@
 apiVersion: v2
 name: locust-k8s-operator
 description: Locust Kubernetes Operator - Go v2
+icon: https://raw.githubusercontent.com/AbdelrhmanHamouda/locust-k8s-operator/master/docs/assets/images/favicon.png
 
 # A chart can be either an 'application' or a 'library' chart.
 #

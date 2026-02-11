@@ -232,7 +232,7 @@ Deploy an OTel Collector alongside the operator:
 | Parameter | Description | Default |
 |---|---|---|
 | `otelCollector.enabled` | Deploy OTel Collector. | `false` |
-| `otelCollector.image` | Collector image. | `otel/opentelemetry-collector-contrib:0.92.0` |
+| `otelCollector.image` | Collector image. | `otel/opentelemetry-collector-contrib:0.145.0` |
 | `otelCollector.replicas` | Number of collector replicas. | `1` |
 | `otelCollector.resources.requests.cpu` | CPU request for collector. | `50m` |
 | `otelCollector.resources.requests.memory` | Memory request for collector. | `64Mi` |

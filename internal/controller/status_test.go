@@ -25,6 +25,8 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/record"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 )
@@ -709,4 +711,55 @@ func TestUpdateStatusFromJobs_NoSpecDriftedOnGeneration1(t *testing.T) {
 	// Verify SpecDrifted condition does NOT exist
 	specDriftedCond := findCondition(lt.Status.Conditions, locustv2.ConditionTypeSpecDrifted)
 	assert.Nil(t, specDriftedCond)
+}
+
+// TestUpdateStatusFromJobs_RetryOnConflict verifies that updateStatusFromJobs retries on 409 Conflict.
+func TestUpdateStatusFromJobs_RetryOnConflict(t *testing.T) {
+	lt := &locustv2.LocustTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Namespace:  "default",
+			Generation: 1,
+		},
+		Spec: locustv2.LocustTestSpec{
+			Worker: locustv2.WorkerSpec{
+				Replicas: 3,
+			},
+		},
+		Status: locustv2.LocustTestStatus{
+			Phase:           locustv2.PhaseRunning,
+			ExpectedWorkers: 3,
+		},
+	}
+
+	scheme := newTestScheme()
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(lt).
+		WithStatusSubresource(&locustv2.LocustTest{}).
+		Build()
+	recorder := record.NewFakeRecorder(10)
+
+	cc := &conflictOnUpdateClient{
+		Client:        fakeClient,
+		conflictCount: 2, // fail twice, succeed on third attempt
+	}
+
+	reconciler := &LocustTestReconciler{
+		Client:   cc,
+		Scheme:   scheme,
+		Config:   newTestOperatorConfig(),
+		Recorder: recorder,
+	}
+
+	masterJob := &batchv1.Job{
+		Status: batchv1.JobStatus{Active: 1},
+	}
+
+	ctx := context.Background()
+	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, locustv2.PhaseRunning, lt.Status.Phase)
+	assert.Equal(t, 3, cc.updateCalls, "Expected 2 conflicts + 1 successful update")
 }

@@ -27,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -36,6 +37,8 @@ import (
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/resources"
 )
+
+const finalizerName = "locust.io/cleanup"
 
 // LocustTestReconciler reconciles a LocustTest object
 type LocustTestReconciler struct {
@@ -47,6 +50,7 @@ type LocustTestReconciler struct {
 
 // +kubebuilder:rbac:groups=locust.io,resources=locusttests,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=locust.io,resources=locusttests/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=locust.io,resources=locusttests/finalizers,verbs=update
 // +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;delete
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;delete
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
@@ -54,7 +58,7 @@ type LocustTestReconciler struct {
 // Reconcile handles LocustTest CR events.
 // On creation: Creates master Service, master Job, and worker Job.
 // On update: NO-OP by design (tests are immutable).
-// On deletion: Automatic cleanup via owner references.
+// On deletion: Finalizer emits log + Event, then cleanup via owner references.
 func (r *LocustTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 
@@ -70,10 +74,44 @@ func (r *LocustTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
+	// Handle deletion: finalizer ensures visible logs and events
+	if !locustTest.DeletionTimestamp.IsZero() {
+		if controllerutil.ContainsFinalizer(locustTest, finalizerName) {
+			log.Info("LocustTest deleted, cleaning up resources via owner references",
+				"name", locustTest.Name,
+				"namespace", locustTest.Namespace)
+			r.Recorder.Event(locustTest, corev1.EventTypeNormal, "Deleting",
+				"LocustTest and owned resources being cleaned up")
+			controllerutil.RemoveFinalizer(locustTest, finalizerName)
+			if err := r.Update(ctx, locustTest); err != nil {
+				log.Error(err, "Failed to remove finalizer")
+				return ctrl.Result{}, fmt.Errorf("failed to remove finalizer: %w", err)
+			}
+		}
+		return ctrl.Result{}, nil
+	}
+
+	// Add finalizer on first reconcile if not present
+	if !controllerutil.ContainsFinalizer(locustTest, finalizerName) {
+		controllerutil.AddFinalizer(locustTest, finalizerName)
+		if err := r.Update(ctx, locustTest); err != nil {
+			log.Error(err, "Failed to add finalizer")
+			return ctrl.Result{}, fmt.Errorf("failed to add finalizer: %w", err)
+		}
+		if err := r.Get(ctx, req.NamespacedName, locustTest); err != nil {
+			return ctrl.Result{}, fmt.Errorf("failed to re-fetch after adding finalizer: %w", err)
+		}
+	}
+
 	// Initialize status on first reconcile
 	if locustTest.Status.Phase == "" {
-		r.initializeStatus(locustTest)
-		if err := r.Status().Update(ctx, locustTest); err != nil {
+		if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+			if err := r.Get(ctx, req.NamespacedName, locustTest); err != nil {
+				return err
+			}
+			r.initializeStatus(locustTest)
+			return r.Status().Update(ctx, locustTest)
+		}); err != nil {
 			log.Error(err, "Failed to initialize status")
 			return ctrl.Result{}, fmt.Errorf("failed to initialize status: %w", err)
 		}
@@ -155,22 +193,20 @@ func (r *LocustTestReconciler) createResources(ctx context.Context, lt *locustv2
 		"masterJob", masterJob.Name,
 		"workerJob", workerJob.Name)
 
-	// Refetch to get latest resource version before status update
-	if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
-		log.Error(err, "Failed to refetch LocustTest before status update")
-		return ctrl.Result{}, fmt.Errorf("failed to refetch LocustTest before status update: %w", err)
-	}
-
-	// Update status after successful resource creation
-	lt.Status.Phase = locustv2.PhaseRunning
-	lt.Status.ObservedGeneration = lt.Generation
-	if lt.Status.StartTime == nil {
-		now := metav1.Now()
-		lt.Status.StartTime = &now
-	}
-	r.setReady(lt, true, locustv2.ReasonResourcesCreated, "All resources created")
-
-	if err := r.Status().Update(ctx, lt); err != nil {
+	// Update status after successful resource creation (with conflict retry)
+	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
+			return err
+		}
+		lt.Status.Phase = locustv2.PhaseRunning
+		lt.Status.ObservedGeneration = lt.Generation
+		if lt.Status.StartTime == nil {
+			now := metav1.Now()
+			lt.Status.StartTime = &now
+		}
+		r.setReady(lt, true, locustv2.ReasonResourcesCreated, "All resources created")
+		return r.Status().Update(ctx, lt)
+	}); err != nil {
 		log.Error(err, "Failed to update status after resource creation")
 		return ctrl.Result{}, fmt.Errorf("failed to update status after resource creation: %w", err)
 	}
@@ -235,20 +271,15 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 				fmt.Sprintf("Master Service %s was deleted externally, will attempt recreation", masterServiceName))
 
 			// Reset to Pending to trigger resource recreation on next reconcile
-			lt.Status.Phase = locustv2.PhasePending
-			lt.Status.ObservedGeneration = lt.Generation
-			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
-
-			// Re-fetch CR to get latest resource version before status update (STAB-01)
-			if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to re-fetch LocustTest: %w", err)
-			}
-			// Re-apply status changes after re-fetch
-			lt.Status.Phase = locustv2.PhasePending
-			lt.Status.ObservedGeneration = lt.Generation
-			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
-
-			if err := r.Status().Update(ctx, lt); err != nil {
+			if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+				if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
+					return err
+				}
+				lt.Status.Phase = locustv2.PhasePending
+				lt.Status.ObservedGeneration = lt.Generation
+				r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
+				return r.Status().Update(ctx, lt)
+			}); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to update status after detecting Service deletion: %w", err)
 			}
 			return ctrl.Result{RequeueAfter: time.Second}, nil
@@ -272,20 +303,15 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 			r.Recorder.Event(lt, corev1.EventTypeWarning, "ResourceDeleted",
 				fmt.Sprintf("Master Job %s was deleted externally, will attempt recreation", masterJobName))
 
-			lt.Status.Phase = locustv2.PhasePending
-			lt.Status.ObservedGeneration = lt.Generation
-			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
-
-			// Re-fetch CR to get latest resource version before status update (STAB-01)
-			if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to re-fetch LocustTest: %w", err)
-			}
-			// Re-apply status changes after re-fetch
-			lt.Status.Phase = locustv2.PhasePending
-			lt.Status.ObservedGeneration = lt.Generation
-			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
-
-			if err := r.Status().Update(ctx, lt); err != nil {
+			if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+				if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
+					return err
+				}
+				lt.Status.Phase = locustv2.PhasePending
+				lt.Status.ObservedGeneration = lt.Generation
+				r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
+				return r.Status().Update(ctx, lt)
+			}); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to update status after detecting master Job deletion: %w", err)
 			}
 			return ctrl.Result{RequeueAfter: time.Second}, nil
@@ -304,20 +330,15 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 			r.Recorder.Event(lt, corev1.EventTypeWarning, "ResourceDeleted",
 				fmt.Sprintf("Worker Job %s was deleted externally, will attempt recreation", workerJobName))
 
-			lt.Status.Phase = locustv2.PhasePending
-			lt.Status.ObservedGeneration = lt.Generation
-			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
-
-			// Re-fetch CR to get latest resource version before status update (STAB-01)
-			if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to re-fetch LocustTest: %w", err)
-			}
-			// Re-apply status changes after re-fetch
-			lt.Status.Phase = locustv2.PhasePending
-			lt.Status.ObservedGeneration = lt.Generation
-			r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
-
-			if err := r.Status().Update(ctx, lt); err != nil {
+			if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+				if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
+					return err
+				}
+				lt.Status.Phase = locustv2.PhasePending
+				lt.Status.ObservedGeneration = lt.Generation
+				r.setReady(lt, false, locustv2.ReasonResourcesCreating, "Recreating externally deleted resources")
+				return r.Status().Update(ctx, lt)
+			}); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to update status after detecting worker Job deletion: %w", err)
 			}
 			return ctrl.Result{RequeueAfter: time.Second}, nil

@@ -42,7 +42,7 @@ description: Enable performance testing for the modern era! Utilize the full pow
 
 <div class="grid cards" markdown>
 
--   :material-rocket-launch:{ .lg .middle } __Rebuilt in Go__
+-   :material-language-go:{ .lg .middle } __Rebuilt in Go__
 
     ---
 

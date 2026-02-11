@@ -61,7 +61,7 @@ func init() {
 func main() {
 	// Parse command-line flags and setup logging
 	flags := parseFlags()
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&flags.zapOpts)))
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&flags.zapOpts), coloredConsoleEncoder()))
 
 	// Create TLS options
 	tlsOpts := configureTLS(flags.enableHTTP2)

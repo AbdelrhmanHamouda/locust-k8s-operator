@@ -30,6 +30,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -1109,4 +1110,268 @@ func TestReconcile_ExternalDeletion_WorkerJob(t *testing.T) {
 	}, lt)
 	require.NoError(t, err)
 	assert.Equal(t, locustv2.PhaseRunning, lt.Status.Phase, "Phase should be Running after recreation")
+}
+
+// conflictOnUpdateClient wraps a client.Client and returns 409 Conflict errors
+// on the first N Status().Update() calls, then delegates to the real client.
+type conflictOnUpdateClient struct {
+	client.Client
+	conflictCount int // number of conflicts to return before succeeding
+	updateCalls   int // tracks total Status().Update() calls
+}
+
+func (c *conflictOnUpdateClient) Status() client.SubResourceWriter {
+	return &conflictStatusWriter{
+		SubResourceWriter: c.Client.Status(),
+		parent:            c,
+	}
+}
+
+type conflictStatusWriter struct {
+	client.SubResourceWriter
+	parent *conflictOnUpdateClient
+}
+
+func (w *conflictStatusWriter) Update(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+	w.parent.updateCalls++
+	if w.parent.updateCalls <= w.parent.conflictCount {
+		return apierrors.NewConflict(
+			schema.GroupResource{Group: "locust.io", Resource: "locusttests"},
+			obj.GetName(),
+			fmt.Errorf("the object has been modified"),
+		)
+	}
+	return w.SubResourceWriter.Update(ctx, obj, opts...)
+}
+
+func TestCreateResources_RetryOnConflict(t *testing.T) {
+	lt := newTestLocustTestCR("conflict-test", "default")
+	// Pre-set Phase to Pending so initializeStatus is skipped
+	lt.Status.Phase = locustv2.PhasePending
+	lt.Status.ExpectedWorkers = lt.Spec.Worker.Replicas
+
+	scheme := newTestScheme()
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(lt).
+		WithStatusSubresource(&locustv2.LocustTest{}).
+		Build()
+	recorder := record.NewFakeRecorder(10)
+
+	cc := &conflictOnUpdateClient{
+		Client:        fakeClient,
+		conflictCount: 1, // fail once, succeed on second attempt
+	}
+
+	reconciler := &LocustTestReconciler{
+		Client:   cc,
+		Scheme:   scheme,
+		Config:   newTestOperatorConfig(),
+		Recorder: recorder,
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "conflict-test",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, ctrl.Result{}, result)
+	assert.Equal(t, 2, cc.updateCalls, "Expected 1 conflict + 1 successful update")
+
+	// Verify status was correctly set despite the conflict
+	err = cc.Get(context.Background(), types.NamespacedName{
+		Name:      "conflict-test",
+		Namespace: "default",
+	}, lt)
+	require.NoError(t, err)
+	assert.Equal(t, locustv2.PhaseRunning, lt.Status.Phase)
+}
+
+func TestReconcile_ExternalDeletion_RetryOnConflict(t *testing.T) {
+	lt := newTestLocustTestCR("conflict-del", "default")
+	// Pre-set to Running phase with resources "already created"
+	lt.Status.Phase = locustv2.PhaseRunning
+	lt.Status.ExpectedWorkers = lt.Spec.Worker.Replicas
+	lt.Status.ObservedGeneration = lt.Generation
+
+	// Create master Job and worker Job, but NOT master Service (simulates external deletion)
+	masterJob := &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "conflict-del-master",
+			Namespace: "default",
+		},
+	}
+	workerJob := &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "conflict-del-worker",
+			Namespace: "default",
+		},
+	}
+
+	scheme := newTestScheme()
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(lt, masterJob, workerJob).
+		WithStatusSubresource(&locustv2.LocustTest{}).
+		Build()
+	recorder := record.NewFakeRecorder(10)
+
+	cc := &conflictOnUpdateClient{
+		Client:        fakeClient,
+		conflictCount: 1, // fail once, succeed on second attempt
+	}
+
+	reconciler := &LocustTestReconciler{
+		Client:   cc,
+		Scheme:   scheme,
+		Config:   newTestOperatorConfig(),
+		Recorder: recorder,
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "conflict-del",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+	assert.Greater(t, result.RequeueAfter, time.Duration(0), "Should requeue after detecting deletion")
+	assert.Equal(t, 2, cc.updateCalls, "Expected 1 conflict + 1 successful update")
+
+	// Verify phase was reset to Pending despite the conflict
+	err = cc.Get(context.Background(), types.NamespacedName{
+		Name:      "conflict-del",
+		Namespace: "default",
+	}, lt)
+	require.NoError(t, err)
+	assert.Equal(t, locustv2.PhasePending, lt.Status.Phase)
+}
+
+func TestReconcile_FinalizerAddedOnFirstReconcile(t *testing.T) {
+	lt := newTestLocustTestCR("finalizer-add", "default")
+	reconciler, _ := newTestReconciler(lt)
+	ctx := context.Background()
+
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "finalizer-add",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+
+	// Refetch CR and verify finalizer is present
+	updated := &locustv2.LocustTest{}
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "finalizer-add",
+		Namespace: "default",
+	}, updated)
+	require.NoError(t, err)
+	assert.Contains(t, updated.Finalizers, finalizerName, "Finalizer should be added on first reconcile")
+}
+
+func TestReconcile_FinalizerDeletion(t *testing.T) {
+	lt := newTestLocustTestCR("finalizer-del", "default")
+	reconciler, recorder := newTestReconciler(lt)
+	ctx := context.Background()
+
+	// First reconcile — adds finalizer and creates resources
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "finalizer-del",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+
+	// Drain creation events (3 resource Created events)
+	for i := 0; i < 3; i++ {
+		select {
+		case <-recorder.Events:
+		default:
+		}
+	}
+
+	// Delete the CR (sets DeletionTimestamp, finalizer keeps it alive)
+	updated := &locustv2.LocustTest{}
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "finalizer-del",
+		Namespace: "default",
+	}, updated)
+	require.NoError(t, err)
+	err = reconciler.Delete(ctx, updated)
+	require.NoError(t, err)
+
+	// Second reconcile — should remove finalizer and emit Deleting event
+	_, err = reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "finalizer-del",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+
+	// Verify "Deleting" event was emitted
+	deletingEventFound := false
+	for {
+		select {
+		case event := <-recorder.Events:
+			if strings.Contains(event, "Deleting") {
+				deletingEventFound = true
+			}
+		default:
+			goto done
+		}
+	}
+done:
+	assert.True(t, deletingEventFound, "Expected 'Deleting' event after finalizer removal")
+
+	// Verify the CR is gone (finalizer removed allows deletion)
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "finalizer-del",
+		Namespace: "default",
+	}, &locustv2.LocustTest{})
+	assert.True(t, apierrors.IsNotFound(err), "CR should be deleted after finalizer removal")
+}
+
+func TestReconcile_FinalizerIdempotent(t *testing.T) {
+	lt := newTestLocustTestCR("finalizer-idem", "default")
+	reconciler, _ := newTestReconciler(lt)
+	ctx := context.Background()
+
+	// First reconcile — adds finalizer
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "finalizer-idem",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+
+	// Second reconcile — should NOT add a duplicate finalizer
+	_, err = reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "finalizer-idem",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+
+	// Verify finalizer appears exactly once
+	updated := &locustv2.LocustTest{}
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "finalizer-idem",
+		Namespace: "default",
+	}, updated)
+	require.NoError(t, err)
+
+	finalizerCount := 0
+	for _, f := range updated.Finalizers {
+		if f == finalizerName {
+			finalizerCount++
+		}
+	}
+	assert.Equal(t, 1, finalizerCount, "Finalizer should appear exactly once")
 }

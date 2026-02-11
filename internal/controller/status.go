@@ -24,6 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -154,15 +155,17 @@ func (r *LocustTestReconciler) updateStatusFromJobs(
 			"Spec changes after creation are ignored. Delete and recreate the CR to apply changes.")
 	}
 
-	// Re-fetch CR to get latest resource version and prevent conflicts (STAB-01)
-	latestLT := lt.DeepCopy()
-	if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
-		return fmt.Errorf("failed to re-fetch LocustTest before status update: %w", err)
-	}
-	// Apply our computed status changes to the freshly fetched object
-	lt.Status = latestLT.Status
+	// Save computed status before retry loop — status is derived from Jobs, not from the CR
+	desiredStatus := lt.Status
 
-	if err := r.Status().Update(ctx, lt); err != nil {
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		if err := r.Get(ctx, client.ObjectKeyFromObject(lt), lt); err != nil {
+			return err
+		}
+		lt.Status = desiredStatus
+		return r.Status().Update(ctx, lt)
+	})
+	if err != nil {
 		return fmt.Errorf("failed to update status from Jobs: %w", err)
 	}
 	return nil

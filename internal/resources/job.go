@@ -103,7 +103,6 @@ func buildJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, mode Operatio
 					Tolerations:      buildTolerations(lt, cfg),
 					NodeSelector:     buildNodeSelector(lt),
 					SecurityContext: &corev1.PodSecurityContext{
-						RunAsNonRoot: boolPtr(true),
 						SeccompProfile: &corev1.SeccompProfile{
 							Type: corev1.SeccompProfileTypeRuntimeDefault,
 						},

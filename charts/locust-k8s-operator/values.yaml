@@ -25,7 +25,7 @@ replicaCount: 2
 nameOverride: ""
 
 # -- Override the full name of the release
-fullnameOverride: ""
+fullnameOverride: "locust-operator"
 
 # -- Additional environment variables for the operator container
 extraEnv: []
@@ -125,7 +125,8 @@ locustPods:
 
 otelCollector:
   enabled: false
-  image: otel/opentelemetry-collector-contrib:0.92.0
+  # Ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases
+  image: otel/opentelemetry-collector-contrib:0.145.0
   replicas: 1
   resources:
     requests:

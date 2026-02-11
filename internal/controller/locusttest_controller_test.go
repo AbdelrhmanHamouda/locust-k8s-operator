@@ -74,6 +74,10 @@ var _ = Describe("LocustTest Controller", func() {
 
 			By("Cleanup the specific resource instance LocustTest")
 			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, typeNamespacedName, &locustv2.LocustTest{})
+				return errors.IsNotFound(err)
+			}, timeout, interval).Should(BeTrue())
 		})
 		It("should successfully reconcile the resource", func() {
 			By("Waiting for the manager to reconcile and create resources")

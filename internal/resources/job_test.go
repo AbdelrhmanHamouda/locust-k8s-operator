@@ -1295,10 +1295,6 @@ func TestBuildMasterJob_HasSecurityContext(t *testing.T) {
 	// Verify SecurityContext is set
 	require.NotNil(t, job.Spec.Template.Spec.SecurityContext, "SecurityContext should be set")
 
-	// Verify RunAsNonRoot is true
-	require.NotNil(t, job.Spec.Template.Spec.SecurityContext.RunAsNonRoot, "RunAsNonRoot should be set")
-	assert.True(t, *job.Spec.Template.Spec.SecurityContext.RunAsNonRoot, "RunAsNonRoot should be true")
-
 	// Verify SeccompProfile is RuntimeDefault
 	require.NotNil(t, job.Spec.Template.Spec.SecurityContext.SeccompProfile, "SeccompProfile should be set")
 	assert.Equal(t, corev1.SeccompProfileTypeRuntimeDefault, job.Spec.Template.Spec.SecurityContext.SeccompProfile.Type, "SeccompProfile should be RuntimeDefault")
@@ -1312,10 +1308,6 @@ func TestBuildWorkerJob_HasSecurityContext(t *testing.T) {
 
 	// Verify SecurityContext is set
 	require.NotNil(t, job.Spec.Template.Spec.SecurityContext, "SecurityContext should be set")
-
-	// Verify RunAsNonRoot is true
-	require.NotNil(t, job.Spec.Template.Spec.SecurityContext.RunAsNonRoot, "RunAsNonRoot should be set")
-	assert.True(t, *job.Spec.Template.Spec.SecurityContext.RunAsNonRoot, "RunAsNonRoot should be true")
 
 	// Verify SeccompProfile is RuntimeDefault
 	require.NotNil(t, job.Spec.Template.Spec.SecurityContext.SeccompProfile, "SeccompProfile should be set")

@@ -44,6 +44,12 @@ rules:
 - apiGroups:
   - locust.io
   resources:
+  - locusttests/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - locust.io
+  resources:
   - locusttests/status
   verbs:
   - get
