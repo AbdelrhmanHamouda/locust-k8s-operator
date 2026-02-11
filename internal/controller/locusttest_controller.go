@@ -26,12 +26,15 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
@@ -53,6 +56,7 @@ type LocustTestReconciler struct {
 // +kubebuilder:rbac:groups=locust.io,resources=locusttests/finalizers,verbs=update
 // +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;delete
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;delete
+// +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 // Reconcile handles LocustTest CR events.
@@ -346,13 +350,67 @@ func (r *LocustTestReconciler) reconcileStatus(ctx context.Context, lt *locustv2
 		return ctrl.Result{}, fmt.Errorf("failed to get worker Job: %w", err)
 	}
 
-	// Update status from Jobs
-	if err := r.updateStatusFromJobs(ctx, lt, masterJob, workerJob); err != nil {
+	// Check pod health before updating status from Jobs
+	podHealthStatus, requeueAfter := r.checkPodHealth(ctx, lt)
+
+	// Update status from Jobs (pass pod health to update logic)
+	if err := r.updateStatusFromJobs(ctx, lt, masterJob, workerJob, podHealthStatus); err != nil {
 		log.Error(err, "Failed to update status from Jobs")
 		return ctrl.Result{}, fmt.Errorf("failed to update status from Jobs: %w", err)
 	}
 
+	// Requeue if pods are in grace period
+	if requeueAfter > 0 {
+		return ctrl.Result{RequeueAfter: requeueAfter}, nil
+	}
+
 	return ctrl.Result{}, nil
+}
+
+// mapPodToLocustTest maps a Pod event to the owning LocustTest reconcile request.
+// Pods are owned by Jobs (Pod→Job), and Jobs are owned by LocustTests (Job→LocustTest).
+// This function traverses the two-level owner reference chain: Pod → Job → LocustTest.
+func (r *LocustTestReconciler) mapPodToLocustTest(ctx context.Context, obj client.Object) []reconcile.Request {
+	log := logf.FromContext(ctx)
+
+	// Step 1: Find the owning Job from the pod's owner references
+	var jobName string
+	for _, ref := range obj.GetOwnerReferences() {
+		if ref.Kind == "Job" && ref.APIVersion == "batch/v1" {
+			jobName = ref.Name
+			break
+		}
+	}
+	if jobName == "" {
+		return nil
+	}
+
+	// Step 2: Fetch the Job to find the owning LocustTest
+	job := &batchv1.Job{}
+	if err := r.Get(ctx, client.ObjectKey{
+		Namespace: obj.GetNamespace(),
+		Name:      jobName,
+	}, job); err != nil {
+		log.V(1).Info("Failed to fetch Job for pod mapping", "pod", obj.GetName(), "job", jobName, "error", err)
+		return nil
+	}
+
+	// Step 3: Find the LocustTest owner from the Job's owner references
+	for _, ref := range job.GetOwnerReferences() {
+		if ref.Kind == "LocustTest" {
+			log.V(1).Info("Mapped pod to LocustTest", "pod", obj.GetName(), "job", jobName, "locustTest", ref.Name)
+			return []reconcile.Request{
+				{
+					NamespacedName: types.NamespacedName{
+						Namespace: obj.GetNamespace(),
+						Name:      ref.Name,
+					},
+				},
+			}
+		}
+	}
+
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -361,6 +419,10 @@ func (r *LocustTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&locustv2.LocustTest{}).
 		Owns(&batchv1.Job{}).    // Watch owned Jobs for status updates
 		Owns(&corev1.Service{}). // Watch owned Services
+		Watches(                 // Watch pods via custom mapping (pods are owned by Jobs, not LocustTest)
+			&corev1.Pod{},
+			handler.EnqueueRequestsFromMapFunc(r.mapPodToLocustTest),
+		).
 		Named("locusttest").
 		Complete(r)
 }
