@@ -167,6 +167,13 @@ var _ = Describe("Manager", Ordered, func() {
 
 		It("should ensure the metrics endpoint is serving metrics", func() {
 			By("creating a ClusterRoleBinding for the service account to allow access to metrics")
+			// Delete existing binding if it exists (cleanup from previous runs)
+			//nolint:gosec // Test code with validated binding name from test setup
+			cleanupCmd := exec.Command("kubectl", "delete", "clusterrolebinding", metricsRoleBindingName,
+				"--ignore-not-found",
+			)
+			_, _ = utils.Run(cleanupCmd) // Ignore errors - binding may not exist
+
 			//nolint:gosec // Test code with validated namespace and service account from test setup
 			cmd := exec.Command("kubectl", "create", "clusterrolebinding", metricsRoleBindingName,
 				"--clusterrole=locust-k8s-operator-metrics-reader",
@@ -200,7 +207,7 @@ var _ = Describe("Manager", Ordered, func() {
 				cmd := exec.Command("kubectl", "logs", controllerPodName, "-n", namespace)
 				output, err := utils.Run(cmd)
 				g.Expect(err).NotTo(HaveOccurred())
-				g.Expect(output).To(ContainSubstring("controller-runtime.metrics\tServing metrics server"),
+				g.Expect(output).To(ContainSubstring("Starting metrics server"),
 					"Metrics server not yet started")
 			}
 			Eventually(verifyMetricsServerStarted).Should(Succeed())
@@ -252,6 +259,22 @@ var _ = Describe("Manager", Ordered, func() {
 			Expect(metricsOutput).To(ContainSubstring(
 				"controller_runtime_reconcile_total",
 			))
+
+			By("cleaning up test resources")
+			// Delete the curl-metrics pod
+			//nolint:gosec // Test code with validated namespace from test setup
+			cleanupCmd = exec.Command("kubectl", "delete", "pod", "curl-metrics",
+				"-n", namespace,
+				"--ignore-not-found",
+			)
+			_, _ = utils.Run(cleanupCmd)
+
+			// Delete the ClusterRoleBinding
+			//nolint:gosec // Test code with validated binding name from test setup
+			cleanupCmd = exec.Command("kubectl", "delete", "clusterrolebinding", metricsRoleBindingName,
+				"--ignore-not-found",
+			)
+			_, _ = utils.Run(cleanupCmd)
 		})
 
 		// +kubebuilder:scaffold:e2e-webhooks-checks
