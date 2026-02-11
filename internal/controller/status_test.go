@@ -31,6 +31,11 @@ import (
 	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 )
 
+// healthyPodStatus returns a default healthy PodHealthStatus for tests that don't test pod health.
+func healthyPodStatus() PodHealthStatus {
+	return PodHealthStatus{Healthy: true, Reason: locustv2.ReasonPodsHealthy, Message: "All pods are healthy"}
+}
+
 func TestInitializeStatus(t *testing.T) {
 	lt := &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
@@ -55,7 +60,7 @@ func TestInitializeStatus(t *testing.T) {
 	assert.Nil(t, lt.Status.CompletionTime)
 
 	// Verify conditions are set
-	require.Len(t, lt.Status.Conditions, 3)
+	require.Len(t, lt.Status.Conditions, 4)
 
 	// Check Ready condition
 	readyCondition := findCondition(lt.Status.Conditions, locustv2.ConditionTypeReady)
@@ -74,6 +79,12 @@ func TestInitializeStatus(t *testing.T) {
 	require.NotNil(t, completedCondition)
 	assert.Equal(t, metav1.ConditionFalse, completedCondition.Status)
 	assert.Equal(t, locustv2.ReasonTestInProgress, completedCondition.Reason)
+
+	// Check PodsHealthy condition
+	podsHealthyCondition := findCondition(lt.Status.Conditions, locustv2.ConditionTypePodsHealthy)
+	require.NotNil(t, podsHealthyCondition)
+	assert.Equal(t, metav1.ConditionTrue, podsHealthyCondition.Status)
+	assert.Equal(t, locustv2.ReasonPodsStarting, podsHealthyCondition.Reason)
 }
 
 func TestSetCondition(t *testing.T) {
@@ -335,7 +346,7 @@ func TestUpdateStatusFromJobs_FullStateMachine(t *testing.T) {
 			ctx := context.Background()
 
 			// Call updateStatusFromJobs
-			err := reconciler.updateStatusFromJobs(ctx, lt, tt.masterJob, tt.workerJob)
+			err := reconciler.updateStatusFromJobs(ctx, lt, tt.masterJob, tt.workerJob, healthyPodStatus())
 			require.NoError(t, err)
 
 			// Verify phase
@@ -441,7 +452,7 @@ func TestUpdateStatusFromJobs_PhaseTransitionEvents(t *testing.T) {
 			ctx := context.Background()
 
 			// Call updateStatusFromJobs
-			err := reconciler.updateStatusFromJobs(ctx, lt, tt.masterJob, nil)
+			err := reconciler.updateStatusFromJobs(ctx, lt, tt.masterJob, nil, healthyPodStatus())
 			require.NoError(t, err)
 
 			// Verify event was emitted
@@ -484,7 +495,7 @@ func TestUpdateStatusFromJobs_NoEventOnSamePhase(t *testing.T) {
 	ctx := context.Background()
 
 	// Call updateStatusFromJobs
-	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil)
+	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil, healthyPodStatus())
 	require.NoError(t, err)
 
 	// Verify no event was emitted
@@ -529,7 +540,7 @@ func TestUpdateStatusFromJobs_ObservedGeneration(t *testing.T) {
 	ctx := context.Background()
 
 	// Call updateStatusFromJobs
-	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil)
+	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil, healthyPodStatus())
 	require.NoError(t, err)
 
 	// Verify ObservedGeneration was updated to match Generation
@@ -623,7 +634,7 @@ func TestUpdateStatusFromJobs_WorkersConnectedCondition(t *testing.T) {
 	ctx := context.Background()
 
 	// Call updateStatusFromJobs
-	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, workerJob)
+	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, workerJob, healthyPodStatus())
 	require.NoError(t, err)
 
 	// Verify WorkersConnected condition
@@ -664,7 +675,7 @@ func TestUpdateStatusFromJobs_SpecDriftedCondition(t *testing.T) {
 	ctx := context.Background()
 
 	// Call updateStatusFromJobs
-	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil)
+	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil, healthyPodStatus())
 	require.NoError(t, err)
 
 	// Verify SpecDrifted condition exists with ConditionTrue
@@ -705,7 +716,7 @@ func TestUpdateStatusFromJobs_NoSpecDriftedOnGeneration1(t *testing.T) {
 	ctx := context.Background()
 
 	// Call updateStatusFromJobs
-	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil)
+	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil, healthyPodStatus())
 	require.NoError(t, err)
 
 	// Verify SpecDrifted condition does NOT exist
@@ -757,7 +768,7 @@ func TestUpdateStatusFromJobs_RetryOnConflict(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil)
+	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil, healthyPodStatus())
 	require.NoError(t, err)
 
 	assert.Equal(t, locustv2.PhaseRunning, lt.Status.Phase)
