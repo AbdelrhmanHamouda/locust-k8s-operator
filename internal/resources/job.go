@@ -447,8 +447,3 @@ func buildNodeSelector(lt *locustv2.LocustTest) map[string]string {
 
 	return lt.Spec.Scheduling.NodeSelector
 }
-
-// boolPtr returns a pointer to a bool value.
-func boolPtr(b bool) *bool {
-	return &b
-}

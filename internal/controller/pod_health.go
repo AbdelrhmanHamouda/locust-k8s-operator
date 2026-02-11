@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"sort"
 	"strings"
 	"time"
 
@@ -319,21 +318,4 @@ func findOldestPodCreationTime(pods []corev1.Pod) time.Time {
 	}
 
 	return oldest
-}
-
-// categorizePodFailures groups failures by type and returns them sorted by priority.
-func categorizePodFailures(failures []PodFailureInfo) map[string][]PodFailureInfo {
-	result := make(map[string][]PodFailureInfo)
-	for _, failure := range failures {
-		result[failure.FailureType] = append(result[failure.FailureType], failure)
-	}
-
-	// Sort each group by pod name for consistent output
-	for _, group := range result {
-		sort.Slice(group, func(i, j int) bool {
-			return group[i].Name < group[j].Name
-		})
-	}
-
-	return result
 }
