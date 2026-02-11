@@ -195,6 +195,7 @@ nav:
       - FAQ: faq.md
   - Architecture:
       - How It Works: how_does_it_work.md
+      - Comparison: comparison.md
   - Operations:
       - Security: security.md
       - Metrics & Dashboards: metrics_and_dashboards.md
