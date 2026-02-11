@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Information on Metrics & Dashboards.">
+        <meta name="description" content="Common questions and answers about the Locust Kubernetes Operator">
       
       
         <meta name="author" content="Abdelrhman Hamouda">
       
       
       
-        <link rel="prev" href="../security/">
+        <link rel="prev" href="../api_reference/">
       
       
-        <link rel="next" href="../migration/">
+        <link rel="next" href="../how_does_it_work/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Metrics & Dashboards - Locust Kubernetes Operator</title>
+        <title>Frequently Asked Questions - Locust Kubernetes Operator</title>
       
     
     
@@ -117,7 +117,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#metrics-dashboards" class="md-skip">
+        <a href="#frequently-asked-questions" class="md-skip">
           Skip to content
         </a>
       
@@ -157,7 +157,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Metrics & Dashboards
+              Frequently Asked Questions
             
           </span>
         </div>
@@ -390,36 +390,36 @@
       
   
   
-  
-  
     
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-    
-      
-        
-        
-      
-    
-    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
-      
-        
   
   
   
-    <a href="../features/" class="md-nav__link">
+    
+    
       
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -433,12 +433,481 @@
   
   
 
-      
-        <span class="md-nav__icon md-icon"></span>
-      
-    </a>
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
   
 
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced_topics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Topics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#test-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Lifecycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Lifecycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-cant-i-update-a-running-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why can't I update a running test?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-change-test-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I change test parameters?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-if-i-edit-a-locusttest-cr-after-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens if I edit a LocustTest CR after creation?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-run-the-same-test-multiple-times" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I run the same test multiple times?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scaling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scaling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#can-i-scale-workers-during-a-running-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Can I scale workers during a running test?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#whats-the-maximum-number-of-workers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's the maximum number of workers?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-size-worker-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I size worker resources?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Debugging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#my-test-is-stuck-in-pending-phase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        My test is stuck in Pending phase
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#my-test-shows-failed-phase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        My test shows Failed phase
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workers-show-0n-connected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workers show 0/N connected
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-access-the-locust-web-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I access the Locust web UI?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configmap-not-found-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ConfigMap not found error
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#can-i-use-v1-and-v2-crs-at-the-same-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Can I use v1 and v2 CRs at the same time?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#do-i-need-to-recreate-existing-v1-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Do I need to recreate existing v1 tests?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-pass-extra-cli-arguments-to-locust" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I pass extra CLI arguments to Locust?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-resource-precedence-applies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What resource precedence applies?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Observability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#should-i-use-opentelemetry-or-the-metrics-sidecar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Should I use OpenTelemetry or the metrics sidecar?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-monitor-test-progress-programmatically" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I monitor test progress programmatically?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -502,32 +971,32 @@
       
   
   
+  
+  
     
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
   
   
   
-    
-    
+    <a href="../security/" class="md-nav__link">
       
-        
-      
-        
-      
-    
-    
-    
-    
-      
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
   
   
   <span class="md-ellipsis">
@@ -541,286 +1010,12 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_5">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Operations
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
   
 
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../security/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Security
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metrics & Dashboards
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metrics & Dashboards
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#opentelemetry-metrics-traces" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OpenTelemetry Metrics &amp; Traces
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="OpenTelemetry Metrics &amp; Traces">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#native-opentelemetry-support" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Native OpenTelemetry Support
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#configuring-otel" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuring OTel
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#otel-collector-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OTel Collector Setup
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#operator-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Operator Metrics
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Operator Metrics">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-operator-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling Operator Metrics
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#servicemonitor-prometheus-operator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ServiceMonitor (Prometheus Operator)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#operator-metrics-queries" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Operator Metrics Queries
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#locust-test-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Locust Test Metrics
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Locust Test Metrics">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#metrics-exporter-sidecar-non-otel-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Metrics Exporter Sidecar (Non-OTel Mode)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#available-locust-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Available Locust Metrics
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#locust-metrics-queries" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Locust Metrics Queries
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#integration-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration Examples
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
       
     </li>
   
@@ -962,7 +1157,7 @@
         
       
       
-        <span class="md-tag md-tag-icon">dashboards</span>
+        <span class="md-tag md-tag-icon">faq</span>
       
     
       
@@ -972,7 +1167,7 @@
         
       
       
-        <span class="md-tag md-tag-icon">metrics</span>
+        <span class="md-tag md-tag-icon">guide</span>
       
     
       
@@ -982,27 +1177,7 @@
         
       
       
-        <span class="md-tag md-tag-icon">monitoring</span>
-      
-    
-      
-      
-      
-        
-        
-      
-      
-        <span class="md-tag md-tag-icon">observability</span>
-      
-    
-      
-      
-      
-        
-        
-      
-      
-        <span class="md-tag md-tag-icon">prometheus</span>
+        <span class="md-tag md-tag-icon">troubleshooting</span>
       
     
   </nav>
@@ -1012,338 +1187,201 @@
   
 
 
-<h1 id="metrics-dashboards">Metrics &amp; Dashboards<a class="headerlink" href="#metrics-dashboards" title="Anchor link to this section for reference">⚓</a></h1>
-<h2 id="opentelemetry-metrics-traces"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M2 2h2v18h18v2H2zm5 8h10v3H7zm4 5h10v3H11zM6 4h16v4h-2V6H8v2H6z"/></svg></span> OpenTelemetry Metrics &amp; Traces<a class="headerlink" href="#opentelemetry-metrics-traces" title="Anchor link to this section for reference">⚓</a></h2>
-<div class="admonition info">
-<p class="admonition-title">New in v2.0</p>
-<p>Native OpenTelemetry support is available in the v2 API.</p>
-</div>
-<h3 id="native-opentelemetry-support">Native OpenTelemetry Support<a class="headerlink" href="#native-opentelemetry-support" title="Anchor link to this section for reference">⚓</a></h3>
-<p>Locust 2.x includes native OpenTelemetry support, which the operator can configure automatically. This provides both metrics and distributed tracing without requiring the metrics exporter sidecar.</p>
-<h3 id="configuring-otel">Configuring OTel<a class="headerlink" href="#configuring-otel" title="Anchor link to this section for reference">⚓</a></h3>
-<p>Enable OpenTelemetry in your LocustTest CR:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust.io/v2</span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LocustTest</span>
-<span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">otel-test</span>
-<span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locustio/locust:2.20.0</span>
-<span class="w">  </span><span class="nt">master</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;--locustfile</span><span class="nv"> </span><span class="s">/lotest/src/test.py</span><span class="nv"> </span><span class="s">--host</span><span class="nv"> </span><span class="s">https://example.com&quot;</span>
-<span class="w">  </span><span class="nt">worker</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;--locustfile</span><span class="nv"> </span><span class="s">/lotest/src/test.py&quot;</span>
-<span class="w">    </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
-<span class="w">  </span><span class="nt">observability</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">openTelemetry</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">      </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;otel-collector.monitoring:4317&quot;</span>
-<span class="w">      </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;grpc&quot;</span>
+<h1 id="frequently-asked-questions">Frequently Asked Questions<a class="headerlink" href="#frequently-asked-questions" title="Anchor link to this section for reference">⚓</a></h1>
+<p>This page answers the most common questions about operating the Locust Kubernetes Operator in production. For step-by-step tutorials, see <a href="../getting_started/">Getting Started</a>. For advanced configuration, see <a href="../advanced_topics/">Advanced Topics</a>.</p>
+<h2 id="test-lifecycle">Test Lifecycle<a class="headerlink" href="#test-lifecycle" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="why-cant-i-update-a-running-test">Why can't I update a running test?<a class="headerlink" href="#why-cant-i-update-a-running-test" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Tests are <strong>immutable by design</strong>. Once a LocustTest CR is created, the operator ignores all changes to the <code>spec</code> field and sets a <code>SpecDrifted</code> condition to indicate drift was detected.</p>
+<p>This ensures predictable behavior — each test run uses exactly the configuration it was created with, with no mid-flight configuration changes. See <a href="../how_does_it_work/#immutable-tests">How Does It Work - Immutable Tests</a> for the design rationale.</p>
+<p>To change test parameters, use the delete-and-recreate pattern:</p>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>delete<span class="w"> </span>locusttest<span class="w"> </span>my-test
+<span class="c1"># Edit your YAML with desired changes</span>
+kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>locusttest.yaml
 </code></pre></div>
-<p>See <a href="../advanced_topics/#opentelemetry-integration">Advanced Topics - OpenTelemetry</a> for detailed configuration options.</p>
-<h3 id="otel-collector-setup">OTel Collector Setup<a class="headerlink" href="#otel-collector-setup" title="Anchor link to this section for reference">⚓</a></h3>
-<p>For a complete observability setup, deploy an OTel Collector. Example configuration:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># otel-collector-config.yaml</span>
-<span class="nt">receivers</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">otlp</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">protocols</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">grpc</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0.0.0:4317</span>
-<span class="w">      </span><span class="nt">http</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0.0.0:4318</span>
-
-<span class="nt">exporters</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">prometheus</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0.0.0:8889</span>
-<span class="w">  </span><span class="nt">otlphttp</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://jaeger-collector:4318</span>
-<span class="w">    </span><span class="nt">tls</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">insecure</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-
-<span class="nt">service</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">pipelines</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">metrics</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">receivers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">otlp</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="nt">exporters</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">prometheus</span><span class="p p-Indicator">]</span>
-<span class="w">    </span><span class="nt">traces</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">receivers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">otlp</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="nt">exporters</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">otlphttp</span><span class="p p-Indicator">]</span>
+<h3 id="how-do-i-change-test-parameters">How do I change test parameters?<a class="headerlink" href="#how-do-i-change-test-parameters" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Delete the LocustTest CR, edit your YAML file with the desired changes, and recreate it:</p>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>delete<span class="w"> </span>locusttest<span class="w"> </span>my-test
+<span class="c1"># Edit locusttest.yaml (change image, replicas, commands, etc.)</span>
+kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>locusttest.yaml
 </code></pre></div>
-<div class="admonition tip">
-<p class="admonition-title">Tip</p>
-<p>The Helm chart includes an optional OTel Collector deployment. Enable it with <code>otelCollector.enabled: true</code>.</p>
-</div>
-<hr />
-<h2 id="operator-metrics"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.5 15.5c0 1.11-.89 2-2 2s-2-.89-2-2 .9-2 2-2 2 .9 2 2m-9-2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.89 2-2-.89-2-2-2M23 15v3c0 .55-.45 1-1 1h-1v1c0 1.11-.89 2-2 2H5a2 2 0 0 1-2-2v-1H2c-.55 0-1-.45-1-1v-3c0-.55.45-1 1-1h1c0-3.87 3.13-7 7-7h1V5.73c-.6-.34-1-.99-1-1.73 0-1.1.9-2 2-2s2 .9 2 2c0 .74-.4 1.39-1 1.73V7h1c3.87 0 7 3.13 7 7h1c.55 0 1 .45 1 1m-2 1h-2v-2c0-2.76-2.24-5-5-5h-4c-2.76 0-5 2.24-5 5v2H3v1h2v3h14v-3h2z"/></svg></span> Operator Metrics<a class="headerlink" href="#operator-metrics" title="Anchor link to this section for reference">⚓</a></h2>
-<p>The Go operator exposes controller-runtime metrics on port 8080:</p>
+<p>The operator will create new Jobs with the updated configuration. Previous test results remain in your monitoring system (if using OpenTelemetry or metrics export).</p>
+<h3 id="what-happens-if-i-edit-a-locusttest-cr-after-creation">What happens if I edit a LocustTest CR after creation?<a class="headerlink" href="#what-happens-if-i-edit-a-locusttest-cr-after-creation" title="Anchor link to this section for reference">⚓</a></h3>
+<p>The operator detects spec changes but <strong>ignores</strong> them. It sets a <code>SpecDrifted</code> condition on the CR to indicate the spec has been modified:</p>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>locusttest<span class="w"> </span>my-test<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.status.conditions[?(@.type==&quot;SpecDrifted&quot;)]}&#39;</span>
+</code></pre></div>
+<p>The test continues running with its original configuration. To apply changes, delete and recreate the CR.</p>
+<h3 id="how-do-i-run-the-same-test-multiple-times">How do I run the same test multiple times?<a class="headerlink" href="#how-do-i-run-the-same-test-multiple-times" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Delete and recreate the CR with the same YAML:</p>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>delete<span class="w"> </span>locusttest<span class="w"> </span>my-test
+kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>locusttest.yaml<span class="w">  </span><span class="c1"># Same file</span>
+</code></pre></div>
+<p>Or use unique names with a suffix to keep test history:</p>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>locusttest-run-01.yaml
+<span class="c1"># Later...</span>
+kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>locusttest-run-02.yaml
+</code></pre></div>
+<h2 id="scaling">Scaling<a class="headerlink" href="#scaling" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="can-i-scale-workers-during-a-running-test">Can I scale workers during a running test?<a class="headerlink" href="#can-i-scale-workers-during-a-running-test" title="Anchor link to this section for reference">⚓</a></h3>
+<p>No, due to immutability. The worker replica count (<code>worker.replicas</code>) is set at test creation time and cannot be changed while the test runs.</p>
+<p>To run with different worker counts:</p>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>delete<span class="w"> </span>locusttest<span class="w"> </span>my-test
+<span class="c1"># Edit YAML to update worker.replicas</span>
+kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>locusttest.yaml
+</code></pre></div>
+<p>Note: Locust's web UI shows real-time user distribution across connected workers regardless of the replica count.</p>
+<h3 id="whats-the-maximum-number-of-workers">What's the maximum number of workers?<a class="headerlink" href="#whats-the-maximum-number-of-workers" title="Anchor link to this section for reference">⚓</a></h3>
+<p>The CRD enforces a maximum of <strong>500 workers</strong> per LocustTest. This limit prevents accidental resource exhaustion.</p>
+<p>For larger scales:</p>
+<ul>
+<li>Run multiple LocustTest CRs against the same target (each test independently generates load)</li>
+<li>Use fewer workers with more users per worker (adjust <code>--users</code> and <code>--spawn-rate</code> in <code>master.command</code>)</li>
+</ul>
+<h3 id="how-do-i-size-worker-resources">How do I size worker resources?<a class="headerlink" href="#how-do-i-size-worker-resources" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Resource requirements depend on test complexity:</p>
 <table>
 <thead>
 <tr>
-<th>Metric</th>
-<th>Description</th>
+<th>Test Type</th>
+<th>CPU per Worker</th>
+<th>Memory per Worker</th>
+<th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>controller_runtime_reconcile_total</code></td>
-<td>Total reconciliations</td>
+<td>Light HTTP tests</td>
+<td>250m</td>
+<td>128Mi</td>
+<td>Simple GET/POST requests</td>
 </tr>
 <tr>
-<td><code>controller_runtime_reconcile_errors_total</code></td>
-<td>Reconciliation errors</td>
+<td>Medium complexity</td>
+<td>500m</td>
+<td>256Mi</td>
+<td>JSON parsing, simple logic</td>
 </tr>
 <tr>
-<td><code>controller_runtime_reconcile_time_seconds</code></td>
-<td>Reconciliation duration</td>
-</tr>
-<tr>
-<td><code>workqueue_depth</code></td>
-<td>Current queue depth</td>
-</tr>
-<tr>
-<td><code>workqueue_adds_total</code></td>
-<td>Items added to queue</td>
+<td>Heavy tests</td>
+<td>1000m</td>
+<td>512Mi-1Gi</td>
+<td>Complex business logic, large payloads</td>
 </tr>
 </tbody>
 </table>
-<p>These metrics can be scraped by Prometheus using the standard <code>/metrics</code> endpoint on the operator pod.</p>
-<h3 id="enabling-operator-metrics">Enabling Operator Metrics<a class="headerlink" href="#enabling-operator-metrics" title="Anchor link to this section for reference">⚓</a></h3>
-<p>Enable metrics in your Helm values:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">metrics</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-</code></pre></div>
-<p>Then configure Prometheus to scrape the operator:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">scrape_configs</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;locust-operator&#39;</span>
-<span class="w">    </span><span class="nt">kubernetes_sd_configs</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pod</span>
-<span class="w">    </span><span class="nt">relabel_configs</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">__meta_kubernetes_pod_label_app_kubernetes_io_name</span><span class="p p-Indicator">]</span>
-<span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">keep</span>
-<span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust-k8s-operator</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">__address__</span><span class="p p-Indicator">]</span>
-<span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">replace</span>
-<span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">([^:]+)(?::\d+)?</span>
-<span class="w">        </span><span class="nt">replacement</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">$1:8080</span>
-<span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">__address__</span>
-</code></pre></div>
-<h3 id="servicemonitor-prometheus-operator">ServiceMonitor (Prometheus Operator)<a class="headerlink" href="#servicemonitor-prometheus-operator" title="Anchor link to this section for reference">⚓</a></h3>
-<p>If using the Prometheus Operator, create a ServiceMonitor to automatically discover and scrape operator metrics:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">HTTP Metrics</label><label for="__tabbed_1_2">HTTPS Metrics (Recommended)</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">monitoring.coreos.com/v1</span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ServiceMonitor</span>
-<span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust-operator-metrics</span>
-<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust-operator-system</span>
-<span class="w">  </span><span class="nt">labels</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">app.kubernetes.io/name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust-k8s-operator</span>
-<span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">selector</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">app.kubernetes.io/name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust-k8s-operator</span>
-<span class="w">  </span><span class="nt">endpoints</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metrics</span>
-<span class="w">      </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/metrics</span>
-<span class="w">      </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
-</code></pre></div>
-<p>Ensure Helm values have:
-<div class="highlight"><pre><span></span><code><span class="nt">metrics</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">  </span><span class="nt">secure</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">  </span><span class="c1"># HTTP metrics</span>
-</code></pre></div></p>
+<p>Start conservative and observe resource usage via <code>kubectl top pods</code>. See <a href="../advanced_topics/#resource-management">Advanced Topics - Resource Management</a> for detailed sizing guidance.</p>
+<div class="admonition tip">
+<p class="admonition-title">Resource Precedence</p>
+<p>The operator applies resources in order of specificity: (1) CR spec resources (highest), (2) Helm role-specific resources (<code>masterResources</code>/<code>workerResources</code>), (3) Helm unified resources (<code>locustPods.resources</code>).</p>
 </div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">monitoring.coreos.com/v1</span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ServiceMonitor</span>
-<span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust-operator-metrics</span>
-<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust-operator-system</span>
-<span class="w">  </span><span class="nt">labels</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">app.kubernetes.io/name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust-k8s-operator</span>
-<span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">selector</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">app.kubernetes.io/name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust-k8s-operator</span>
-<span class="w">  </span><span class="nt">endpoints</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metrics</span>
-<span class="w">      </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/metrics</span>
-<span class="w">      </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
-<span class="w">      </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https</span>
-<span class="w">      </span><span class="nt">bearerTokenFile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/run/secrets/kubernetes.io/serviceaccount/token</span>
-<span class="w">      </span><span class="nt">tlsConfig</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">insecureSkipVerify</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">  </span><span class="c1"># For development only</span>
-</code></pre></div>
-<p>Ensure Helm values have:
-<div class="highlight"><pre><span></span><code><span class="nt">metrics</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">  </span><span class="nt">secure</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">  </span><span class="c1"># Enable HTTPS metrics (default: false)</span>
-</code></pre></div></p>
-</div>
-</div>
-</div>
-<div class="admonition warning">
-<p class="admonition-title">Production TLS</p>
-<p>For production, use cert-manager to manage TLS certificates instead of <code>insecureSkipVerify: true</code>. See the operator's <code>config/prometheus/</code> directory for examples.</p>
-</div>
-<h3 id="operator-metrics-queries">Operator Metrics Queries<a class="headerlink" href="#operator-metrics-queries" title="Anchor link to this section for reference">⚓</a></h3>
-<p>Useful PromQL queries for operator monitoring:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Reconciliation rate (per second)</span>
-<span class="kr">rate</span><span class="o">(</span><span class="nv">controller_runtime_reconcile_total</span><span class="p">[</span><span class="s">5m</span><span class="p">]</span><span class="o">)</span>
-
-<span class="c1"># Reconciliation error rate</span>
-<span class="kr">rate</span><span class="o">(</span><span class="nv">controller_runtime_reconcile_errors_total</span><span class="p">[</span><span class="s">5m</span><span class="p">]</span><span class="o">)</span>
-
-<span class="c1"># Average reconciliation duration</span>
-<span class="kr">rate</span><span class="o">(</span><span class="nv">controller_runtime_reconcile_time_seconds_sum</span><span class="p">[</span><span class="s">5m</span><span class="p">]</span><span class="o">)</span><span class="w"> </span>
-<span class="w">  </span><span class="o">/</span><span class="w"> </span><span class="kr">rate</span><span class="o">(</span><span class="nv">controller_runtime_reconcile_time_seconds_count</span><span class="p">[</span><span class="s">5m</span><span class="p">]</span><span class="o">)</span>
-
-<span class="c1"># Current workqueue depth</span>
-<span class="nv">workqueue_depth</span>
-
-<span class="c1"># Queue processing rate</span>
-<span class="kr">rate</span><span class="o">(</span><span class="nv">workqueue_adds_total</span><span class="p">[</span><span class="s">5m</span><span class="p">]</span><span class="o">)</span>
-</code></pre></div>
-<hr />
-<h2 id="locust-test-metrics"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 17H7v-7h2zm4 0h-2V7h2zm4 0h-2v-4h2zm2 2H5V5h14v14.1M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2"/></svg></span> Locust Test Metrics<a class="headerlink" href="#locust-test-metrics" title="Anchor link to this section for reference">⚓</a></h2>
-<div class="admonition warning">
-<p class="admonition-title">Two Metrics Approaches - Choose One</p>
-<p>The operator provides <strong>two mutually exclusive</strong> methods for collecting Locust test metrics:</p>
-<p><strong>1. Prometheus Exporter Sidecar</strong> (default, v1 &amp; v2 API)</p>
-<ul>
-<li>Uses <code>containersol/locust_exporter</code> sidecar on port 9646</li>
-<li>Exposes Prometheus-formatted metrics</li>
-<li>Works with Prometheus scraping</li>
-<li>Documented in this section below</li>
-</ul>
-<p><strong>2. Native OpenTelemetry</strong> (v2 API only)</p>
-<ul>
-<li>Locust exports directly via OTLP protocol</li>
-<li>No sidecar container needed</li>
-<li>Metrics sent to OTel Collector</li>
-<li>See <a href="#opentelemetry-metrics-traces">OpenTelemetry section above</a></li>
-</ul>
-<p><strong>When OTel is enabled, the exporter sidecar is NOT deployed.</strong> All Prometheus exporter documentation below only applies to <strong>non-OTel mode</strong>.</p>
-</div>
-<h3 id="metrics-exporter-sidecar-non-otel-mode">Metrics Exporter Sidecar (Non-OTel Mode)<a class="headerlink" href="#metrics-exporter-sidecar-non-otel-mode" title="Anchor link to this section for reference">⚓</a></h3>
-<p>When OpenTelemetry is <strong>not</strong> enabled, the operator automatically injects a Prometheus metrics exporter sidecar into the Locust master pod. This exporter scrapes Locust's built-in stats endpoint and exposes metrics in Prometheus format.</p>
-<p><strong>What the Operator Creates Automatically</strong>:</p>
+<h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="my-test-is-stuck-in-pending-phase">My test is stuck in Pending phase<a class="headerlink" href="#my-test-is-stuck-in-pending-phase" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Check in this order:</p>
 <ol>
-<li><strong>Metrics Exporter Sidecar Container</strong>:</li>
-<li>Image: <code>containersol/locust_exporter:v0.5.0</code></li>
-<li>Port: 9646</li>
-<li>
-<p>Path: <code>/metrics</code></p>
-</li>
-<li>
-<p><strong>Kubernetes Service</strong>: <code>&lt;test-name&gt;-master</code></p>
-</li>
-<li>Includes metrics port 9646</li>
-<li>
-<p>Provides stable DNS endpoint</p>
-</li>
-<li>
-<p><strong>Pod Annotations</strong> (for Prometheus auto-discovery):
-   <div class="highlight"><pre><span></span><code><span class="nt">prometheus.io/scrape</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<span class="nt">prometheus.io/path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/metrics&quot;</span>
-<span class="nt">prometheus.io/port</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;9646&quot;</span>
-</code></pre></div></p>
+<li><strong>Check operator events</strong>: <code>kubectl describe locusttest &lt;test-name&gt;</code> — look for errors in the Events section</li>
+<li><strong>Check pod status</strong>: <code>kubectl get pods -l performance-test-name=&lt;test-name&gt;</code> — look for scheduling errors or image pull failures</li>
+<li><strong>Check PodsHealthy condition</strong>: <code>kubectl get locusttest &lt;test-name&gt; -o jsonpath='{.status.conditions[?(@.type=="PodsHealthy")]}'</code> — the operator reports pod issues here</li>
+<li><strong>Check ConfigMap exists</strong>: If using <code>testFiles.configMapRef</code>, ensure the ConfigMap exists: <code>kubectl get configmap &lt;name&gt;</code></li>
+</ol>
+<p>The operator has a 2-minute grace period before reporting pod failures, allowing time for image pulls and startup.</p>
+<h3 id="my-test-shows-failed-phase">My test shows Failed phase<a class="headerlink" href="#my-test-shows-failed-phase" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Check the failure reason:</p>
+<ol>
+<li><strong>Check conditions</strong>: <code>kubectl describe locusttest &lt;test-name&gt;</code> — the Status section shows why it failed</li>
+<li><strong>Check master logs</strong>: <code>kubectl logs &lt;test-name&gt;-master-&lt;hash&gt;</code> — Locust errors appear here</li>
+<li><strong>Common causes</strong>:<ul>
+<li><strong>Locustfile syntax error</strong>: Python errors in your test script</li>
+<li><strong>Target host unreachable</strong>: Network connectivity issues</li>
+<li><strong>ConfigMap not found</strong>: Missing test files</li>
+<li><strong>Image pull failure</strong>: Invalid image name or missing pull secrets</li>
+</ul>
 </li>
 </ol>
-<p><strong>No manual setup required</strong> - the operator handles everything.</p>
-<h3 id="available-locust-metrics">Available Locust Metrics<a class="headerlink" href="#available-locust-metrics" title="Anchor link to this section for reference">⚓</a></h3>
-<p>The exporter provides these key metrics from Locust:</p>
-<table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>locust_requests_total</code></td>
-<td>Counter</td>
-<td>Total number of requests</td>
-</tr>
-<tr>
-<td><code>locust_requests_current_rps</code></td>
-<td>Gauge</td>
-<td>Current requests per second</td>
-</tr>
-<tr>
-<td><code>locust_requests_current_fail_per_sec</code></td>
-<td>Gauge</td>
-<td>Current failures per second</td>
-</tr>
-<tr>
-<td><code>locust_requests_avg_response_time</code></td>
-<td>Gauge</td>
-<td>Average response time (ms)</td>
-</tr>
-<tr>
-<td><code>locust_requests_min_response_time</code></td>
-<td>Gauge</td>
-<td>Minimum response time (ms)</td>
-</tr>
-<tr>
-<td><code>locust_requests_max_response_time</code></td>
-<td>Gauge</td>
-<td>Maximum response time (ms)</td>
-</tr>
-<tr>
-<td><code>locust_requests_avg_content_length</code></td>
-<td>Gauge</td>
-<td>Average response size (bytes)</td>
-</tr>
-<tr>
-<td><code>locust_users</code></td>
-<td>Gauge</td>
-<td>Current number of simulated users</td>
-</tr>
-<tr>
-<td><code>locust_errors</code></td>
-<td>Counter</td>
-<td>Total errors by type</td>
-</tr>
-</tbody>
-</table>
-<p>For the complete list, see the <a href="https://github.com/ContainerSolutions/locust_exporter">locust_exporter documentation</a>.</p>
-<h3 id="locust-metrics-queries">Locust Metrics Queries<a class="headerlink" href="#locust-metrics-queries" title="Anchor link to this section for reference">⚓</a></h3>
-<p>Useful PromQL queries for load test monitoring:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Total request rate across all endpoints</span>
-<span class="k">sum</span><span class="o">(</span><span class="kr">rate</span><span class="o">(</span><span class="nv">locust_requests_total</span><span class="p">[</span><span class="s">1m</span><span class="p">]</span><span class="o">))</span>
-
-<span class="c1"># Error rate</span>
-<span class="k">sum</span><span class="o">(</span><span class="kr">rate</span><span class="o">(</span><span class="nv">locust_errors</span><span class="p">[</span><span class="s">1m</span><span class="p">]</span><span class="o">))</span>
-
-<span class="c1"># Average response time</span>
-<span class="k">avg</span><span class="o">(</span><span class="nv">locust_requests_avg_response_time</span><span class="o">)</span>
-
-<span class="c1"># Max response time (locust_exporter exposes gauges, not histograms)</span>
-<span class="k">max</span><span class="o">(</span><span class="nv">locust_requests_max_response_time</span><span class="o">)</span>
-
-<span class="c1"># Current active users</span>
-<span class="k">sum</span><span class="o">(</span><span class="nv">locust_users</span><span class="o">)</span>
-
-<span class="c1"># Request rate by endpoint</span>
-<span class="k">sum</span><span class="o">(</span><span class="kr">rate</span><span class="o">(</span><span class="nv">locust_requests_total</span><span class="p">[</span><span class="s">1m</span><span class="p">]</span><span class="o">))</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="o">(</span><span class="nv">name</span><span class="p">,</span><span class="w"> </span><span class="nv">method</span><span class="o">)</span>
-
-<span class="c1"># Error percentage</span>
-<span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">sum</span><span class="o">(</span><span class="kr">rate</span><span class="o">(</span><span class="nv">locust_errors</span><span class="p">[</span><span class="s">1m</span><span class="p">]</span><span class="o">))</span><span class="w"> </span>
-<span class="w">  </span><span class="o">/</span><span class="w"> </span><span class="k">sum</span><span class="o">(</span><span class="kr">rate</span><span class="o">(</span><span class="nv">locust_requests_total</span><span class="p">[</span><span class="s">1m</span><span class="p">]</span><span class="o">))</span>
+<h3 id="workers-show-0n-connected">Workers show 0/N connected<a class="headerlink" href="#workers-show-0n-connected" title="Anchor link to this section for reference">⚓</a></h3>
+<p>The <code>connectedWorkers</code> field is an approximation from <code>Job.Status.Active</code>. Workers need time to start, pull images, and connect to the master.</p>
+<p>Check worker connectivity:</p>
+<ol>
+<li><strong>Verify worker pods are running</strong>: <code>kubectl get pods -l locust-role=worker</code></li>
+<li><strong>Verify master service exists</strong>: <code>kubectl get svc &lt;test-name&gt;-master</code></li>
+<li><strong>Check worker logs</strong>: <code>kubectl logs &lt;test-name&gt;-worker-&lt;hash&gt;</code> — workers should show "Connected to master"</li>
+<li><strong>Verify network connectivity</strong>: Workers connect to the master on port 5557</li>
+</ol>
+<p>Workers typically connect within 30-60 seconds after pod startup.</p>
+<h3 id="how-do-i-access-the-locust-web-ui">How do I access the Locust web UI?<a class="headerlink" href="#how-do-i-access-the-locust-web-ui" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Port-forward to the master service:</p>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>port-forward<span class="w"> </span>svc/&lt;test-name&gt;-master<span class="w"> </span><span class="m">8089</span>:8089
 </code></pre></div>
-<h3 id="integration-examples">Integration Examples<a class="headerlink" href="#integration-examples" title="Anchor link to this section for reference">⚓</a></h3>
-<p>The metrics are automatically exposed by the operator-created Service and pod annotations. Simply configure your monitoring tools to discover them:</p>
-<p><strong>Prometheus</strong>: Configure Kubernetes service discovery to scrape pods with <code>prometheus.io/scrape: "true"</code> annotation. The operator adds these annotations automatically - no manual configuration of individual tests needed.</p>
-<p><strong>Grafana</strong>: Connect to your Prometheus datasource and create dashboards using the PromQL queries above. Import panels from existing <a href="https://grafana.com/grafana/dashboards/?search=locust">Locust dashboard examples</a>.</p>
-<p><strong>NewRelic</strong>: Deploy a Prometheus agent configured to scrape Kubernetes pods with <code>prometheus.io/scrape: true</code> and forward metrics to NewRelic. See <a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues/118">Issue #118</a> for production deployment patterns.</p>
-<p><strong>DataDog</strong>: Configure the DataDog agent's Prometheus integration to auto-discover and scrape pods with <code>prometheus.io/*</code> annotations. The DataDog agent automatically finds operator-created test pods.</p>
-<div class="admonition tip">
-<p class="admonition-title">Production Deployment</p>
-<p>For large-scale deployments, see <a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues/118">Issue #118</a> which documents production patterns used with thousands of tests in NewRelic and DataDog environments.</p>
+<p>Then visit <a href="http://localhost:8089">http://localhost:8089</a> in your browser.</p>
+<div class="admonition note">
+<p class="admonition-title">Autostart Behavior</p>
+<p>If <code>autostart: true</code> (default), the test starts automatically and the web UI shows the running test. Set <code>autostart: false</code> to control test start from the web UI.</p>
 </div>
+<h3 id="configmap-not-found-error">ConfigMap not found error<a class="headerlink" href="#configmap-not-found-error" title="Anchor link to this section for reference">⚓</a></h3>
+<p>The operator detects missing ConfigMaps via pod health monitoring and reports the issue in the <code>PodsHealthy</code> condition.</p>
+<p>You can create the ConfigMap <strong>before or after</strong> the LocustTest CR:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create ConfigMap from local files</span>
+kubectl<span class="w"> </span>create<span class="w"> </span>configmap<span class="w"> </span>my-test-scripts<span class="w"> </span>--from-file<span class="o">=</span>test.py<span class="o">=</span>./test.py
+
+<span class="c1"># If LocustTest already exists, the operator detects recovery automatically</span>
+</code></pre></div>
+<p>The operator monitors pod status every 30 seconds and updates conditions when ConfigMaps become available.</p>
+<h2 id="migration">Migration<a class="headerlink" href="#migration" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="can-i-use-v1-and-v2-crs-at-the-same-time">Can I use v1 and v2 CRs at the same time?<a class="headerlink" href="#can-i-use-v1-and-v2-crs-at-the-same-time" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Yes, with the conversion webhook enabled. The operator automatically converts v1 CRs to v2 internally, allowing both versions to coexist.</p>
+<p>v1 CRs continue to work with their existing configuration. See <a href="../migration/">Migration Guide</a> for conversion details.</p>
+<h3 id="do-i-need-to-recreate-existing-v1-tests">Do I need to recreate existing v1 tests?<a class="headerlink" href="#do-i-need-to-recreate-existing-v1-tests" title="Anchor link to this section for reference">⚓</a></h3>
+<p>No, existing v1 tests continue to work. However, new features (OpenTelemetry integration, environment variable injection, volume mounts) require the v2 API.</p>
+<p>Migrate when you need v2-only features or when convenient. See <a href="../migration/">Migration Guide</a> for the conversion process.</p>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="how-do-i-pass-extra-cli-arguments-to-locust">How do I pass extra CLI arguments to Locust?<a class="headerlink" href="#how-do-i-pass-extra-cli-arguments-to-locust" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Use <code>master.extraArgs</code> and <code>worker.extraArgs</code> in the v2 API. These are appended after the command seed and operator-managed flags:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">locust.io/v2</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LocustTest</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">master</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;--locustfile</span><span class="nv"> </span><span class="s">/lotest/src/test.py</span><span class="nv"> </span><span class="s">--host</span><span class="nv"> </span><span class="s">https://api.example.com&quot;</span>
+<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;--loglevel&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;DEBUG&quot;</span>
+<span class="w">  </span><span class="nt">worker</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;--locustfile</span><span class="nv"> </span><span class="s">/lotest/src/test.py&quot;</span>
+<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;--loglevel&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;DEBUG&quot;</span>
+<span class="w">    </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Reserved Flags</p>
+<p>The operator manages these flags automatically: <code>--master</code>, <code>--worker</code>, <code>--master-host</code>, <code>--master-port</code>, <code>--expect-workers</code>, <code>--autostart</code>, <code>--autoquit</code>. Do not set them manually.</p>
+</div>
+<h3 id="what-resource-precedence-applies">What resource precedence applies?<a class="headerlink" href="#what-resource-precedence-applies" title="Anchor link to this section for reference">⚓</a></h3>
+<p>The operator applies resources in this order (first non-empty value wins):</p>
+<ol>
+<li><strong>CR spec resources</strong> (highest precedence): Set in <code>LocustTest.spec.master.resources</code> or <code>LocustTest.spec.worker.resources</code></li>
+<li><strong>Helm role-specific resources</strong>: Set in <code>values.yaml</code> as <code>locustPods.masterResources</code> or <code>locustPods.workerResources</code></li>
+<li><strong>Helm unified resources</strong>: Set in <code>values.yaml</code> as <code>locustPods.resources</code></li>
+</ol>
+<p>This allows global defaults with role-specific overrides and per-test customization.</p>
+<h2 id="observability">Observability<a class="headerlink" href="#observability" title="Anchor link to this section for reference">⚓</a></h2>
+<h3 id="should-i-use-opentelemetry-or-the-metrics-sidecar">Should I use OpenTelemetry or the metrics sidecar?<a class="headerlink" href="#should-i-use-opentelemetry-or-the-metrics-sidecar" title="Anchor link to this section for reference">⚓</a></h3>
+<p><strong>Use OpenTelemetry for new deployments.</strong> It provides traces and metrics without requiring a sidecar container, reducing resource overhead.</p>
+<p>The metrics sidecar is maintained for legacy compatibility. Use it only if:</p>
+<ul>
+<li>Your monitoring stack doesn't support OTLP</li>
+<li>You have existing dashboards built on the CSV metrics format</li>
+</ul>
+<p>See <a href="../advanced_topics/#opentelemetry-integration">Advanced Topics - OpenTelemetry Integration</a> for configuration details.</p>
+<h3 id="how-do-i-monitor-test-progress-programmatically">How do I monitor test progress programmatically?<a class="headerlink" href="#how-do-i-monitor-test-progress-programmatically" title="Anchor link to this section for reference">⚓</a></h3>
+<p>Use the LocustTest status conditions for automation:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Check if test is ready</span>
+kubectl<span class="w"> </span>get<span class="w"> </span>locusttest<span class="w"> </span>my-test<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.status.conditions[?(@.type==&quot;Ready&quot;)].status}&#39;</span>
+
+<span class="c1"># Get current phase</span>
+kubectl<span class="w"> </span>get<span class="w"> </span>locusttest<span class="w"> </span>my-test<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.status.phase}&#39;</span>
+
+<span class="c1"># Get worker count</span>
+kubectl<span class="w"> </span>get<span class="w"> </span>locusttest<span class="w"> </span>my-test<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.status.connectedWorkers}/{.status.expectedWorkers}&#39;</span>
+</code></pre></div>
+<p>See <a href="../api_reference/#status-fields">API Reference - Status Fields</a> for all available status information.</p>
 
 
 
@@ -1364,7 +1402,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="February 10, 2026 11:45:58 UTC">February 10, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="February 11, 2026 22:19:21 UTC">February 11, 2026</span>
   </span>
 
     
@@ -1402,7 +1440,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../security/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Security">
+          <a href="../api_reference/" class="md-footer__link md-footer__link--prev" aria-label="Previous: API Reference">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1412,20 +1450,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Security
+                API Reference
               </div>
             </div>
           </a>
         
         
           
-          <a href="../migration/" class="md-footer__link md-footer__link--next" aria-label="Next: Migration &amp; Upgrade">
+          <a href="../how_does_it_work/" class="md-footer__link md-footer__link--next" aria-label="Next: How It Works">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Migration & Upgrade
+                How It Works
               </div>
             </div>
             <div class="md-footer__button md-icon">
