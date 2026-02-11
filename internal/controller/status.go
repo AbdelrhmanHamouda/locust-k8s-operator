@@ -44,6 +44,9 @@ func (r *LocustTestReconciler) initializeStatus(lt *locustv2.LocustTest) {
 	r.setCondition(lt, locustv2.ConditionTypeTestCompleted,
 		metav1.ConditionFalse, locustv2.ReasonTestInProgress,
 		"Test has not started")
+	r.setCondition(lt, locustv2.ConditionTypePodsHealthy,
+		metav1.ConditionTrue, locustv2.ReasonPodsStarting,
+		"Waiting for pods to start")
 }
 
 // setCondition sets a condition on the LocustTest status.
@@ -80,9 +83,20 @@ func (r *LocustTestReconciler) updateStatusFromJobs(
 	lt *locustv2.LocustTest,
 	masterJob *batchv1.Job,
 	workerJob *batchv1.Job,
+	podHealth PodHealthStatus,
 ) error {
+	log := logf.FromContext(ctx)
+
 	// Determine phase from master Job status
 	newPhase := derivePhaseFromJob(masterJob)
+
+	// If pods unhealthy and grace period expired, mark as Failed
+	// BUT: Don't override terminal states (Succeeded/Failed from Job completion)
+	if !podHealth.Healthy && !podHealth.InGracePeriod {
+		if newPhase != locustv2.PhaseSucceeded && newPhase != locustv2.PhaseFailed {
+			newPhase = locustv2.PhaseFailed
+		}
+	}
 
 	// Update phase if changed and emit events
 	if lt.Status.Phase != newPhase {
@@ -124,7 +138,6 @@ func (r *LocustTestReconciler) updateStatusFromJobs(
 			}
 		}
 
-		log := logf.FromContext(ctx)
 		log.Info("Phase transition", "from", string(oldPhase), "to", string(newPhase), "locustTest", lt.Name)
 	}
 
@@ -143,6 +156,23 @@ func (r *LocustTestReconciler) updateStatusFromJobs(
 				fmt.Sprintf("%d/%d workers connected",
 					lt.Status.ConnectedWorkers, lt.Status.ExpectedWorkers))
 		}
+	}
+
+	// Update PodsHealthy condition
+	if podHealth.Healthy {
+		r.setCondition(lt, locustv2.ConditionTypePodsHealthy,
+			metav1.ConditionTrue, podHealth.Reason, podHealth.Message)
+	} else {
+		r.setCondition(lt, locustv2.ConditionTypePodsHealthy,
+			metav1.ConditionFalse, podHealth.Reason, podHealth.Message)
+
+		// Emit warning event
+		r.Recorder.Event(lt, corev1.EventTypeWarning, "PodFailure", podHealth.Message)
+
+		// Log for operator visibility
+		log.Info("Pod health check failed",
+			"reason", podHealth.Reason,
+			"failedPods", len(podHealth.FailedPods))
 	}
 
 	// Update ObservedGeneration (CORE-25)

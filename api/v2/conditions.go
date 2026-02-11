@@ -29,6 +29,9 @@ const (
 
 	// ConditionTypeSpecDrifted indicates the CR spec was modified after creation but changes are ignored.
 	ConditionTypeSpecDrifted = "SpecDrifted"
+
+	// ConditionTypePodsHealthy indicates whether pods are healthy and running.
+	ConditionTypePodsHealthy = "PodsHealthy"
 )
 
 // Condition reasons for Ready condition.
@@ -55,6 +58,17 @@ const (
 // Condition reasons for SpecDrifted condition.
 const (
 	ReasonSpecChangeIgnored = "SpecChangeIgnored"
+)
+
+// Condition reasons for PodsHealthy condition.
+const (
+	ReasonPodsStarting       = "PodsStarting"
+	ReasonPodsHealthy        = "PodsHealthy"
+	ReasonPodImagePullError  = "ImagePullError"
+	ReasonPodConfigError     = "ConfigurationError"
+	ReasonPodSchedulingError = "SchedulingError"
+	ReasonPodCrashLoop       = "CrashLoopBackOff"
+	ReasonPodInitError       = "InitializationError"
 )
 
 // Phase represents the current lifecycle phase of a LocustTest.
