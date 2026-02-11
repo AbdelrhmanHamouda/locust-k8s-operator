@@ -154,20 +154,189 @@ The v2 API provides a cleaner, grouped configuration structure with new features
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `phase` | string | Current phase: `Pending`, `Running`, `Succeeded`, `Failed` |
-| `expectedWorkers` | int32 | Number of expected worker replicas |
-| `connectedWorkers` | int32 | Number of connected workers |
-| `startTime` | metav1.Time | When the test started |
-| `completionTime` | metav1.Time | When the test completed |
-| `conditions` | []metav1.Condition | Standard Kubernetes conditions |
+| `phase` | string | Current lifecycle phase: `Pending`, `Running`, `Succeeded`, `Failed` |
+| `observedGeneration` | int64 | Most recent generation observed by the controller |
+| `expectedWorkers` | int32 | Number of expected worker replicas (from spec) |
+| `connectedWorkers` | int32 | Approximate number of connected workers (from Job.Status.Active) |
+| `startTime` | metav1.Time | When the test transitioned to Running |
+| `completionTime` | metav1.Time | When the test reached Succeeded or Failed |
+| `conditions` | []metav1.Condition | Standard Kubernetes conditions (see below) |
+
+!!! note
+    `connectedWorkers` is an approximation derived from the worker Job's active pod count. It may briefly lag behind actual Locust worker connections.
+
+#### Phase Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending: CR Created
+    Pending --> Running: Master Job active
+    Running --> Succeeded: Master Job completed
+    Running --> Failed: Master Job failed
+    Pending --> Failed: Pod health check failed (after grace period)
+    Running --> Failed: Pod health check failed (after grace period)
+```
+
+| Phase | Meaning | What to do |
+|-------|---------|------------|
+| `Pending` | Resources are being created (Service, master Job, worker Job). Initial state after CR creation. Also set during recovery after external resource deletion. | Wait for resources to be scheduled. Check events if stuck. |
+| `Running` | Master Job has at least one active pod. Test execution is in progress. `startTime` is set on this transition. | Monitor worker connections and test progress. |
+| `Succeeded` | Master Job completed successfully (exit code 0). `completionTime` is set. | Collect results. CR can be deleted or kept for records. |
+| `Failed` | Master Job failed, or pod health checks detected persistent failures after the 2-minute grace period. `completionTime` is set. | Check pod logs and events for failure details. Delete and recreate to retry. |
+
+The operator waits 2 minutes after pod creation before reporting pod health failures. This prevents false alarms during normal startup activities like image pulling, volume mounting, and scheduling.
 
 #### Condition Types
 
-| Type | Description |
-|------|-------------|
-| `Ready` | True when all resources are created |
-| `WorkersConnected` | True when all workers are connected |
-| `TestCompleted` | True when the test has finished |
+**Ready**
+
+| Status | Reason | Meaning |
+|--------|--------|---------|
+| `True` | `ResourcesCreated` | All resources (Service, Jobs) created successfully |
+| `False` | `ResourcesCreating` | Resources are being created |
+| `False` | `ResourcesFailed` | Test failed, resources in error state |
+
+**WorkersConnected**
+
+| Status | Reason | Meaning |
+|--------|--------|---------|
+| `True` | `AllWorkersConnected` | All expected workers have active pods |
+| `False` | `WaitingForWorkers` | Initial state, waiting for worker pods |
+| `False` | `WorkersMissing` | Some workers not yet active (shows N/M count) |
+
+**TestCompleted**
+
+| Status | Reason | Meaning |
+|--------|--------|---------|
+| `True` | `TestSucceeded` | Test completed successfully |
+| `True` | `TestFailed` | Test completed with failure |
+| `False` | `TestInProgress` | Test has not finished |
+
+**PodsHealthy**
+
+| Status | Reason | Meaning |
+|--------|--------|---------|
+| `True` | `PodsHealthy` | All pods running normally |
+| `True` | `PodsStarting` | Within 2-minute grace period (not yet checking) |
+| `False` | `ImagePullError` | One or more pods cannot pull container image |
+| `False` | `ConfigurationError` | ConfigMap or Secret not found |
+| `False` | `SchedulingError` | Pod cannot be scheduled (node affinity, resources) |
+| `False` | `CrashLoopBackOff` | Container repeatedly crashing |
+| `False` | `InitializationError` | Init container failed |
+
+**SpecDrifted**
+
+| Status | Reason | Meaning |
+|--------|--------|---------|
+| `True` | `SpecChangeIgnored` | CR spec was modified after creation. Changes are ignored. Delete and recreate to apply. |
+
+!!! info
+    The `SpecDrifted` condition only appears when a user edits the CR spec after initial creation. It serves as a reminder that tests are immutable.
+
+#### Checking Status
+
+```bash
+# Quick status overview
+kubectl get locusttest my-test
+
+# Detailed status with conditions
+kubectl get locusttest my-test -o jsonpath='{.status}' | jq .
+
+# Watch phase changes in real-time
+kubectl get locusttest my-test -w
+
+# Check specific condition
+kubectl get locusttest my-test -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+
+# Check worker connection progress
+kubectl get locusttest my-test -o jsonpath='{.status.connectedWorkers}/{.status.expectedWorkers}'
+```
+
+#### CI/CD Integration
+
+Use `kubectl wait` to integrate LocustTest into CI/CD pipelines. The operator's status conditions follow standard Kubernetes conventions, making them compatible with any tool that supports `kubectl wait`.
+
+**GitHub Actions example:**
+
+```yaml
+name: Load Test
+on:
+  workflow_dispatch:
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply test
+        run: kubectl apply -f locusttest.yaml
+
+      - name: Wait for test completion
+        run: |
+          kubectl wait locusttest/my-test \
+            --for=jsonpath='{.status.phase}'=Succeeded \
+            --timeout=30m
+
+      - name: Check result
+        if: failure()
+        run: |
+          echo "Test failed or timed out"
+          kubectl describe locusttest my-test
+          kubectl logs -l performance-test-name=my-test --tail=50
+
+      - name: Cleanup
+        if: always()
+        run: kubectl delete locusttest my-test --ignore-not-found
+```
+
+**GitLab CI example:**
+
+```yaml
+load-test:
+  stage: test
+  script:
+    - kubectl apply -f locusttest.yaml
+    - |
+      kubectl wait locusttest/my-test \
+        --for=jsonpath='{.status.phase}'=Succeeded \
+        --timeout=30m
+    - echo "Load test passed"
+  after_script:
+    - kubectl delete locusttest my-test --ignore-not-found
+  allow_failure: false
+```
+
+**Generic shell script example:**
+
+```bash
+#!/bin/bash
+set -e
+
+# Apply test
+kubectl apply -f locusttest.yaml
+
+# Wait for completion (either Succeeded or Failed)
+echo "Waiting for test to complete..."
+while true; do
+  PHASE=$(kubectl get locusttest my-test -o jsonpath='{.status.phase}' 2>/dev/null)
+  case "$PHASE" in
+    Succeeded)
+      echo "Test passed!"
+      exit 0
+      ;;
+    Failed)
+      echo "Test failed!"
+      kubectl describe locusttest my-test
+      exit 1
+      ;;
+    *)
+      echo "Phase: $PHASE - waiting..."
+      sleep 10
+      ;;
+  esac
+done
+```
 
 ### Complete v2 Example
 
