@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -773,4 +774,268 @@ func TestUpdateStatusFromJobs_RetryOnConflict(t *testing.T) {
 
 	assert.Equal(t, locustv2.PhaseRunning, lt.Status.Phase)
 	assert.Equal(t, 3, cc.updateCalls, "Expected 2 conflicts + 1 successful update")
+}
+
+func TestUpdateStatusFromJobs_PodHealthUnhealthy_TransitionsToFailed(t *testing.T) {
+	lt := &locustv2.LocustTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Namespace:  "default",
+			Generation: 1,
+		},
+		Spec: locustv2.LocustTestSpec{
+			Worker: locustv2.WorkerSpec{Replicas: 3},
+		},
+		Status: locustv2.LocustTestStatus{
+			Phase:           locustv2.PhaseRunning,
+			ExpectedWorkers: 3,
+		},
+	}
+
+	masterJob := &batchv1.Job{
+		Status: batchv1.JobStatus{Active: 1}, // Job still running
+	}
+
+	unhealthyStatus := PodHealthStatus{
+		Healthy: false,
+		Reason:  locustv2.ReasonPodConfigError,
+		Message: "ConfigurationError: 1 pod(s) affected [test-master-abc]: ConfigMap not found (expected: my-configmap)",
+		FailedPods: []PodFailureInfo{
+			{Name: "test-master-abc", FailureType: locustv2.ReasonPodConfigError, ErrorMessage: "ConfigMap not found"},
+		},
+	}
+
+	reconciler, recorder := newTestReconciler(lt)
+	ctx := context.Background()
+
+	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil, unhealthyStatus)
+	require.NoError(t, err)
+
+	// Phase should transition to Failed
+	assert.Equal(t, locustv2.PhaseFailed, lt.Status.Phase)
+
+	// PodsHealthy condition should be False
+	podsHealthyCond := findCondition(lt.Status.Conditions, locustv2.ConditionTypePodsHealthy)
+	require.NotNil(t, podsHealthyCond)
+	assert.Equal(t, metav1.ConditionFalse, podsHealthyCond.Status)
+	assert.Equal(t, locustv2.ReasonPodConfigError, podsHealthyCond.Reason)
+	assert.Contains(t, podsHealthyCond.Message, "ConfigMap not found")
+
+	// Two events should be emitted: TestFailed and PodFailure
+	var events []string
+	for i := 0; i < 2; i++ {
+		select {
+		case event := <-recorder.Events:
+			events = append(events, event)
+		default:
+		}
+	}
+	require.Len(t, events, 2, "Expected 2 events: TestFailed and PodFailure")
+
+	// Check that both events were emitted
+	hasTestFailed := false
+	hasPodFailure := false
+	for _, event := range events {
+		if strings.Contains(event, "TestFailed") {
+			hasTestFailed = true
+		}
+		if strings.Contains(event, "PodFailure") {
+			hasPodFailure = true
+		}
+	}
+	assert.True(t, hasTestFailed, "Expected TestFailed event")
+	assert.True(t, hasPodFailure, "Expected PodFailure event")
+}
+
+func TestUpdateStatusFromJobs_PodHealthUnhealthy_DoesNotOverrideTerminalState(t *testing.T) {
+	lt := &locustv2.LocustTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Namespace:  "default",
+			Generation: 1,
+		},
+		Spec: locustv2.LocustTestSpec{
+			Worker: locustv2.WorkerSpec{Replicas: 3},
+		},
+		Status: locustv2.LocustTestStatus{
+			Phase:           locustv2.PhaseRunning,
+			ExpectedWorkers: 3,
+		},
+	}
+
+	// Master Job has completed successfully
+	masterJob := &batchv1.Job{
+		Status: batchv1.JobStatus{
+			Conditions: []batchv1.JobCondition{
+				{
+					Type:   batchv1.JobComplete,
+					Status: corev1.ConditionTrue,
+				},
+			},
+		},
+	}
+
+	// Pods are unhealthy (e.g., worker pods terminating after completion)
+	unhealthyStatus := PodHealthStatus{
+		Healthy: false,
+		Reason:  locustv2.ReasonPodCrashLoop,
+		Message: "CrashLoopBackOff: 1 pod(s) affected [test-worker-xyz]: Container failed",
+		FailedPods: []PodFailureInfo{
+			{Name: "test-worker-xyz", FailureType: locustv2.ReasonPodCrashLoop, ErrorMessage: "Container failed"},
+		},
+	}
+
+	reconciler, _ := newTestReconciler(lt)
+	ctx := context.Background()
+
+	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil, unhealthyStatus)
+	require.NoError(t, err)
+
+	// Phase should be Succeeded (not Failed), as terminal state takes precedence
+	assert.Equal(t, locustv2.PhaseSucceeded, lt.Status.Phase)
+
+	// PodsHealthy condition should still be set as informational
+	podsHealthyCond := findCondition(lt.Status.Conditions, locustv2.ConditionTypePodsHealthy)
+	require.NotNil(t, podsHealthyCond)
+	assert.Equal(t, metav1.ConditionFalse, podsHealthyCond.Status)
+	assert.Equal(t, locustv2.ReasonPodCrashLoop, podsHealthyCond.Reason)
+}
+
+func TestUpdateStatusFromJobs_PodHealthImagePullError(t *testing.T) {
+	lt := &locustv2.LocustTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Namespace:  "default",
+			Generation: 1,
+		},
+		Spec: locustv2.LocustTestSpec{
+			Worker: locustv2.WorkerSpec{Replicas: 3},
+		},
+		Status: locustv2.LocustTestStatus{
+			Phase:           locustv2.PhaseRunning,
+			ExpectedWorkers: 3,
+		},
+	}
+
+	masterJob := &batchv1.Job{
+		Status: batchv1.JobStatus{Active: 1},
+	}
+
+	unhealthyStatus := PodHealthStatus{
+		Healthy: false,
+		Reason:  locustv2.ReasonPodImagePullError,
+		Message: "ImagePullError: 2 pod(s) affected [test-worker-1, test-worker-2]: Failed to pull image locustio/locust:nonexistent",
+		FailedPods: []PodFailureInfo{
+			{Name: "test-worker-1", FailureType: locustv2.ReasonPodImagePullError, ErrorMessage: "Failed to pull image"},
+			{Name: "test-worker-2", FailureType: locustv2.ReasonPodImagePullError, ErrorMessage: "Failed to pull image"},
+		},
+	}
+
+	reconciler, _ := newTestReconciler(lt)
+	ctx := context.Background()
+
+	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil, unhealthyStatus)
+	require.NoError(t, err)
+
+	// Phase should transition to Failed
+	assert.Equal(t, locustv2.PhaseFailed, lt.Status.Phase)
+
+	// PodsHealthy condition should have correct reason
+	podsHealthyCond := findCondition(lt.Status.Conditions, locustv2.ConditionTypePodsHealthy)
+	require.NotNil(t, podsHealthyCond)
+	assert.Equal(t, metav1.ConditionFalse, podsHealthyCond.Status)
+	assert.Equal(t, locustv2.ReasonPodImagePullError, podsHealthyCond.Reason)
+	assert.Contains(t, podsHealthyCond.Message, "ImagePullError")
+	assert.Contains(t, podsHealthyCond.Message, "test-worker-1")
+}
+
+func TestUpdateStatusFromJobs_PodHealthCrashLoop(t *testing.T) {
+	lt := &locustv2.LocustTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Namespace:  "default",
+			Generation: 1,
+		},
+		Spec: locustv2.LocustTestSpec{
+			Worker: locustv2.WorkerSpec{Replicas: 3},
+		},
+		Status: locustv2.LocustTestStatus{
+			Phase:           locustv2.PhaseRunning,
+			ExpectedWorkers: 3,
+		},
+	}
+
+	masterJob := &batchv1.Job{
+		Status: batchv1.JobStatus{Active: 1},
+	}
+
+	unhealthyStatus := PodHealthStatus{
+		Healthy: false,
+		Reason:  locustv2.ReasonPodCrashLoop,
+		Message: "CrashLoopBackOff: 1 pod(s) affected [test-master-xyz]: Container exited with code 1",
+		FailedPods: []PodFailureInfo{
+			{Name: "test-master-xyz", FailureType: locustv2.ReasonPodCrashLoop, ErrorMessage: "Container exited with code 1"},
+		},
+	}
+
+	reconciler, _ := newTestReconciler(lt)
+	ctx := context.Background()
+
+	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil, unhealthyStatus)
+	require.NoError(t, err)
+
+	// Phase should transition to Failed
+	assert.Equal(t, locustv2.PhaseFailed, lt.Status.Phase)
+
+	// PodsHealthy condition should have correct reason
+	podsHealthyCond := findCondition(lt.Status.Conditions, locustv2.ConditionTypePodsHealthy)
+	require.NotNil(t, podsHealthyCond)
+	assert.Equal(t, metav1.ConditionFalse, podsHealthyCond.Status)
+	assert.Equal(t, locustv2.ReasonPodCrashLoop, podsHealthyCond.Reason)
+	assert.Contains(t, podsHealthyCond.Message, "CrashLoopBackOff")
+}
+
+func TestUpdateStatusFromJobs_PodHealthInGracePeriod(t *testing.T) {
+	lt := &locustv2.LocustTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Namespace:  "default",
+			Generation: 1,
+		},
+		Spec: locustv2.LocustTestSpec{
+			Worker: locustv2.WorkerSpec{Replicas: 3},
+		},
+		Status: locustv2.LocustTestStatus{
+			Phase:           locustv2.PhaseRunning,
+			ExpectedWorkers: 3,
+		},
+	}
+
+	masterJob := &batchv1.Job{
+		Status: batchv1.JobStatus{Active: 1},
+	}
+
+	// Pods in grace period - still healthy
+	gracePeriodStatus := PodHealthStatus{
+		Healthy:       true,
+		InGracePeriod: true,
+		Reason:        locustv2.ReasonPodsStarting,
+		Message:       "Pods are starting up",
+	}
+
+	reconciler, _ := newTestReconciler(lt)
+	ctx := context.Background()
+
+	err := reconciler.updateStatusFromJobs(ctx, lt, masterJob, nil, gracePeriodStatus)
+	require.NoError(t, err)
+
+	// Phase should stay Running
+	assert.Equal(t, locustv2.PhaseRunning, lt.Status.Phase)
+
+	// PodsHealthy condition should be True with starting reason
+	podsHealthyCond := findCondition(lt.Status.Conditions, locustv2.ConditionTypePodsHealthy)
+	require.NotNil(t, podsHealthyCond)
+	assert.Equal(t, metav1.ConditionTrue, podsHealthyCond.Status)
+	assert.Equal(t, locustv2.ReasonPodsStarting, podsHealthyCond.Reason)
+	assert.Contains(t, podsHealthyCond.Message, "starting")
 }
