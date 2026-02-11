@@ -3,7 +3,8 @@
 # Project information
 site_name: Locust Kubernetes Operator
 site_author: Abdelrhman Hamouda
-site_description: Locust kubernetes operator documentation.
+site_description: Production-ready Kubernetes operator for Locust distributed load testing. Automate performance testing with cloud-native CI/CD integration, OpenTelemetry observability, and horizontal scaling.
+site_keywords: kubernetes, locust, operator, load testing, performance testing, distributed testing, cloud-native, k8s, helm, CI/CD
 
 # Repository
 repo_name: locust-k8s-operator
@@ -89,6 +90,7 @@ extra_css:
 extra_javascript:
   - assets/javascripts/scroll-effects.js
   - assets/javascripts/custom-announcements.js
+  - assets/javascripts/schema-org.js
 
 # Customization
 extra:
@@ -183,16 +185,20 @@ markdown_extensions:
 # Page tree
 nav:
   - Introduction: index.md
-  - How does it work: how_does_it_work.md
-  - Features: features.md
-  - Getting Started: getting_started.md
-  - Deploy Operator with HELM: helm_deploy.md
-  - Advanced topics: advanced_topics.md
-  - Metrics & Dashboards: metrics_and_dashboards.md
-  - Security: security.md
-  - API Reference: api_reference.md
-  - FAQ: faq.md
-  - Migration Guide: migration.md
+  - Getting Started:
+      - Quick Start: getting_started.md
+      - Deploy with Helm: helm_deploy.md
+  - User Guide:
+      - Features: features.md
+      - Advanced Topics: advanced_topics.md
+      - API Reference: api_reference.md
+      - FAQ: faq.md
+  - Architecture:
+      - How It Works: how_does_it_work.md
+  - Operations:
+      - Security: security.md
+      - Metrics & Dashboards: metrics_and_dashboards.md
+  - Migration & Upgrade: migration.md
   - Contributing & Development:
       - Overview: contribute.md
       - Integration Testing: integration-testing.md
