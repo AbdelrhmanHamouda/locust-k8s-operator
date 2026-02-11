@@ -1375,3 +1375,231 @@ func TestReconcile_FinalizerIdempotent(t *testing.T) {
 	}
 	assert.Equal(t, 1, finalizerCount, "Finalizer should appear exactly once")
 }
+
+func TestMapPodToLocustTest(t *testing.T) {
+	tests := []struct {
+		name              string
+		pod               *corev1.Pod
+		job               *batchv1.Job
+		expectedRequests  int
+		expectedName      string
+		expectedNamespace string
+	}{
+		{
+			name: "pod with valid owner chain maps to LocustTest",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-master-abc123",
+					Namespace: "default",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: "batch/v1",
+							Kind:       "Job",
+							Name:       "test-master",
+							UID:        "job-uid-123",
+						},
+					},
+				},
+			},
+			job: &batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-master",
+					Namespace: "default",
+					UID:       "job-uid-123",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: "locust.io/v2",
+							Kind:       "LocustTest",
+							Name:       "test",
+							UID:        "locusttest-uid-123",
+						},
+					},
+				},
+			},
+			expectedRequests:  1,
+			expectedName:      "test",
+			expectedNamespace: "default",
+		},
+		{
+			name: "pod without owner references returns empty",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "orphan-pod",
+					Namespace: "default",
+				},
+			},
+			job:              nil,
+			expectedRequests: 0,
+		},
+		{
+			name: "pod owned by non-Job resource returns empty",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "replicaset-pod",
+					Namespace: "default",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: "apps/v1",
+							Kind:       "ReplicaSet",
+							Name:       "my-replicaset",
+							UID:        "rs-uid-123",
+						},
+					},
+				},
+			},
+			job:              nil,
+			expectedRequests: 0,
+		},
+		{
+			name: "pod owned by Job not owned by LocustTest returns empty",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "standalone-job-pod",
+					Namespace: "default",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: "batch/v1",
+							Kind:       "Job",
+							Name:       "standalone-job",
+							UID:        "job-uid-456",
+						},
+					},
+				},
+			},
+			job: &batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "standalone-job",
+					Namespace: "default",
+					UID:       "job-uid-456",
+					// No owner references
+				},
+			},
+			expectedRequests: 0,
+		},
+		{
+			name: "pod owned by deleted Job returns empty",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "deleted-job-pod",
+					Namespace: "default",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: "batch/v1",
+							Kind:       "Job",
+							Name:       "deleted-job",
+							UID:        "job-uid-789",
+						},
+					},
+				},
+			},
+			job:              nil, // Job doesn't exist in fake client
+			expectedRequests: 0,
+		},
+		{
+			name: "pod in different namespace maps correctly",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "custom-pod",
+					Namespace: "custom-ns",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: "batch/v1",
+							Kind:       "Job",
+							Name:       "custom-job",
+							UID:        "job-uid-custom",
+						},
+					},
+				},
+			},
+			job: &batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "custom-job",
+					Namespace: "custom-ns",
+					UID:       "job-uid-custom",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: "locust.io/v2",
+							Kind:       "LocustTest",
+							Name:       "custom-test",
+							UID:        "locusttest-uid-custom",
+						},
+					},
+				},
+			},
+			expectedRequests:  1,
+			expectedName:      "custom-test",
+			expectedNamespace: "custom-ns",
+		},
+		{
+			name: "multiple owner references finds Job correctly",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "multi-owner-pod",
+					Namespace: "default",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: "apps/v1",
+							Kind:       "ReplicaSet",
+							Name:       "some-replicaset",
+							UID:        "rs-uid-999",
+						},
+						{
+							APIVersion: "batch/v1",
+							Kind:       "Job",
+							Name:       "multi-owner-job",
+							UID:        "job-uid-multi",
+						},
+					},
+				},
+			},
+			job: &batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "multi-owner-job",
+					Namespace: "default",
+					UID:       "job-uid-multi",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: "locust.io/v2",
+							Kind:       "LocustTest",
+							Name:       "multi-test",
+							UID:        "locusttest-uid-multi",
+						},
+					},
+				},
+			},
+			expectedRequests:  1,
+			expectedName:      "multi-test",
+			expectedNamespace: "default",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			scheme := newTestScheme()
+
+			// Build fake client with Job if provided
+			builder := fake.NewClientBuilder().WithScheme(scheme)
+			if tt.job != nil {
+				builder = builder.WithObjects(tt.job)
+			}
+			fakeClient := builder.Build()
+
+			reconciler := &LocustTestReconciler{
+				Client: fakeClient,
+				Scheme: scheme,
+				Config: newTestOperatorConfig(),
+			}
+
+			ctx := context.Background()
+			requests := reconciler.mapPodToLocustTest(ctx, tt.pod)
+
+			if tt.expectedRequests == 0 {
+				assert.Empty(t, requests, "Expected no reconcile requests")
+			} else {
+				require.Len(t, requests, tt.expectedRequests)
+				assert.Equal(t, tt.expectedName, requests[0].Name)
+				assert.Equal(t, tt.expectedNamespace, requests[0].Namespace)
+			}
+		})
+	}
+}
