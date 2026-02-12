@@ -209,23 +209,23 @@ markdown_extensions:
 
 # Page tree
 nav:
-  - Introduction: index.md
+  - Home: index.md
   - Getting Started:
       - Quick Start: getting_started.md
+      - Compare Alternatives: comparison.md
       - Deploy with Helm: helm_deploy.md
-  - User Guide:
-      - Features: features.md
+  - How-To Guides:
+      - Features Overview: features.md
       - Advanced Topics: advanced_topics.md
+  - Reference:
       - API Reference: api_reference.md
-      - FAQ: faq.md
-  - Architecture:
-      - How It Works: how_does_it_work.md
-      - Comparison: comparison.md
-  - Operations:
-      - Security: security.md
       - Metrics & Dashboards: metrics_and_dashboards.md
-  - Migration & Upgrade: migration.md
-  - Contributing & Development:
+      - FAQ: faq.md
+  - Explanation:
+      - How It Works: how_does_it_work.md
+      - Security: security.md
+  - Migration Guide: migration.md
+  - Contributing:
       - Overview: contribute.md
       - Integration Testing: integration-testing.md
       - Local Development: local-development.md
