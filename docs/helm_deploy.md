@@ -287,4 +287,4 @@ This command will remove all the Kubernetes components associated with the chart
 
 ## :material-arrow-right-bold-box-outline: Next Steps
 
-Once the operator is installed, you're ready to start running performance tests! Head over to the [Getting Started](./getting_started.md) guide to learn how to deploy your first `LocustTest`.
+Once the operator is installed, you're ready to start running performance tests! Head over to the [Getting Started](./getting_started/index.md) guide to learn how to deploy your first `LocustTest`.

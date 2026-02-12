@@ -1,6 +1,8 @@
 ---
 title: Locust Kubernetes Operator
 description: Enable performance testing for the modern era! Utilize the full power of Locust in the cloud with a fully automated, cloud-native approach.
+hide:
+  - navigation
 ---
 
 # Performance testing that simply works
@@ -14,8 +16,8 @@ description: Enable performance testing for the modern era! Utilize the full pow
   <a href="getting_started/" class="md-button md-button--primary">
     Get started in 5 minutes
   </a>
-  <a href="comparison/" class="md-button">
-    Compare alternatives
+  <a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator" class="md-button" target="_blank" rel="noopener noreferrer">
+    View on GitHub
   </a>
 </div>
 </div>
@@ -28,7 +30,7 @@ description: Enable performance testing for the modern era! Utilize the full pow
 
     ---
 
-    Compare the Locust Kubernetes Operator with alternatives like the official operator, k6-operator, and Grafana k6 in under 30 seconds.
+    Compare the Locust Kubernetes Operator with alternatives in under 30 seconds.
 
     [:octicons-arrow-right-24: Compare alternatives](comparison.md)
 
@@ -38,7 +40,7 @@ description: Enable performance testing for the modern era! Utilize the full pow
 
     Deploy your first distributed load test on Kubernetes in 5 minutes with our step-by-step guide.
 
-    [:octicons-arrow-right-24: Quick start guide](getting_started.md)
+    [:octicons-arrow-right-24: Quick start guide](getting_started/index.md)
 
 -   :material-book-open-variant:{ .lg .middle } **Need API Details?**
 
@@ -85,7 +87,7 @@ description: Enable performance testing for the modern era! Utilize the full pow
 
     Gain deep visibility with built-in tracing and metrics. No sidecars required—just pure, cloud-native observability.
 
-    [:octicons-arrow-right-24: Learn more](advanced_topics.md#opentelemetry-integration)
+    [:octicons-arrow-right-24: Learn more](how-to-guides/observability/configure-opentelemetry.md)
 
 -   :material-key-variant:{ .lg .middle } __Secret Injection__
 
@@ -93,7 +95,7 @@ description: Enable performance testing for the modern era! Utilize the full pow
 
     Securely manage your test credentials with native Kubernetes Secret and ConfigMap injection directly into your test pods.
 
-    [:octicons-arrow-right-24: Learn more](advanced_topics.md#environment-secret-injection)
+    [:octicons-arrow-right-24: Learn more](how-to-guides/security/inject-secrets.md)
 
 -   :material-harddisk:{ .lg .middle } __Volume Mounting__
 
@@ -101,7 +103,7 @@ description: Enable performance testing for the modern era! Utilize the full pow
 
     Mount any storage volume to your master and worker pods for flexible test data and configuration management.
 
-    [:octicons-arrow-right-24: Learn more](advanced_topics.md#volume-mounting)
+    [:octicons-arrow-right-24: Learn more](how-to-guides/configuration/mount-volumes.md)
 
 </div>
 

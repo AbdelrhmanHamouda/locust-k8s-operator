@@ -128,7 +128,7 @@ spec:
     replicas: 5
 ```
 
-[:octicons-arrow-right-24: Get started with the operator](getting_started.md)
+[:octicons-arrow-right-24: Get started with the operator](getting_started/index.md)
 
 ### From Helm Chart to Operator
 
@@ -158,4 +158,4 @@ If you're already using v1 of the Locust Kubernetes Operator, migration to v2 is
 
 The Locust Kubernetes Operator provides comprehensive lifecycle management for running Locust tests on Kubernetes, with features designed for CI/CD pipelines and production environments.
 
-[:octicons-arrow-right-24: Get started in 5 minutes](getting_started.md){ .md-button .md-button--primary }
+[:octicons-arrow-right-24: Get started in 5 minutes](getting_started/index.md){ .md-button .md-button--primary }

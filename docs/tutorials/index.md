@@ -56,6 +56,6 @@ Before starting the tutorials, complete the [Quick Start](../getting_started/ind
 
 ## Need Help?
 
-- **Troubleshooting:** See common issues and solutions in the [FAQ](../reference/faq.md)
-- **API Reference:** Complete field documentation in the [API Reference](../reference/api.md)
+- **Troubleshooting:** See common issues and solutions in the [FAQ](../faq.md)
+- **API Reference:** Complete field documentation in the [API Reference](../api_reference.md)
 - **Community:** Join discussions on [GitHub Discussions](https://github.com/locust-k8s-operator/locust-k8s-operator/discussions)

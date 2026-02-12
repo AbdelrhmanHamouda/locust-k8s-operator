@@ -116,4 +116,4 @@ kubectl delete configmap demo-test
 
 - **[Your First Load Test](../tutorials/first-load-test.md)** - Build a realistic test with multiple scenarios (10 minutes)
 - **[CI/CD Integration](../tutorials/ci-cd-integration.md)** - Automate tests in your pipeline (15 minutes)
-- **[API Reference](../reference/api.md)** - Complete LocustTest CR specification
+- **[API Reference](../api_reference.md)** - Complete LocustTest CR specification

@@ -44,7 +44,7 @@ spec:
       protocol: "grpc"
 ```
 
-See [Advanced Topics - OpenTelemetry](advanced_topics.md#opentelemetry-integration) for detailed configuration options.
+See [Advanced Topics - OpenTelemetry](how-to-guides/observability/configure-opentelemetry.md) for detailed configuration options.
 
 ### OTel Collector Setup
 

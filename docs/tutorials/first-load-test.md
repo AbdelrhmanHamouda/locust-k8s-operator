@@ -203,6 +203,6 @@ The operator automatically cleans up all related pods, services, and jobs when y
 ## Next steps
 
 - **[CI/CD Integration](ci-cd-integration.md)**: Run tests automatically in your pipeline (15 minutes)
-- **[How-To: Configure resources](../how-to-guides/configuration/resource-limits.md)**: Set CPU/memory for stable tests
-- **[How-To: Set up Prometheus monitoring](../how-to-guides/observability/prometheus.md)**: Export metrics for long-term analysis
-- **[API Reference](../reference/api.md)**: Explore all LocustTest configuration options
+- **[How-To: Configure resources](../how-to-guides/configuration/configure-resources.md)**: Set CPU/memory for stable tests
+- **[How-To: Set up Prometheus monitoring](../metrics_and_dashboards.md)**: Export metrics for long-term analysis
+- **[API Reference](../api_reference.md)**: Explore all LocustTest configuration options
