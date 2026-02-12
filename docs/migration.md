@@ -344,6 +344,62 @@ spec:
 
 ---
 
+## Documentation Structure Changes
+
+!!! info "Upcoming Navigation Restructure"
+    The documentation is being reorganized to follow the [Divio documentation framework](https://documentation.divio.com/)
+    for improved discoverability. This section documents the planned URL changes.
+
+The documentation structure is being reorganized into four distinct sections:
+
+- **Tutorials**: Step-by-step learning guides (new)
+- **How-To Guides**: Task-oriented recipes grouped by domain (new)
+- **Reference**: API specs, field definitions, configuration (existing content promoted)
+- **Explanation**: Architecture, design decisions, concepts (existing content reorganized)
+
+### Current Navigation
+
+The current navigation uses a maximum 2-level hierarchy, keeping all pages accessible within 1-2 clicks:
+
+| Page | Clicks to Reach | Path |
+|------|-----------------|------|
+| Introduction | 1 | Direct link |
+| Getting Started | 2 | Getting Started → Quick Start |
+| API Reference | 2 | User Guide → API Reference |
+| Comparison | 2 | Architecture → Comparison |
+| Migration Guide | 1 | Direct link |
+| FAQ | 2 | User Guide → FAQ |
+
+The upcoming restructure maintains this 2-level maximum while reorganizing content into the Divio taxonomy.
+
+### Planned URL Changes
+
+| Current Page | Current URL | Planned Change | Notes |
+|-------------|-------------|----------------|-------|
+| Getting Started | `/getting_started/` | No change | Remains top-level, high-traffic page |
+| Helm Deploy | `/helm_deploy/` | No change | Remains in Getting Started section |
+| API Reference | `/api_reference/` | No change | Promoted to top-level navigation |
+| Comparison | `/comparison/` | No change | Moved to Getting Started navigation |
+| Features | `/features/` | Content split | Content distributed to Tutorial & How-To sections |
+| Advanced Topics | `/advanced_topics/` | Content reorganized | Content moves to domain-grouped How-To Guides |
+| How It Works | `/how_does_it_work/` | May move to Explanation | URL redirect will be added if path changes |
+| Security | `/security/` | May move to How-To | URL redirect will be added if path changes |
+| Metrics & Dashboards | `/metrics_and_dashboards/` | May move to How-To | URL redirect will be added if path changes |
+| FAQ | `/faq/` | No change | Remains accessible at current URL |
+| Migration Guide | `/migration/` | No change | This page stays at current URL |
+
+!!! note "Automatic Redirects"
+    When URLs change, all old URLs will redirect automatically to their new locations.
+    No action is needed for external links — they will continue to work.
+
+### What You Need to Do
+
+- **Nothing, if you use the navigation**: The site navigation always shows the current structure
+- **Update bookmarks**: If you have bookmarked specific pages, check the table above after the restructure
+- **External links**: Old URLs redirect automatically — no changes needed
+
+---
+
 ## Troubleshooting
 
 ### Common Issues
