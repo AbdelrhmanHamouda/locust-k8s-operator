@@ -346,9 +346,9 @@ spec:
 
 ## Documentation Structure Changes
 
-!!! info "Upcoming Navigation Restructure"
-    The documentation is being reorganized to follow the [Divio documentation framework](https://documentation.divio.com/)
-    for improved discoverability. This section documents the planned URL changes.
+!!! success "Navigation Restructured"
+    The documentation has been reorganized to follow the [Divio documentation framework](https://documentation.divio.com/)
+    for improved discoverability. All old URLs continue to work via automatic redirects.
 
 The documentation structure is being reorganized into four distinct sections:
 
@@ -359,44 +359,44 @@ The documentation structure is being reorganized into four distinct sections:
 
 ### Current Navigation
 
-The current navigation uses a maximum 2-level hierarchy, keeping all pages accessible within 1-2 clicks:
+The documentation uses a maximum 2-level hierarchy, keeping all pages accessible within 1-2 clicks:
 
-| Page | Clicks to Reach | Path |
-|------|-----------------|------|
-| Introduction | 1 | Direct link |
-| Getting Started | 2 | Getting Started → Quick Start |
-| API Reference | 2 | User Guide → API Reference |
-| Comparison | 2 | Architecture → Comparison |
-| Migration Guide | 1 | Direct link |
-| FAQ | 2 | User Guide → FAQ |
+| Section | Pages | Clicks to Reach |
+|---------|-------|-----------------|
+| Home | Introduction | 1 |
+| Getting Started | Quick Start, Compare Alternatives, Deploy with Helm | 2 |
+| How-To Guides | Features Overview, Advanced Topics | 2 |
+| Reference | API Reference, Metrics & Dashboards, FAQ | 2 |
+| Explanation | How It Works, Security | 2 |
+| Migration Guide | This page | 1 |
+| Contributing | Overview, Integration Testing, Local Development, Pull Request Process | 2 |
 
-The upcoming restructure maintains this 2-level maximum while reorganizing content into the Divio taxonomy.
+### Navigation Changes
 
-### Planned URL Changes
+| Page | Previous Section | New Section | URL Changed? |
+|------|-----------------|-------------|--------------|
+| Quick Start | Getting Started | Getting Started | No |
+| Deploy with Helm | Getting Started | Getting Started | No |
+| Compare Alternatives | Architecture | Getting Started | No (nav only) |
+| Features Overview | User Guide | How-To Guides | No (nav only) |
+| Advanced Topics | User Guide | How-To Guides | No (nav only) |
+| API Reference | User Guide | Reference | No (nav only) |
+| FAQ | User Guide | Reference | No (nav only) |
+| Metrics & Dashboards | Operations | Reference | No (nav only) |
+| How It Works | Architecture | Explanation | No (nav only) |
+| Security | Operations | Explanation | No (nav only) |
+| Migration Guide | Direct link | Direct link | No |
 
-| Current Page | Current URL | Planned Change | Notes |
-|-------------|-------------|----------------|-------|
-| Getting Started | `/getting_started/` | No change | Remains top-level, high-traffic page |
-| Helm Deploy | `/helm_deploy/` | No change | Remains in Getting Started section |
-| API Reference | `/api_reference/` | No change | Promoted to top-level navigation |
-| Comparison | `/comparison/` | No change | Moved to Getting Started navigation |
-| Features | `/features/` | Content split | Content distributed to Tutorial & How-To sections |
-| Advanced Topics | `/advanced_topics/` | Content reorganized | Content moves to domain-grouped How-To Guides |
-| How It Works | `/how_does_it_work/` | May move to Explanation | URL redirect will be added if path changes |
-| Security | `/security/` | May move to How-To | URL redirect will be added if path changes |
-| Metrics & Dashboards | `/metrics_and_dashboards/` | May move to How-To | URL redirect will be added if path changes |
-| FAQ | `/faq/` | No change | Remains accessible at current URL |
-| Migration Guide | `/migration/` | No change | This page stays at current URL |
-
-!!! note "Automatic Redirects"
-    When URLs change, all old URLs will redirect automatically to their new locations.
-    No action is needed for external links — they will continue to work.
+!!! note "No URL Changes"
+    This restructure was navigation-only — all page files remain at their current paths.
+    No redirects were needed as all URLs stayed the same. Only the navigation labels changed.
 
 ### What You Need to Do
 
-- **Nothing, if you use the navigation**: The site navigation always shows the current structure
-- **Update bookmarks**: If you have bookmarked specific pages, check the table above after the restructure
-- **External links**: Old URLs redirect automatically — no changes needed
+- **Nothing**: All page URLs remained unchanged in this restructure
+- **Bookmarks**: All bookmarks continue to work at the same URLs
+- **External links**: No changes needed — all URLs are identical
+- **Navigation**: Simply use the new section labels (Getting Started, How-To Guides, Reference, Explanation) to find content
 
 ---
 
