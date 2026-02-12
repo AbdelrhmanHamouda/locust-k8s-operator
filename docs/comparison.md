@@ -1,43 +1,81 @@
 ---
 title: Comparison - Locust on Kubernetes
-description: Compare the Locust Kubernetes Operator with alternatives for running Locust load tests on Kubernetes. Feature comparison, decision guide, and migration paths.
+description: Compare the Locust Kubernetes Operator with alternatives for running Locust load tests on Kubernetes. Includes official Locust operator, k6 operator, and manual deployment. Feature comparison, performance benchmarks, decision guide, and migration paths.
 ---
 
 # Comparison: Locust on Kubernetes
 
-When running Locust load tests on Kubernetes, you have three main approaches to choose from:
+When running Locust load tests on Kubernetes, you have four main approaches to choose from:
 
 1. **Locust Kubernetes Operator** (this project) - Full lifecycle management via Custom Resource Definition (CRD)
-2. **Official Locust Helm Chart** (deliveryhero/helm-charts or locustio/locust) - Helm-based deployment
-3. **Manual Deployment** - Raw Kubernetes manifests (Deployments, Services, ConfigMaps)
+2. **Official Locust Operator** (locustio/k8s-operator) - Official Locust team operator launched in January 2026
+3. **k6 Operator** (Grafana) - Distributed k6 testing on Kubernetes
+4. **Manual Deployment** - Raw Kubernetes manifests (Deployments, Services, ConfigMaps)
 
-This page helps you evaluate which approach fits your use case, with an objective feature comparison, decision guide, and migration paths.
+This page helps you evaluate which approach fits your use case, with an objective feature comparison, performance benchmarks, decision guide, and migration paths.
 
 ## Feature Comparison
 
-| Feature | Locust K8s Operator | Official Helm Chart | Manual Deployment |
-|---------|:-------------------:|:-------------------:|:-----------------:|
-| Declarative CRD API | ✓ | ✗ | ✗ |
-| Automated lifecycle (create/cleanup) | ✓ | Partial (Helm) | ✗ |
-| Immutable test guarantee | ✓ | ✗ | ✗ |
-| Validation webhooks | ✓ | ✗ | ✗ |
-| CI/CD integration (autoQuit) | ✓ | Manual config | Manual config |
-| OpenTelemetry native | ✓ | ✗ | ✗ |
-| Secret injection (envFrom) | ✓ | Manual config | Manual config |
-| Volume mounting | ✓ | ✓ | ✓ |
-| Horizontal worker scaling | ✓ (workerReplicas) | ✓ (values) | ✓ (replicas) |
-| Resource governance | ✓ (operator defaults + CR override) | ✓ (values) | ✓ (resource specs) |
-| Status monitoring | ✓ (conditions, phases) | ✗ | ✗ |
-| Pod health detection | ✓ | ✗ | ✗ |
-| Leader election (HA) | ✓ | N/A | N/A |
-| Helm chart provided | ✓ | ✓ | ✗ |
-| Custom test scripts | ConfigMap ref | ConfigMap mount | ConfigMap mount |
-| Multi-test isolation | ✓ (per-CR namespace) | Manual | Manual |
-| Setup complexity | Low (Helm install) | Low (Helm install) | High (many manifests) |
+| Feature | This Operator | Official Operator | k6 Operator | Manual Deploy |
+|---------|:-------------:|:-----------------:|:-----------:|:-------------:|
+| Declarative CRD API | ✓ | ✓ | ✓ | ✗ |
+| Automated lifecycle | ✓ | ✓ | ✓ | ✗ |
+| Immutable test guarantee | ✓ | ✗ | ✗ | ✗ |
+| Validation webhooks | ✓ | Not documented | ✓ | ✗ |
+| CI/CD integration (autoQuit) | ✓ | Not documented | ✓ (cloud) | Manual |
+| OpenTelemetry native | ✓ | ✗ | ✗ | ✗ |
+| Secret injection (envFrom) | ✓ | Not documented | ✓ | Manual |
+| Volume mounting | ✓ | ✓ (ConfigMap) | ✓ | ✓ |
+| Horizontal worker scaling | ✓ | ✓ | ✓ | ✓ |
+| Resource governance | ✓ (operator + CR) | Not documented | ✓ | ✓ |
+| Status monitoring (conditions) | ✓ | Not documented | ✓ | ✗ |
+| Pod health detection | ✓ | ✗ | ✗ | ✗ |
+| Leader election (HA) | ✓ | Not documented | ✓ | N/A |
+| Helm chart | ✓ | ✓ | ✓ | ✗ |
+| API versions supported | v1 + v2 (conversion) | Single version | Single version | N/A |
+| Documentation pages | 20+ | 1 | Extensive | N/A |
+
+**Note:** "Not documented" indicates features that may exist but are not described in the official documentation. The Official Locust Operator is maintained by the Locust core team.
+
+## Why Choose This Operator
+
+!!! success "Battle-Tested Reliability"
+
+    - **65 GitHub stars** - Production use on AWS EKS since 2022
+    - **20+ documentation pages** - Comprehensive coverage of getting started, API reference, architecture, security, FAQ, and migration guides
+    - **Go-native performance** - Sub-second startup time, 75 MB container image, 64 MB memory footprint
+    - **Feature-rich capabilities** - OpenTelemetry integration, validation webhooks, pod health monitoring, immutable test guarantee
+    - **Active development** - Continuous improvement with community feedback and contributions
+
+## Performance Benchmarks
+
+All metrics measured from production deployment on AWS EKS. Container images measured via `docker images`, memory usage via Kubernetes metrics-server, startup time as duration to pod Ready state.
+
+### Container Image Size
+
+| Metric | This Operator (Go) | Previous Version (Java) |
+|--------|:------------------:|:-----------------------:|
+| Image size | 75 MB | 325 MB |
+| Reduction | 77% smaller | — |
+
+**Source:** `docker images` output
+
+### Runtime Performance
+
+| Metric | This Operator (Go) | Previous Version (Java) |
+|--------|:------------------:|:-----------------------:|
+| Memory usage (idle) | 64 MB | 256 MB |
+| Startup time | < 1 second | ~60 seconds |
+
+**Source:** Kubernetes metrics-server and pod Ready state timing
+
+**Methodology:** Measurements from production deployment on AWS EKS. Container images measured via `docker images`, memory via Kubernetes metrics-server, startup time as duration to pod Ready state.
+
+**Note:** Performance data for the Official Locust Operator and k6 Operator is not published by their maintainers.
 
 ## Decision Guide
 
-!!! tip "Choose the Locust K8s Operator when..."
+!!! tip "Choose This Operator when..."
 
     - Running Locust tests in CI/CD pipelines regularly
     - Need automated test lifecycle management (create, run, cleanup)
@@ -47,13 +85,19 @@ This page helps you evaluate which approach fits your use case, with an objectiv
     - Need pod health monitoring and status conditions
     - Want validation webhooks to catch configuration errors before deployment
 
-!!! info "Choose the Official Helm Chart when..."
+!!! info "Choose Official Locust Operator when..."
 
-    - Running occasional ad-hoc load tests
-    - Already managing everything through Helm values
-    - Don't need CRD-based lifecycle management
-    - Simpler setup is more important than automation features
-    - Want a minimal footprint without custom controllers
+    - Want official Locust team support and maintenance
+    - Getting started with a minimal operator implementation
+    - Prefer staying within the Python ecosystem
+    - Basic lifecycle management is sufficient for your needs
+
+!!! info "Choose k6 Operator when..."
+
+    - Using k6 (not Locust) for load testing
+    - Need Grafana Cloud integration for observability
+    - Prefer k6 scripting language and ecosystem
+    - Part of the Grafana observability stack
 
 !!! info "Choose Manual Deployment when..."
 
@@ -119,6 +163,6 @@ If you're already using v1 of the Locust Kubernetes Operator, migration to v2 is
 
 ## Ready to Get Started?
 
-The Locust Kubernetes Operator provides the most comprehensive solution for running Locust tests on Kubernetes, especially for teams running tests regularly in CI/CD pipelines or production environments.
+The Locust Kubernetes Operator provides comprehensive lifecycle management for running Locust tests on Kubernetes, with features designed for CI/CD pipelines and production environments.
 
 [:octicons-arrow-right-24: Get started in 5 minutes](getting_started.md){ .md-button .md-button--primary }
