@@ -168,10 +168,10 @@ Look for:
 
 ```bash
 # List worker pods
-kubectl get pods -l locust.io/role=worker
+kubectl get pods -l performance-test-pod-name=high-load-test-worker
 
 # Check for pending or failed pods
-kubectl get pods -l locust.io/role=worker | grep -v Running
+kubectl get pods -l performance-test-pod-name=high-load-test-worker | grep -v Running
 
 # Describe problematic pods
 kubectl describe pod <worker-pod-name>
@@ -189,7 +189,7 @@ Common issues:
 Check which nodes are running workers:
 
 ```bash
-kubectl get pods -l locust.io/role=worker -o wide
+kubectl get pods -l performance-test-pod-name=high-load-test-worker -o wide
 ```
 
 Output shows pod-to-node distribution:
@@ -251,19 +251,18 @@ master:
       cpu: "1000m"
 ```
 
-## Dynamic scaling (manual)
+## Adjusting worker count
 
-Scale workers during test execution:
+Due to the operator's immutability model, worker count changes require updating the CR specification:
 
 ```bash
-# Increase workers
-kubectl scale locusttest high-load-test --replicas=30
-
-# Wait for new workers to connect
-kubectl get locusttest high-load-test -o jsonpath='{.status.connectedWorkers}'
+# Edit the worker replica count in your LocustTest manifest
+# Change spec.worker.replicas to desired count, then apply:
+kubectl apply -f my-locust-test.yaml
 ```
 
-**Note:** Locust handles worker connections dynamically. New workers join running tests automatically.
+!!! note "New test execution"
+    Changing the worker count and reapplying creates a new test execution — this is not live scaling of running workers. The operator will tear down the existing test and create a new one with the updated worker count.
 
 ## What's next
 

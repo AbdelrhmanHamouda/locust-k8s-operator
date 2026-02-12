@@ -146,10 +146,10 @@ Check that pods successfully pulled the image:
 
 ```bash
 # Get pod status
-kubectl get pods -l locust.io/test-id=private-registry-test
+kubectl get pods -l performance-test-name=private-registry-test
 
 # Check image field
-kubectl get pod -l locust.io/role=master -o jsonpath='{.items[0].spec.containers[0].image}'
+kubectl get pod -l performance-test-pod-name=private-registry-test-master -o jsonpath='{.items[0].spec.containers[0].image}'
 ```
 
 Expected output:
@@ -161,7 +161,7 @@ ghcr.io/mycompany/locust-custom:v1.2.3
 Verify pull policy:
 
 ```bash
-kubectl get pod -l locust.io/role=master -o jsonpath='{.items[0].spec.containers[0].imagePullPolicy}'
+kubectl get pod -l performance-test-pod-name=private-registry-test-master -o jsonpath='{.items[0].spec.containers[0].imagePullPolicy}'
 ```
 
 ## Troubleshoot ImagePullBackOff
@@ -170,7 +170,7 @@ If pods fail with `ImagePullBackOff`:
 
 ```bash
 # Check pod events
-kubectl describe pod -l locust.io/test-id=private-registry-test | grep -A 10 "Events:"
+kubectl describe pod -l performance-test-name=private-registry-test | grep -A 10 "Events:"
 ```
 
 **Common issues:**

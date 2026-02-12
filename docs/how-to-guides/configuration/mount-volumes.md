@@ -265,7 +265,7 @@ Check that volumes are mounted correctly:
 
 ```bash
 # Get a worker pod name
-WORKER_POD=$(kubectl get pod -l locust.io/role=worker -o jsonpath='{.items[0].metadata.name}')
+WORKER_POD=$(kubectl get pod -l performance-test-pod-name=my-test-worker -o jsonpath='{.items[0].metadata.name}')
 
 # Check mount exists
 kubectl exec $WORKER_POD -- ls -la /data

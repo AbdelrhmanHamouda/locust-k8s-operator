@@ -9,7 +9,7 @@ tags:
 
 # Frequently Asked Questions
 
-This page answers the most common questions about operating the Locust Kubernetes Operator in production. For step-by-step tutorials, see [Getting Started](getting_started/index.md). For advanced configuration, see [Advanced Topics](advanced_topics.md).
+This page answers the most common questions about operating the Locust Kubernetes Operator in production. For step-by-step tutorials, see [Getting Started](getting_started/index.md). For advanced configuration, see [How-To Guides](how-to-guides/index.md).
 
 ## Test Lifecycle
 
@@ -137,7 +137,7 @@ The `connectedWorkers` field is an approximation from `Job.Status.Active`. Worke
 
 Check worker connectivity:
 
-1. **Verify worker pods are running**: `kubectl get pods -l locust-role=worker`
+1. **Verify worker pods are running**: `kubectl get pods -l performance-test-pod-name=<test-name>-worker`
 2. **Verify master service exists**: `kubectl get svc <test-name>-master`
 3. **Check worker logs**: `kubectl logs <test-name>-worker-<hash>` — workers should show "Connected to master"
 4. **Verify network connectivity**: Workers connect to the master on port 5557

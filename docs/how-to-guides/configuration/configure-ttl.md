@@ -96,7 +96,7 @@ Check that TTL is set on created jobs:
 kubectl apply -f locusttest.yaml
 
 # Check master job TTL
-kubectl get job -l locust.io/role=master -o yaml | grep ttlSecondsAfterFinished
+kubectl get job -l performance-test-pod-name=my-test-master -o yaml | grep ttlSecondsAfterFinished
 ```
 
 Expected output:
@@ -120,10 +120,10 @@ Verify cleanup occurred:
 
 ```bash
 # Jobs should be gone after TTL
-kubectl get jobs -l locust.io/test-id=my-test
+kubectl get jobs -l performance-test-name=my-test
 
 # Pods should also be gone
-kubectl get pods -l locust.io/test-id=my-test
+kubectl get pods -l performance-test-name=my-test
 
 # But CR still exists
 kubectl get locusttest my-test

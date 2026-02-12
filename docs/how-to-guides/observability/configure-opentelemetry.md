@@ -23,9 +23,9 @@ Determine the correct endpoint for your OTel Collector:
 
 | Scenario | Endpoint Format | Example |
 |----------|-----------------|---------|
-| Same namespace | `<service-name>:<port>` | `otel-collector:4317` |
-| Different namespace | `<service-name>.<namespace>:<port>` | `otel-collector.monitoring:4317` |
-| External collector | `<hostname>:<port>` | `otel.example.com:4317` |
+| Same namespace | `http://<service-name>:<port>` | `http://otel-collector:4317` |
+| Different namespace | `http://<service-name>.<namespace>:<port>` | `http://otel-collector.monitoring:4317` |
+| External collector | `https://<hostname>:<port>` | `https://otel.example.com:4317` |
 
 **Test connectivity** from a debug pod:
 
@@ -54,7 +54,7 @@ spec:
   observability:
     openTelemetry:
       enabled: true                                    # Enable OTel integration
-      endpoint: "otel-collector.monitoring:4317"       # OTel Collector endpoint
+      endpoint: "http://otel-collector.monitoring:4317"  # OTel Collector endpoint
       protocol: "grpc"                                 # Use gRPC (or "http/protobuf")
       insecure: false                                  # Use TLS (set true for dev/testing)
       extraEnvVars:
@@ -65,13 +65,16 @@ spec:
 **Configuration fields explained:**
 
 - `enabled`: Set to `true` to activate OpenTelemetry integration
-- `endpoint`: OTel Collector address (hostname:port)
+- `endpoint`: OTel Collector URL (scheme://hostname:port). Include the scheme (`http://` or `https://`) for compatibility across OTel SDK versions.
 - `protocol`: Transport protocol
     - `grpc` (recommended, default): Use gRPC transport
     - `http/protobuf`: Use HTTP/protobuf transport
 - `insecure`: TLS configuration
     - `false` (default): Use TLS for secure communication
     - `true`: Skip TLS verification (development/testing only)
+
+    !!! note
+        TLS behavior primarily depends on the endpoint scheme (`http://` vs `https://`). The `OTEL_EXPORTER_OTLP_INSECURE` environment variable is set by the operator but may not be recognized by all OTel SDK implementations (e.g., Python). Use `http://` endpoints for non-TLS connections.
 - `extraEnvVars`: Additional OpenTelemetry environment variables
     - `OTEL_SERVICE_NAME`: Identifier for this test in traces
     - `OTEL_RESOURCE_ATTRIBUTES`: Metadata tags (key=value pairs, comma-separated)
@@ -87,7 +90,7 @@ kubectl apply -f locusttest.yaml
 **Check that OTel environment variables were injected:**
 
 ```bash
-kubectl get pod -l locust.io/test-id=otel-enabled-test -o yaml | grep OTEL_
+kubectl get pod -l performance-test-name=otel-enabled-test -o yaml | grep OTEL_
 ```
 
 **Expected environment variables:**
@@ -107,6 +110,9 @@ kubectl get pod -l locust.io/test-id=otel-enabled-test -o yaml | grep OTEL_
 Once your test is running, telemetry flows to your OTel Collector and downstream backends.
 
 **Prometheus metrics** (if OTel Collector exports to Prometheus):
+
+!!! note
+    The exact metric names depend on your OTel Collector pipeline configuration and Locust's OTel instrumentation. The examples below assume the Collector exports to Prometheus with default naming.
 
 ```promql
 # Request rate by service

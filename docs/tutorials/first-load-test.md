@@ -136,7 +136,7 @@ ecommerce-load   Succeeded  5          5           5m22s
 You can also check individual pods:
 
 ```bash
-kubectl get pods -l locust.io/test-id=ecommerce-load
+kubectl get pods -l performance-test-name=ecommerce-load
 ```
 
 Expected output:

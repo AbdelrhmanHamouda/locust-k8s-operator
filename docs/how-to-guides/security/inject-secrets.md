@@ -300,7 +300,7 @@ Verify that environment variables were injected into test pods:
 
 ```bash
 # Get a pod name
-POD=$(kubectl get pods -l locust.io/test-id=combined-injection -o jsonpath='{.items[0].metadata.name}')
+POD=$(kubectl get pods -l performance-test-name=combined-injection -o jsonpath='{.items[0].metadata.name}')
 
 # Check all environment variables
 kubectl exec $POD -- printenv | sort

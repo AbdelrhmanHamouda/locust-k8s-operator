@@ -193,10 +193,10 @@ Check that pods are scheduled on the correct nodes:
 
 ```bash
 # Show pod-to-node mapping
-kubectl get pods -l locust.io/test-id=nodeselector-test -o wide
+kubectl get pods -l performance-test-name=nodeselector-test -o wide
 
 # Check labels on nodes where pods are running
-NODE=$(kubectl get pod -l locust.io/role=master -o jsonpath='{.items[0].spec.nodeName}')
+NODE=$(kubectl get pod -l performance-test-pod-name=nodeselector-test-master -o jsonpath='{.items[0].spec.nodeName}')
 kubectl get node $NODE --show-labels | grep disktype
 ```
 

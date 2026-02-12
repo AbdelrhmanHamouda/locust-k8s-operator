@@ -8,7 +8,7 @@ description: Compare the Locust Kubernetes Operator with alternatives for runnin
 When running Locust load tests on Kubernetes, you have four main approaches to choose from:
 
 1. **Locust Kubernetes Operator** (this project) - Full lifecycle management via Custom Resource Definition (CRD)
-2. **Official Locust Operator** (locustio/k8s-operator) - Official Locust team operator launched in January 2026
+2. **Official Locust Operator** (locustio/k8s-operator) - Locust team operator
 3. **k6 Operator** (Grafana) - Distributed k6 testing on Kubernetes
 4. **Manual Deployment** - Raw Kubernetes manifests (Deployments, Services, ConfigMaps)
 

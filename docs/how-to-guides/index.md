@@ -44,4 +44,4 @@ Secure your tests and manage credentials:
 
 - **[Inject secrets into test pods](security/inject-secrets.md)** — Use Kubernetes secrets for API keys, tokens, and credentials
 - **[Configure pod security settings](security/configure-pod-security.md)** — Set security contexts, RBAC, and network policies for test pods
-- **[Use image pull secrets](configuration/use-private-registry.md)** — Authenticate with private container registries
+- **[Secure container registry access](configuration/use-private-registry.md)** — Authenticate with private container registries

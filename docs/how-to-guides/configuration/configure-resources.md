@@ -167,7 +167,7 @@ Check actual resource specs on running pods:
 
 ```bash
 # Get master pod name
-MASTER_POD=$(kubectl get pod -l locust.io/role=master -o jsonpath='{.items[0].metadata.name}')
+MASTER_POD=$(kubectl get pod -l performance-test-pod-name=resource-optimized-test-master -o jsonpath='{.items[0].metadata.name}')
 
 # Verify resource configuration
 kubectl describe pod $MASTER_POD | grep -A 10 "Limits:\|Requests:"
@@ -189,10 +189,10 @@ Check actual resource consumption:
 
 ```bash
 # Real-time resource usage
-kubectl top pod -l locust.io/test-id=resource-optimized-test
+kubectl top pod -l performance-test-name=resource-optimized-test
 
 # Watch resource usage during test
-kubectl top pod -l locust.io/test-id=resource-optimized-test --watch
+kubectl top pod -l performance-test-name=resource-optimized-test --watch
 ```
 
 If pods consistently hit memory limits, they'll be OOMKilled. If they hit CPU limits, they'll be throttled (slower performance).

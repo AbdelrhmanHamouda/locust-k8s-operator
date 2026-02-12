@@ -42,8 +42,9 @@ kafka:
     protocol: "SASL_SSL"        # PLAINTEXT, SASL_PLAINTEXT, SASL_SSL, or SSL
     saslMechanism: "SCRAM-SHA-512"  # PLAINTEXT, SCRAM-SHA-256, or SCRAM-SHA-512
   credentials:
-    username: "kafka-user"
-    password: "kafka-password"  # Use Helm secrets for production
+    secretName: "kafka-credentials"    # Name of K8s Secret containing credentials
+    usernameKey: "username"            # Key in Secret for username (default: "username")
+    passwordKey: "password"            # Key in Secret for password (default: "password")
 ```
 
 Install or upgrade the operator:
@@ -68,8 +69,9 @@ kafka:
     protocol: "SASL_SSL"
     saslMechanism: "SCRAM-SHA-512"  # Or AWS_MSK_IAM for IAM auth
   credentials:
-    username: "msk-user"
-    password: "msk-password"
+    secretName: "msk-credentials"      # Name of K8s Secret containing MSK credentials
+    usernameKey: "username"            # Key in Secret for username (default: "username")
+    passwordKey: "password"            # Key in Secret for password (default: "password")
 ```
 
 ## Configure per-test (override)
@@ -211,7 +213,7 @@ Check that environment variables are injected:
 
 ```bash
 # Get a worker pod name
-WORKER_POD=$(kubectl get pod -l locust.io/role=worker -o jsonpath='{.items[0].metadata.name}')
+WORKER_POD=$(kubectl get pod -l performance-test-pod-name=kafka-test-worker -o jsonpath='{.items[0].metadata.name}')
 
 # Verify Kafka environment variables
 kubectl exec $WORKER_POD -- env | grep KAFKA_

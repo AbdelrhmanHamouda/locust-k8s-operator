@@ -275,7 +275,7 @@ Check that pods are scheduled on tainted nodes:
 
 ```bash
 # Show pod placement
-kubectl get pods -l locust.io/test-id=toleration-test -o wide
+kubectl get pods -l performance-test-name=toleration-test -o wide
 
 # Check node taints
 kubectl describe node <node-name> | grep Taints

@@ -184,7 +184,7 @@ Look for the `PodsHealthy` condition in the Status section. The message field ex
 **View pod states directly:**
 
 ```bash
-kubectl get pods -l locust.io/test-id=my-test
+kubectl get pods -l performance-test-name=my-test
 ```
 
 **Check pod logs for errors:**
@@ -238,7 +238,7 @@ jobs:
         run: |
           echo "Test failed or timed out"
           kubectl describe locusttest my-test
-          kubectl logs -l locust.io/test-id=my-test --tail=50
+          kubectl logs -l performance-test-name=my-test --tail=50
 
       - name: Cleanup
         if: always()
@@ -320,7 +320,7 @@ If workers aren't connecting:
 
 1. **Check worker pod status:**
    ```bash
-   kubectl get pods -l locust.io/role=worker,locust.io/test-id=my-test
+   kubectl get pods -l performance-test-pod-name=my-test-worker
    ```
 
 2. **Verify master service exists:**

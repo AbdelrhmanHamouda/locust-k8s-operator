@@ -388,7 +388,7 @@ Kubernetes audit logs capture all operator actions. Enable audit logging at the 
 ## Additional Resources
 
 - [Getting Started](getting_started/index.md) — Initial setup and first test
-- [Advanced Topics](advanced_topics.md) — Environment variables, volumes, resource management
+- [How-To Guides](how-to-guides/index.md) — Environment variables, volumes, resource management
 - [API Reference](api_reference.md) — Complete CR specification
 - [Kubernetes RBAC Documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
 - [External Secrets Operator](https://external-secrets.io/)

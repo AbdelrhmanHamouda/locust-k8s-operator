@@ -205,7 +205,7 @@ Check that pods are scheduled on the correct nodes:
 
 ```bash
 # Show pod-to-node mapping
-kubectl get pods -l locust.io/test-id=affinity-test -o wide
+kubectl get pods -l performance-test-name=affinity-test -o wide
 
 # Check specific labels on nodes where pods are running
 kubectl get nodes -l workload-type=load-testing

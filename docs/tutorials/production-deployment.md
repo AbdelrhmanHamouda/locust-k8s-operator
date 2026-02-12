@@ -245,7 +245,7 @@ spec:
 
 ```bash
 # Check where master and worker pods are scheduled
-kubectl get pods -l locust.io/test-id=isolated-test -o wide
+kubectl get pods -l performance-test-name=isolated-test -o wide
 
 # You should see NODE column showing only your labeled nodes
 ```
@@ -303,7 +303,7 @@ spec:
 
 ```bash
 # Check environment variables in master pod
-kubectl get pod -l locust.io/role=master,locust.io/test-id=otel-enabled-test \
+kubectl get pod -l performance-test-pod-name=otel-enabled-test-master \
   -o yaml | grep OTEL_
 
 # Expected output:
@@ -424,7 +424,7 @@ kubectl get locusttest production-load-test -n load-testing \
 
 ```bash
 # Check all worker pods are running
-kubectl get pods -l locust.io/role=worker,locust.io/test-id=production-load-test \
+kubectl get pods -l performance-test-pod-name=production-load-test-worker \
   -n load-testing
 
 # Expected: 20 pods in Running state

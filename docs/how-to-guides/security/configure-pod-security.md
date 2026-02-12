@@ -15,22 +15,23 @@ The operator applies security settings to all test pods by default. This guide e
 
 ## Default security context
 
-The operator automatically applies a security context to all Locust test pods (master and worker). This security context meets Kubernetes Pod Security Standards **"restricted"** profile requirements.
+The operator automatically applies a security context to all Locust test pods (master and worker). This security context meets Kubernetes Pod Security Standards **"baseline"** profile requirements.
 
 ### Security settings applied
 
 ```yaml
 # Applied to all test pods by default
 securityContext:
-  runAsNonRoot: true                    # Pod must run as non-root user
   seccompProfile:
     type: RuntimeDefault                # Use runtime's default seccomp profile
 ```
 
-**Why these defaults:**
+**Why this default:**
 
-- **runAsNonRoot: true** — The official Locust image (`locustio/locust`) runs as a non-root user by default (UID 1000). This setting enforces that behavior.
 - **seccompProfile: RuntimeDefault** — Uses the container runtime's default seccomp profile to restrict system calls.
+
+!!! note "Non-root execution"
+    The official Locust image (`locustio/locust`) runs as a non-root user by default (UID 1000), but the operator does not explicitly set `runAsNonRoot: true` on the pod security context. If you require enforced non-root execution, see the [restricted profile section](#pod-security-standards-compliance) below.
 
 ### Why NOT readOnlyRootFilesystem
 
@@ -209,7 +210,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      locust.io/test-id: my-test       # Apply to specific test
+      performance-test-name: my-test    # Apply to specific test
   policyTypes:
     - Ingress
     - Egress
@@ -219,7 +220,7 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              locust.io/test-id: my-test
+              performance-test-name: my-test
       ports:
         - port: 5557                    # Worker -> Master
           protocol: TCP
@@ -279,7 +280,7 @@ kubectl get networkpolicy -n performance-testing
 
 ```bash
 # Get a worker pod
-POD=$(kubectl get pods -l locust.io/role=worker,locust.io/test-id=my-test -o jsonpath='{.items[0].metadata.name}')
+POD=$(kubectl get pods -l performance-test-pod-name=my-test-worker -o jsonpath='{.items[0].metadata.name}')
 
 # Test target system connectivity
 kubectl exec $POD -- curl -I https://api.example.com
@@ -297,7 +298,7 @@ kubectl exec $POD -- curl -I https://blocked-host.com --max-time 5
 
 2. **Allow DNS:** Always allow egress to `kube-system` namespace port 53 for DNS resolution.
 
-3. **Test-specific policies:** Use `locust.io/test-id` label to isolate individual tests.
+3. **Test-specific policies:** Use `performance-test-name` label to isolate individual tests.
 
 4. **Monitor denied traffic:** Use a CNI that logs dropped packets (Calico, Cilium) to identify blocked traffic.
 
@@ -309,14 +310,13 @@ kubectl exec $POD -- curl -I https://blocked-host.com --max-time 5
 
 ```bash
 # Get pod security context
-kubectl get pod -l locust.io/test-id=my-test -o jsonpath='{.items[0].spec.securityContext}' | jq .
+kubectl get pod -l performance-test-name=my-test -o jsonpath='{.items[0].spec.securityContext}' | jq .
 ```
 
 **Expected output:**
 
 ```json
 {
-  "runAsNonRoot": true,
   "seccompProfile": {
     "type": "RuntimeDefault"
   }
@@ -327,7 +327,7 @@ kubectl get pod -l locust.io/test-id=my-test -o jsonpath='{.items[0].spec.securi
 
 ```bash
 # Check which user the pod runs as
-POD=$(kubectl get pods -l locust.io/role=master,locust.io/test-id=my-test -o jsonpath='{.items[0].metadata.name}')
+POD=$(kubectl get pods -l performance-test-pod-name=my-test-master -o jsonpath='{.items[0].metadata.name}')
 kubectl exec $POD -- id
 ```
 
@@ -357,18 +357,18 @@ The operator's default security settings meet these Pod Security Standards profi
 
 | Profile | Compliant | Notes |
 |---------|-----------|-------|
-| **Baseline** | ✅ Yes | Minimal restrictions, prevents privilege escalation |
-| **Restricted** | ⚠️ Partial | Missing: allowPrivilegeEscalation=false, capabilities drop ALL |
+| **Baseline** | ✅ Yes | Seccomp profile satisfies baseline requirements |
+| **Restricted** | ⚠️ Partial | Missing: `runAsNonRoot`, `allowPrivilegeEscalation=false`, `capabilities drop ALL` |
 | **Privileged** | ✅ Yes | No restrictions |
 
 **To meet "restricted" profile:**
 
-The operator would need to add:
+Users would need to add the following settings (via Helm values customization):
 
 ```yaml
 securityContext:
-  runAsNonRoot: true
-  allowPrivilegeEscalation: false       # Add this
+  runAsNonRoot: true                     # Add this
+  allowPrivilegeEscalation: false        # Add this
   seccompProfile:
     type: RuntimeDefault
   capabilities:                          # Add this

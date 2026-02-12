@@ -21,7 +21,7 @@ Get your first distributed load test running on Kubernetes.
 
 ```bash
 # Add the Helm repository
-helm repo add locust-k8s-operator https://locust-k8s-operator.github.io/helm-charts/
+helm repo add locust-k8s-operator https://abdelrhmanhamouda.github.io/locust-k8s-operator/
 helm repo update
 
 # Install the operator into a dedicated namespace
