@@ -278,6 +278,6 @@ kubectl exec $WORKER_POD -- env | grep KAFKA_SECURITY_PROTOCOL_CONFIG
 
 ## What's next
 
-- **[Inject secrets](../../advanced_topics.md#environment-secret-injection)** — Manage Kafka credentials using Kubernetes secrets
+- **[Inject secrets](../security/inject-secrets.md)** — Manage Kafka credentials using Kubernetes secrets
 - **[Scale worker replicas](../scaling/scale-workers.md)** — Size workers for high Kafka throughput
 - **[Configure resources](configure-resources.md)** — Ensure pods have enough resources for Kafka connections

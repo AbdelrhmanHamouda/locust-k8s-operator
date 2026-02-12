@@ -324,6 +324,6 @@ spec:
 
 ## What's next
 
-- **[Inject secrets](../../advanced_topics.md#environment-secret-injection)** — Pass credentials as environment variables instead of files
+- **[Inject secrets](../security/inject-secrets.md)** — Pass credentials as environment variables instead of files
 - **[Use private registry](use-private-registry.md)** — Pull custom images with volume-specific tools
 - **[Configure resources](configure-resources.md)** — Ensure pods have enough resources for I/O operations

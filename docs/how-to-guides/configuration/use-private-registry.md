@@ -226,5 +226,5 @@ kubectl get networkpolicies
 ## What's next
 
 - **[Mount volumes](mount-volumes.md)** — Add test data or certificates to pods
-- **[Inject secrets](../../advanced_topics.md#environment-secret-injection)** — Pass API keys and credentials as environment variables
+- **[Inject secrets](../security/inject-secrets.md)** — Pass API keys and credentials as environment variables
 - **[Configure resources](configure-resources.md)** — Set CPU and memory limits for custom images

@@ -209,4 +209,4 @@ Kubernetes TTL controller monitors finished jobs:
 
 - **[Scale worker replicas](../scaling/scale-workers.md)** — Size tests appropriately to minimize wasted resources
 - **[Configure resources](configure-resources.md)** — Set resource limits to prevent cluster exhaustion
-- **[Configure OpenTelemetry](../../advanced_topics.md#opentelemetry-integration)** — Export metrics before cleanup
+- **[Configure OpenTelemetry](../observability/configure-opentelemetry.md)** — Export metrics before cleanup
