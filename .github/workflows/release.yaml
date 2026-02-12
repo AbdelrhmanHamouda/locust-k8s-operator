@@ -105,7 +105,6 @@ jobs:
           pip install \
           mkdocs-material \
           mkdocs-git-revision-date-localized-plugin \
-          mkdocs-redirects \
           mkdocs-minify-plugin
 
       - name: 🚀 Build documentation
