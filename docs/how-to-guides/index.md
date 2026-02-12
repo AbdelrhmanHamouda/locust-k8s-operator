@@ -25,7 +25,8 @@ Set up and configure your load tests:
 
 Monitor and measure test performance:
 
-- **[Configure OpenTelemetry integration](../advanced_topics.md#opentelemetry-integration)** — Export traces and metrics using native OTel support
+- **[Configure OpenTelemetry integration](observability/configure-opentelemetry.md)** — Export traces and metrics using native OTel support
+- **[Monitor test status and health](observability/monitor-test-status.md)** — Track test progress, phase transitions, conditions, and pod health
 - **[Set up Prometheus monitoring](../metrics_and_dashboards.md)** — Collect and visualize test metrics with Prometheus and Grafana
 
 ## Scaling
@@ -41,5 +42,6 @@ Scale tests for high load and optimize resource placement:
 
 Secure your tests and manage credentials:
 
-- **[Inject secrets into test pods](../advanced_topics.md#environment-secret-injection)** — Use Kubernetes secrets for API keys, tokens, and credentials
+- **[Inject secrets into test pods](security/inject-secrets.md)** — Use Kubernetes secrets for API keys, tokens, and credentials
+- **[Configure pod security settings](security/configure-pod-security.md)** — Set security contexts, RBAC, and network policies for test pods
 - **[Use image pull secrets](configuration/use-private-registry.md)** — Authenticate with private container registries
