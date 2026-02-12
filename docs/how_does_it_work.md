@@ -7,6 +7,18 @@ description: A high-level overview of the operator's architecture and workflow.
 
 To run a performance test, basic configuration is provided through a simple and intuitive Kubernetes custom resource. Once deployed, the _Operator_ does all the heavy work of creating and scheduling the resources while making sure that all created load generation pods can effectively communicate with each other.
 
+## Demo
+
+Since a "_Picture Is Worth a Thousand Words_", here is a gif!
+![Short demo for how the operator works](assets/images/operatorDemo.gif "Operator Demo")
+
+### Steps performed in demo
+
+-   :material-file-code-outline: Test ConfigMap created in cluster
+-   :material-file-document-edit-outline: LocustTest CR deployed into the cluster
+-   :material-robot-outline: The _Operator_ creating, configuring and scheduling test resources on CR creation event
+-   :material-delete-sweep-outline: The _Operator_ cleaning up test resources after test CR has been removed
+
 ## Architecture Overview
 
 The Locust K8s Operator is built using **Go** with the [controller-runtime](https://github.com/kubernetes-sigs/controller-runtime) framework, following the standard Kubernetes operator pattern.
@@ -209,15 +221,3 @@ status:
       reason: AllWorkersConnected
       message: "All 5 workers connected to master"
 ```
-
-## Demo
-
-Since a "_Picture Is Worth a Thousand Words_", here is a gif!
-![Short demo for how the operator works](assets/images/operatorDemo.gif "Operator Demo")
-
-### Steps performed in demo
-
--   :material-file-code-outline: Test ConfigMap created in cluster
--   :material-file-document-edit-outline: LocustTest CR deployed into the cluster
--   :material-robot-outline: The _Operator_ creating, configuring and scheduling test resources on CR creation event
--   :material-delete-sweep-outline: The _Operator_ cleaning up test resources after test CR has been removed
