@@ -26,8 +26,8 @@ plugins:
   - redirects:
       redirect_maps:
         # Redirect mappings for Phase 19 IA restructure
-        # Will be activated when pages physically move to new directories
-        # See docs/migration.md for the full URL change mapping table
+        # getting_started.md moved to getting_started/index.md
+        getting_started.md: getting_started/index.md
   - tags
   - minify:
       minify_html: true
@@ -210,19 +210,42 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting Started:
-      - Quick Start: getting_started.md
+      - Quick Start: getting_started/index.md
       - Compare Alternatives: comparison.md
       - Deploy with Helm: helm_deploy.md
+  - Tutorials:
+      - Overview: tutorials/index.md
+      - "Your First Load Test (10 min)": tutorials/first-load-test.md
+      - "CI/CD Integration (15 min)": tutorials/ci-cd-integration.md
+      - "Production Deployment (20 min)": tutorials/production-deployment.md
   - How-To Guides:
-      - Features Overview: features.md
-      - Advanced Topics: advanced_topics.md
+      - Overview: how-to-guides/index.md
+      - Configuration:
+          - Configure resource limits: how-to-guides/configuration/configure-resources.md
+          - Use a private registry: how-to-guides/configuration/use-private-registry.md
+          - Mount volumes: how-to-guides/configuration/mount-volumes.md
+          - Configure Kafka integration: how-to-guides/configuration/configure-kafka.md
+          - Configure automatic cleanup: how-to-guides/configuration/configure-ttl.md
+      - Observability:
+          - Configure OpenTelemetry: how-to-guides/observability/configure-opentelemetry.md
+          - Monitor test status: how-to-guides/observability/monitor-test-status.md
+      - Scaling:
+          - Scale worker replicas: how-to-guides/scaling/scale-workers.md
+          - Use node affinity: how-to-guides/scaling/use-node-affinity.md
+          - Configure tolerations: how-to-guides/scaling/configure-tolerations.md
+          - Use node selector: how-to-guides/scaling/use-node-selector.md
+      - Security:
+          - Inject secrets: how-to-guides/security/inject-secrets.md
+          - Configure pod security: how-to-guides/security/configure-pod-security.md
   - Reference:
       - API Reference: api_reference.md
+      - Features Overview: features.md
       - Metrics & Dashboards: metrics_and_dashboards.md
       - FAQ: faq.md
   - Explanation:
       - How It Works: how_does_it_work.md
       - Security: security.md
+      - Advanced Topics: advanced_topics.md
   - Migration Guide: migration.md
   - Contributing:
       - Overview: contribute.md
