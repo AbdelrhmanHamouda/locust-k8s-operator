@@ -12,14 +12,43 @@ description: Enable performance testing for the modern era! Utilize the full pow
 </div>
 <div class="tx-hero__content">
   <a href="getting_started/" class="md-button md-button--primary">
-    Get started
+    Get started in 5 minutes
   </a>
-  <a href="features/" class="md-button">
-    Learn more
+  <a href="comparison/" class="md-button">
+    Compare alternatives
   </a>
 </div>
 </div>
 
+## Find Your Path
+
+<div class="grid cards" markdown>
+
+-   :material-scale-balance:{ .lg .middle } **Evaluating Solutions?**
+
+    ---
+
+    Compare the Locust Kubernetes Operator with alternatives like the official operator, k6-operator, and Grafana k6 in under 30 seconds.
+
+    [:octicons-arrow-right-24: Compare alternatives](comparison.md)
+
+-   :material-rocket-launch:{ .lg .middle } **Ready to Start?**
+
+    ---
+
+    Deploy your first distributed load test on Kubernetes in 5 minutes with our step-by-step guide.
+
+    [:octicons-arrow-right-24: Quick start guide](getting_started.md)
+
+-   :material-book-open-variant:{ .lg .middle } **Need API Details?**
+
+    ---
+
+    Jump straight to the complete API field reference, resource configuration, and status lifecycle documentation.
+
+    [:octicons-arrow-right-24: API Reference](api_reference.md)
+
+</div>
 
 <div class="badges-section">
   <div class="badges-container">
