@@ -81,7 +81,7 @@ hide:
 
     [:octicons-arrow-right-24: Read the migration guide](migration.md)
 
--   :material-eye-check:{ .lg .middle } __Native OpenTelemetry__
+-   :material-eye-check:{ .lg .middle } __OpenTelemetry__
 
     ---
 
