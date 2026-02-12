@@ -9,6 +9,10 @@ site_keywords: kubernetes, locust, operator, load testing, performance testing, 
 # Repository
 repo_name: locust-k8s-operator
 repo_url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
+edit_uri: edit/docs/improve/docs/
+
+# Site URL (required for instant navigation)
+site_url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/
 
 # Copyright
 copyright: >
@@ -44,6 +48,9 @@ theme:
     - search.suggest
 
     # Navigation
+    - navigation.instant          # SPA-like behavior (no full page reloads)
+    - navigation.instant.prefetch # Predictive loading on hover
+    - navigation.instant.progress # Progress bar for slow connections
     - navigation.tracking
     - navigation.top
     - navigation.footer
@@ -63,6 +70,8 @@ theme:
 
     # Other features
     - header.autohide
+    - content.action.edit         # GitHub edit button on pages
+    - content.action.view         # GitHub view source button on pages
 
   palette:
     # Palette toggle for light mode
