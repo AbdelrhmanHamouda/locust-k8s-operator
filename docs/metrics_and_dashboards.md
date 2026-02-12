@@ -40,11 +40,11 @@ spec:
   observability:
     openTelemetry:
       enabled: true
-      endpoint: "otel-collector.monitoring:4317"
+      endpoint: "http://otel-collector.monitoring:4317"
       protocol: "grpc"
 ```
 
-See [Advanced Topics - OpenTelemetry](advanced_topics.md#opentelemetry-integration) for detailed configuration options.
+See [Advanced Topics - OpenTelemetry](how-to-guides/observability/configure-opentelemetry.md) for detailed configuration options.
 
 ### OTel Collector Setup
 
@@ -85,7 +85,7 @@ service:
 
 ## :material-robot-outline: Operator Metrics
 
-The Go operator exposes controller-runtime metrics on port 8080:
+The Go operator can expose controller-runtime metrics (disabled by default). When enabled, metrics are served on the configured port (default: 8080):
 
 | Metric | Description |
 |--------|-------------|

@@ -1,6 +1,8 @@
 ---
 title: Locust Kubernetes Operator
 description: Enable performance testing for the modern era! Utilize the full power of Locust in the cloud with a fully automated, cloud-native approach.
+hide:
+  - navigation
 ---
 
 # Performance testing that simply works
@@ -12,14 +14,43 @@ description: Enable performance testing for the modern era! Utilize the full pow
 </div>
 <div class="tx-hero__content">
   <a href="getting_started/" class="md-button md-button--primary">
-    Get started
+    Get started in 5 minutes
   </a>
-  <a href="features/" class="md-button">
-    Learn more
+  <a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator" class="md-button" target="_blank" rel="noopener noreferrer">
+    View on GitHub
   </a>
 </div>
 </div>
 
+## Find Your Path
+
+<div class="grid cards" markdown>
+
+-   :material-scale-balance:{ .lg .middle } **Evaluating Solutions?**
+
+    ---
+
+    Compare the Locust Kubernetes Operator with alternatives in under 30 seconds.
+
+    [:octicons-arrow-right-24: Compare alternatives](comparison.md)
+
+-   :material-rocket-launch:{ .lg .middle } **Ready to Start?**
+
+    ---
+
+    Deploy your first distributed load test on Kubernetes in 5 minutes with our step-by-step guide.
+
+    [:octicons-arrow-right-24: Quick start guide](getting_started/index.md)
+
+-   :material-book-open-variant:{ .lg .middle } **Need API Details?**
+
+    ---
+
+    Jump straight to the complete API field reference, resource configuration, and status lifecycle documentation.
+
+    [:octicons-arrow-right-24: API Reference](api_reference.md)
+
+</div>
 
 <div class="badges-section">
   <div class="badges-container">
@@ -50,13 +81,13 @@ description: Enable performance testing for the modern era! Utilize the full pow
 
     [:octicons-arrow-right-24: Read the migration guide](migration.md)
 
--   :material-eye-check:{ .lg .middle } __Native OpenTelemetry__
+-   :material-eye-check:{ .lg .middle } __OpenTelemetry__
 
     ---
 
     Gain deep visibility with built-in tracing and metrics. No sidecars required—just pure, cloud-native observability.
 
-    [:octicons-arrow-right-24: Learn more](advanced_topics.md#opentelemetry-integration)
+    [:octicons-arrow-right-24: Learn more](how-to-guides/observability/configure-opentelemetry.md)
 
 -   :material-key-variant:{ .lg .middle } __Secret Injection__
 
@@ -64,7 +95,7 @@ description: Enable performance testing for the modern era! Utilize the full pow
 
     Securely manage your test credentials with native Kubernetes Secret and ConfigMap injection directly into your test pods.
 
-    [:octicons-arrow-right-24: Learn more](advanced_topics.md#environment-secret-injection)
+    [:octicons-arrow-right-24: Learn more](how-to-guides/security/inject-secrets.md)
 
 -   :material-harddisk:{ .lg .middle } __Volume Mounting__
 
@@ -72,7 +103,7 @@ description: Enable performance testing for the modern era! Utilize the full pow
 
     Mount any storage volume to your master and worker pods for flexible test data and configuration management.
 
-    [:octicons-arrow-right-24: Learn more](advanced_topics.md#volume-mounting)
+    [:octicons-arrow-right-24: Learn more](how-to-guides/configuration/mount-volumes.md)
 
 </div>
 
@@ -161,24 +192,3 @@ performance testing. Scale up or down based on your needs.
 
 
 
-[//]: # (Pipeline status badge)
-[pipeline-status]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/actions/workflows/ci.yaml/badge.svg?branch=master
-[pipeline-status-url]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/actions/workflows/ci.yaml
-
-[//]: # (Code coverage badge)
-[code-coverage]: https://app.codacy.com/project/badge/Grade/70b76e69dbde4a9ebfd36ad5ccf6de78
-[code-coverage-url]: https://www.codacy.com/gh/AbdelrhmanHamouda/locust-k8s-operator/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=AbdelrhmanHamouda/locust-k8s-operator&amp;utm_campaign=Badge_Grade
-
-[//]: # (Code quality badge)
-[code-quality]: https://app.codacy.com/project/badge/Coverage/70b76e69dbde4a9ebfd36ad5ccf6de78
-[code-quality-url]: https://www.codacy.com/gh/AbdelrhmanHamouda/locust-k8s-operator/dashboard?utm_source=github.com&utm_medium=referral&utm_content=AbdelrhmanHamouda/locust-k8s-operator&utm_campaign=Badge_Coverage
-
-[//]: # (common urls)
-[contributing-url]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/blob/master/CONTRIBUTING.md
-[issues-url]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues
-[LocustTest]:https://github.com/AbdelrhmanHamouda/locust-k8s-operator/tree/master/kube/crd/locust-test-crd.yaml
-[cr-example]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/tree/master/kube/sample-cr/locust-test-cr.yaml
-
-[//]: # (Docker badge)
-[docker-url]: https://hub.docker.com/r/lotest/locust-k8s-operator
-[docker-pulls]:https://img.shields.io/docker/pulls/lotest/locust-k8s-operator?style=flat&logo=docker&logoColor=green&label=Image%20Pulls&color=green&link=https%3A%2F%2Fhub.docker.com%2Fr%2Flotest%2Flocust-k8s-operator

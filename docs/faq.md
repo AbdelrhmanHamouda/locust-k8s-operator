@@ -9,7 +9,7 @@ tags:
 
 # Frequently Asked Questions
 
-This page answers the most common questions about operating the Locust Kubernetes Operator in production. For step-by-step tutorials, see [Getting Started](getting_started.md). For advanced configuration, see [Advanced Topics](advanced_topics.md).
+This page answers the most common questions about operating the Locust Kubernetes Operator in production. For step-by-step tutorials, see [Getting Started](getting_started/index.md). For advanced configuration, see [How-To Guides](how-to-guides/index.md).
 
 ## Test Lifecycle
 
@@ -101,7 +101,7 @@ Resource requirements depend on test complexity:
 | Medium complexity | 500m | 256Mi | JSON parsing, simple logic |
 | Heavy tests | 1000m | 512Mi-1Gi | Complex business logic, large payloads |
 
-Start conservative and observe resource usage via `kubectl top pods`. See [Advanced Topics - Resource Management](advanced_topics.md#resource-management) for detailed sizing guidance.
+Start conservative and observe resource usage via `kubectl top pods`. See [Advanced Topics - Resource Management](how-to-guides/configuration/configure-resources.md) for detailed sizing guidance.
 
 !!! tip "Resource Precedence"
     The operator applies resources in order of specificity: (1) CR spec resources (highest), (2) Helm role-specific resources (`masterResources`/`workerResources`), (3) Helm unified resources (`locustPods.resources`).
@@ -137,7 +137,7 @@ The `connectedWorkers` field is an approximation from `Job.Status.Active`. Worke
 
 Check worker connectivity:
 
-1. **Verify worker pods are running**: `kubectl get pods -l locust-role=worker`
+1. **Verify worker pods are running**: `kubectl get pods -l performance-test-pod-name=<test-name>-worker`
 2. **Verify master service exists**: `kubectl get svc <test-name>-master`
 3. **Check worker logs**: `kubectl logs <test-name>-worker-<hash>` — workers should show "Connected to master"
 4. **Verify network connectivity**: Workers connect to the master on port 5557
@@ -233,7 +233,7 @@ The metrics sidecar is maintained for legacy compatibility. Use it only if:
 - Your monitoring stack doesn't support OTLP
 - You have existing dashboards built on the CSV metrics format
 
-See [Advanced Topics - OpenTelemetry Integration](advanced_topics.md#opentelemetry-integration) for configuration details.
+See [Advanced Topics - OpenTelemetry Integration](how-to-guides/observability/configure-opentelemetry.md) for configuration details.
 
 ### How do I monitor test progress programmatically?
 

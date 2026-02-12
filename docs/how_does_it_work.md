@@ -1,9 +1,9 @@
 ---
-title: How does it work
+title: How Does It Work
 description: A high-level overview of the operator's architecture and workflow.
 ---
 
-# How does it work
+# How Does It Work
 
 To run a performance test, basic configuration is provided through a simple and intuitive Kubernetes custom resource. Once deployed, the _Operator_ does all the heavy work of creating and scheduling the resources while making sure that all created load generation pods can effectively communicate with each other.
 

@@ -289,7 +289,7 @@ spec:
       protocol: "grpc"
 ```
 
-[:octicons-arrow-right-24: Learn more about OpenTelemetry](advanced_topics.md#opentelemetry-integration)
+[:octicons-arrow-right-24: Learn more about OpenTelemetry](how-to-guides/observability/configure-opentelemetry.md)
 
 ### Secret & ConfigMap Injection
 
@@ -306,7 +306,7 @@ spec:
         value: "https://api.example.com"
 ```
 
-[:octicons-arrow-right-24: Learn more about Environment Injection](advanced_topics.md#environment-secret-injection)
+[:octicons-arrow-right-24: Learn more about Environment Injection](how-to-guides/security/inject-secrets.md)
 
 ### Volume Mounting
 
@@ -322,7 +322,7 @@ spec:
       target: both  # master, worker, or both
 ```
 
-[:octicons-arrow-right-24: Learn more about Volume Mounting](advanced_topics.md#volume-mounting)
+[:octicons-arrow-right-24: Learn more about Volume Mounting](how-to-guides/configuration/mount-volumes.md)
 
 ### Separate Resource Specs
 
@@ -340,7 +340,7 @@ spec:
         cpu: "500m"
 ```
 
-[:octicons-arrow-right-24: Learn more about Separate Resources](advanced_topics.md#separate-resource-specs)
+[:octicons-arrow-right-24: Learn more about Separate Resources](api_reference.md)
 
 ---
 

@@ -154,7 +154,7 @@ spec:
       - name: api-credentials  # All keys become env vars
 ```
 
-See [Advanced Topics - Environment Variables](advanced_topics.md#environment-variables) for detailed examples of all three approaches.
+See [Advanced Topics - Environment Variables](how-to-guides/security/inject-secrets.md) for detailed examples of all three approaches.
 
 ### Secret Rotation
 
@@ -387,8 +387,8 @@ Kubernetes audit logs capture all operator actions. Enable audit logging at the 
 
 ## Additional Resources
 
-- [Getting Started](getting_started.md) — Initial setup and first test
-- [Advanced Topics](advanced_topics.md) — Environment variables, volumes, resource management
+- [Getting Started](getting_started/index.md) — Initial setup and first test
+- [How-To Guides](how-to-guides/index.md) — Environment variables, volumes, resource management
 - [API Reference](api_reference.md) — Complete CR specification
 - [Kubernetes RBAC Documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
 - [External Secrets Operator](https://external-secrets.io/)
