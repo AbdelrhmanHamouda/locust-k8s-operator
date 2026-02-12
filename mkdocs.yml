@@ -4,7 +4,6 @@
 site_name: Locust Kubernetes Operator
 site_author: Abdelrhman Hamouda
 site_description: Production-ready Kubernetes operator for Locust distributed load testing. Automate performance testing with cloud-native CI/CD integration, OpenTelemetry observability, and horizontal scaling.
-site_keywords: kubernetes, locust, operator, load testing, performance testing, distributed testing, cloud-native, k8s, helm, CI/CD
 
 # Repository
 repo_name: locust-k8s-operator
@@ -25,6 +24,14 @@ plugins:
   - git-revision-date-localized
   - privacy
   - tags
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+      htmlmin_opts:
+        remove_comments: true
+        remove_empty_space: true
+      cache_safe: true
 
 # Configuration
 theme:
@@ -174,7 +181,10 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-  - pymdownx.highlight
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
   - pymdownx.critic
   - pymdownx.inlinehilite
   - pymdownx.keys
