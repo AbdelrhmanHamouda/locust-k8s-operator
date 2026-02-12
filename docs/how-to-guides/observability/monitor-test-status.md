@@ -245,23 +245,6 @@ jobs:
         run: kubectl delete locusttest my-test --ignore-not-found
 ```
 
-### GitLab CI example
-
-```yaml
-load-test:
-  stage: test
-  script:
-    - kubectl apply -f locusttest.yaml
-    - |
-      kubectl wait locusttest/my-test \
-        --for=jsonpath='{.status.phase}'=Succeeded \
-        --timeout=30m
-    - echo "Load test passed"
-  after_script:
-    - kubectl delete locusttest my-test --ignore-not-found
-  allow_failure: false
-```
-
 ### Generic shell script
 
 ```bash

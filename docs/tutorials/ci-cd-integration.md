@@ -1,12 +1,11 @@
 ---
 title: CI/CD Integration (15 minutes)
-description: Automate load tests in GitHub Actions and GitLab CI pipelines
+description: Automate load tests in GitHub Actions pipelines
 tags:
   - tutorial
   - ci-cd
   - automation
   - github-actions
-  - gitlab-ci
 ---
 
 # CI/CD Integration (15 minutes)
@@ -237,84 +236,6 @@ if (( $(echo "$AVG_RESPONSE > 500" | bc -l) )); then
   exit 1
 fi
 ```
-
-## Alternative: GitLab CI
-
-For GitLab users, here's an equivalent `.gitlab-ci.yml`:
-
-??? example "GitLab CI configuration"
-    ```yaml
-    nightly-load-test:
-      stage: test
-      image: bitnami/kubectl:1.28
-      script:
-        # Configure kubectl
-        - mkdir -p ~/.kube
-        - echo "$KUBECONFIG" > ~/.kube/config
-        - kubectl cluster-info
-
-        # Create/update ConfigMap
-        - kubectl create configmap ecommerce-test
-            --from-file=tests/locust/ecommerce_test.py
-            --dry-run=client -o yaml | kubectl apply -f -
-
-        # Deploy LocustTest
-        - TEST_NAME="ecommerce-ci-$(date +%Y%m%d-%H%M%S)"
-        - |
-          kubectl apply -f - <<EOF
-          apiVersion: locust.io/v2
-          kind: LocustTest
-          metadata:
-            name: ${TEST_NAME}
-          spec:
-            image: locustio/locust:2.20.0
-            testFiles:
-              configMapRef: ecommerce-test
-            master:
-              command: |
-                --locustfile /lotest/src/ecommerce_test.py
-                --host https://api.staging.example.com
-                --users 100
-                --spawn-rate 10
-                --run-time 5m
-            worker:
-              command: "--locustfile /lotest/src/ecommerce_test.py"
-              replicas: 5
-          EOF
-
-        # Wait for completion
-        - kubectl wait --for=jsonpath='{.status.phase}'=Succeeded
-            locusttest/${TEST_NAME} --timeout=10m
-
-        # Collect results
-        - kubectl logs job/${TEST_NAME}-master > results.log
-        - kubectl get locusttest ${TEST_NAME} -o yaml > test-status.yaml
-
-        # Check regression
-        - |
-          FAILURE_RATE=$(grep -oP 'Total.*Failures.*\K[\d.]+%' results.log | tail -1 | sed 's/%//')
-          if (( $(echo "$FAILURE_RATE > 1.0" | bc -l) )); then
-            echo "ERROR: Failure rate ${FAILURE_RATE}% exceeds threshold"
-            exit 1
-          fi
-
-      artifacts:
-        when: always
-        paths:
-          - results.log
-          - test-status.yaml
-        expire_in: 30 days
-
-      only:
-        - schedules
-        - web  # Manual trigger from GitLab UI
-    ```
-
-    **GitLab-specific setup:**
-
-    1. Add `KUBECONFIG` as a GitLab CI/CD variable (Settings → CI/CD → Variables)
-    2. Create a pipeline schedule (CI/CD → Schedules → New schedule)
-    3. Set cron expression: `0 2 * * 1` for weekly Monday 2 AM runs
 
 ## What you learned
 
