@@ -19,10 +19,16 @@ copyright: >
   <a href="#__consent">Change cookie settings</a>
 
 # Plugins
+# Note: mkdocs-redirects and mkdocs-minify-plugin are pip dependencies (see CI workflows)
 plugins:
   - search
   - git-revision-date-localized
   - privacy
+  - redirects:
+      redirect_maps:
+        # Redirect mappings for Phase 19 IA restructure
+        # Will be activated when pages physically move to new directories
+        # See docs/migration.md for the full URL change mapping table
   - tags
   - minify:
       minify_html: true
