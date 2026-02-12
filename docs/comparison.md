@@ -41,8 +41,8 @@ This page helps you evaluate which approach fits your use case, with an objectiv
 
 !!! success "Battle-Tested Reliability"
 
-    - **65 GitHub stars** - Production use on AWS EKS since 2022
-    - **20+ documentation pages** - Comprehensive coverage of getting started, API reference, architecture, security, FAQ, and migration guides
+    - **Battle-Tested** - Production use on AWS EKS since 2022
+    - **Comprehensive documentation** - Comprehensive coverage of getting started, API reference, architecture, security, FAQ, and migration guides
     - **Go-native performance** - Sub-second startup time, 75 MB container image, 64 MB memory footprint
     - **Feature-rich capabilities** - OpenTelemetry integration, validation webhooks, pod health monitoring, immutable test guarantee
     - **Active development** - Continuous improvement with community feedback and contributions
@@ -84,13 +84,6 @@ All metrics measured from production deployment on AWS EKS. Container images mea
     - Multiple teams sharing a cluster need governance and isolation
     - Need pod health monitoring and status conditions
     - Want validation webhooks to catch configuration errors before deployment
-
-!!! info "Choose Official Locust Operator when..."
-
-    - Want official Locust team support and maintenance
-    - Getting started with a minimal operator implementation
-    - Prefer staying within the Python ecosystem
-    - Basic lifecycle management is sufficient for your needs
 
 !!! info "Choose k6 Operator when..."
 

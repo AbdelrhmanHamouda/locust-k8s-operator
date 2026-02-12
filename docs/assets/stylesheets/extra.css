@@ -4,17 +4,11 @@
 
 /* CSS Custom Properties for consistent typography scale */
 :root {
-  --content-max-width: 75ch;
   --body-line-height: 1.7;
   --code-line-height: 1.5;
   --heading-line-height: 1.3;
   --code-font-size: 14px;
   --code-block-padding: 1.25rem;
-}
-
-/* Limit line length for readability (article content only, not nav/sidebars) */
-.md-content__inner {
-  max-width: var(--content-max-width);
 }
 
 /* Body text line-height */
