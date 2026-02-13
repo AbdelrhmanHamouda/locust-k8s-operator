@@ -76,7 +76,7 @@ jobs:
           commit_message: 'Deploy docs preview for PR #${{ github.event.number }}'
 
       - name: 💬 Comment on PR with preview link
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
@@ -149,7 +149,7 @@ jobs:
           fi
 
       - name: 💬 Update PR comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
