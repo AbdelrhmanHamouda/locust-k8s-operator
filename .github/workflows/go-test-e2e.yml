@@ -30,7 +30,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: 📥 Clone the code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 🔧 Setup Go
         uses: actions/setup-go@v5
