@@ -76,8 +76,10 @@ jobs:
           mkdir -p .cr-release-packages
           helm package charts/locust-k8s-operator --app-version=${VERSION} --version=${VERSION} --destination=.cr-release-packages
 
+      # Pin to v1.6.1 to avoid latest_tag scope bug in v1.7.0+
+      # See: https://github.com/helm/chart-releaser-action/issues/171
       - name: 🎉 Run chart-releaser
-        uses: helm/chart-releaser-action@v1
+        uses: helm/chart-releaser-action@v1.6.1
         with:
           skip_packaging: true
         env:
