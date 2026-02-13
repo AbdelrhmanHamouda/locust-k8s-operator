@@ -90,6 +90,11 @@ spec:
   worker:
     command: "--locustfile /lotest/src/demo_test.py"
     replicas: 2
+  observability:
+    openTelemetry:
+      enabled: true
+      endpoint: "otel-collector:4317"
+      insecure: true
 EOF
 
 # 5. Watch progress
@@ -217,6 +222,11 @@ spec:
   worker:
     command: "--locustfile /lotest/src/demo_test.py"
     replicas: 2
+  observability:
+    openTelemetry:
+      enabled: true
+      endpoint: "otel-collector:4317"
+      insecure: true
 EOF
 ```
 
@@ -227,6 +237,7 @@ This creates a distributed load test with:
 - **Spawn rate**: 2 users per second
 - **Duration**: 1 minute
 - **Workers**: 2 worker replicas
+- **OpenTelemetry**: Enabled
 
 ### Step 5: Watch Test Execution
 
@@ -284,7 +295,7 @@ Then open http://localhost:8089 in your browser to see:
 - Worker status
 
 !!! note "Web UI Availability"
-    The web UI is only available while the master pod is running. After the test completes, the Job pod may terminate (depending on your TTL settings).
+    The web UI is available while the master job is running. After the test completes (1 minute runtime), the job stays in completed state and you can still port-forward to view final results.
 
 ### Step 7: Cleanup
 
@@ -419,7 +430,7 @@ kubectl logs -l app=locust,role=worker --tail=50
 
 ## Advanced Testing
 
-### Test with Local Build
+### Testing with Local Builds
 
 To test local changes to the operator code:
 
@@ -437,142 +448,21 @@ helm install locust-operator ./charts/locust-k8s-operator \
   --set image.pullPolicy=IfNotPresent
 ```
 
-!!! tip "Use Local Chart"
-    When testing Helm chart changes, install from your local chart directory instead of the published repository.
+### Testing Production Configuration
 
-### Test Production Features
-
-Try the production-ready example with resource limits, affinity, and tolerations:
+Test resource limits, node affinity, and other production features:
 
 ```bash
 kubectl apply -f config/samples/locusttest_v2_production.yaml
 ```
 
-Or test OpenTelemetry integration:
+This sample includes:
 
-```bash
-kubectl apply -f config/samples/locust_v2_locusttest_with_otel.yaml
-```
-
-??? example "Custom Load Profile"
-    Create a more realistic load test with custom stages:
-    ```yaml
-    apiVersion: locust.io/v2
-    kind: LocustTest
-    metadata:
-      name: staged-test
-    spec:
-      image: locustio/locust:2.20.0
-      testFiles:
-        configMapRef: demo-test
-      master:
-        command: |
-          --locustfile /lotest/src/demo_test.py
-          --host https://httpbin.org
-          --headless
-          --users 100
-          --spawn-rate 10
-          --run-time 5m
-        resources:
-          requests:
-            cpu: 500m
-            memory: 512Mi
-          limits:
-            cpu: 1000m
-            memory: 1Gi
-      worker:
-        command: "--locustfile /lotest/src/demo_test.py"
-        replicas: 5
-        resources:
-          requests:
-            cpu: 500m
-            memory: 512Mi
-          limits:
-            cpu: 1000m
-            memory: 1Gi
-    ```
-
-### Automated Validation Script
-
-Create a validation script for CI/CD pipelines:
-
-```bash
-#!/bin/bash
-set -e
-
-# Validation script for Kind cluster testing
-CLUSTER_NAME="locust-ci-test"
-NAMESPACE="locust-system"
-TEST_NAME="ci-validation"
-
-echo "Creating Kind cluster..."
-kind create cluster --name $CLUSTER_NAME
-
-echo "Installing operator..."
-helm repo add locust-k8s-operator https://abdelrhmanhamouda.github.io/locust-k8s-operator/
-helm repo update
-helm install locust-operator locust-k8s-operator/locust-k8s-operator \
-  --namespace $NAMESPACE \
-  --create-namespace \
-  --wait \
-  --timeout 5m
-
-echo "Waiting for operator to be ready..."
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=locust-k8s-operator \
-  -n $NAMESPACE --timeout=5m
-
-echo "Creating test resources..."
-kubectl create configmap demo-test --from-literal=demo_test.py='
-from locust import HttpUser, task
-class DemoUser(HttpUser):
-    @task
-    def get_homepage(self):
-        self.client.get("/")
-'
-
-kubectl apply -f - <<EOF
-apiVersion: locust.io/v2
-kind: LocustTest
-metadata:
-  name: $TEST_NAME
-spec:
-  image: locustio/locust:2.20.0
-  testFiles:
-    configMapRef: demo-test
-  master:
-    command: "--locustfile /lotest/src/demo_test.py --host https://httpbin.org --users 10 --spawn-rate 2 --run-time 1m"
-  worker:
-    command: "--locustfile /lotest/src/demo_test.py"
-    replicas: 2
-EOF
-
-echo "Waiting for test to complete..."
-kubectl wait --for=jsonpath='{.status.phase}'=Succeeded locusttest/$TEST_NAME \
-  --timeout=5m || {
-  echo "Test failed or timed out!"
-  kubectl describe locusttest/$TEST_NAME
-  kubectl logs job/${TEST_NAME}-master
-  exit 1
-}
-
-echo "Validation successful!"
-kubectl get locusttest/$TEST_NAME -o yaml
-
-echo "Cleaning up..."
-kind delete cluster --name $CLUSTER_NAME
-```
-
-## Success Criteria
-
-The validation is successful if:
-
-1. ✅ Operator installs without errors
-2. ✅ LocustTest CR is accepted and reconciled
-3. ✅ Master job and worker deployment are created
-4. ✅ Workers successfully connect to master
-5. ✅ Load test runs and completes (transitions to `Succeeded` phase)
-6. ✅ No errors in operator logs
-7. ✅ Resources are cleaned up properly when CR is deleted
+- Resource requests and limits
+- Node affinity and tolerations
+- Horizontal Pod Autoscaler configuration
+- OpenTelemetry integration
+- Autostart/autoquit for automated testing
 
 ## Next Steps
 
