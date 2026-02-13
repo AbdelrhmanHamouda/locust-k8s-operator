@@ -1,3 +1,4 @@
 exclude_paths:
   - "**/zz_generated.deepcopy.go"
   - "test/utils/**"
+  - "**/*.md"
