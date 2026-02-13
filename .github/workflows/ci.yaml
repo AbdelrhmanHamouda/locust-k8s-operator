@@ -56,6 +56,14 @@ jobs:
           name: go-coverage
           fail_ci_if_error: false
 
+      - name: 📈 Report coverage to Codacy
+        if: always()
+        uses: codacy/codacy-coverage-reporter-action@v1
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: cover.out
+          force-coverage-parser: go
+
       - name: 📦 Upload Go test artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v4
