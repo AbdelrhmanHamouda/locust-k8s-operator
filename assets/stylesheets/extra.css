@@ -1,3 +1,43 @@
+/* ================================
+   TYPOGRAPHY & READABILITY
+   ================================ */
+
+/* CSS Custom Properties for consistent typography scale */
+:root {
+  --body-line-height: 1.7;
+  --code-line-height: 1.5;
+  --heading-line-height: 1.3;
+  --code-font-size: 14px;
+  --code-block-padding: 1.25rem;
+}
+
+/* Body text line-height */
+.md-typeset p,
+.md-typeset li,
+.md-typeset td {
+  line-height: var(--body-line-height);
+}
+
+/* Heading line-height (tighter for visual hierarchy) */
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4 {
+  line-height: var(--heading-line-height);
+}
+
+/* Code block improvements */
+.md-typeset pre > code {
+  font-size: var(--code-font-size);
+  line-height: var(--code-line-height);
+  padding: var(--code-block-padding);
+}
+
+/* Inline code sizing to match */
+.md-typeset code {
+  font-size: 0.85em;
+}
+
 /* Modern hero section with gradient background and enhanced styling */
 .md-content .tx-hero {
   display: flex !important;
@@ -642,15 +682,6 @@ html {
   filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15)) !important;
 }
 
-/* Enhanced section styling */
-.md-content h2 {
-  margin-top: 2rem !important;
-  margin-bottom: 1rem !important;
-  font-size: 2.2rem !important;
-  font-weight: 600 !important;
-  line-height: 1.2 !important;
-}
-
 /* Improved image styling throughout docs */
 .md-content img:not(.twemoji):not(.badge) {
   border-radius: 12px !important;
@@ -669,19 +700,6 @@ html {
 .md-content .grid:not(.cards) {
   gap: 1.5rem !important;
   margin: 1.5rem 0 !important;
-}
-
-/* Better typography hierarchy */
-.md-content h3 {
-  font-size: 1.4rem !important;
-  font-weight: 600 !important;
-  margin-bottom: 1rem !important;
-  color: var(--md-default-fg-color) !important;
-}
-
-.md-content p {
-  line-height: 1.7 !important;
-  margin-bottom: 1rem !important;
 }
 
 /* ================================
@@ -955,4 +973,53 @@ html {
   .announcement-modal-body h3 {
     font-size: 1.25rem;
   }
+}
+
+/* Glowing border animation for v2 announcement */
+.admonition.success.glowing-border {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent !important;
+  background-clip: padding-box !important;
+  z-index: 0;
+}
+
+.admonition.success.glowing-border::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg, 
+    transparent 0deg, 
+    var(--md-primary-fg-color) 45deg, 
+    var(--md-accent-fg-color) 135deg, 
+    #00bcd4 225deg, 
+    var(--md-primary-fg-color) 315deg, 
+    transparent 360deg
+  );
+  animation: borderRotate 8s linear infinite;
+  z-index: -2;
+}
+
+.admonition.success.glowing-border::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  background: var(--md-default-bg-color);
+  z-index: -1;
+  border-radius: inherit;
+}
+
+@keyframes borderRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Ensure content stays readable on top */
+.admonition.success.glowing-border > * {
+  position: relative;
+  z-index: 1;
 }
