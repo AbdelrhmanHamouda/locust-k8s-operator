@@ -41,10 +41,6 @@ Ensure you have installed:
     # macOS (using Homebrew)
     brew install kubectl helm kind
 
-    # Linux
-    curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
-    chmod +x ./kind
-    sudo mv ./kind /usr/local/bin/kind
 
     # Verify installations
     kubectl version --client
@@ -63,8 +59,7 @@ kind create cluster --name locust-test
 # 2. Install operator
 helm repo add locust-k8s-operator https://abdelrhmanhamouda.github.io/locust-k8s-operator/
 helm repo update
-helm install locust-operator locust-k8s-operator/locust-k8s-operator \
-  --namespace locust-system --create-namespace
+helm install locust-operator locust-k8s-operator/locust-k8s-operator --namespace locust-system --create-namespace
 
 # 3. Create test
 kubectl create configmap demo-test --from-literal=demo_test.py='
@@ -82,7 +77,7 @@ kind: LocustTest
 metadata:
   name: demo
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: demo-test
   master:
@@ -214,7 +209,7 @@ kind: LocustTest
 metadata:
   name: demo
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: demo-test
   master:
