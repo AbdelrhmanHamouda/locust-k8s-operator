@@ -15,6 +15,7 @@ Schedule Locust pods on specific nodes using node affinity, enabling dedicated t
 
 - Locust Kubernetes Operator installed
 - Access to label cluster nodes
+- Affinity injection enabled via the `ENABLE_AFFINITY_CR_INJECTION` environment variable on the operator (Helm default: `locustPods.affinityInjection: true`)
 
 ## When to use node affinity
 
@@ -211,14 +212,20 @@ kubectl get pods -l performance-test-name=affinity-test -o wide
 kubectl get nodes -l workload-type=load-testing
 ```
 
-Expected output showing pods only on labeled nodes:
+Expected output showing pods scheduled only on labeled nodes:
 
 ```
-NAME                           NODE                          STATUS
-affinity-test-master-abc123    node-1 (workload=load-test)   Running
-affinity-test-worker-0         node-1 (workload=load-test)   Running
-affinity-test-worker-1         node-2 (workload=load-test)   Running
-affinity-test-worker-2         node-3 (workload=load-test)   Running
+NAME                            READY   STATUS    RESTARTS   AGE   IP            NODE
+affinity-test-master-abc123     1/1     Running   0          45s   10.244.1.12   node-1
+affinity-test-worker-0-def456   1/1     Running   0          42s   10.244.1.13   node-1
+affinity-test-worker-1-ghi789   1/1     Running   0          42s   10.244.2.8    node-2
+affinity-test-worker-2-jkl012   1/1     Running   0          42s   10.244.3.5    node-3
+```
+
+Cross-reference the NODE column against your labeled nodes:
+
+```bash
+kubectl get nodes -l workload-type=load-testing
 ```
 
 ## Troubleshoot scheduling failures
@@ -264,6 +271,12 @@ Warning  FailedScheduling  No nodes are available that match all of the followin
    kubectl get nodes --show-labels | grep workload
    ```
 
+!!! tip "podAffinity and podAntiAffinity"
+
+    The `scheduling.affinity` field also supports `podAffinity` and `podAntiAffinity` for
+    inter-pod scheduling rules. See the [production deployment sample](../../samples/production-deployment.md)
+    for a worked example.
+
 ## Combine with tolerations
 
 Often used together for dedicated node pools:
@@ -298,6 +311,11 @@ spec:
         value: load-testing
         effect: NoSchedule
 ```
+
+!!! note "Feature flags"
+
+    Tolerations injection requires the `ENABLE_TAINT_TOLERATIONS_CR_INJECTION` environment variable
+    to be enabled on the operator.
 
 See [Configure tolerations](configure-tolerations.md) for details.
 

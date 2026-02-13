@@ -18,6 +18,9 @@ Configure Locust pods to connect to authenticated Kafka clusters, including AWS 
 - Kafka credentials (username/password for SASL authentication)
 - Basic understanding of Kafka security protocols
 
+!!! warning "Deprecated Feature"
+    The operator-level Kafka configuration via Helm values is deprecated and will be removed in a future release. For new deployments, configure Kafka directly in your locustfile using [locust-plugins](https://github.com/SvenskaSpworker/locust-plugins) or a similar library. This approach gives you full control over Kafka client settings and is independent of the operator.
+
 ## Two-level configuration model
 
 The operator supports two approaches to Kafka configuration:
@@ -39,8 +42,9 @@ kafka:
   bootstrapServers: "kafka-broker1:9092,kafka-broker2:9092"
   security:
     enabled: true
-    protocol: "SASL_SSL"        # PLAINTEXT, SASL_PLAINTEXT, SASL_SSL, or SSL
+    protocol: "SASL_SSL"        # Default: SASL_PLAINTEXT. Options: PLAINTEXT, SASL_PLAINTEXT, SASL_SSL, or SSL
     saslMechanism: "SCRAM-SHA-512"  # PLAINTEXT, SCRAM-SHA-256, or SCRAM-SHA-512
+    jaasConfig: ""                  # Optional: raw JAAS config string for advanced auth
   credentials:
     secretName: "kafka-credentials"    # Name of K8s Secret containing credentials
     usernameKey: "username"            # Key in Secret for username (default: "username")
@@ -66,7 +70,7 @@ kafka:
   bootstrapServers: "b-1.mycluster.kafka.us-east-1.amazonaws.com:9096"
   security:
     enabled: true
-    protocol: "SASL_SSL"
+    protocol: "SASL_SSL"             # Default: SASL_PLAINTEXT
     saslMechanism: "SCRAM-SHA-512"  # Or AWS_MSK_IAM for IAM auth
   credentials:
     secretName: "msk-credentials"      # Name of K8s Secret containing MSK credentials
@@ -136,6 +140,7 @@ When Kafka configuration is enabled, these environment variables are available i
 | `KAFKA_SASL_MECHANISM` | Authentication mechanism | `PLAINTEXT`, `SCRAM-SHA-256`, `SCRAM-SHA-512` |
 | `KAFKA_USERNAME` | Kafka username | `kafka-user` |
 | `KAFKA_PASSWORD` | Kafka password | `kafka-password` |
+| `KAFKA_SASL_JAAS_CONFIG` | Raw JAAS configuration string for advanced authentication scenarios | `org.apache.kafka.common.security.scram.ScramLoginModule required username="user" password="pass";` |
 
 ## Use in Locust test script
 
@@ -159,6 +164,9 @@ class KafkaUser(User):
 
         if security_enabled:
             # Use authenticated connection
+            # Note: kafka-python uses sasl_plain_username/sasl_plain_password
+            # for all SASL mechanisms (PLAIN, SCRAM-SHA-256, SCRAM-SHA-512),
+            # not just PLAIN. The parameter names are misleading.
             self.producer = KafkaProducer(
                 bootstrap_servers=bootstrap_servers,
                 security_protocol=os.getenv('KAFKA_SECURITY_PROTOCOL_CONFIG', 'SASL_SSL'),

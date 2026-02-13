@@ -60,7 +60,7 @@ helm install locust-operator locust-k8s-operator/locust-k8s-operator \
 
 | Value | Duration | Use case |
 |-------|----------|----------|
-| `0` | Immediate | CI/CD where you collect results before cleanup |
+| `0` | Immediate | Use with caution -- risk of race condition with log collection |
 | `300` | 5 minutes | Quick tests where results are exported immediately |
 | `3600` | 1 hour | Standard tests with manual result review |
 | `7200` | 2 hours | Long tests with delayed result analysis |
@@ -96,7 +96,7 @@ Check that TTL is set on created jobs:
 kubectl apply -f locusttest.yaml
 
 # Check master job TTL
-kubectl get job -l performance-test-pod-name=my-test-master -o yaml | grep ttlSecondsAfterFinished
+kubectl get job my-test-master -o yaml | grep ttlSecondsAfterFinished
 ```
 
 Expected output:
@@ -129,15 +129,20 @@ kubectl get pods -l performance-test-name=my-test
 kubectl get locusttest my-test
 ```
 
-## Example: CI/CD with immediate cleanup
+## Example: CI/CD with automatic cleanup
 
-For CI/CD pipelines where you collect results before cleanup:
+For CI/CD pipelines, use a short TTL to allow time for log collection:
 
 ```yaml
 # values.yaml
 locustPods:
-  ttlSecondsAfterFinished: 0  # Clean up immediately after completion
+  ttlSecondsAfterFinished: 60  # Clean up 60 seconds after completion
 ```
+
+!!! warning "Avoid `ttlSecondsAfterFinished: 0` in CI/CD"
+    Setting TTL to `0` creates a race condition: Kubernetes may delete the job and its
+    pods before your pipeline can collect logs with `kubectl logs`. Use at least `60`
+    seconds to give your pipeline time to retrieve results.
 
 In your pipeline:
 
@@ -149,10 +154,10 @@ kubectl apply -f locusttest.yaml
 kubectl wait --for=jsonpath='{.status.phase}'=Succeeded \
   locusttest/ci-test --timeout=10m
 
-# Collect results BEFORE cleanup happens
+# Collect results within the 60-second TTL window
 kubectl logs job/ci-test-master > results.log
 
-# Jobs and pods will be cleaned up within seconds
+# Jobs and pods will be cleaned up after the TTL expires
 # CR persists for historical tracking
 ```
 

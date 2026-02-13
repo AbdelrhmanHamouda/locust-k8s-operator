@@ -15,7 +15,7 @@ The operator applies security settings to all test pods by default. This guide e
 
 ## Default security context
 
-The operator automatically applies a security context to all Locust test pods (master and worker). This security context meets Kubernetes Pod Security Standards **"baseline"** profile requirements.
+The operator automatically applies a security context to all Locust test pods (master and worker). The operator meets the **baseline** profile because it does not use any restricted fields (hostNetwork, hostPID, privileged, etc.). The seccomp RuntimeDefault profile is an additional hardening measure toward **restricted** profile compliance.
 
 ### Security settings applied
 
@@ -45,26 +45,9 @@ If your test doesn't require write access, you can customize the security contex
 
 ## Customizing security context
 
-Override the default security context per test if needed:
+The v2 API does **not** expose `securityContext` fields on the LocustTest CR. The test pod security context is hardcoded in the operator (see `internal/resources/job.go`). There is no way to customize it per-test via the CR.
 
-```yaml
-apiVersion: locust.io/v2
-kind: LocustTest
-metadata:
-  name: hardened-test
-spec:
-  image: locustio/locust:2.20.0
-  master:
-    command: "--locustfile /lotest/src/test.py --host https://example.com"
-    # Custom security context for master pod (if needed)
-  worker:
-    command: "--locustfile /lotest/src/test.py"
-    replicas: 3
-    # Custom security context for worker pod (if needed)
-```
-
-!!! note
-    The v2 API does not currently expose securityContext at the CR level. The operator uses defaults from Helm values. To customize per-test, you would need to modify the operator's Helm chart values.
+The `podSecurityContext` and `containerSecurityContext` Helm values apply to the **operator deployment only**, not to test pods. To change the test pod security context, you would need to modify the operator source code.
 
 ## RBAC best practices
 
@@ -109,44 +92,7 @@ k8s:
 
 ### Test pod RBAC
 
-Test pods run as non-root and do **not** get elevated privileges. By default:
-
-- No service account token is mounted (unless you explicitly set `serviceAccountName`)
-- No Kubernetes API access
-- No elevated Linux capabilities
-
-**If your test needs Kubernetes API access:**
-
-1. Create a service account with minimal permissions:
-   ```bash
-   kubectl create serviceaccount locust-test-runner
-   ```
-
-2. Grant only required permissions:
-   ```yaml
-   apiVersion: rbac.authorization.k8s.io/v1
-   kind: Role
-   metadata:
-     name: locust-pod-reader
-   rules:
-     - apiGroups: [""]
-       resources: ["pods"]
-       verbs: ["get", "list"]
-   ---
-   apiVersion: rbac.authorization.k8s.io/v1
-   kind: RoleBinding
-   metadata:
-     name: locust-pod-reader-binding
-   subjects:
-     - kind: ServiceAccount
-       name: locust-test-runner
-   roleRef:
-     kind: Role
-     name: locust-pod-reader
-     apiGroup: rbac.authorization.k8s.io
-   ```
-
-3. Reference in LocustTest CR (not yet supported in v2 API).
+Test pods run as non-root and do **not** get elevated privileges. Test pods use the namespace's default service account. Kubernetes mounts its token automatically. If your cluster does not restrict default service account permissions, consider setting `automountServiceAccountToken: false` on the default service account.
 
 !!! warning "Least privilege"
     Only grant the minimum permissions your test needs. Avoid `cluster-admin` or broad wildcard permissions.
@@ -222,10 +168,23 @@ spec:
             matchLabels:
               performance-test-name: my-test
       ports:
-        - port: 5557                    # Worker -> Master
+        - port: 5557                    # Worker -> Master (communication)
+          protocol: TCP
+        - port: 5558                    # Worker -> Master (data)
           protocol: TCP
 
   egress:
+    # Allow worker -> master communication
+    - to:
+        - podSelector:
+            matchLabels:
+              performance-test-name: my-test
+      ports:
+        - port: 5557                    # Worker -> Master (communication)
+          protocol: TCP
+        - port: 5558                    # Worker -> Master (data)
+          protocol: TCP
+
     # Allow DNS resolution
     - to:
         - namespaceSelector:
@@ -343,7 +302,8 @@ If you see `uid=0(root)`, the pod is running as root (violation of security poli
 
 ```bash
 # Check operator service account permissions
-kubectl auth can-i --list --as=system:serviceaccount:locust-operator-system:locust-k8s-operator
+# Replace <namespace> and <sa-name> with your installation's values
+kubectl auth can-i --list --as=system:serviceaccount:<namespace>:<sa-name>
 
 # Check if test pod has Kubernetes API access (should be "no" by default)
 kubectl exec $POD -- curl -k https://kubernetes.default.svc
@@ -357,26 +317,24 @@ The operator's default security settings meet these Pod Security Standards profi
 
 | Profile | Compliant | Notes |
 |---------|-----------|-------|
-| **Baseline** | ✅ Yes | Seccomp profile satisfies baseline requirements |
-| **Restricted** | ⚠️ Partial | Missing: `runAsNonRoot`, `allowPrivilegeEscalation=false`, `capabilities drop ALL` |
-| **Privileged** | ✅ Yes | No restrictions |
+| **Baseline** | Yes | No restricted fields used (hostNetwork, hostPID, privileged, etc.) |
+| **Restricted** | Partial | Missing: `runAsNonRoot`, `allowPrivilegeEscalation=false`, `capabilities drop ALL`. Seccomp RuntimeDefault is present as a hardening measure. |
+| **Privileged** | Yes | No restrictions |
 
 **To meet "restricted" profile:**
 
-Users would need to add the following settings (via Helm values customization):
+The following settings would need to be added to the test pod security context. Since the test pod security context is hardcoded in the operator (`internal/resources/job.go`), this requires modifying the operator source code:
 
 ```yaml
 securityContext:
-  runAsNonRoot: true                     # Add this
-  allowPrivilegeEscalation: false        # Add this
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
   seccompProfile:
     type: RuntimeDefault
-  capabilities:                          # Add this
+  capabilities:
     drop:
       - ALL
 ```
-
-Currently, the operator meets "baseline" by default. For "restricted" compliance, customize the operator's Helm values.
 
 ## Related guides
 

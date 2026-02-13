@@ -27,7 +27,7 @@ Automate your load tests to run on every deployment or on a schedule.
 
 ## The scenario
 
-You want nightly load tests against your staging environment, plus on-demand tests before releases. Tests should fail the pipeline if error rate exceeds 1%.
+You want weekly load tests against your staging environment, plus on-demand tests before releases. Tests should fail the pipeline if error rate exceeds 1%.
 
 ## Step 1: Prepare the test script
 
@@ -50,7 +50,7 @@ The test script should be checked into your repository at `tests/locust/ecommerc
 Create `.github/workflows/load-test.yaml`:
 
 ```yaml
-name: Nightly Load Test
+name: Weekly Load Test
 
 on:
   schedule:
@@ -91,39 +91,51 @@ jobs:
           TEST_NAME="ecommerce-ci-$(date +%Y%m%d-%H%M%S)"
 
           kubectl apply -f - <<EOF
-          apiVersion: locust.io/v2
-          kind: LocustTest
-          metadata:
-            name: ${TEST_NAME}
-          spec:
-            image: locustio/locust:2.20.0
-            testFiles:
-              configMapRef: ecommerce-test
-            master:
-              command: |
-                --locustfile /lotest/src/ecommerce_test.py
-                --host https://api.staging.example.com
-                --users 100
-                --spawn-rate 10
-                --run-time 5m
-            worker:
-              command: "--locustfile /lotest/src/ecommerce_test.py"
-              replicas: 5
-          EOF
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: ${TEST_NAME}
+spec:
+  image: locustio/locust:2.20.0
+  testFiles:
+    configMapRef: ecommerce-test
+  master:
+    command: |
+      --locustfile /lotest/src/ecommerce_test.py
+      --host https://api.staging.example.com
+      --users 100
+      --spawn-rate 10
+      --run-time 5m
+  worker:
+    command: "--locustfile /lotest/src/ecommerce_test.py"
+    replicas: 5
+EOF
 
           # Store test name for later steps
           echo "TEST_NAME=${TEST_NAME}" >> $GITHUB_ENV
 
       - name: Wait for test completion
         run: |
-          # Wait up to 10 minutes for test to succeed
-          kubectl wait --for=jsonpath='{.status.phase}'=Succeeded \
-            locusttest/${TEST_NAME} --timeout=10m
+          # Timeout accounts for pod scheduling + 5m run time + autoquit grace period
+          TIMEOUT=600  # 10 minutes
+          ELAPSED=0
+          while true; do
+            PHASE=$(kubectl get locusttest ${TEST_NAME} -o jsonpath='{.status.phase}')
+            case "$PHASE" in
+              Succeeded) echo "Test passed"; break ;;
+              Failed) echo "Test failed"; exit 1 ;;
+              *) echo "Phase: $PHASE -- waiting..."; sleep 10 ;;
+            esac
+            ELAPSED=$((ELAPSED + 10))
+            if [ $ELAPSED -ge $TIMEOUT ]; then
+              echo "Timed out after ${TIMEOUT}s"; exit 1
+            fi
+          done
 
       - name: Collect test results
         if: always()  # Run even if test fails
         run: |
-          # Get master pod logs
+          # Get master pod logs (job/ selector works because master always has exactly 1 pod)
           kubectl logs job/${TEST_NAME}-master > results.log
 
           # Get test status YAML
@@ -136,6 +148,9 @@ jobs:
       - name: Check for performance regression
         run: |
           # Extract final statistics from master logs
+          # NOTE: This grep regex is version-specific to Locust's log format.
+          # For more robust failure detection, consider using --exit-code-on-error
+          # in the Locust command, which makes Locust exit with code 1 on errors.
           FAILURE_RATE=$(kubectl logs job/${TEST_NAME}-master | \
             grep -oP 'Total.*Failures.*\K[\d.]+%' | tail -1 | sed 's/%//')
 
@@ -158,6 +173,10 @@ jobs:
             results.log
             test-status.yaml
           retention-days: 30
+
+      - name: Cleanup test resources
+        if: always()
+        run: kubectl delete locusttest ${TEST_NAME} --ignore-not-found
 ```
 
 **Key workflow features:**
@@ -173,14 +192,14 @@ jobs:
 
 Your workflow needs a kubeconfig to access the cluster. Add it as a GitHub secret:
 
-1. Get your kubeconfig:
+1. Copy your kubeconfig content:
    ```bash
-   cat ~/.kube/config | base64
+   cat ~/.kube/config
    ```
 
 2. In GitHub: Go to **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
 
-3. Create secret `KUBECONFIG` with the base64-encoded content
+3. Create secret `KUBECONFIG` and paste the raw kubeconfig YAML content (GitHub secrets handle arbitrary text, no encoding needed)
 
 **Security note:** For production, use a service account with minimal permissions instead of full admin kubeconfig.
 
@@ -189,7 +208,7 @@ Your workflow needs a kubeconfig to access the cluster. Add it as a GitHub secre
 ### Trigger the workflow manually
 
 1. Go to **Actions** tab in GitHub
-2. Select **Nightly Load Test** workflow
+2. Select **Weekly Load Test** workflow
 3. Click **Run workflow** → **Run workflow**
 
 ### Monitor execution

@@ -24,8 +24,7 @@ Store registry credentials in a Kubernetes secret:
 kubectl create secret docker-registry my-registry-secret \
   --docker-server=ghcr.io \
   --docker-username=myusername \
-  --docker-password=ghp_myPersonalAccessToken \
-  --docker-email=user@example.com
+  --docker-password=ghp_myPersonalAccessToken
 ```
 
 **For specific registries:**
@@ -36,8 +35,7 @@ kubectl create secret docker-registry my-registry-secret \
     kubectl create secret docker-registry ghcr-secret \
       --docker-server=ghcr.io \
       --docker-username=myusername \
-      --docker-password=ghp_myPersonalAccessToken \
-      --docker-email=user@example.com
+      --docker-password=ghp_myPersonalAccessToken
     ```
 
 === "Docker Hub"
@@ -46,20 +44,18 @@ kubectl create secret docker-registry my-registry-secret \
     kubectl create secret docker-registry dockerhub-secret \
       --docker-server=docker.io \
       --docker-username=myusername \
-      --docker-password=myAccessToken \
-      --docker-email=user@example.com
+      --docker-password=myAccessToken
     ```
 
 === "AWS ECR"
 
     ```bash
     # Get ECR login token (expires after 12 hours)
-    aws ecr get-login-password --region us-east-1 | \
-      kubectl create secret docker-registry ecr-secret \
-        --docker-server=123456789012.dkr.ecr.us-east-1.amazonaws.com \
-        --docker-username=AWS \
-        --docker-password-stdin \
-        --docker-email=user@example.com
+    ECR_TOKEN=$(aws ecr get-login-password --region <region>)
+    kubectl create secret docker-registry ecr-secret \
+      --docker-server=<account-id>.dkr.ecr.<region>.amazonaws.com \
+      --docker-username=AWS \
+      --docker-password="${ECR_TOKEN}"
     ```
 
 === "Google Container Registry"
@@ -69,9 +65,12 @@ kubectl create secret docker-registry my-registry-secret \
     kubectl create secret docker-registry gcr-secret \
       --docker-server=gcr.io \
       --docker-username=_json_key \
-      --docker-password="$(cat key.json)" \
-      --docker-email=user@example.com
+      --docker-password="$(cat key.json)"
     ```
+
+!!! note "Namespace"
+
+    The image pull secret must be created in the same namespace as the LocustTest CR that references it.
 
 Verify the secret exists:
 

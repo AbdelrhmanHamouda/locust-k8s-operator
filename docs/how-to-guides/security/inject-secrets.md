@@ -90,7 +90,7 @@ spec:
   env:
     secretRefs:
       - name: api-credentials     # Secret name
-        prefix: ""                # No prefix (use key names directly)
+        # No prefix specified -- keys are used as-is
 ```
 
 **Result:** Secret keys become environment variables:
@@ -234,6 +234,8 @@ The following paths are reserved and cannot be used for secret mounts:
 | `/lotest/src/` | Test script mount point | `testFiles.srcMountPath` |
 | `/opt/locust/lib` | Library mount point | `testFiles.libMountPath` |
 
+When `testFiles` is configured, only the paths actually in use are reserved. When not configured, both default paths are reserved.
+
 If you customize `srcMountPath` or `libMountPath`, those custom paths become reserved instead.
 
 ## Combined example
@@ -261,7 +263,7 @@ spec:
     # Method 2: Secret environment variables
     secretRefs:
       - name: api-credentials
-        prefix: ""
+        # No prefix specified -- keys are used as-is
 
     # Method 3: Individual variables
     variables:
@@ -328,7 +330,7 @@ kubectl exec $POD -- cat /etc/locust/certs/ca.crt
 
 | Problem | Symptom | Solution |
 |---------|---------|----------|
-| Pod stuck in `Pending` | ConfigurationError condition | Verify ConfigMap/Secret exists: `kubectl get configmap,secret` |
+| Pod stuck in `ContainerCreating` or shows `CreateContainerConfigError` | ConfigurationError condition | Verify ConfigMap/Secret exists: `kubectl get configmap,secret` |
 | Environment variable missing | Variable not in `printenv` output | Check spelling of ConfigMap/Secret name and key |
 | File mount empty | Directory exists but no files | Verify Secret exists and has data: `kubectl get secret <name> -o yaml` |
 | Permission denied reading file | `cat` fails with permission error | Check `readOnly: true` and Secret file permissions |
@@ -345,11 +347,7 @@ If `status=False` with reason `ConfigurationError`, the error message shows whic
 
 1. **Use Secrets for sensitive data:** Never use ConfigMaps for passwords, tokens, or keys.
 
-2. **Use RBAC to restrict Secret access:** Limit who can read Secrets in your namespace:
-   ```bash
-   # Users should NOT have direct Secret access
-   # Only the operator's service account needs it
-   ```
+2. **Use RBAC to restrict Secret access:** Limit who can read Secrets in your namespace. Users should not have direct Secret access -- only the operator's service account needs it.
 
 3. **Rotate secrets regularly:** See [Security Best Practices - Secret Rotation](../../security.md#secret-rotation) for the rotation process.
 

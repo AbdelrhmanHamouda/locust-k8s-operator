@@ -76,6 +76,9 @@ spec:
     replicas: 20          # 1000 users / 50 users per worker = 20 workers
 ```
 
+!!! note "Replica validation range"
+    The operator accepts 1 to 500 worker replicas.
+
 Apply the configuration:
 
 ```bash
@@ -160,7 +163,8 @@ Look for:
 {
   "phase": "Running",
   "expectedWorkers": 20,
-  "connectedWorkers": 20
+  "connectedWorkers": 20,
+  "conditions": [ ... ]
 }
 ```
 
@@ -253,16 +257,18 @@ master:
 
 ## Adjusting worker count
 
-Due to the operator's immutability model, worker count changes require updating the CR specification:
+Editing the CR spec of a running test does **not** live-update it. To change the worker count, delete the existing test and re-apply the updated manifest:
 
 ```bash
-# Edit the worker replica count in your LocustTest manifest
-# Change spec.worker.replicas to desired count, then apply:
+# Delete the running test
+kubectl delete locusttest my-locust-test
+
+# Edit spec.worker.replicas in your manifest, then apply:
 kubectl apply -f my-locust-test.yaml
 ```
 
-!!! note "New test execution"
-    Changing the worker count and reapplying creates a new test execution — this is not live scaling of running workers. The operator will tear down the existing test and create a new one with the updated worker count.
+!!! note "No live scaling"
+    The operator does not support in-place updates. You must `kubectl delete` the running LocustTest and then `kubectl apply` the updated manifest to change worker replicas or any other spec field.
 
 ## What's next
 

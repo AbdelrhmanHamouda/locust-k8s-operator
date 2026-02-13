@@ -62,6 +62,9 @@ spec:
       storage: 10Gi
 ```
 
+!!! warning "StorageClass compatibility"
+    Not all StorageClasses support `ReadOnlyMany` (ROX) access mode. Check your cluster's StorageClass documentation to confirm ROX support before using this access mode.
+
 Apply both:
 
 ```bash
@@ -166,7 +169,7 @@ response = requests.get(
 
 ## Use EmptyDir for temporary storage
 
-Create temporary storage shared between containers:
+Create temporary storage available within a pod (shared between containers in the same pod, but not across pods):
 
 ```yaml
 apiVersion: locust.io/v2
@@ -241,7 +244,7 @@ The following paths are reserved and cannot be used for volume mounts:
 
 | Path | Purpose | Customizable |
 |------|---------|--------------|
-| `/lotest/src/` | Test script mount point | Yes, via `testFiles.srcMountPath` |
+| `/lotest/src` | Test script mount point | Yes, via `testFiles.srcMountPath` |
 | `/opt/locust/lib` | Library mount point | Yes, via `testFiles.libMountPath` |
 
 If you customize these paths, the custom paths become reserved instead.
@@ -265,7 +268,7 @@ Check that volumes are mounted correctly:
 
 ```bash
 # Get a worker pod name
-WORKER_POD=$(kubectl get pod -l performance-test-pod-name=my-test-worker -o jsonpath='{.items[0].metadata.name}')
+WORKER_POD=$(kubectl get pod -l performance-test-pod-name=<cr-name>-worker -o jsonpath='{.items[0].metadata.name}')
 
 # Check mount exists
 kubectl exec $WORKER_POD -- ls -la /data

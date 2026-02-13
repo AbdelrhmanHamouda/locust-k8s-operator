@@ -193,10 +193,10 @@ Check that pods are scheduled on the correct nodes:
 
 ```bash
 # Show pod-to-node mapping
-kubectl get pods -l performance-test-name=nodeselector-test -o wide
+kubectl get pods -l performance-test-name=<test-name> -o wide
 
 # Check labels on nodes where pods are running
-NODE=$(kubectl get pod -l performance-test-pod-name=nodeselector-test-master -o jsonpath='{.items[0].spec.nodeName}')
+NODE=$(kubectl get pod -l performance-test-pod-name=<test-name>-master -o jsonpath='{.items[0].spec.nodeName}')
 kubectl get node $NODE --show-labels | grep disktype
 ```
 
@@ -272,6 +272,11 @@ scheduling:
 
 Node selector is simpler. Node affinity is more powerful.
 
+!!! note "Feature flag"
+
+    Node affinity injection requires the `ENABLE_AFFINITY_CR_INJECTION` environment variable
+    to be enabled on the operator (Helm default: `locustPods.affinityInjection: true`).
+
 ## Combine with other scheduling
 
 Node selector works with tolerations:
@@ -299,6 +304,10 @@ spec:
         value: load-testing
         effect: NoSchedule  # Tolerate taint on SSD nodes
 ```
+
+!!! note "Feature flag"
+
+    Tolerations injection requires the helm value.
 
 See [Configure tolerations](configure-tolerations.md) for details.
 

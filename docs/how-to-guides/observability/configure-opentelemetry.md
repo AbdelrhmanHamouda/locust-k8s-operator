@@ -162,7 +162,7 @@ kubectl logs -n monitoring deployment/otel-collector | grep -i error
 
 OpenTelemetry adds overhead to your test execution:
 
-- **Typical overhead:** 2-5% additional CPU/memory usage
+- **Overhead:** Generally minimal overhead, varying with telemetry volume, sampling rate, and collector proximity.
 - **Network overhead:** Depends on telemetry volume and sampling
 
 **Recommendations:**
@@ -184,7 +184,7 @@ OpenTelemetry adds overhead to your test execution:
 | **Metrics** | Yes | Yes |
 | **Additional containers** | None | 1 sidecar per master pod |
 | **Setup complexity** | Requires OTel Collector | Works with Prometheus directly |
-| **Resource overhead** | 2-5% in test pods | Additional sidecar container |
+| **Resource overhead** | Generally minimal, varies with config | Additional sidecar container |
 | **Recommended for** | New deployments, distributed tracing needs | Legacy compatibility, Prometheus-only stacks |
 | **v2 API** | Yes | Yes (default when OTel disabled) |
 | **v1 API** | No | Yes |

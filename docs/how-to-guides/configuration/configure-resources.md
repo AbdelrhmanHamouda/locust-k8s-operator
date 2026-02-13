@@ -25,11 +25,13 @@ Configure default resources for all tests during operator installation:
 locustPods:
   resources:
     requests:
-      cpu: "250m"        # Guaranteed CPU
-      memory: "256Mi"    # Guaranteed memory
+      cpu: "250m"            # Guaranteed CPU
+      memory: "128Mi"        # Guaranteed memory
+      ephemeralStorage: 30M  # Scratch space for logs and temp files
     limits:
-      cpu: "1000m"       # Maximum CPU
-      memory: "512Mi"    # Maximum memory
+      cpu: "1000m"           # Maximum CPU
+      memory: "1024Mi"       # Maximum memory
+      ephemeralStorage: 50M  # Prevents runaway disk usage from evicting the pod
 ```
 
 Install or upgrade the operator:
@@ -81,6 +83,31 @@ Apply the configuration:
 ```bash
 kubectl apply -f locusttest-resources.yaml
 ```
+
+## Resource precedence chain
+
+The operator resolves resource values using a 3-level precedence chain:
+
+| Priority | Source | Scope | Merge behavior |
+|----------|--------|-------|----------------|
+| **1 (highest)** | CR-level (`spec.master.resources` / `spec.worker.resources`) | Per-test | Complete override -- replaces the entire resources block |
+| **2** | Helm role-specific (`masterResources` / `workerResources`) | All tests | Field-level fallback -- individual fields fall back to unified defaults |
+| **3 (lowest)** | Helm unified (`resources`) | All tests | Base defaults for every pod |
+
+**Example:** Given these Helm values:
+
+```yaml
+locustPods:
+  resources:                # Level 3: unified defaults
+    requests:
+      cpu: "250m"
+      memory: "128Mi"
+  workerResources:          # Level 2: role-specific override
+    requests:
+      memory: "512Mi"       # Only memory is overridden
+```
+
+Workers get `cpu: "250m"` (from unified) and `memory: "512Mi"` (from role-specific). If a CR also sets `spec.worker.resources`, it replaces the entire block.
 
 ## Disable CPU limits for performance tests
 
@@ -135,7 +162,7 @@ spec:
 **Worker pod:**
 
 - CPU: 500-1000m per worker (depends on test script complexity)
-- Memory: 256-512Mi per worker (depends on data handling)
+- Memory: 512Mi-1Gi per worker (depends on data handling)
 - Scale workers based on user count (see [Scale worker replicas](../scaling/scale-workers.md))
 
 **Example sizing for 1000 users:**
@@ -190,9 +217,6 @@ Check actual resource consumption:
 ```bash
 # Real-time resource usage
 kubectl top pod -l performance-test-name=resource-optimized-test
-
-# Watch resource usage during test
-kubectl top pod -l performance-test-name=resource-optimized-test --watch
 ```
 
 If pods consistently hit memory limits, they'll be OOMKilled. If they hit CPU limits, they'll be throttled (slower performance).

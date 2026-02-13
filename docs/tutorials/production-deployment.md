@@ -45,6 +45,7 @@ Building on the `ecommerce_test.py` from Tutorial 1, here's a production-ready v
 # production_test.py
 from locust import HttpUser, task, between
 import logging
+import uuid
 
 class ProductionShopperUser(HttpUser):
     """Production-grade e-commerce load test with authentication and realistic behavior."""
@@ -53,6 +54,7 @@ class ProductionShopperUser(HttpUser):
 
     def on_start(self):
         """Called once when user starts - simulate authentication."""
+        self.user_id = str(uuid.uuid4())
         # Authenticate with the API
         response = self.client.post("/api/v1/auth/login", json={
             "username": "loadtest@example.com",
@@ -286,7 +288,7 @@ spec:
       enabled: true
       endpoint: "otel-collector.monitoring:4317"  # Your OTel Collector endpoint
       protocol: "grpc"  # or "http/protobuf"
-      insecure: false  # Set true for development without TLS
+      # TLS is the default; set insecure: true only for development without TLS
       extraEnvVars:
         OTEL_SERVICE_NAME: "production-load-test"
         OTEL_RESOURCE_ATTRIBUTES: "environment=staging,team=platform,test.type=load"
@@ -296,7 +298,7 @@ spec:
 
 - **`endpoint`** — OpenTelemetry Collector gRPC endpoint (format: `host:port`)
 - **`protocol`** — `grpc` (default) or `http/protobuf`
-- **`insecure`** — `false` for TLS (production), `true` for development
+- **`insecure`** — TLS is the default; set `true` only for development without TLS
 - **`extraEnvVars`** — Custom attributes for trace/metric filtering
 
 ### Verify OpenTelemetry injection
@@ -398,7 +400,7 @@ kubectl apply -f production-load-test.yaml
 kubectl get locusttest production-load-test -n load-testing -w
 
 # Expected progression:
-# NAME                     PHASE       EXPECTED   CONNECTED   AGE
+# NAME                     PHASE       WORKERS   CONNECTED   AGE
 # production-load-test     Pending     20         0           5s
 # production-load-test     Running     20         20          45s
 # production-load-test     Succeeded   20         20          31m
@@ -415,8 +417,8 @@ kubectl get locusttest production-load-test -n load-testing \
 # {
 #   "type": "PodsHealthy",
 #   "status": "True",
-#   "reason": "AllPodsReady",
-#   "message": "Master and 20/20 workers are ready"
+#   "reason": "PodsHealthy",
+#   "message": "All pods are healthy"
 # }
 ```
 
@@ -436,12 +438,15 @@ If OpenTelemetry is configured, check your observability backend:
 
 **Prometheus (metrics):**
 ```promql
-# Query Locust request metrics
+# Query Locust request metrics (illustrative)
 locust_requests_total{service_name="production-load-test"}
 
-# Query response time metrics
+# Query response time metrics (illustrative)
 locust_request_duration_seconds{service_name="production-load-test"}
 ```
+
+!!! note "Metric names are illustrative"
+    Actual metric names depend on your OpenTelemetry/Prometheus setup and exporter configuration. Check your OTel Collector and Prometheus documentation for the exact names available in your environment.
 
 **Jaeger/Tempo (traces):**
 

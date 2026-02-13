@@ -90,7 +90,7 @@ kubectl get locusttest demo -w
 You'll see output like this:
 
 ```
-NAME   PHASE     EXPECTED   CONNECTED   AGE
+NAME   PHASE     WORKERS   CONNECTED   AGE
 demo   Pending   2          0           2s
 demo   Running   2          2           15s
 demo   Succeeded 2          2           75s

@@ -61,6 +61,7 @@ stateDiagram-v2
     Pending --> Running: Master pod active
     Running --> Succeeded: Test completed (exit 0)
     Running --> Failed: Master failed or pods unhealthy
+    Running --> Failed: Pod health check failed (after grace period)
     Pending --> Failed: Pod health check failed
 ```
 
@@ -154,9 +155,19 @@ Detects pod-level failures (crashes, scheduling issues, image pull errors).
 kubectl get locusttest my-test -o jsonpath='{.status.conditions[?(@.type=="PodsHealthy")]}'
 ```
 
+#### TestCompleted
+
+Indicates whether the test has finished and the outcome.
+
+| Status | Reason | Meaning |
+|--------|--------|---------|
+| `True` | `TestSucceeded` | Test completed successfully (master exited with code 0) |
+| `True` | `TestFailed` | Test completed with failure |
+| `False` | `TestInProgress` | Test is still running |
+
 #### SpecDrifted
 
-Appears only when the CR spec is edited after creation (tests are immutable).
+Appears when the CR spec is edited after creation, once the test has moved past the Pending phase.
 
 | Status | Reason | Meaning |
 |--------|--------|---------|
@@ -174,14 +185,25 @@ kubectl describe locusttest my-test
 
 Look for the `PodsHealthy` condition in the Status section. The message field explains what failed.
 
+**Failure message format:**
+
+Messages follow the pattern: `{FailureType}: {N} pod(s) affected [{pod-names}]: {error-detail}`
+
 **Example failure messages:**
 
-- `Master pod image pull error: ErrImagePull`
-- `Worker pod configuration error: Secret "api-creds" not found`
-- `Worker pod scheduling error: 0/3 nodes available: insufficient cpu`
-- `Master pod crash loop: CrashLoopBackOff`
+- `ImagePullError: 1 pod(s) affected [my-test-master-abc12]: ErrImagePull`
+- `ConfigurationError: 3 pod(s) affected [my-test-worker-def34, my-test-worker-ghi56, my-test-worker-jkl78]: Secret "api-creds" not found`
+- `SchedulingError: 2 pod(s) affected [my-test-worker-mno90, my-test-worker-pqr12]: 0/3 nodes available: insufficient cpu`
+- `CrashLoopBackOff: 1 pod(s) affected [my-test-master-stu34]: CrashLoopBackOff`
 
 **View pod states directly:**
+
+The operator applies two label selectors to test pods:
+
+| Label | Selects | Example |
+|-------|---------|---------|
+| `performance-test-name=<cr-name>` | All pods (master + workers) | `kubectl get pods -l performance-test-name=my-test` |
+| `performance-test-pod-name=<cr-name>-<role>` | Specific role (master or worker) | `kubectl get pods -l performance-test-pod-name=my-test-worker` |
 
 ```bash
 kubectl get pods -l performance-test-name=my-test

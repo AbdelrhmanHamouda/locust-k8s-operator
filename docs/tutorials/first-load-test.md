@@ -119,7 +119,7 @@ kubectl get locusttest ecommerce-load -w
 You'll see output like:
 
 ```
-NAME             PHASE      EXPECTED   CONNECTED   AGE
+NAME             PHASE      WORKERS   CONNECTED   AGE
 ecommerce-load   Pending    5          0           2s
 ecommerce-load   Running    5          1           8s
 ecommerce-load   Running    5          3           12s

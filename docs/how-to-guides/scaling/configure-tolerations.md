@@ -16,6 +16,7 @@ Schedule Locust pods on tainted nodes using tolerations, enabling dedicated node
 
 - Locust Kubernetes Operator installed
 - Access to taint cluster nodes
+- **Toleration injection enabled** -- The operator must have the `ENABLE_TAINT_TOLERATIONS_CR_INJECTION` environment variable set to `"true"`. The Helm chart enables this by default via `locustPods.tolerationsInjection: true`.
 
 ## When to use tolerations
 
@@ -237,10 +238,10 @@ spec:
       - key: cloud.google.com/gke-preemptible  # GKE spot instances
         operator: Exists
         effect: NoSchedule
-      - key: eks.amazonaws.com/capacityType    # AWS spot instances
-        operator: Equal
-        value: SPOT
-        effect: NoSchedule
+      - key: eks.amazonaws.com/capacityType    # EKS does NOT add a spot taint by default
+        operator: Equal                       # (unlike GKE). You must configure a custom
+        value: SPOT                           # taint on your EKS managed/self-managed
+        effect: NoSchedule                    # node groups for this toleration to apply.
 ```
 
 ## NoExecute effect
