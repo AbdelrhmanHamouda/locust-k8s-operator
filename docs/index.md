@@ -58,10 +58,10 @@ hide:
       <img src="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/actions/workflows/ci.yaml/badge.svg?branch=master" alt="CI Pipeline" class="badge">
     </a>
     <a href="https://app.codacy.com/gh/AbdelrhmanHamouda/locust-k8s-operator/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade" target="_blank">
-      <img src="https://app.codacy.com/project/badge/Grade/70b76e69dbde4a9ebfd36ad5ccf6de78" alt="Code Quality" class="badge">
+      <img src="https://app.codacy.com/project/badge/Grade/70b76e69dbde4a9ebfd36ad5ccf6de78?branch=master" alt="Code Quality" class="badge">
     </a>
     <a href="https://app.codacy.com/gh/AbdelrhmanHamouda/locust-k8s-operator/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage" target="_blank">
-      <img src="https://app.codacy.com/project/badge/Coverage/70b76e69dbde4a9ebfd36ad5ccf6de78" alt="Code Coverage" class="badge">
+      <img src="https://app.codacy.com/project/badge/Coverage/70b76e69dbde4a9ebfd36ad5ccf6de78?branch=master" alt="Code Coverage" class="badge">
     </a>
     <a href="https://hub.docker.com/r/lotest/locust-k8s-operator" target="_blank">
       <img src="https://img.shields.io/docker/pulls/lotest/locust-k8s-operator?style=flat&logo=docker&logoColor=green&label=Image%20Pulls&color=green" alt="Docker Pulls" class="badge">
