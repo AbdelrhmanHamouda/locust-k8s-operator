@@ -163,8 +163,9 @@ The Go operator requires significantly fewer resources than the Java version:
 | `metrics.secure` | Use HTTPS for metrics endpoint. | `false` |
 | `webhook.enabled` | Enable conversion webhook (requires cert-manager). | `false` |
 
-### Webhook Configuration
+### Webhook Configuration (optional)
 
+The conversion webhook is meant for cases where both the old and new CRDs are present in the cluster. 
 Required when `webhook.enabled: true`:
 
 | Parameter | Description | Default |
