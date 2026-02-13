@@ -118,7 +118,7 @@ kind: LocustTest
 metadata:
   name: my-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-existing-configmap  # Reference your existing ConfigMap
   master:

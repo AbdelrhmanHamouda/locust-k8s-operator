@@ -1,3 +1,14 @@
+## 2.1.0 (2026-02-14)
+
+### Feat
+
+- **ci**: add Codacy coverage reporting to CI pipeline
+
+### Fix
+
+- add Artifact Hub metadata (#279)
+- **ci**: remove excessive SHA tag from Docker image releases (#278)
+
 ## 2.0.0 (2026-02-13)
 
 ### Feat

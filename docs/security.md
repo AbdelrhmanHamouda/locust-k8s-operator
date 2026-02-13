@@ -143,7 +143,7 @@ The operator provides three approaches for injecting secrets into Locust test po
 apiVersion: locust.io/v2
 kind: LocustTest
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   master:
     command: "--locustfile /lotest/src/test.py --host https://api.example.com"
   worker:
@@ -216,7 +216,7 @@ kind: LocustTest
 metadata:
   name: my-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   master:
     command: "--locustfile /lotest/src/test.py --host https://api.example.com"
   worker:
@@ -364,7 +364,7 @@ Scan Locust images for vulnerabilities before use:
 
 ```bash
 # Example with Trivy
-trivy image locustio/locust:2.20.0
+trivy image locustio/locust:2.43.3
 ```
 
 Build custom hardened images if the official image doesn't meet security requirements.
