@@ -44,7 +44,7 @@ jobs:
           ko build ./cmd \
             --platform=linux/amd64,linux/arm64 \
             --bare \
-            --tags=${{ github.ref_name }},latest,${{ github.sha }}
+            --tags=${{ github.ref_name }},latest
 
   helm-chart-release:
     name: 🌊 Publish Helm chart
