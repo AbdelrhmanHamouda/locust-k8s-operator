@@ -1,6 +1,40 @@
 apiVersion: v1
 entries:
   locust-k8s-operator:
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: changed
+          description: Rewritten for Go operator with clean-slate design
+        - kind: changed
+          description: Updated health probes to /healthz and /readyz on port 8081
+        - kind: changed
+          description: Reduced default memory from 1Gi to 128Mi (Go binary)
+        - kind: added
+          description: Leader election support for HA deployments
+        - kind: added
+          description: Optional webhook configuration with cert-manager
+        - kind: added
+          description: Optional OTel Collector deployment
+        - kind: deprecated
+          description: Micronaut/JVM configuration removed (no longer applicable)
+    apiVersion: v2
+    appVersion: 2.0.0
+    created: "2026-02-13T11:51:54.029066887Z"
+    description: Locust Kubernetes Operator - Go v2
+    digest: 67b36d7f10ec5b4d4a0b320771f45d7ce2ca27a829272d5edbfb090b640fc026
+    home: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
+    icon: https://raw.githubusercontent.com/AbdelrhmanHamouda/locust-k8s-operator/master/docs/assets/images/favicon.png
+    kubeVersion: '>= 1.25.0-0'
+    maintainers:
+    - name: AbdelrhmanHamouda
+      url: https://github.com/AbdelrhmanHamouda
+    name: locust-k8s-operator
+    sources:
+    - https://github.com/AbdelrhmanHamouda/locust-k8s-operator
+    type: application
+    urls:
+    - https://github.com/AbdelrhmanHamouda/locust-k8s-operator/releases/download/locust-k8s-operator-2.0.0/locust-k8s-operator-2.0.0.tgz
+    version: 2.0.0
   - apiVersion: v2
     appVersion: 1.1.1
     created: "2025-07-04T00:09:22.426294871Z"
@@ -171,4 +205,4 @@ entries:
     urls:
     - https://github.com/AbdelrhmanHamouda/locust-k8s-operator/releases/download/locust-k8s-operator-0.1.0/locust-k8s-operator-0.1.0.tgz
     version: 0.1.0
-generated: "2025-07-04T00:09:22.426428322Z"
+generated: "2026-02-13T11:51:54.029202612Z"
