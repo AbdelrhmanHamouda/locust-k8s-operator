@@ -115,6 +115,10 @@ jobs:
         run: |
           python -m mkdocs build
 
+      - name: 📝 Copy Artifact Hub metadata
+        run: |
+          cp artifacthub-repo.yml ./site/
+
       - name: 🚀 Deploy documentation
         uses: peaceiris/actions-gh-pages@v4
         with:
