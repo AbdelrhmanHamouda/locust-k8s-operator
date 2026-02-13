@@ -1,0 +1,35 @@
+🚀 {{ .Chart.Name }} deployed to namespace {{ .Release.Namespace }}.
+
+Get started:
+
+  # Verify the operator is running
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "locust-k8s-operator.name" . }}
+
+  # View operator logs
+  kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "locust-k8s-operator.name" . }} -f
+
+  # Create a LocustTest resource
+  kubectl apply -f your-locusttest.yaml
+
+  # Watch status
+  kubectl get locusttest -n {{ .Release.Namespace }} -w
+
+  # Access the Locust web UI (port 8089)
+  kubectl port-forward -n {{ .Release.Namespace }} job/<test-name>-master 8089:8089
+{{- if .Values.webhook.enabled }}
+
+Webhook: ENABLED (requires cert-manager)
+  kubectl get certificate {{ include "locust-k8s-operator.fullname" . }}-webhook-cert -n {{ .Release.Namespace }}
+{{- end }}
+{{- if .Values.otelCollector.enabled }}
+
+OTel Collector: ENABLED
+  Endpoint: {{ include "locust-k8s-operator.fullname" . }}-otel-collector.{{ .Release.Namespace }}.svc.cluster.local
+  gRPC: 4317 | HTTP: 4318
+{{- end }}
+{{- if .Values.metrics.enabled }}
+
+Metrics: port {{ .Values.metrics.port }} ({{ if .Values.metrics.secure }}HTTPS{{ else }}HTTP{{ end }})
+{{- end }}
+
+📖 Docs: {{ .Chart.Home | default "https://github.com/AbdelrhmanHamouda/locust-k8s-operator" }}

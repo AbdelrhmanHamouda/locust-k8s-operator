@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- locust_v2_locusttest.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

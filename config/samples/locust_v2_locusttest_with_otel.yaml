@@ -1,0 +1,38 @@
+# Example LocustTest with OpenTelemetry configuration
+# This sample demonstrates native Locust OTel integration
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: locusttest-with-otel
+  namespace: default
+spec:
+  image: "locustio/locust:2.32.0"
+  imagePullPolicy: IfNotPresent
+
+  master:
+    command: "--locustfile /lotest/src/locustfile.py --host https://example.com"
+
+  worker:
+    command: "--locustfile /lotest/src/locustfile.py --host https://example.com"
+    replicas: 3
+
+  testFiles:
+    configMapRef: locust-scripts
+
+  # OpenTelemetry configuration
+  # When enabled, this replaces the Prometheus metrics exporter sidecar
+  # with native Locust OTel integration
+  observability:
+    openTelemetry:
+      enabled: true
+      # OTel collector endpoint (required when enabled)
+      endpoint: "otel-collector.monitoring:4317"
+      # Protocol: "grpc" (default) or "http/protobuf"
+      protocol: grpc
+      # Skip TLS verification (useful for development)
+      insecure: true
+      # Additional OTel SDK configuration
+      extraEnvVars:
+        OTEL_RESOURCE_ATTRIBUTES: "service.name=locust-load-test,service.version=1.0.0"
+        OTEL_TRACES_SAMPLER: "parentbased_traceidratio"
+        OTEL_TRACES_SAMPLER_ARG: "0.1"

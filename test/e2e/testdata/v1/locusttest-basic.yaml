@@ -1,0 +1,10 @@
+apiVersion: locust.io/v1
+kind: LocustTest
+metadata:
+  name: e2e-test-v1
+spec:
+  masterCommandSeed: "-f /lotest/src/locustfile.py"
+  workerCommandSeed: "-f /lotest/src/locustfile.py"
+  workerReplicas: 1
+  image: locustio/locust:latest
+  configMap: e2e-test-configmap

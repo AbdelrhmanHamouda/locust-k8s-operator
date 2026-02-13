@@ -1,0 +1,41 @@
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: load-test-with-env
+  namespace: default
+spec:
+  image: locustio/locust:2.20.0
+  imagePullPolicy: IfNotPresent
+  
+  master:
+    command: "--locustfile /lotest/src/locustfile.py"
+
+  worker:
+    command: "--locustfile /lotest/src/locustfile.py"
+    replicas: 2
+  
+  testFiles:
+    configMapRef: locust-scripts
+  
+  env:
+    # Inject all keys from a ConfigMap as env vars with prefix
+    configMapRefs:
+      - name: app-config
+        prefix: "APP_"
+    # Inject all keys from a Secret as env vars
+    secretRefs:
+      - name: api-credentials
+    # Individual environment variables
+    variables:
+      - name: TARGET_HOST
+        value: "https://api.example.com"
+      - name: LOG_LEVEL
+        valueFrom:
+          configMapKeyRef:
+            name: app-config
+            key: log-level
+    # Mount secrets as files
+    secretMounts:
+      - name: tls-certs
+        mountPath: /etc/locust/certs
+        readOnly: true

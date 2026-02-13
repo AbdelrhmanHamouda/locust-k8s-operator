@@ -1,0 +1,61 @@
+name: 🚀 Go E2E Tests
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'cmd/**'
+      - 'api/**'
+      - 'internal/**'
+      - 'test/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Makefile'
+  pull_request:
+    paths:
+      - 'cmd/**'
+      - 'api/**'
+      - 'internal/**'
+      - 'test/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Makefile'
+
+permissions: read-all
+
+jobs:
+  test-e2e:
+    name: 🎯 Run E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: 📥 Clone the code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: ☸️ Create Kind cluster
+        uses: helm/kind-action@v1.12.0
+        with:
+          cluster_name: locust-k8s-operator-test-e2e
+          wait: 120s
+
+      - name: 🔍 Verify go mod tidy
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+
+      - name: 🎯 Run E2E tests
+        run: make test-e2e
+
+      - name: 📦 Upload E2E test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-artifacts
+          path: |
+            cover.out
+          retention-days: 7

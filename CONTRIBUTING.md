@@ -30,102 +30,106 @@ Please note that we have a code of conduct and thus you are kindly asked to foll
 <summary>Setup: once per project</summary>
 
 1. Clone this repository.
-2. Install  [pre-commit](https://pre-commit.com/) and run the below commands to add and register needed git hooks
-    1. Run `pre-commit install --install-hooks`
-    2. Run `pre-commit install --hook-type commit-msg`
+2. Install prerequisites:
+    - [Go 1.24+](https://go.dev/dl/)
+    - [Docker](https://docs.docker.com/get-docker/)
+    - [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) (Kubernetes in Docker)
+    - [Helm 3](https://helm.sh/docs/intro/install/)
+3. Install development tools:
+    ```bash
+    make controller-gen envtest kustomize
+    ```
+4. Install [pre-commit](https://pre-commit.com/) and run:
+    1. `pre-commit install --install-hooks`
+    2. `pre-commit install --hook-type commit-msg`
 
 </details>
 
 <details>
-<summary>Developing</summary>
+<summary>Common development commands</summary>
 
 - This project follows the [Conventional Commits](https://www.conventionalcommits.org/) standard to
   automate [Semantic Versioning](https://semver.org/) and [Keep A Changelog](https://keepachangelog.com/)
   with [Commitizen](https://github.com/commitizen-tools/commitizen).
 
+```bash
+# Build the operator binary
+make build
+
+# Run all tests (unit + integration via envtest)
+make test
+
+# Run linter
+make lint
+
+# Generate CRDs, RBAC, and webhook manifests
+make manifests
+
+# Run all CI checks locally
+make ci
+```
+
 </details>
 
-### Local Testing with Minikube and Helm
+### Local Testing with Kind
 
-For local development and testing, you can use Minikube to create a local Kubernetes cluster. This allows you to test the operator and your changes in an environment that closely resembles a production setup.
+For local development and testing, [Kind](https://kind.sigs.k8s.io/) (Kubernetes in Docker) is the recommended approach.
 
 #### Prerequisites
 
-- [Minikube](https://minikube.sigs.k8s.io/docs/start/)
-- [Helm](https://helm.sh/docs/intro/install/)
+- [Go 1.24+](https://go.dev/dl/)
+- [Docker](https://docs.docker.com/get-docker/)
+- [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
+- [Helm 3](https://helm.sh/docs/intro/install/)
 
 #### Steps
 
-1.  **Start Minikube**
-
-    Start a local Kubernetes cluster using Minikube:
+1.  **Create a Kind Cluster**
 
     ```bash
-    minikube start
+    kind create cluster --name locust-dev
     ```
 
 2.  **Build and Load the Docker Image**
 
-    If you've made changes to the operator's source code, you'll need to build a new Docker image and load it into your Minikube cluster. This project uses the Jib Gradle plugin to build images directly, so you don't need a `Dockerfile`.
-
-    First, build the image to your local Docker daemon:
-    ```bash
-    ./gradlew jibDockerBuild
-    ```
-
-    Next, load the image into Minikube's internal registry:
-    ```bash
-    minikube image load locust-k8s-operator:latest
-    ```
-
-3.  **Package the Helm Chart**
-
-    Package the Helm chart to create a distributable `.tgz` file.
+    Build a Docker image and load it into Kind:
 
     ```bash
-    helm package ./charts/locust-k8s-operator
+    # Build the Docker image
+    make docker-build IMG=locust-k8s-operator:dev
+
+    # Load the image into Kind
+    kind load docker-image locust-k8s-operator:dev --name locust-dev
     ```
 
-4.  **Install the Operator with Helm**
-
-    Install the Helm chart on your Minikube cluster. The command below overrides the default image settings to use the one you just built and loaded.
-
-    You can use a `values.yaml` file to override other settings.
-
-    ```yaml
-    # values.yaml (optional)
-    # Example: Set resource requests and limits for the operator pod
-    config:
-      loadGenerationPods:
-        resource:
-          cpuRequest: 250m
-          memRequest: 128Mi
-          ephemeralRequest: 300M
-          cpuLimit: 1000m
-          memLimit: 1024Mi
-          ephemeralLimit: 50M
-    
-    # To leave a resource unbound, Leave the limit empty
-    # This is useful when you don't want to set a specific limit.
-    # example:
-    # config:
-    #   loadGenerationPods:
-    #     resource:
-    #       cpuLimit: ""
-    #       memLimit: ""
-    #       ephemeralLimit: ""
-    ```
-
-    Install the chart using the following command. The `-f values.yaml` flag is optional.
+3.  **Install the Operator with Helm**
 
     ```bash
-    helm install locust-operator locust-k8s-operator-*.tgz -f values.yaml \
+    # Package the Helm chart
+    helm package charts/locust-k8s-operator
+
+    # Install with local image
+    helm install locust-operator locust-k8s-operator-*.tgz \
       --set image.repository=locust-k8s-operator \
-      --set image.tag=latest \
+      --set image.tag=dev \
       --set image.pullPolicy=IfNotPresent
     ```
 
-    This will deploy the operator to your Minikube cluster using the settings defined in your `values.yaml` file.
+4.  **Verify the Deployment**
+
+    ```bash
+    kubectl get pods -A | grep locust
+    ```
+
+5.  **Cleanup**
+
+    ```bash
+    # Uninstall the operator
+    helm uninstall locust-operator
+
+    # Delete the Kind cluster
+    kind delete cluster --name locust-dev
+    ```
 
 ### Writing documentation
 

@@ -1,0 +1,297 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AbdelrhmanHamouda/locust-k8s-operator/charts/locust-k8s-operator/values.schema.json",
+  "title": "Locust K8s Operator Helm Values",
+  "description": "Schema for validating Helm values for the Locust K8s Operator chart",
+  "type": "object",
+  "properties": {
+    "image": {
+      "type": "object",
+      "required": ["repository"],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "description": "Docker image repository"
+        },
+        "tag": {
+          "type": "string",
+          "description": "Image tag (defaults to appVersion if empty)"
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"],
+          "description": "Image pull policy"
+        },
+        "pullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Image pull secrets"
+        }
+      }
+    },
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of operator replicas"
+    },
+    "nameOverride": {
+      "type": "string",
+      "description": "Override the chart name"
+    },
+    "fullnameOverride": {
+      "type": "string",
+      "description": "Override the full release name"
+    },
+    "extraEnv": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Additional environment variables for operator"
+    },
+    "terminationGracePeriodSeconds": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Termination grace period in seconds"
+    },
+    "resources": {
+      "type": "object",
+      "properties": {
+        "limits": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "pattern": "^[0-9]+(m|[.][0-9]+)?$"
+            },
+            "memory": {
+              "type": "string",
+              "pattern": "^[0-9]+(Mi|Gi|Ki|M|G|K)?$"
+            }
+          }
+        },
+        "requests": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "pattern": "^[0-9]+(m|[.][0-9]+)?$"
+            },
+            "memory": {
+              "type": "string",
+              "pattern": "^[0-9]+(Mi|Gi|Ki|M|G|K)?$"
+            }
+          }
+        }
+      },
+      "description": "Resource requests and limits for operator pod"
+    },
+    "leaderElection": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable leader election for HA"
+        }
+      }
+    },
+    "podDisruptionBudget": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable PodDisruptionBudget"
+        },
+        "maxUnavailable": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable Prometheus metrics endpoint"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "secure": {
+          "type": "boolean",
+          "description": "Use HTTPS for metrics endpoint"
+        }
+      }
+    },
+    "webhook": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable admission webhook"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "certManager": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Use cert-manager for TLS certificates"
+            }
+          }
+        }
+      }
+    },
+    "locustPods": {
+      "type": "object",
+      "properties": {
+        "resources": {
+          "type": "object",
+          "description": "Default resources for Locust test pods"
+        },
+        "masterResources": {
+          "type": "object",
+          "description": "Role-specific resources for master pods"
+        },
+        "workerResources": {
+          "type": "object",
+          "description": "Role-specific resources for worker pods"
+        },
+        "affinityInjection": {
+          "type": "boolean",
+          "description": "Enable affinity injection from CR"
+        },
+        "tolerationsInjection": {
+          "type": "boolean",
+          "description": "Enable tolerations injection from CR"
+        },
+        "ttlSecondsAfterFinished": {
+          "oneOf": [
+            {"type": "string"},
+            {"type": "integer"}
+          ],
+          "description": "TTL for completed Jobs"
+        },
+        "metricsExporter": {
+          "type": "object",
+          "properties": {
+            "image": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "pullPolicy": {
+              "type": "string",
+              "enum": ["Always", "IfNotPresent", "Never"]
+            }
+          }
+        }
+      }
+    },
+    "otelCollector": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Deploy OTel Collector"
+        },
+        "image": {
+          "type": "string",
+          "description": "OTel Collector image"
+        },
+        "replicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "resources": {
+          "type": "object",
+          "description": "Resources for OTel Collector"
+        },
+        "config": {
+          "type": "string",
+          "description": "OTel Collector YAML configuration"
+        }
+      }
+    },
+    "kafka": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable Kafka configuration"
+        },
+        "bootstrapServers": {
+          "type": "string",
+          "description": "Kafka bootstrap servers"
+        },
+        "security": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "protocol": {
+              "type": "string"
+            },
+            "saslMechanism": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "description": "Create service account"
+        },
+        "name": {
+          "type": "string",
+          "description": "Service account name"
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Service account annotations"
+        }
+      }
+    },
+    "podSecurityContext": {
+      "type": "object",
+      "description": "Pod-level security context"
+    },
+    "containerSecurityContext": {
+      "type": "object",
+      "description": "Container-level security context"
+    },
+    "podAnnotations": {
+      "type": "object",
+      "description": "Annotations for operator pods"
+    },
+    "nodeSelector": {
+      "type": "object",
+      "description": "Node selector for operator pods"
+    },
+    "tolerations": {
+      "type": "array",
+      "description": "Tolerations for operator pods"
+    },
+    "affinity": {
+      "type": "object",
+      "description": "Affinity rules for operator pods"
+    }
+  }
+}

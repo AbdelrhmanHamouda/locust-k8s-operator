@@ -1,0 +1,19 @@
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: e2e-test-env
+spec:
+  master:
+    command: "-f /lotest/src/locustfile.py"
+  worker:
+    replicas: 1
+    command: "-f /lotest/src/locustfile.py"
+  image: locustio/locust:latest
+  testFiles:
+    configMapRef: e2e-test-configmap
+  env:
+    configMapRefs:
+      - name: e2e-env-configmap
+    variables:
+      - name: E2E_TEST_VAR
+        value: "test-value"

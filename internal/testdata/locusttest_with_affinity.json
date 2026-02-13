@@ -1,0 +1,23 @@
+{
+  "apiVersion": "locust.io/v1",
+  "kind": "LocustTest",
+  "metadata": {
+    "name": "affinity-test",
+    "namespace": "default"
+  },
+  "spec": {
+    "masterCommandSeed": "locust -f /lotest/src/test.py",
+    "workerCommandSeed": "locust -f /lotest/src/test.py",
+    "workerReplicas": 5,
+    "image": "locustio/locust:latest",
+    "configMap": "locust-scripts",
+    "affinity": {
+      "nodeAffinity": {
+        "requiredDuringSchedulingIgnoredDuringExecution": {
+          "node-type": "performance",
+          "zone": "us-west-2a"
+        }
+      }
+    }
+  }
+}

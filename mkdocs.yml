@@ -3,23 +3,35 @@
 # Project information
 site_name: Locust Kubernetes Operator
 site_author: Abdelrhman Hamouda
-site_description: Locust kubernetes operator documentation.
+site_description: Production-ready Kubernetes operator for Locust distributed load testing. Automate performance testing with cloud-native CI/CD integration, OpenTelemetry observability, and horizontal scaling.
 
 # Repository
 repo_name: locust-k8s-operator
 repo_url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
 
+# Site URL (required for instant navigation)
+site_url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/
+
 # Copyright
 copyright: >
-  Copyright &copy; 2025 Abdelrhman Hamouda –
+  Copyright &copy; 2026 Abdelrhman Hamouda –
   <a href="#__consent">Change cookie settings</a>
 
 # Plugins
+# Note: mkdocs-minify-plugin is a pip dependency (see CI workflows)
 plugins:
   - search
   - git-revision-date-localized
   - privacy
   - tags
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+      htmlmin_opts:
+        remove_comments: true
+        remove_empty_space: true
+      cache_safe: true
 
 # Configuration
 theme:
@@ -43,6 +55,11 @@ theme:
     - search.suggest
 
     # Navigation
+    - navigation.tabs
+    - navigation.instant          # SPA-like behavior (no full page reloads)
+    - navigation.instant.prefetch # Predictive loading on hover
+    - navigation.instant.progress # Progress bar for slow connections
+    - navigation.path
     - navigation.tracking
     - navigation.top
     - navigation.footer
@@ -89,13 +106,10 @@ extra_css:
 extra_javascript:
   - assets/javascripts/scroll-effects.js
   - assets/javascripts/custom-announcements.js
+  - assets/javascripts/schema-org.js
 
 # Customization
 extra:
-  # Version dropdown configuration
-  version:
-    provider: mike
-    default: latest
 
   # Tag configuration (optional - for tag icons)
   tags:
@@ -163,13 +177,20 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-  - pymdownx.highlight
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
   - pymdownx.critic
   - pymdownx.inlinehilite
   - pymdownx.keys
   - pymdownx.mark
   - pymdownx.smartsymbols
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.tasklist:
@@ -178,15 +199,45 @@ markdown_extensions:
 
 # Page tree
 nav:
-  - Introduction: index.md
-  - How does it work: how_does_it_work.md
-  - Features: features.md
-  - Getting Started: getting_started.md
-  - Deploy Operator with HELM: helm_deploy.md
-  - Advanced topics: advanced_topics.md
-  - Metrics & Dashboards: metrics_and_dashboards.md
-  - Roadmap: roadmap.md
-  - Contributing & Development:
+  - Home: index.md
+  - Getting Started:
+      - Quick Start: getting_started/index.md
+      - Install the Operator: helm_deploy.md
+  - Tutorials:
+      - Overview: tutorials/index.md
+      - "Your First Load Test (10 min)": tutorials/first-load-test.md
+      - "CI/CD Integration (15 min)": tutorials/ci-cd-integration.md
+      - "Production Deployment (20 min)": tutorials/production-deployment.md
+  - How-To Guides:
+      - Overview: how-to-guides/index.md
+      - Configuration:
+          - Configure resource limits: how-to-guides/configuration/configure-resources.md
+          - Use a private registry: how-to-guides/configuration/use-private-registry.md
+          - Mount volumes: how-to-guides/configuration/mount-volumes.md
+          - Configure Kafka integration: how-to-guides/configuration/configure-kafka.md
+          - Configure automatic cleanup: how-to-guides/configuration/configure-ttl.md
+      - Observability:
+          - Configure OpenTelemetry: how-to-guides/observability/configure-opentelemetry.md
+          - Monitor test status: how-to-guides/observability/monitor-test-status.md
+      - Scaling:
+          - Scale worker replicas: how-to-guides/scaling/scale-workers.md
+          - Use node affinity: how-to-guides/scaling/use-node-affinity.md
+          - Configure tolerations: how-to-guides/scaling/configure-tolerations.md
+          - Use node selector: how-to-guides/scaling/use-node-selector.md
+      - Security:
+          - Inject secrets: how-to-guides/security/inject-secrets.md
+          - Configure pod security: how-to-guides/security/configure-pod-security.md
+  - Reference:
+      - API Reference: api_reference.md
+      - Metrics & Dashboards: metrics_and_dashboards.md
+      - FAQ: faq.md
+  - Explanation:
+      - How It Works: how_does_it_work.md
+      - Features Overview: features.md
+      - Compare Alternatives: comparison.md
+      - Security Model: security.md
+      - Migration from v1: migration.md
+  - Contributing:
       - Overview: contribute.md
       - Integration Testing: integration-testing.md
       - Local Development: local-development.md

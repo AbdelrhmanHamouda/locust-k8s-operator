@@ -22,13 +22,3 @@ repos:
     hooks:
       - id: commitizen
         stages: [commit-msg]
-
-  - repo: https://github.com/jguttman94/pre-commit-gradle
-    rev: v0.3.0
-    hooks:
-      - id: gradle-check
-        args: [ --wrapper, --output ]
-        exclude: .*\.md # Markdown
-      - id: gradle-spotless
-        args: [ --wrapper, --output ]
-        exclude: .*\.md # Markdown

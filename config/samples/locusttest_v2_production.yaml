@@ -1,0 +1,150 @@
+# ==============================================================================
+# PRODUCTION-READY LOCUSTTEST EXAMPLE
+# ==============================================================================
+# This example demonstrates best practices for running Locust load tests in
+# production environments, including resource management, high availability,
+# and automatic cleanup.
+#
+# Copy and adapt this as a starting point for your production workloads.
+# ==============================================================================
+
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: production-load-test
+  namespace: default
+  labels:
+    app.kubernetes.io/name: locust-load-test
+    app.kubernetes.io/part-of: performance-testing
+    environment: production
+  annotations:
+    description: "Production-ready load test with resource limits and anti-affinity"
+
+spec:
+  # ==============================================================================
+  # IMAGE CONFIGURATION
+  # ==============================================================================
+  # Use a specific version tag (not :latest) for reproducibility
+  image: locustio/locust:2.43.1
+  imagePullPolicy: IfNotPresent
+
+  # ==============================================================================
+  # MASTER CONFIGURATION
+  # ==============================================================================
+  # The master node orchestrates the test and aggregates results from workers
+  master:
+    command: "--locustfile /lotest/src/locustfile.py"
+
+    # Autostart: Begin test immediately when all workers connect
+    # Production tests often use autostart=true for CI/CD pipelines
+    autostart: true
+
+    # Autoquit: Automatically terminate after test completion
+    # Prevents resource waste and enables clean CI/CD integration
+    # The 60s timeout allows time to collect final metrics before shutdown
+    autoquit:
+      enabled: true
+      timeout: 60
+
+    # Resource limits: Critical for production stability
+    # Master handles aggregation and UI, needs moderate resources
+    # Requests: Guaranteed allocation (scheduler requirement)
+    # Limits: Maximum allowed (prevents runaway resource consumption)
+    resources:
+      requests:
+        cpu: "500m"      # 0.5 CPU cores guaranteed
+        memory: "512Mi"  # 512 MiB guaranteed
+      limits:
+        cpu: "1000m"     # Max 1 CPU core
+        memory: "1Gi"    # Max 1 GiB
+
+    labels:
+      role: master
+      component: load-test-orchestrator
+
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8089"
+
+  # ==============================================================================
+  # WORKER CONFIGURATION
+  # ==============================================================================
+  # Workers generate the actual load against your target system
+  worker:
+    command: "--locustfile /lotest/src/locustfile.py"
+
+    # Replicas: Scale based on target load
+    # 10 workers can typically generate 5,000-10,000 RPS depending on test complexity
+    # Increase for higher load requirements
+    replicas: 10
+
+    # Resource limits: Size based on test complexity
+    # Workers need CPU for request generation and memory for client connections
+    # These values are suitable for typical HTTP load tests
+    resources:
+      requests:
+        cpu: "250m"      # 0.25 CPU cores per worker
+        memory: "256Mi"  # 256 MiB per worker
+      limits:
+        cpu: "500m"      # Max 0.5 CPU per worker
+        memory: "512Mi"  # Max 512 MiB per worker
+
+    labels:
+      role: worker
+      component: load-generator
+
+    annotations:
+      # Workers don't expose metrics individually (master aggregates)
+      prometheus.io/scrape: "false"
+
+  # ==============================================================================
+  # TEST FILES
+  # ==============================================================================
+  # Mount your locustfile and any dependencies from a ConfigMap
+  # Create the ConfigMap separately: kubectl create configmap my-locust-tests --from-file=locustfile.py
+  testFiles:
+    configMapRef: my-locust-tests
+
+  # ==============================================================================
+  # SCHEDULING CONFIGURATION
+  # ==============================================================================
+  # High availability: Spread workers across nodes to survive node failures
+  scheduling:
+    # Anti-affinity: Prefer to schedule workers on different nodes
+    # This improves load distribution and resilience
+    # Uses preferredDuringSchedulingIgnoredDuringExecution (soft constraint)
+    # to avoid blocking deployment if insufficient nodes exist
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              # Match workers from this same LocustTest
+              labelSelector:
+                matchLabels:
+                  performance-test-name: production-load-test
+                  role: worker
+              # Spread across nodes (not zones, as single-zone testing is common)
+              topologyKey: kubernetes.io/hostname
+
+    # Optional: Target specific node pools for load generation
+    # Uncomment and adjust based on your cluster setup
+    # nodeSelector:
+    #   workload-type: load-testing
+
+    # Optional: Tolerate taints on dedicated load-testing nodes
+    # tolerations:
+    #   - key: "workload-type"
+    #     operator: "Equal"
+    #     value: "load-testing"
+    #     effect: "NoSchedule"
+
+  # ==============================================================================
+  # NOTES ON WHAT'S NOT INCLUDED
+  # ==============================================================================
+  # This example intentionally omits:
+  # - secretMounts: Keep secrets out of example files (security sensitive)
+  # - observability.openTelemetry: Optional advanced feature, adds complexity
+  #
+  # Add these sections to your actual CRs based on your needs.
+  # See the API reference docs for full configuration options.

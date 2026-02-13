@@ -1,0 +1,69 @@
+{
+  "apiVersion": "locust.io/v2",
+  "kind": "LocustTest",
+  "metadata": {
+    "name": "full-featured-test-v2",
+    "namespace": "load-testing"
+  },
+  "spec": {
+    "image": "locustio/locust:2.32.0",
+    "imagePullPolicy": "IfNotPresent",
+    "imagePullSecrets": [
+      {
+        "name": "registry-secret"
+      }
+    ],
+    "master": {
+      "command": "locust -f /lotest/src/test.py --host https://api.example.com",
+      "labels": {
+        "team": "platform",
+        "environment": "staging"
+      },
+      "annotations": {
+        "description": "Load test master"
+      }
+    },
+    "worker": {
+      "command": "locust -f /lotest/src/test.py",
+      "replicas": 10,
+      "labels": {
+        "team": "platform"
+      },
+      "annotations": {
+        "description": "Load test worker"
+      }
+    },
+    "testFiles": {
+      "configMapRef": "locust-scripts",
+      "libConfigMapRef": "locust-lib"
+    },
+    "env": {
+      "secretMounts": [
+        {
+          "name": "api-credentials",
+          "mountPath": "/etc/locust/secrets"
+        }
+      ]
+    },
+    "observability": {
+      "openTelemetry": {
+        "enabled": true,
+        "endpoint": "otel-collector.monitoring.svc.cluster.local:4317",
+        "protocol": "grpc"
+      }
+    },
+    "scheduling": {
+      "nodeSelector": {
+        "workload-type": "performance-testing"
+      },
+      "tolerations": [
+        {
+          "key": "performance-testing",
+          "operator": "Equal",
+          "value": "true",
+          "effect": "NoSchedule"
+        }
+      ]
+    }
+  }
+}
