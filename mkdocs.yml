@@ -227,6 +227,8 @@ nav:
       - Security:
           - Inject secrets: how-to-guides/security/inject-secrets.md
           - Configure pod security: how-to-guides/security/configure-pod-security.md
+      - Testing & Validation:
+          - Validate with Kind: how-to-guides/validate-with-kind.md
   - Reference:
       - API Reference: api_reference.md
       - Metrics & Dashboards: metrics_and_dashboards.md

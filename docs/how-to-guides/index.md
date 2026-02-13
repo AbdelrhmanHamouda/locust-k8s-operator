@@ -45,3 +45,9 @@ Secure your tests and manage credentials:
 - **[Inject secrets into test pods](security/inject-secrets.md)** — Use Kubernetes secrets for API keys, tokens, and credentials
 - **[Configure pod security settings](security/configure-pod-security.md)** — Set security contexts, RBAC, and network policies for test pods
 - **[Secure container registry access](configuration/use-private-registry.md)** — Authenticate with private container registries
+
+## Testing & Validation
+
+Validate operator deployments and test changes:
+
+- **[Validate with Kind cluster](validate-with-kind.md)** — Complete guide to testing the operator on a local Kind cluster
