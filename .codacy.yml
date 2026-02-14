@@ -1,4 +1,18 @@
+---
 exclude_paths:
   - "**/zz_generated.deepcopy.go"
   - "test/utils/**"
   - "**/*.md"
+  - "**.md"
+  - "*.md"
+  - "docs/**"
+  - "README.md"
+  - "SECURITY.md"
+  - "CONTRIBUTING.md"
+  - "LICENSE"
+
+engines:
+  markdownlint:
+    enabled: false
+  remark-lint:
+    enabled: false

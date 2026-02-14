@@ -11,7 +11,9 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
 
 # Sets default read-only permissions for the workflow.
-permissions: read-all
+permissions:
+  contents: read
+  security-events: write # Required for uploading SARIF to GitHub Security tab
 
 jobs:
   # ============================================
@@ -39,7 +41,7 @@ jobs:
       - name: 🔍 Run linter
         uses: golangci/golangci-lint-action@v8
         with:
-          version: v2.1.0
+          version: latest # Use latest to support Go 1.25
 
       - name: 🛠️ Build
         run: make build
@@ -194,4 +196,58 @@ jobs:
           name: docs-build-artifacts
           path: |
             site/
+          retention-days: 7
+
+  # ============================================
+  # Security Scanning with Trivy
+  # ============================================
+  security-scan:
+    name: 🔒 Security scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: 📂 Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+
+      - name: 🔧 Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: 🛠️ Install ko
+        uses: ko-build/setup-ko@v0.7
+
+      - name: 🐳 Build operator image with ko
+        env:
+          KO_DOCKER_REPO: lotest/locust-k8s-operator
+        run: |
+          CHART_VERSION=$(grep '^appVersion:' charts/locust-k8s-operator/Chart.yaml | awk '{print $2}' | tr -d '"')
+          ko build ./cmd --local --bare --tags=${CHART_VERSION}
+          echo "IMAGE_TAG=${CHART_VERSION}" >> $GITHUB_ENV
+
+      - name: 🔍 Run Trivy security scan
+        uses: aquasecurity/trivy-action@0.29.0
+        with:
+          image-ref: lotest/locust-k8s-operator:${{ env.IMAGE_TAG }}
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: 1 # Fail the build if vulnerabilities are found
+
+      - name: 📊 Upload Trivy results to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-container-scan
+
+      - name: 📦 Upload Trivy scan artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-scan-results
+          path: trivy-results.sarif
           retention-days: 7

@@ -41,6 +41,9 @@ Thumbs.db
 .docs-venv
 .cache
 
+# Trivy security scanner
+.trivycache/
+
 # Agentic flows
 specs/
 .windsurf/

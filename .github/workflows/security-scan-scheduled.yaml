@@ -1,0 +1,131 @@
+# Daily security scan of published Docker images
+name: 🔒 Daily Security Scan
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: read
+  security-events: write
+  issues: write # Required for creating issues on vulnerabilities
+
+jobs:
+  scan-published-image:
+    name: 🔍 Scan published image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: 📂 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔍 Run Trivy scan on latest image
+        uses: aquasecurity/trivy-action@0.29.0
+        id: trivy-scan
+        with:
+          image-ref: lotest/locust-k8s-operator:latest
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: 0 # Don't fail, we'll create an issue instead
+
+      - name: 📊 Upload Trivy results to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-daily-scan
+
+      - name: 🔍 Check for vulnerabilities
+        id: check-vulns
+        run: |
+          # Check if SARIF file contains vulnerabilities
+          if grep -q '"level": "error"' trivy-results.sarif || grep -q '"level": "warning"' trivy-results.sarif; then
+            echo "vulnerabilities_found=true" >> $GITHUB_OUTPUT
+          else
+            echo "vulnerabilities_found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🚨 Create issue for vulnerabilities
+        if: steps.check-vulns.outputs.vulnerabilities_found == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const sarif = JSON.parse(fs.readFileSync('trivy-results.sarif', 'utf8'));
+
+            let vulnerabilities = [];
+            for (const run of sarif.runs) {
+              for (const result of run.results || []) {
+                const severity = result.level === 'error' ? 'CRITICAL/HIGH' : 'MEDIUM';
+                const ruleId = result.ruleId || 'Unknown';
+                const message = result.message?.text || 'No description';
+                vulnerabilities.push(`- **${ruleId}** (${severity}): ${message}`);
+              }
+            }
+
+            if (vulnerabilities.length === 0) {
+              console.log('No vulnerabilities found in SARIF');
+              return;
+            }
+
+            const issueTitle = `🚨 Security vulnerabilities found in latest Docker image`;
+            const issueBody = `## Security Scan Alert
+
+            Daily security scan detected vulnerabilities in \`lotest/locust-k8s-operator:latest\`.
+
+            ### Vulnerabilities Found:
+            ${vulnerabilities.slice(0, 20).join('\n')}
+            ${vulnerabilities.length > 20 ? `\n\n... and ${vulnerabilities.length - 20} more` : ''}
+
+            ### Next Steps:
+            1. Review the full scan results in the [Security tab](${context.payload.repository.html_url}/security/code-scanning)
+            2. Update dependencies or Go version as needed
+            3. Rebuild and push a new image
+
+            **Scan Date:** ${new Date().toISOString().split('T')[0]}
+            **Image:** lotest/locust-k8s-operator:latest
+            `;
+
+            // Check if an open issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'security,automated'
+            });
+
+            const existingIssue = issues.data.find(issue =>
+              issue.title.includes('Security vulnerabilities found')
+            );
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## New Scan Results\n\n${issueBody}`
+              });
+              console.log(`Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['security', 'automated']
+              });
+              console.log('Created new security issue');
+            }
+
+      - name: 📦 Upload scan results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-daily-scan-${{ github.run_number }}
+          path: trivy-results.sarif
+          retention-days: 30

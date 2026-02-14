@@ -1,0 +1,35 @@
+# Trivy security scanner configuration
+# Documentation: https://aquasecurity.github.io/trivy/latest/docs/configuration/
+
+# Severity levels to report
+severity:
+  - CRITICAL
+  - HIGH
+
+# Vulnerability types to scan
+vuln-type:
+  - os
+  - library
+
+# Output format (can be overridden in CLI)
+format: table
+
+# Exit with error if vulnerabilities are found
+exit-code: 1
+
+# Timeout for scanning
+timeout: 5m0s
+
+# Skip files and directories
+skip-dirs:
+  - .git
+  - .github
+  - docs
+  - test
+  - bin
+
+# Ignore unfixed vulnerabilities (set to false to see all)
+ignore-unfixed: false
+
+# Cache directory
+cache-dir: .trivycache/
