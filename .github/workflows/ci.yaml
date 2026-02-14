@@ -41,7 +41,7 @@ jobs:
       - name: 🔍 Run linter
         uses: golangci/golangci-lint-action@v8
         with:
-          version: v2.1.0
+          version: latest # Use latest to support Go 1.25
 
       - name: 🛠️ Build
         run: make build
