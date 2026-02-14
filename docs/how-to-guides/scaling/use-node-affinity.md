@@ -73,7 +73,7 @@ kind: LocustTest
 metadata:
   name: affinity-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -109,7 +109,7 @@ kind: LocustTest
 metadata:
   name: multi-label-affinity
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -149,7 +149,7 @@ kind: LocustTest
 metadata:
   name: aws-instance-affinity
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -180,7 +180,7 @@ kind: LocustTest
 metadata:
   name: zone-affinity-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -287,7 +287,7 @@ kind: LocustTest
 metadata:
   name: affinity-toleration-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:

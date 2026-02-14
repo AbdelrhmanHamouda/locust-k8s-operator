@@ -88,7 +88,7 @@ kind: LocustTest
 metadata:
   name: kafka-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: kafka-test-script
   master:

@@ -89,7 +89,7 @@ kind: LocustTest
 metadata:
   name: ecommerce-load
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: ecommerce-test
   master:

@@ -1,7 +1,18 @@
 apiVersion: v2
 name: locust-k8s-operator
-description: Locust Kubernetes Operator - Go v2
+description: Production-ready Kubernetes operator for distributed Locust load testing with native OpenTelemetry, HA support, and automatic v1→v2 migration
 icon: https://raw.githubusercontent.com/AbdelrhmanHamouda/locust-k8s-operator/master/docs/assets/images/favicon.png
+
+# Keywords for Artifact Hub search discoverability
+keywords:
+  - locust
+  - load-testing
+  - performance-testing
+  - kubernetes-operator
+  - distributed-testing
+  - opentelemetry
+  - observability
+  - stress-testing
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -16,23 +27,40 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 2.0.0
+version: 2.1.0
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "2.0.0"
+appVersion: "2.1.0"
 
 kubeVersion: ">= 1.25.0-0"
 home: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
 sources:
   - https://github.com/AbdelrhmanHamouda/locust-k8s-operator
 maintainers:
-  - name: AbdelrhmanHamouda
+  - name: Abdelrhman Hamouda
     url: https://github.com/AbdelrhmanHamouda
 
 annotations:
+  # Artifact Hub specific metadata
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/operator: "true"
+  artifacthub.io/operatorCapabilities: Basic Install
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/links: |
+    - name: Documentation
+      url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/
+    - name: Getting Started
+      url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/getting_started/
+    - name: Migration Guide (v1→v2)
+      url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/
+    - name: GitHub Discussions
+      url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/discussions
+    - name: GitHub Issues
+      url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues
   artifacthub.io/changes: |
     - kind: changed
       description: Rewritten for Go operator with clean-slate design

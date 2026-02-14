@@ -29,7 +29,7 @@ kind: LocustTest
 metadata:
   name: pvc-volume-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -82,7 +82,7 @@ kind: LocustTest
 metadata:
   name: configmap-volume-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -128,7 +128,7 @@ kind: LocustTest
 metadata:
   name: secret-volume-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -177,7 +177,7 @@ kind: LocustTest
 metadata:
   name: emptydir-volume-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -285,7 +285,7 @@ kind: LocustTest
 metadata:
   name: multi-volume-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:

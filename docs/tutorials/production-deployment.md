@@ -139,7 +139,7 @@ kind: LocustTest
 metadata:
   name: resource-sized-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: production-test
   master:
@@ -202,7 +202,7 @@ kind: LocustTest
 metadata:
   name: isolated-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: production-test
   master:
@@ -270,7 +270,7 @@ kind: LocustTest
 metadata:
   name: otel-enabled-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: production-test
   master:
@@ -327,7 +327,7 @@ metadata:
   name: production-load-test
   namespace: load-testing
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: production-test
   master:

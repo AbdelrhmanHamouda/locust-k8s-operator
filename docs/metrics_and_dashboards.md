@@ -31,7 +31,7 @@ kind: LocustTest
 metadata:
   name: otel-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   master:
     command: "--locustfile /lotest/src/test.py --host https://example.com"
   worker:

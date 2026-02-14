@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      contents: read
+      contents: write # Required for uploading release assets
     env:
       DOCKER_IMAGE: lotest/locust-k8s-operator
     steps:
@@ -44,7 +44,38 @@ jobs:
           ko build ./cmd \
             --platform=linux/amd64,linux/arm64 \
             --bare \
-            --tags=${{ github.ref_name }},latest,${{ github.sha }}
+            --tags=${{ github.ref_name }},latest
+
+      - name: 🔍 Install Trivy
+        run: |
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
+
+      - name: 📋 Generate SBOM (SPDX format)
+        run: |
+          trivy image \
+            --format spdx-json \
+            --output sbom-spdx.json \
+            ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}
+
+      - name: 📋 Generate SBOM (CycloneDX format)
+        run: |
+          trivy image \
+            --format cyclonedx \
+            --output sbom-cyclonedx.json \
+            ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}
+
+      - name: 📦 Upload SBOMs to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            sbom-spdx.json
+            sbom-cyclonedx.json
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   helm-chart-release:
     name: 🌊 Publish Helm chart
@@ -114,6 +145,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python -m mkdocs build
+
+      - name: 📝 Copy Artifact Hub metadata
+        run: |
+          cp artifacthub-repo.yml ./site/
 
       - name: 🚀 Deploy documentation
         uses: peaceiris/actions-gh-pages@v4

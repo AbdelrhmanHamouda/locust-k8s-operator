@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.24.0 AS builder
+FROM golang:1.25 AS builder
 ARG TARGETOS
 ARG TARGETARCH
 
@@ -26,6 +26,14 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o ma
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
+
+# OCI image labels for metadata
+LABEL org.opencontainers.image.source="https://github.com/AbdelrhmanHamouda/locust-k8s-operator"
+LABEL org.opencontainers.image.description="Kubernetes operator for managing Locust load testing deployments"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+LABEL org.opencontainers.image.vendor="Locust K8s Operator Project"
+LABEL org.opencontainers.image.documentation="https://abdelrhmanhamouda.github.io/locust-k8s-operator/"
+
 WORKDIR /
 COPY --from=builder /workspace/manager .
 USER 65532:65532

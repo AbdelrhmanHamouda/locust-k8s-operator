@@ -66,7 +66,7 @@ kind: LocustTest
 metadata:
   name: demo
 spec:
-  image: locustio/locust:2.20.0  # Use a specific version
+  image: locustio/locust:2.43.3  # Use a specific version
   testFiles:
     configMapRef: demo-test  # Reference the test script ConfigMap
   master:
