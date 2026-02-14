@@ -34,7 +34,7 @@ The v2 API provides a cleaner, grouped configuration structure with new features
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `image` | string | **Yes** | - | Container image for Locust pods (e.g., `locustio/locust:2.20.0`) |
+| `image` | string | **Yes** | - | Container image for Locust pods (e.g., `locustio/locust:2.43.3`) |
 | `imagePullPolicy` | string | No | `IfNotPresent` | Image pull policy: `Always`, `IfNotPresent`, `Never` |
 | `imagePullSecrets` | []LocalObjectReference | No | - | Secrets for pulling from private registries (specify as `- name: secret-name`) |
 | `master` | [MasterSpec](#masterspec) | **Yes** | - | Master pod configuration |
@@ -329,7 +329,7 @@ kind: LocustTest
 metadata:
   name: comprehensive-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   imagePullPolicy: IfNotPresent
   
   master:
@@ -436,7 +436,7 @@ kind: LocustTest
 metadata:
   name: basic-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   masterCommandSeed: "--locustfile /lotest/src/test.py --host https://example.com"
   workerCommandSeed: "--locustfile /lotest/src/test.py"
   workerReplicas: 3

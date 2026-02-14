@@ -69,7 +69,7 @@ kind: LocustTest
 metadata:
   name: toleration-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -126,7 +126,7 @@ kind: LocustTest
 metadata:
   name: multi-toleration-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -179,7 +179,7 @@ kind: LocustTest
 metadata:
   name: dedicated-pool-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -225,7 +225,7 @@ kind: LocustTest
 metadata:
   name: spot-instance-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:

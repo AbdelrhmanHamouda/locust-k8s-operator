@@ -1,0 +1,7 @@
+# Artifact Hub repository metadata file
+# This file enables Verified Publisher status and ownership claim
+
+repositoryID: 8e1a59f6-36d5-4e2a-805e-aeb1c38784c0
+owners:
+  - name: Abdelrhman Hamouda
+    email: abdelrhman.ahmed@outlook.com

@@ -33,7 +33,7 @@ kind: LocustTest
 metadata:
   name: configmap-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   master:
     command: "--locustfile /lotest/src/test.py --host https://example.com"
   worker:
@@ -81,7 +81,7 @@ kind: LocustTest
 metadata:
   name: secret-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   master:
     command: "--locustfile /lotest/src/test.py --host https://api.example.com"
   worker:
@@ -130,7 +130,7 @@ kind: LocustTest
 metadata:
   name: individual-vars-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   master:
     command: "--locustfile /lotest/src/test.py --host https://example.com"
   worker:
@@ -191,7 +191,7 @@ kind: LocustTest
 metadata:
   name: file-mount-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   master:
     command: "--locustfile /lotest/src/test.py --host https://api.example.com"
   worker:
@@ -248,7 +248,7 @@ kind: LocustTest
 metadata:
   name: combined-injection
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   master:
     command: "--locustfile /lotest/src/test.py --host https://api.example.com"
   worker:

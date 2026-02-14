@@ -18,6 +18,7 @@ package resources
 
 import (
 	"fmt"
+	"log"
 
 	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
@@ -385,21 +386,29 @@ func hasResourcesSpecified(r *corev1.ResourceRequirements) bool {
 
 // buildResourceList creates a ResourceList from CPU, memory, and ephemeral storage strings.
 // Empty strings are skipped (not added to the resource list).
-// Safe parsing is used (errors ignored) because values are pre-validated at operator startup.
+// Values are pre-validated at operator startup, but defensive logging is included to detect validation bypasses.
 func buildResourceList(cpu, memory, ephemeral string) corev1.ResourceList {
 	resources := corev1.ResourceList{}
 
 	if cpu != "" {
-		// Safe: Already validated at startup in LoadConfig
-		q, _ := resource.ParseQuantity(cpu)
+		q, err := resource.ParseQuantity(cpu)
+		if err != nil {
+			log.Printf("CRITICAL: Invalid CPU quantity %q passed startup validation: %v", cpu, err)
+		}
 		resources[corev1.ResourceCPU] = q
 	}
 	if memory != "" {
-		q, _ := resource.ParseQuantity(memory)
+		q, err := resource.ParseQuantity(memory)
+		if err != nil {
+			log.Printf("CRITICAL: Invalid memory quantity %q passed startup validation: %v", memory, err)
+		}
 		resources[corev1.ResourceMemory] = q
 	}
 	if ephemeral != "" {
-		q, _ := resource.ParseQuantity(ephemeral)
+		q, err := resource.ParseQuantity(ephemeral)
+		if err != nil {
+			log.Printf("CRITICAL: Invalid ephemeral storage quantity %q passed startup validation: %v", ephemeral, err)
+		}
 		resources[corev1.ResourceEphemeralStorage] = q
 	}
 

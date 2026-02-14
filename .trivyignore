@@ -1,0 +1,8 @@
+# Trivy ignore file for false positives
+# Documentation: https://aquasecurity.github.io/trivy/latest/docs/configuration/filtering/#by-finding-ids
+
+# To ignore a specific CVE, add it below with a justification comment:
+# Example:
+# CVE-2024-1234 # False positive: not used in our codebase, expires 2025-06-01
+
+# Currently no vulnerabilities are ignored

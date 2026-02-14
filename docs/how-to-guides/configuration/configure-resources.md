@@ -54,7 +54,7 @@ kind: LocustTest
 metadata:
   name: resource-optimized-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -119,7 +119,7 @@ kind: LocustTest
 metadata:
   name: no-cpu-limit-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:

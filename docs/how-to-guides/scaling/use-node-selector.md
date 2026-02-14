@@ -61,7 +61,7 @@ kind: LocustTest
 metadata:
   name: nodeselector-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -90,7 +90,7 @@ kind: LocustTest
 metadata:
   name: multi-label-selector
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -126,7 +126,7 @@ kind: LocustTest
 metadata:
   name: high-perf-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: performance-test
   master:
@@ -149,7 +149,7 @@ kind: LocustTest
 metadata:
   name: aws-instance-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -174,7 +174,7 @@ kind: LocustTest
 metadata:
   name: zone-specific-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:
@@ -287,7 +287,7 @@ kind: LocustTest
 metadata:
   name: selector-toleration-test
 spec:
-  image: locustio/locust:2.20.0
+  image: locustio/locust:2.43.3
   testFiles:
     configMapRef: my-test
   master:

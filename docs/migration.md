@@ -192,7 +192,7 @@ While v1 CRs continue to work, migrating to v2 format is recommended to access n
     metadata:
       name: example-test
     spec:
-      image: locustio/locust:2.20.0
+      image: locustio/locust:2.43.3
       masterCommandSeed: --locustfile /lotest/src/test.py --host https://example.com
       workerCommandSeed: --locustfile /lotest/src/test.py
       workerReplicas: 5
@@ -212,7 +212,7 @@ While v1 CRs continue to work, migrating to v2 format is recommended to access n
     metadata:
       name: example-test
     spec:
-      image: locustio/locust:2.20.0
+      image: locustio/locust:2.43.3
       master:
         command: "--locustfile /lotest/src/test.py --host https://example.com"
         labels:

@@ -44,6 +44,7 @@ The operator has been completely rewritten in Go, bringing significant improveme
 
 [//]: # (Badges)
 [![CI Pipeline][pipeline-status]][pipeline-status-url]
+[![Security Scan][security-scan]][security-scan-url]
 [![Codacy Badge][code-coverage]][code-coverage-url]
 [![Codacy Badge][code-quality]][code-quality-url]
 [![Documentation][docs]][docs-url]
@@ -123,13 +124,17 @@ Open source licensed under Apache-2.0 license (see LICENSE file for details).
 [pipeline-status]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/actions/workflows/ci.yaml/badge.svg?branch=master
 [pipeline-status-url]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/actions/workflows/ci.yaml
 
+[//]: # (Security scan badge)
+[security-scan]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/actions/workflows/security-scan-scheduled.yaml/badge.svg?branch=master
+[security-scan-url]: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/security/code-scanning
+
 [//]: # (Code coverage badge)
-[code-coverage]: https://app.codacy.com/project/badge/Grade/70b76e69dbde4a9ebfd36ad5ccf6de78
-[code-coverage-url]: https://app.codacy.com/gh/AbdelrhmanHamouda/locust-k8s-operator/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade
+[code-coverage]: https://app.codacy.com/project/badge/Coverage/70b76e69dbde4a9ebfd36ad5ccf6de78?branch=master
+[code-coverage-url]: https://app.codacy.com/gh/AbdelrhmanHamouda/locust-k8s-operator/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage
 
 [//]: # (Code quality badge)
-[code-quality]: https://app.codacy.com/project/badge/Coverage/70b76e69dbde4a9ebfd36ad5ccf6de78
-[code-quality-url]: https://app.codacy.com/gh/AbdelrhmanHamouda/locust-k8s-operator/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage
+[code-quality]: https://app.codacy.com/project/badge/Grade/70b76e69dbde4a9ebfd36ad5ccf6de78?branch=master
+[code-quality-url]: https://app.codacy.com/gh/AbdelrhmanHamouda/locust-k8s-operator/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade
 [//]: # (Documentation badge)
 [docs]: https://img.shields.io/badge/Documentation-gh--pages-green
 [docs-url]:https://abdelrhmanhamouda.github.io/locust-k8s-operator/
