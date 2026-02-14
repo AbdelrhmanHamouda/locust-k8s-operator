@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: 📂 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 🔍 Run Trivy scan on latest image
         uses: aquasecurity/trivy-action@0.29.0
