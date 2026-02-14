@@ -16,5 +16,3 @@ engines:
     enabled: false
   remark-lint:
     enabled: false
-  prose:
-    enabled: false
