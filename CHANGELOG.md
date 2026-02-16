@@ -1,3 +1,10 @@
+## 2.1.1 (2026-02-16)
+
+### Fix
+
+- **security**: resolve GitHub code scanning alert #1 (#291)
+- **docs**: correct Codacy badge URLs for code quality and coverage (#280)
+
 ## 2.1.0 (2026-02-14)
 
 ### Feat
