@@ -46,26 +46,19 @@ jobs:
             --bare \
             --tags=${{ github.ref_name }},latest
 
-      - name: 🔍 Install Trivy
-        run: |
-          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
-          sudo apt-get update
-          sudo apt-get install trivy
-
       - name: 📋 Generate SBOM (SPDX format)
-        run: |
-          trivy image \
-            --format spdx-json \
-            --output sbom-spdx.json \
-            ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}
+        uses: aquasecurity/trivy-action@0.29.0
+        with:
+          image-ref: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}
+          format: spdx-json
+          output: sbom-spdx.json
 
       - name: 📋 Generate SBOM (CycloneDX format)
-        run: |
-          trivy image \
-            --format cyclonedx \
-            --output sbom-cyclonedx.json \
-            ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}
+        uses: aquasecurity/trivy-action@0.29.0
+        with:
+          image-ref: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}
+          format: cyclonedx
+          output: sbom-cyclonedx.json
 
       - name: 📦 Upload SBOMs to release
         uses: softprops/action-gh-release@v2

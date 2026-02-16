@@ -16,17 +16,15 @@ on:
       - master
       - main
 
-permissions:
-  contents: write  # Required to push to gh-pages branch
-  pages: write
-  id-token: write
-  pull-requests: write
-  actions: read
-
 jobs:
   # Build and deploy docs preview for opened/updated PRs
   build-preview:
-    if: github.event.action != 'closed'
+    permissions:
+      contents: write       # Push to gh-pages branch
+      pull-requests: write  # Create/update preview comment
+    # SECURITY: Only run on pull_request trigger (not pull_request_target) to prevent
+    # untrusted fork PRs from executing code with write permissions (RCE vulnerability)
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - name: 📂 Checkout PR code
@@ -126,6 +124,9 @@ jobs:
 
   # Clean up preview when PR is closed/merged
   cleanup-preview:
+    permissions:
+      contents: write       # Push to gh-pages branch
+      pull-requests: write  # Update comment on cleanup
     if: github.event.action == 'closed'
     runs-on: ubuntu-latest
     steps:
