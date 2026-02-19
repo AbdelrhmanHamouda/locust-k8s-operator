@@ -68,7 +68,7 @@ jobs:
 
       - name: 📦 Upload Go test artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: go-test-artifacts
           path: |
@@ -152,7 +152,7 @@ jobs:
 
       - name: 📦 Upload Helm test artifacts on failure
         if: failure() && steps.list-changed.outputs.changed == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: helm-test-artifacts
           path: |
@@ -191,7 +191,7 @@ jobs:
 
       - name: 📦 Upload docs build artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: docs-build-artifacts
           path: |
@@ -246,7 +246,7 @@ jobs:
 
       - name: 📦 Upload Trivy scan artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: trivy-scan-results
           path: trivy-results.sarif
