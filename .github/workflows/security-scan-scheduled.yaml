@@ -124,7 +124,7 @@ jobs:
 
       - name: 📦 Upload scan results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: trivy-daily-scan-${{ github.run_number }}
           path: trivy-results.sarif
