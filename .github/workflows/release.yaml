@@ -29,7 +29,7 @@ jobs:
           go-version-file: go.mod
 
       - name: 🔧 Setup ko
-        uses: ko-build/setup-ko@v0.7
+        uses: ko-build/setup-ko@v0.9
 
       - name: 🔐 Login to Docker Hub
         uses: docker/login-action@v3

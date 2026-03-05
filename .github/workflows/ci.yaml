@@ -127,7 +127,7 @@ jobs:
 
       - name: 🛠️ Install ko
         if: steps.list-changed.outputs.changed == 'true'
-        uses: ko-build/setup-ko@v0.7
+        uses: ko-build/setup-ko@v0.9
 
       - name: 🐳 Build operator image with ko
         if: steps.list-changed.outputs.changed == 'true'
@@ -218,7 +218,7 @@ jobs:
           go-version-file: go.mod
 
       - name: 🛠️ Install ko
-        uses: ko-build/setup-ko@v0.7
+        uses: ko-build/setup-ko@v0.9
 
       - name: 🐳 Build operator image with ko
         env:
