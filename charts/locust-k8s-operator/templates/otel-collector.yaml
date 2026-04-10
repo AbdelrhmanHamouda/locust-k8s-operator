@@ -78,9 +78,7 @@ spec:
     spec:
       # Security context - run as non-root
       securityContext:
-        runAsNonRoot: true
-        seccompProfile:
-          type: RuntimeDefault
+        {{- toYaml .Values.otelCollector.podSecurityContext | nindent 8 }}
       containers:
         - name: otel-collector
           image: {{ .Values.otelCollector.image }}
@@ -102,10 +100,7 @@ spec:
               protocol: TCP
           # Container security - principle of least privilege
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-            readOnlyRootFilesystem: true
+            {{- toYaml .Values.otelCollector.containerSecurityContext | nindent 12 }}
           # Liveness probe - restart if unhealthy
           livenessProbe:
             httpGet:

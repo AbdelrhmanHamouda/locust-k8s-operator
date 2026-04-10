@@ -226,6 +226,25 @@ type TargetedVolumeMount struct {
 }
 
 // ============================================
+// SECURITY CONFIGURATION (Issue #300)
+// ============================================
+
+// SecurityConfig defines security context configuration for managed pods.
+type SecurityConfig struct {
+	// PodSecurityContext applies to all containers in the pod.
+	// When set, this completely overrides the operator's default PodSecurityContext.
+	// When unset, the operator applies a minimal default (SeccompProfile: RuntimeDefault).
+	// On OpenShift, leave this unset or configure it to comply with your SCC.
+	// +optional
+	PodSecurityContext *corev1.PodSecurityContext `json:"podSecurityContext,omitempty"`
+
+	// ContainerSecurityContext applies to the Locust container.
+	// When set, this is applied to the main locust container in each pod.
+	// +optional
+	ContainerSecurityContext *corev1.SecurityContext `json:"containerSecurityContext,omitempty"`
+}
+
+// ============================================
 // OBSERVABILITY (Issue #72)
 // ============================================
 
@@ -354,6 +373,10 @@ type LocustTestSpec struct {
 	// VolumeMounts for the locust container with target selection.
 	// +optional
 	VolumeMounts []TargetedVolumeMount `json:"volumeMounts,omitempty"`
+
+	// Security configuration for pod and container security contexts.
+	// +optional
+	Security *SecurityConfig `json:"security,omitempty"`
 
 	// Observability configuration for metrics and tracing.
 	// +optional

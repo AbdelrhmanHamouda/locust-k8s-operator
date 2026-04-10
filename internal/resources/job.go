@@ -103,11 +103,7 @@ func buildJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, mode Operatio
 					Affinity:         buildAffinity(lt, cfg),
 					Tolerations:      buildTolerations(lt, cfg),
 					NodeSelector:     buildNodeSelector(lt),
-					SecurityContext: &corev1.PodSecurityContext{
-						SeccompProfile: &corev1.SeccompProfile{
-							Type: corev1.SeccompProfileTypeRuntimeDefault,
-						},
-					},
+					SecurityContext:  buildPodSecurityContext(lt),
 				},
 			},
 		},
@@ -128,6 +124,11 @@ func buildLocustContainer(lt *locustv2.LocustTest, name string, command []string
 		Env:             BuildEnvVars(lt, cfg),
 		EnvFrom:         BuildEnvFrom(lt),
 		VolumeMounts:    buildVolumeMounts(lt, name, mode),
+	}
+
+	// Apply container security context if specified
+	if lt.Spec.Security != nil && lt.Spec.Security.ContainerSecurityContext != nil {
+		container.SecurityContext = lt.Spec.Security.ContainerSecurityContext
 	}
 
 	// Default to IfNotPresent if not specified
@@ -443,6 +444,20 @@ func buildTolerations(lt *locustv2.LocustTest, cfg *config.OperatorConfig) []cor
 
 	// v2 uses standard corev1.Toleration directly
 	return lt.Spec.Scheduling.Tolerations
+}
+
+// buildPodSecurityContext returns the PodSecurityContext for managed pods.
+// If the CR specifies a security context, it is used as a complete override.
+// Otherwise, the operator applies a minimal default (SeccompProfile: RuntimeDefault).
+func buildPodSecurityContext(lt *locustv2.LocustTest) *corev1.PodSecurityContext {
+	if lt.Spec.Security != nil && lt.Spec.Security.PodSecurityContext != nil {
+		return lt.Spec.Security.PodSecurityContext
+	}
+	return &corev1.PodSecurityContext{
+		SeccompProfile: &corev1.SeccompProfile{
+			Type: corev1.SeccompProfileTypeRuntimeDefault,
+		},
+	}
 }
 
 // buildNodeSelector creates pod node selector from the CR spec.

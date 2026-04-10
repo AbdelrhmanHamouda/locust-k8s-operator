@@ -1,0 +1,32 @@
+# Example LocustTest with custom security context
+# Demonstrates OpenShift-compatible configuration using the security field
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: load-test-with-security
+  namespace: default
+spec:
+  image: locustio/locust:2.43.1
+
+  master:
+    command: "--locustfile /lotest/src/locustfile.py"
+
+  worker:
+    command: "--locustfile /lotest/src/locustfile.py"
+    replicas: 3
+
+  testFiles:
+    configMapRef: locust-scripts
+
+  # Security context configuration for managed pods
+  # On OpenShift, omit runAsUser to let the SCC assign a UID from the namespace range.
+  # On vanilla Kubernetes, you can pin a specific UID if needed.
+  security:
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: ["ALL"]
