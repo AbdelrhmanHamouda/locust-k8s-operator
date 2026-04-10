@@ -1408,10 +1408,14 @@ func TestBuildMasterJob_MetricsExporter_NoUserSecurityContext(t *testing.T) {
 	// Master job has 2 containers: locust + metrics exporter (OTel is disabled by default)
 	require.Len(t, job.Spec.Template.Spec.Containers, 2)
 
-	// Metrics exporter sidecar should NOT have user's security context
+	// Metrics exporter sidecar should have its own hardcoded security context, NOT the user's
 	metricsContainer := job.Spec.Template.Spec.Containers[1]
 	assert.Equal(t, MetricsExporterContainerName, metricsContainer.Name)
-	assert.Nil(t, metricsContainer.SecurityContext, "Metrics exporter should not inherit user's container security context")
+	require.NotNil(t, metricsContainer.SecurityContext, "Metrics exporter should have its own hardcoded security context")
+	// Verify it has the hardcoded values, not the user's AllowPrivilegeEscalation=false
+	assert.False(t, *metricsContainer.SecurityContext.AllowPrivilegeEscalation)
+	assert.True(t, *metricsContainer.SecurityContext.ReadOnlyRootFilesystem)
+	assert.Equal(t, []corev1.Capability{"ALL"}, metricsContainer.SecurityContext.Capabilities.Drop)
 }
 
 func TestBuildWorkerJob_CustomSecurityContext(t *testing.T) {
@@ -1441,6 +1445,45 @@ func TestBuildWorkerJob_CustomSecurityContext(t *testing.T) {
 	locustContainer := job.Spec.Template.Spec.Containers[0]
 	require.NotNil(t, locustContainer.SecurityContext)
 	assert.False(t, *locustContainer.SecurityContext.AllowPrivilegeEscalation)
+}
+
+func TestBuildMasterJob_ContainerSecurityOnly_PodGetsDefault(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Security = &locustv2.SecurityConfig{
+		ContainerSecurityContext: &corev1.SecurityContext{
+			AllowPrivilegeEscalation: boolPtr(false),
+		},
+		// PodSecurityContext intentionally nil
+	}
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg, logr.Discard())
+
+	// Pod should still get the default seccomp profile
+	require.NotNil(t, job.Spec.Template.Spec.SecurityContext)
+	require.NotNil(t, job.Spec.Template.Spec.SecurityContext.SeccompProfile)
+	assert.Equal(t, corev1.SeccompProfileTypeRuntimeDefault,
+		job.Spec.Template.Spec.SecurityContext.SeccompProfile.Type)
+
+	// Container should have the custom context
+	locustContainer := job.Spec.Template.Spec.Containers[0]
+	require.NotNil(t, locustContainer.SecurityContext)
+	require.NotNil(t, locustContainer.SecurityContext.AllowPrivilegeEscalation)
+	assert.False(t, *locustContainer.SecurityContext.AllowPrivilegeEscalation)
+}
+
+func TestBuildMetricsExporterContainer_HasHardenedSecurityContext(t *testing.T) {
+	cfg := newTestConfig()
+
+	container := buildMetricsExporterContainer(cfg)
+
+	require.NotNil(t, container.SecurityContext)
+	require.NotNil(t, container.SecurityContext.AllowPrivilegeEscalation)
+	assert.False(t, *container.SecurityContext.AllowPrivilegeEscalation)
+	require.NotNil(t, container.SecurityContext.Capabilities)
+	assert.Equal(t, []corev1.Capability{"ALL"}, container.SecurityContext.Capabilities.Drop)
+	require.NotNil(t, container.SecurityContext.ReadOnlyRootFilesystem)
+	assert.True(t, *container.SecurityContext.ReadOnlyRootFilesystem)
 }
 
 func boolPtr(b bool) *bool {

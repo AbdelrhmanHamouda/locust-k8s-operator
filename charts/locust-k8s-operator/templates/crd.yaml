@@ -4,6 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
+{{- if and .Values.webhook.enabled .Values.webhook.certManager.enabled }}
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "locust-k8s-operator.fullname" . }}-serving-cert
+{{- end }}
   name: locusttests.locust.io
 spec:
   group: locust.io
@@ -15,6 +18,18 @@ spec:
     - lotest
     singular: locusttest
   scope: Namespaced
+{{- if .Values.webhook.enabled }}
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        service:
+          name: {{ include "locust-k8s-operator.fullname" . }}-webhook
+          namespace: {{ .Release.Namespace }}
+          path: /convert
+      conversionReviewVersions:
+      - v1
+{{- end }}
   versions:
   - additionalPrinterColumns:
     - description: Master pod command seed

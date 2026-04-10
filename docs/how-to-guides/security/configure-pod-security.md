@@ -45,9 +45,53 @@ If your test doesn't require write access, you can customize the security contex
 
 ## Customizing security context
 
-The v2 API does **not** expose `securityContext` fields on the LocustTest CR. The test pod security context is hardcoded in the operator (see `internal/resources/job.go`). There is no way to customize it per-test via the CR.
+The v2 API exposes a `security` field on the LocustTest CR for configuring pod and container security contexts on managed test pods. The `podSecurityContext` and `containerSecurityContext` Helm values apply to the **operator deployment only** — test pods are configured via the CR.
 
-The `podSecurityContext` and `containerSecurityContext` Helm values apply to the **operator deployment only**, not to test pods. To change the test pod security context, you would need to modify the operator source code.
+### Pod security context
+
+Set `spec.security.podSecurityContext` to override the operator's default. This is a **complete override** — the operator's default `seccompProfile: RuntimeDefault` is replaced entirely by your configuration.
+
+```yaml
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: my-test
+spec:
+  # ...
+  security:
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+```
+
+### Container security context
+
+Set `spec.security.containerSecurityContext` to apply a security context to the main Locust container:
+
+```yaml
+spec:
+  security:
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: ["ALL"]
+      readOnlyRootFilesystem: false  # Locust needs /tmp write access
+```
+
+!!! note "Metrics exporter sidecar"
+    The container security context applies only to the Locust container. The metrics exporter sidecar has its own hardcoded security context (`allowPrivilegeEscalation: false`, `drop ALL`, `readOnlyRootFilesystem: true`).
+
+### OpenShift compatibility
+
+On OpenShift, omit `runAsUser` to let the SCC assign a UID from the namespace's allocated range:
+
+```yaml
+spec:
+  security:
+    podSecurityContext:
+      runAsNonRoot: true
+```
 
 ## RBAC best practices
 
@@ -323,17 +367,25 @@ The operator's default security settings meet these Pod Security Standards profi
 
 **To meet "restricted" profile:**
 
-The following settings would need to be added to the test pod security context. Since the test pod security context is hardcoded in the operator (`internal/resources/job.go`), this requires modifying the operator source code:
+Configure the LocustTest CR `security` field with the required settings:
 
 ```yaml
-securityContext:
-  runAsNonRoot: true
-  allowPrivilegeEscalation: false
-  seccompProfile:
-    type: RuntimeDefault
-  capabilities:
-    drop:
-      - ALL
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: my-test
+spec:
+  # ...
+  security:
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: ["ALL"]
+      # Note: readOnlyRootFilesystem is omitted because Locust needs /tmp write access
 ```
 
 ## Related guides

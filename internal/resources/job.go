@@ -27,6 +27,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 // BuildMasterJob creates a Kubernetes Job for the Locust master node.
@@ -158,6 +159,13 @@ func buildMetricsExporterContainer(cfg *config.OperatorConfig) corev1.Container 
 				Name:  ExporterPortEnvVar,
 				Value: fmt.Sprintf(":%d", cfg.MetricsExporterPort),
 			},
+		},
+		SecurityContext: &corev1.SecurityContext{
+			AllowPrivilegeEscalation: ptr.To(false),
+			Capabilities: &corev1.Capabilities{
+				Drop: []corev1.Capability{"ALL"},
+			},
+			ReadOnlyRootFilesystem: ptr.To(true),
 		},
 	}
 }

@@ -182,7 +182,10 @@ serviceAccount:
 
 podAnnotations: {}
 
-# -- Pod security context (runs as non-root)
+# -- Pod security context for the operator deployment (runs as non-root).
+# The operator image uses distroless/static:nonroot (UID 65532).
+# On OpenShift, the restricted SCC overrides the image UID with one from the
+# namespace's allocated range. No explicit runAsUser is needed here.
 podSecurityContext:
   runAsNonRoot: true
   seccompProfile:
