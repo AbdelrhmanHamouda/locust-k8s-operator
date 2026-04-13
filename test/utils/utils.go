@@ -282,18 +282,21 @@ func UncommentCode(filename, target, prefix string) error {
 
 // ApplyFromFile applies a Kubernetes resource from a YAML file
 func ApplyFromFile(namespace, path string) (string, error) {
+	//nolint:gosec // G204 - test helper, args are controlled
 	cmd := exec.Command("kubectl", "apply", "-f", path, "-n", namespace)
 	return Run(cmd)
 }
 
 // DeleteFromFile deletes a Kubernetes resource from a YAML file
 func DeleteFromFile(namespace, path string) (string, error) {
+	//nolint:gosec // G204 - test helper, args are controlled
 	cmd := exec.Command("kubectl", "delete", "-f", path, "-n", namespace, "--ignore-not-found")
 	return Run(cmd)
 }
 
 // WaitForResource waits for a resource to exist
 func WaitForResource(resourceType, namespace, name string, timeout string) error {
+	//nolint:gosec // G204 - test helper, args are controlled
 	cmd := exec.Command("kubectl", "wait", resourceType, name,
 		"-n", namespace,
 		"--for=create",
