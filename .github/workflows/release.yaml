@@ -47,14 +47,14 @@ jobs:
             --tags=${{ github.ref_name }},latest
 
       - name: 📋 Generate SBOM (SPDX format)
-        uses: aquasecurity/trivy-action@v0.29.0
+        uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}
           format: spdx-json
           output: sbom-spdx.json
 
       - name: 📋 Generate SBOM (CycloneDX format)
-        uses: aquasecurity/trivy-action@v0.29.0
+        uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}
           format: cyclonedx

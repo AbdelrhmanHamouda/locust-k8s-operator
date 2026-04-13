@@ -307,6 +307,7 @@ func WaitForResource(resourceType, namespace, name string, timeout string) error
 
 // ResourceExists checks if a resource exists
 func ResourceExists(resourceType, namespace, name string) bool {
+	//nolint:gosec // G204 - test helper, args are controlled
 	cmd := exec.Command("kubectl", "get", resourceType, name, "-n", namespace)
 	_, err := Run(cmd)
 	return err == nil
@@ -377,6 +378,7 @@ func GetJobVolumeMounts(namespace, jobName, containerName string) (string, error
 // WaitForControllerReady waits for the controller-manager deployment to be ready
 func WaitForControllerReady(namespace string, timeout string) error {
 	_, _ = fmt.Fprintf(GinkgoWriter, "Waiting for controller-manager deployment to be ready...\n")
+	//nolint:gosec // G204 - test helper, args are controlled
 	cmd := exec.Command("kubectl", "wait", "deployment",
 		"-l", "control-plane=controller-manager",
 		"-n", namespace,
@@ -389,6 +391,7 @@ func WaitForControllerReady(namespace string, timeout string) error {
 // WaitForWebhookReady waits for the webhook service endpoint to be ready
 func WaitForWebhookReady(namespace, serviceName string, timeout string) error {
 	_, _ = fmt.Fprintf(GinkgoWriter, "Waiting for webhook service endpoint to be ready...\n")
+	//nolint:gosec // G204 - test helper, args are controlled
 	cmd := exec.Command("kubectl", "wait", "endpoints", serviceName,
 		"-n", namespace,
 		"--for=jsonpath={.subsets[0].addresses[0].ip}",
@@ -400,6 +403,7 @@ func WaitForWebhookReady(namespace, serviceName string, timeout string) error {
 // WaitForCertificateReady waits for the serving certificate to be ready
 func WaitForCertificateReady(namespace, certName string, timeout string) error {
 	_, _ = fmt.Fprintf(GinkgoWriter, "Waiting for certificate %s to be ready...\n", certName)
+	//nolint:gosec // G204 - test helper, args are controlled
 	cmd := exec.Command("kubectl", "wait", "certificate", certName,
 		"-n", namespace,
 		"--for=condition=Ready",
