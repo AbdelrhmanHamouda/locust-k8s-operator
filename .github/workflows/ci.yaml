@@ -229,7 +229,7 @@ jobs:
           echo "IMAGE_TAG=${CHART_VERSION}" >> $GITHUB_ENV
 
       - name: 🔍 Run Trivy security scan
-        uses: aquasecurity/trivy-action@0.29.0
+        uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: lotest/locust-k8s-operator:${{ env.IMAGE_TAG }}
           format: sarif

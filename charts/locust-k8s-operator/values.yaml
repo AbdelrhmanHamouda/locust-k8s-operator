@@ -159,6 +159,17 @@ otelCollector:
           receivers: [otlp]
           processors: [batch]
           exporters: [debug]
+  # -- OTel Collector pod security context
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  # -- OTel Collector container security context
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    readOnlyRootFilesystem: true
 
 # =============================================================================
 # Standard Kubernetes options
@@ -171,12 +182,12 @@ serviceAccount:
 
 podAnnotations: {}
 
-# -- Pod security context (runs as non-root)
+# -- Pod security context for the operator deployment (runs as non-root).
+# The operator image uses distroless/static:nonroot (UID 65532).
+# On OpenShift, the restricted SCC overrides the image UID with one from the
+# namespace's allocated range. No explicit runAsUser is needed here.
 podSecurityContext:
   runAsNonRoot: true
-  runAsUser: 65532
-  runAsGroup: 65532
-  fsGroup: 65532
   seccompProfile:
     type: RuntimeDefault
 

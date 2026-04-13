@@ -151,6 +151,7 @@ func (dst *LocustTest) ConvertFrom(srcRaw conversion.Hub) error {
 	// - scheduling.nodeSelector
 	// - env (configMapRefs, secretRefs, variables, secretMounts)
 	// - volumes, volumeMounts
+	// - security (podSecurityContext, containerSecurityContext)
 	// - observability (OpenTelemetry config)
 	// - status (v1 has no status subresource fields)
 

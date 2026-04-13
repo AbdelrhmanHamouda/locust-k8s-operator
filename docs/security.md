@@ -234,21 +234,23 @@ spec:
 
 ### Operator Pod Security
 
-The operator runs with a hardened security context by default, meeting Kubernetes Pod Security Standards **"restricted"** profile:
+The operator deployment runs with a hardened security context by default, meeting Kubernetes Pod Security Standards **"restricted"** profile:
 
 ```yaml
 # From values.yaml (default configuration)
-securityContext:
+podSecurityContext:
   runAsNonRoot: true
-  runAsUser: 65532  # Non-root user
-  readOnlyRootFilesystem: true
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-      - ALL
   seccompProfile:
     type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  readOnlyRootFilesystem: true
 ```
+
+The operator image (`distroless/static:nonroot`) runs as UID 65532 by default via its image metadata. No explicit `runAsUser` is needed in the pod security context — on OpenShift, this allows the SCC to assign a UID from the namespace's allocated range.
 
 These settings are enabled by default in the Helm chart. No additional configuration is required.
 
@@ -274,7 +276,7 @@ Test pods run the user-provided Locust image. Security depends on the image you 
         memory: 1Gi
   ```
 
-Test pods inherit the default security context from Helm values (`locustPods.securityContext`). Override per-test if needed.
+Test pods receive a default security context from the operator (seccomp `RuntimeDefault` profile). To customize the security context for test pods, use the `spec.security` field on the LocustTest CR. See [Configure pod security settings](how-to-guides/security/configure-pod-security.md) for details.
 
 ## Network Security
 

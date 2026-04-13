@@ -215,7 +215,7 @@ func getEnvBool(key string, defaultValue bool) bool {
 	if v := os.Getenv(key); v != "" {
 		b, err := strconv.ParseBool(v)
 		if err != nil {
-			log.Printf("WARNING: env var %s has unparseable boolean value %q, using default %v", key, v, defaultValue)
+			log.Printf("WARNING: env var %s has unparseable boolean value %q, using default %v", key, v, defaultValue) //nolint:gosec // G706 - env var value is safely quoted with %q
 			return defaultValue
 		}
 		return b
@@ -228,7 +228,7 @@ func getEnvInt32(key string, defaultValue int32) int32 {
 	if v := os.Getenv(key); v != "" {
 		i, err := strconv.ParseInt(v, 10, 32)
 		if err != nil {
-			log.Printf("WARNING: env var %s has unparseable int32 value %q, using default %d", key, v, defaultValue)
+			log.Printf("WARNING: env var %s has unparseable int32 value %q, using default %d", key, v, defaultValue) //nolint:gosec // G706 - env var value is safely quoted with %q
 			return defaultValue
 		}
 		return int32(i)
@@ -242,7 +242,7 @@ func getEnvInt32Ptr(key string) *int32 {
 	if v := os.Getenv(key); v != "" {
 		i, err := strconv.ParseInt(v, 10, 32)
 		if err != nil {
-			log.Printf("WARNING: env var %s has unparseable int32 value %q, ignoring", key, v)
+			log.Printf("WARNING: env var %s has unparseable int32 value %q, ignoring", key, v) //nolint:gosec // G706 - env var value is safely quoted with %q
 			return nil
 		}
 		val := int32(i)
