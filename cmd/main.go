@@ -343,5 +343,12 @@ func setupHealthChecks(mgr ctrl.Manager) error {
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		return fmt.Errorf("unable to set up ready check: %w", err)
 	}
+	// Gate readiness on the webhook server actually listening, so the pod's
+	// Endpoints entry doesn't appear until admission webhook calls succeed.
+	if ws := mgr.GetWebhookServer(); ws != nil {
+		if err := mgr.AddReadyzCheck("webhook", ws.StartedChecker()); err != nil {
+			return fmt.Errorf("unable to set up webhook ready check: %w", err)
+		}
+	}
 	return nil
 }
