@@ -1,3 +1,9 @@
+## 2.2.1 (2026-04-27)
+
+### Fix
+
+- **ci**: repin chart-releaser-action to v1.5.0 to unbreak publish
+
 ## 2.2.0 (2026-04-27)
 
 ### Feat
