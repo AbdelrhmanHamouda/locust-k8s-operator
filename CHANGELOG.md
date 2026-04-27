@@ -1,3 +1,13 @@
+## 2.2.0 (2026-04-27)
+
+### Feat
+
+- add configurable security context for OpenShift compatibility (#304)
+
+### Fix
+
+- **security**: bump Go directive to 1.26.2 to clear stdlib CVEs (#310)
+
 ## 2.1.1 (2026-02-16)
 
 ### Fix
