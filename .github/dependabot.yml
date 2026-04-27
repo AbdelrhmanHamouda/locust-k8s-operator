@@ -49,3 +49,9 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+    ignore:
+      # Pinned to v1.5.0 in release.yaml — v1.6.0+ has a `latest_tag` unbound
+      # variable regression that fails the publish job after the chart is
+      # already pushed to gh-pages. Re-evaluate when issue #171 is resolved.
+      # https://github.com/helm/chart-releaser-action/issues/171
+      - dependency-name: "helm/chart-releaser-action"

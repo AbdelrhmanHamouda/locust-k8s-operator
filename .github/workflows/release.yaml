@@ -101,9 +101,12 @@ jobs:
           helm package charts/locust-k8s-operator --app-version=${VERSION} --version=${VERSION} --destination=.cr-release-packages
 
       # Pin to v1.5.0 - last stable version with skip_packaging before v1.6.0 bug
-      # v1.6.0 introduced latest_tag scope bug: https://github.com/helm/chart-releaser-action/issues/171
+      # v1.6.0+ introduced latest_tag unbound-variable regression (cr.sh:111) that
+      # fails the job after the chart is already published to gh-pages.
+      # See: https://github.com/helm/chart-releaser-action/issues/171
+      # Also pinned via .github/dependabot.yml ignore rule to prevent re-bumping.
       - name: 🎉 Run chart-releaser
-        uses: helm/chart-releaser-action@v1.7.0
+        uses: helm/chart-releaser-action@v1.5.0
         with:
           skip_packaging: true
         env:
