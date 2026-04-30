@@ -80,6 +80,57 @@ Most users will not need to make any changes. The Go operator is a drop-in repla
 
 For detailed migration guidance, see the [Migration Guide](https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/) in the documentation.
 
+## v2.2 → v2.2.2
+
+### Webhook configuration: env var → flag
+
+The operator binary previously gated webhook registration on the
+`ENABLE_WEBHOOKS` environment variable, which the Helm chart set from
+`.Values.webhook.enabled`. As of v2.2.2 this is replaced by an explicit
+`--enable-webhooks` command-line flag. The chart's `deployment.yaml` now
+passes `--enable-webhooks={{ .Values.webhook.enabled }}` directly.
+
+**For chart users**: no action required. `helm upgrade` rolls out the new
+flag automatically.
+
+**For users running the binary directly or with custom Kustomize / ArgoCD
+overlays that set `ENABLE_WEBHOOKS`**: the env var is still honoured for one
+release as a deprecated alias and the binary logs a one-time deprecation
+warning when it is read. Migrate to `--enable-webhooks=true|false` before
+v2.3.0, when the env var will be removed.
+
+When both are set, the explicit flag wins.
+
+### New flag: `--webhook-cert-wait-timeout`
+
+When webhooks are enabled, the operator polls for the cert files mounted by
+cert-manager. Previously this poll was unbounded — a misconfigured
+cert-manager would cause the operator to hang silently with no health probe
+registered yet. The new `--webhook-cert-wait-timeout` flag (default `2m`)
+bounds the wait and exits with a clear error message if certs never appear.
+Set to `0` to restore the previous "wait forever" behaviour.
+
+### Switching `webhook.enabled` from `true` to `false` (CRD downgrade)
+
+The CRD's `spec.conversion` block is rendered only when
+`webhook.enabled=true`. If you upgrade an installation from `webhook.enabled=true`
+to `webhook.enabled=false`, Helm removes that block on the next upgrade. Any
+stored `LocustTest` resources at API version `v1` then become unreadable
+because the apiserver no longer has a conversion route to `v2`.
+
+**Before flipping `webhook.enabled` to `false`:**
+
+```bash
+# 1. Confirm no v1 LocustTest resources exist anywhere in the cluster
+kubectl get locusttests.v1.locust.io -A
+
+# 2. If any remain, migrate them to v2 manifests and re-apply at v2 first
+#    (or delete them if they're no longer needed) before the helm upgrade
+```
+
+If you only ever applied LocustTest resources at `apiVersion: locust.io/v2`
+this caveat does not apply to you.
+
 ## Rationale
 
 The rewrite to Go was motivated by:

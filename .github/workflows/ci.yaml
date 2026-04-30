@@ -78,6 +78,12 @@ jobs:
   # ============================================
   # Helm Chart Lint & Test
   # ============================================
+  # Runs ct lint always; runs ct install (with kind cluster) on EVERY PR —
+  # not just when charts/ changes. Issue #317 was a cmd/ change that broke the
+  # default Helm install but no chart files moved, so the previous
+  # "list-changed" gate let the regression through. Always installing closes
+  # that hole. ct install picks up scenarios from charts/locust-k8s-operator/ci/
+  # (default-values + webhook-enabled-values).
   lint-test-helm:
     name: 🌊 Lint & Test chart
     runs-on: ubuntu-latest
@@ -104,33 +110,21 @@ jobs:
       - name: 📊 Set up chart-testing
         uses: helm/chart-testing-action@v2.7.0
 
-      - name: 📋 Run chart-testing (list-changed)
-        id: list-changed
-        run: |
-          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
-          if [[ -n "$changed" ]]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          fi
-
       - name: 🔎 Run chart-testing (lint)
         run: ct lint --target-branch ${{ github.event.repository.default_branch }} --config .github/ct.yaml
 
       - name: ⛵ Create kind cluster
         uses: helm/kind-action@v1.14.0
-        if: steps.list-changed.outputs.changed == 'true'
 
       - name: 🔧 Setup Go
-        if: steps.list-changed.outputs.changed == 'true'
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
 
       - name: 🛠️ Install ko
-        if: steps.list-changed.outputs.changed == 'true'
         uses: ko-build/setup-ko@v0.9
 
       - name: 🐳 Build operator image with ko
-        if: steps.list-changed.outputs.changed == 'true'
         env:
           KO_DOCKER_REPO: lotest/locust-k8s-operator
         run: |
@@ -138,26 +132,212 @@ jobs:
           ko build ./cmd --local --bare --tags=${CHART_VERSION}
 
       - name: 📦 Load image into kind cluster
-        if: steps.list-changed.outputs.changed == 'true'
         run: |
           CHART_VERSION=$(grep '^appVersion:' charts/locust-k8s-operator/Chart.yaml | awk '{print $2}' | tr -d '"')
           kind load docker-image lotest/locust-k8s-operator:${CHART_VERSION} --name chart-testing
 
+      # cert-manager is required for ci/webhook-enabled-values.yaml. ct install
+      # has no native pre-install hook, so we install cert-manager explicitly
+      # before invoking ct.
+      - name: 🔐 Install cert-manager (for webhook-enabled scenario)
+        run: |
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.3/cert-manager.yaml
+          kubectl -n cert-manager rollout status deploy/cert-manager --timeout=120s
+          kubectl -n cert-manager rollout status deploy/cert-manager-webhook --timeout=120s
+          kubectl -n cert-manager rollout status deploy/cert-manager-cainjector --timeout=120s
+
       - name: 🚀 Run chart-testing (install)
-        run: ct install --target-branch ${{ github.event.repository.default_branch }} --config .github/ct.yaml --helm-extra-set-args "--set=image.pullPolicy=Never"
+        # --all forces ct to install regardless of git-changed scope; pairs
+        # with removing the list-changed gate so this runs on every PR.
+        run: |
+          ct install --all --target-branch ${{ github.event.repository.default_branch }} \
+            --config .github/ct.yaml \
+            --helm-extra-set-args "--set=image.pullPolicy=Never"
 
       - name: 📦 Collect kind cluster logs on failure
-        if: failure() && steps.list-changed.outputs.changed == 'true'
+        if: failure()
         run: kind export logs kind-logs --name chart-testing
 
       - name: 📦 Upload Helm test artifacts on failure
-        if: failure() && steps.list-changed.outputs.changed == 'true'
+        if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: helm-test-artifacts
           path: |
             kind-logs/
           retention-days: 7
+
+  # ============================================
+  # Helm default-install smoke test (regression guard for #317)
+  # ============================================
+  # Runs on every PR. Installs the chart with DEFAULT values (webhook.enabled=
+  # false, no cert-manager) — i.e. the Quick Start path. Asserts pod becomes
+  # Ready and stays restart-free. Catches any change to cmd/, charts/, or
+  # dependencies that breaks the Quick Start, regardless of whether chart
+  # files were edited.
+  helm-default-smoke:
+    name: 🚦 Helm default-install smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: 📂 Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+
+      - name: 🌊 Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: ⛵ Create kind cluster
+        uses: helm/kind-action@v1.14.0
+        with:
+          cluster_name: helm-default-smoke
+
+      - name: 🔧 Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: 🛠️ Install ko
+        uses: ko-build/setup-ko@v0.9
+
+      - name: 🐳 Build operator image with ko
+        env:
+          KO_DOCKER_REPO: lotest/locust-k8s-operator
+        run: |
+          CHART_VERSION=$(grep '^appVersion:' charts/locust-k8s-operator/Chart.yaml | awk '{print $2}' | tr -d '"')
+          ko build ./cmd --local --bare --tags=${CHART_VERSION}
+          echo "CHART_VERSION=${CHART_VERSION}" >> $GITHUB_ENV
+
+      - name: 📦 Load image into kind cluster
+        run: kind load docker-image lotest/locust-k8s-operator:${CHART_VERSION} --name helm-default-smoke
+
+      - name: 🚀 helm install (default values, the Quick Start path)
+        run: |
+          helm install locust-operator charts/locust-k8s-operator/ \
+            --namespace locust-system \
+            --create-namespace \
+            --set image.pullPolicy=Never \
+            --wait --timeout=2m
+
+      - name: ✅ Assert Deployment Available
+        run: |
+          kubectl -n locust-system rollout status deploy/locust-operator --timeout=120s
+          kubectl -n locust-system get deploy/locust-operator -o jsonpath='{.status.conditions[?(@.type=="Available")].status}' \
+            | grep -q '^True$' || (echo "Deployment is not Available" && exit 1)
+
+      - name: 🛡️ Assert no restarts in last 30s (regression guard for #317)
+        run: |
+          sleep 30
+          restarts=$(kubectl -n locust-system get pods -l app.kubernetes.io/name=locust-k8s-operator \
+            -o jsonpath='{.items[*].status.containerStatuses[*].restartCount}')
+          for r in $restarts; do
+            if [ "$r" != "0" ]; then
+              echo "ERROR: container restart detected (counts: $restarts) — operator is crash-looping"
+              exit 1
+            fi
+          done
+          echo "✓ no restarts (counts: $restarts)"
+
+      - name: 🔬 Dump diagnostics on failure
+        if: failure()
+        run: |
+          kubectl -n locust-system get pods,events
+          kubectl -n locust-system describe pods
+          kubectl -n locust-system logs -l app.kubernetes.io/name=locust-k8s-operator --tail=200 || true
+
+  # ============================================
+  # Helm upgrade smoke test
+  # ============================================
+  # Installs the last KNOWN-GOOD released chart (v2.1.1 with default values —
+  # v2.2.0/v2.2.1 were broken by #317), then upgrades to the local fix-branch
+  # build. Asserts the upgrade keeps the operator Ready with no restarts.
+  # NOTE: When bumping past 2.1.1, only update this pin once the new baseline
+  # is verified to install cleanly with default values.
+  helm-upgrade-smoke:
+    name: 🔁 Helm upgrade smoke (v2.1.1 → fix)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: 📂 Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+
+      - name: 🌊 Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: ⛵ Create kind cluster
+        uses: helm/kind-action@v1.14.0
+        with:
+          cluster_name: helm-upgrade-smoke
+
+      - name: 🔧 Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: 🛠️ Install ko
+        uses: ko-build/setup-ko@v0.9
+
+      - name: 🐳 Build operator image with ko (fix-branch)
+        env:
+          KO_DOCKER_REPO: lotest/locust-k8s-operator
+        run: |
+          CHART_VERSION=$(grep '^appVersion:' charts/locust-k8s-operator/Chart.yaml | awk '{print $2}' | tr -d '"')
+          ko build ./cmd --local --bare --tags=${CHART_VERSION}
+          echo "CHART_VERSION=${CHART_VERSION}" >> $GITHUB_ENV
+
+      - name: 📦 Load fix-branch image into kind
+        run: kind load docker-image lotest/locust-k8s-operator:${CHART_VERSION} --name helm-upgrade-smoke
+
+      - name: 🌐 Add public Helm repo
+        run: |
+          helm repo add locust-k8s-operator https://abdelrhmanhamouda.github.io/locust-k8s-operator/
+          helm repo update
+
+      - name: 🛻 Install baseline chart v2.1.1 (last known-good defaults)
+        run: |
+          helm install locust-operator locust-k8s-operator/locust-k8s-operator \
+            --version 2.1.1 \
+            --namespace locust-system \
+            --create-namespace \
+            --wait --timeout=2m
+          kubectl -n locust-system rollout status deploy/locust-operator --timeout=120s
+
+      - name: ⬆️ Upgrade to fix-branch chart and image
+        run: |
+          helm upgrade locust-operator charts/locust-k8s-operator/ \
+            --namespace locust-system \
+            --set image.pullPolicy=Never \
+            --wait --timeout=2m
+          kubectl -n locust-system rollout status deploy/locust-operator --timeout=120s
+
+      - name: 🛡️ Assert no restarts in last 30s after upgrade
+        run: |
+          sleep 30
+          restarts=$(kubectl -n locust-system get pods -l app.kubernetes.io/name=locust-k8s-operator \
+            -o jsonpath='{.items[*].status.containerStatuses[*].restartCount}')
+          for r in $restarts; do
+            if [ "$r" != "0" ]; then
+              echo "ERROR: container restart detected after upgrade (counts: $restarts)"
+              exit 1
+            fi
+          done
+          echo "✓ upgrade clean (counts: $restarts)"
+
+      - name: 🔬 Dump diagnostics on failure
+        if: failure()
+        run: |
+          kubectl -n locust-system get pods,events
+          kubectl -n locust-system describe pods
+          kubectl -n locust-system logs -l app.kubernetes.io/name=locust-k8s-operator --tail=200 || true
 
   docs-test:
     name: 📚 Test documentation

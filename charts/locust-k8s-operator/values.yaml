@@ -50,12 +50,21 @@ metrics:
   port: 8080
   secure: false
 
-# -- Webhook configuration (for validation/conversion)
+# -- Webhook configuration (for v2 validation and v1→v2 conversion).
+# When enabled, the operator serves admission webhooks on port 9443 and
+# REQUIRES TLS certificates. Provide them either by:
+#   1. Setting webhook.certManager.enabled=true (cert-manager issues a
+#      Certificate that mounts at /tmp/k8s-webhook-server/serving-certs), or
+#   2. Manually creating a Secret named "<release>-webhook-certs" with
+#      tls.crt and tls.key keys before installing the chart.
+# When disabled (default), no webhook server runs and no certs are needed.
+# This matches the Quick Start path — see issue #317 if you previously hit
+# CrashLoopBackOff on webhook cert lookup with the default install.
 webhook:
-  enabled: false  # Requires cert-manager
+  enabled: false
   port: 9443
   certManager:
-    enabled: true  # Use cert-manager for TLS
+    enabled: true  # Use cert-manager for TLS (requires webhook.enabled=true)
 
 # =============================================================================
 # Locust Test Pod Configuration (what the operator creates)

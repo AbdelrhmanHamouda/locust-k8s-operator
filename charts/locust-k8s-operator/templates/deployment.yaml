@@ -73,6 +73,10 @@ spec:
             - --metrics-secure=false
             {{- end }}
             {{- end }}
+            # Webhooks: explicit single source of truth. When false, the binary
+            # registers no webhook handlers and never starts a webhook server,
+            # so no TLS certificates are required (see issue #317).
+            - --enable-webhooks={{ .Values.webhook.enabled }}
             {{- if .Values.webhook.enabled }}
             # Webhook TLS certificate path (managed by cert-manager or manually)
             - --webhook-cert-path=/tmp/k8s-webhook-server/serving-certs
