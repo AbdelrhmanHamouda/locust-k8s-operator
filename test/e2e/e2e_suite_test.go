@@ -65,6 +65,7 @@ func TestE2E(t *testing.T) {
 //   - lint-test-helm:    ct install with ci/default-values + ci/webhook-enabled
 //   - helm-default-smoke: fresh helm install with default values, asserts no restarts
 //   - helm-upgrade-smoke: helm install v2.1.1 → upgrade to fix-branch
+//
 // Together those cover the install/upgrade surface of the chart end-to-end.
 // Extending the Ginkgo suite to cover Helm-deployed installs is tracked as
 // a follow-up.
