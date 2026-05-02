@@ -47,6 +47,9 @@ const (
 	// Kubernetes Kind names used for owner-reference matching and event payloads.
 	kindJob        = "Job"
 	kindLocustTest = "LocustTest"
+
+	// apiVersionBatchV1 is the APIVersion string for batch/v1 owner references.
+	apiVersionBatchV1 = "batch/v1"
 )
 
 // LocustTestReconciler reconciles a LocustTest object
@@ -414,7 +417,7 @@ func (r *LocustTestReconciler) mapPodToLocustTest(ctx context.Context, obj clien
 	// Step 1: Find the owning Job from the pod's owner references
 	var jobName string
 	for _, ref := range obj.GetOwnerReferences() {
-		if ref.Kind == kindJob && ref.APIVersion == "batch/v1" {
+		if ref.Kind == kindJob && ref.APIVersion == apiVersionBatchV1 {
 			jobName = ref.Name
 			break
 		}
