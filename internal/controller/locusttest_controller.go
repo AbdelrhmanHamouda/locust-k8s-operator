@@ -41,7 +41,13 @@ import (
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/resources"
 )
 
-const finalizerName = "locust.io/cleanup"
+const (
+	finalizerName = "locust.io/cleanup"
+
+	// Kubernetes Kind names used for owner-reference matching and event payloads.
+	kindJob        = "Job"
+	kindLocustTest = "LocustTest"
+)
 
 // LocustTestReconciler reconciles a LocustTest object
 type LocustTestReconciler struct {
@@ -180,13 +186,13 @@ func (r *LocustTestReconciler) createResources(ctx context.Context, lt *locustv2
 	log.V(1).Info("Master Service reconciled", "name", masterService.Name)
 
 	// Create master Job
-	if err := r.createResource(ctx, lt, masterJob, "Job"); err != nil {
+	if err := r.createResource(ctx, lt, masterJob, kindJob); err != nil {
 		return ctrl.Result{}, err
 	}
 	log.V(1).Info("Master Job reconciled", "name", masterJob.Name)
 
 	// Create worker Job
-	if err := r.createResource(ctx, lt, workerJob, "Job"); err != nil {
+	if err := r.createResource(ctx, lt, workerJob, kindJob); err != nil {
 		return ctrl.Result{}, err
 	}
 	log.V(1).Info("Worker Job reconciled", "name", workerJob.Name)
@@ -408,7 +414,7 @@ func (r *LocustTestReconciler) mapPodToLocustTest(ctx context.Context, obj clien
 	// Step 1: Find the owning Job from the pod's owner references
 	var jobName string
 	for _, ref := range obj.GetOwnerReferences() {
-		if ref.Kind == "Job" && ref.APIVersion == "batch/v1" {
+		if ref.Kind == kindJob && ref.APIVersion == "batch/v1" {
 			jobName = ref.Name
 			break
 		}
@@ -429,7 +435,7 @@ func (r *LocustTestReconciler) mapPodToLocustTest(ctx context.Context, obj clien
 
 	// Step 3: Find the LocustTest owner from the Job's owner references
 	for _, ref := range job.GetOwnerReferences() {
-		if ref.Kind == "LocustTest" {
+		if ref.Kind == kindLocustTest {
 			log.V(1).Info("Mapped pod to LocustTest", "pod", obj.GetName(), "job", jobName, "locustTest", ref.Name)
 			return []reconcile.Request{
 				{

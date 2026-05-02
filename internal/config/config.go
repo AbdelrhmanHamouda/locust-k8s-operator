@@ -84,6 +84,30 @@ type OperatorConfig struct {
 	EnableTolerationsCRInjection bool
 }
 
+// Environment variable names. Centralized so that each name appears as a
+// string literal exactly once, both for grep-ability and to keep goconst
+// happy.
+const (
+	envPodCPURequest          = "POD_CPU_REQUEST"
+	envPodMemRequest          = "POD_MEM_REQUEST"
+	envPodEphemeralRequest    = "POD_EPHEMERAL_REQUEST"
+	envPodCPULimit            = "POD_CPU_LIMIT"
+	envPodMemLimit            = "POD_MEM_LIMIT"
+	envPodEphemeralLimit      = "POD_EPHEMERAL_LIMIT"
+	envMasterCPURequest       = "MASTER_POD_CPU_REQUEST"
+	envMasterMemRequest       = "MASTER_POD_MEM_REQUEST"
+	envMasterEphemeralRequest = "MASTER_POD_EPHEMERAL_REQUEST"
+	envMasterCPULimit         = "MASTER_POD_CPU_LIMIT"
+	envMasterMemLimit         = "MASTER_POD_MEM_LIMIT"
+	envMasterEphemeralLimit   = "MASTER_POD_EPHEMERAL_LIMIT"
+	envWorkerCPURequest       = "WORKER_POD_CPU_REQUEST"
+	envWorkerMemRequest       = "WORKER_POD_MEM_REQUEST"
+	envWorkerEphemeralRequest = "WORKER_POD_EPHEMERAL_REQUEST"
+	envWorkerCPULimit         = "WORKER_POD_CPU_LIMIT"
+	envWorkerMemLimit         = "WORKER_POD_MEM_LIMIT"
+	envWorkerEphemeralLimit   = "WORKER_POD_EPHEMERAL_LIMIT"
+)
+
 // LoadConfig loads operator configuration from environment variables.
 // Default values match those in the Java operator's application.yml.
 // Returns error if any resource values are invalid Kubernetes quantities.
@@ -93,26 +117,26 @@ func LoadConfig() (*OperatorConfig, error) {
 		TTLSecondsAfterFinished: getEnvInt32Ptr("JOB_TTL_SECONDS_AFTER_FINISHED"),
 
 		// Pod resource configuration
-		PodCPURequest:              getEnv("POD_CPU_REQUEST", "250m"),
-		PodMemRequest:              getEnv("POD_MEM_REQUEST", "128Mi"),
-		PodEphemeralStorageRequest: getEnv("POD_EPHEMERAL_REQUEST", "30M"),
-		PodCPULimit:                getEnv("POD_CPU_LIMIT", "1000m"),
-		PodMemLimit:                getEnv("POD_MEM_LIMIT", "1024Mi"),
-		PodEphemeralStorageLimit:   getEnv("POD_EPHEMERAL_LIMIT", "50M"),
+		PodCPURequest:              getEnv(envPodCPURequest, "250m"),
+		PodMemRequest:              getEnv(envPodMemRequest, "128Mi"),
+		PodEphemeralStorageRequest: getEnv(envPodEphemeralRequest, "30M"),
+		PodCPULimit:                getEnv(envPodCPULimit, "1000m"),
+		PodMemLimit:                getEnv(envPodMemLimit, "1024Mi"),
+		PodEphemeralStorageLimit:   getEnv(envPodEphemeralLimit, "50M"),
 
 		// Role-specific pod resources (empty = use unified Pod* values above)
-		MasterCPURequest:              getEnv("MASTER_POD_CPU_REQUEST", ""),
-		MasterMemRequest:              getEnv("MASTER_POD_MEM_REQUEST", ""),
-		MasterEphemeralStorageRequest: getEnv("MASTER_POD_EPHEMERAL_REQUEST", ""),
-		MasterCPULimit:                getEnv("MASTER_POD_CPU_LIMIT", ""),
-		MasterMemLimit:                getEnv("MASTER_POD_MEM_LIMIT", ""),
-		MasterEphemeralStorageLimit:   getEnv("MASTER_POD_EPHEMERAL_LIMIT", ""),
-		WorkerCPURequest:              getEnv("WORKER_POD_CPU_REQUEST", ""),
-		WorkerMemRequest:              getEnv("WORKER_POD_MEM_REQUEST", ""),
-		WorkerEphemeralStorageRequest: getEnv("WORKER_POD_EPHEMERAL_REQUEST", ""),
-		WorkerCPULimit:                getEnv("WORKER_POD_CPU_LIMIT", ""),
-		WorkerMemLimit:                getEnv("WORKER_POD_MEM_LIMIT", ""),
-		WorkerEphemeralStorageLimit:   getEnv("WORKER_POD_EPHEMERAL_LIMIT", ""),
+		MasterCPURequest:              getEnv(envMasterCPURequest, ""),
+		MasterMemRequest:              getEnv(envMasterMemRequest, ""),
+		MasterEphemeralStorageRequest: getEnv(envMasterEphemeralRequest, ""),
+		MasterCPULimit:                getEnv(envMasterCPULimit, ""),
+		MasterMemLimit:                getEnv(envMasterMemLimit, ""),
+		MasterEphemeralStorageLimit:   getEnv(envMasterEphemeralLimit, ""),
+		WorkerCPURequest:              getEnv(envWorkerCPURequest, ""),
+		WorkerMemRequest:              getEnv(envWorkerMemRequest, ""),
+		WorkerEphemeralStorageRequest: getEnv(envWorkerEphemeralRequest, ""),
+		WorkerCPULimit:                getEnv(envWorkerCPULimit, ""),
+		WorkerMemLimit:                getEnv(envWorkerMemLimit, ""),
+		WorkerEphemeralStorageLimit:   getEnv(envWorkerEphemeralLimit, ""),
 
 		// Metrics exporter configuration
 		MetricsExporterImage:                   getEnv("METRICS_EXPORTER_IMAGE", "containersol/locust_exporter:v0.5.0"),
@@ -150,24 +174,24 @@ func LoadConfig() (*OperatorConfig, error) {
 // validateResourceQuantities validates all resource quantity strings in config.
 func validateResourceQuantities(cfg *OperatorConfig) error {
 	quantities := map[string]string{
-		"POD_CPU_REQUEST":                    cfg.PodCPURequest,
-		"POD_MEM_REQUEST":                    cfg.PodMemRequest,
-		"POD_EPHEMERAL_REQUEST":              cfg.PodEphemeralStorageRequest,
-		"POD_CPU_LIMIT":                      cfg.PodCPULimit,
-		"POD_MEM_LIMIT":                      cfg.PodMemLimit,
-		"POD_EPHEMERAL_LIMIT":                cfg.PodEphemeralStorageLimit,
-		"MASTER_POD_CPU_REQUEST":             cfg.MasterCPURequest,
-		"MASTER_POD_MEM_REQUEST":             cfg.MasterMemRequest,
-		"MASTER_POD_EPHEMERAL_REQUEST":       cfg.MasterEphemeralStorageRequest,
-		"MASTER_POD_CPU_LIMIT":               cfg.MasterCPULimit,
-		"MASTER_POD_MEM_LIMIT":               cfg.MasterMemLimit,
-		"MASTER_POD_EPHEMERAL_LIMIT":         cfg.MasterEphemeralStorageLimit,
-		"WORKER_POD_CPU_REQUEST":             cfg.WorkerCPURequest,
-		"WORKER_POD_MEM_REQUEST":             cfg.WorkerMemRequest,
-		"WORKER_POD_EPHEMERAL_REQUEST":       cfg.WorkerEphemeralStorageRequest,
-		"WORKER_POD_CPU_LIMIT":               cfg.WorkerCPULimit,
-		"WORKER_POD_MEM_LIMIT":               cfg.WorkerMemLimit,
-		"WORKER_POD_EPHEMERAL_LIMIT":         cfg.WorkerEphemeralStorageLimit,
+		envPodCPURequest:          cfg.PodCPURequest,
+		envPodMemRequest:          cfg.PodMemRequest,
+		envPodEphemeralRequest:    cfg.PodEphemeralStorageRequest,
+		envPodCPULimit:            cfg.PodCPULimit,
+		envPodMemLimit:            cfg.PodMemLimit,
+		envPodEphemeralLimit:      cfg.PodEphemeralStorageLimit,
+		envMasterCPURequest:       cfg.MasterCPURequest,
+		envMasterMemRequest:       cfg.MasterMemRequest,
+		envMasterEphemeralRequest: cfg.MasterEphemeralStorageRequest,
+		envMasterCPULimit:         cfg.MasterCPULimit,
+		envMasterMemLimit:         cfg.MasterMemLimit,
+		envMasterEphemeralLimit:   cfg.MasterEphemeralStorageLimit,
+		envWorkerCPURequest:       cfg.WorkerCPURequest,
+		envWorkerMemRequest:       cfg.WorkerMemRequest,
+		envWorkerEphemeralRequest: cfg.WorkerEphemeralStorageRequest,
+		envWorkerCPULimit:         cfg.WorkerCPULimit,
+		envWorkerMemLimit:         cfg.WorkerMemLimit,
+		envWorkerEphemeralLimit:   cfg.WorkerEphemeralStorageLimit,
 		"METRICS_EXPORTER_CPU_REQUEST":       cfg.MetricsExporterCPURequest,
 		"METRICS_EXPORTER_MEM_REQUEST":       cfg.MetricsExporterMemRequest,
 		"METRICS_EXPORTER_EPHEMERAL_REQUEST": cfg.MetricsExporterEphemeralStorageRequest,

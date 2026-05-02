@@ -121,3 +121,9 @@ const (
 	// DefaultNodeMatchExpressionOperator is the default operator for node selector requirements.
 	DefaultNodeMatchExpressionOperator = "In"
 )
+
+// Security context constants
+const (
+	// CapabilityAll is the wildcard capability used to drop all Linux capabilities.
+	CapabilityAll = "ALL"
+)
