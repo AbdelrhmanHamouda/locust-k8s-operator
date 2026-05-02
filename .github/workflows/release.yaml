@@ -15,8 +15,10 @@ jobs:
     name: 🐳 Publish image
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # SBOMs are generated here but uploaded to the chart release in the
+    # helm-chart-release job (avoids creating a separate bare-semver release).
     permissions:
-      contents: write # Required for uploading release assets
+      contents: read
     env:
       DOCKER_IMAGE: lotest/locust-k8s-operator
     steps:
@@ -60,15 +62,15 @@ jobs:
           format: cyclonedx
           output: sbom-cyclonedx.json
 
-      - name: 📦 Upload SBOMs to release
-        uses: softprops/action-gh-release@v2
+      - name: 📤 Stash SBOMs for chart release job
+        uses: actions/upload-artifact@v7
         with:
-          files: |
+          name: sboms
+          path: |
             sbom-spdx.json
             sbom-cyclonedx.json
-          fail_on_unmatched_files: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          if-no-files-found: error
+          retention-days: 7
 
   helm-chart-release:
     name: 🌊 Publish Helm chart
@@ -111,6 +113,22 @@ jobs:
           skip_packaging: true
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: 📥 Fetch SBOMs from publish-image job
+        uses: actions/download-artifact@v7
+        with:
+          name: sboms
+
+      - name: 📦 Attach SBOMs to chart release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: locust-k8s-operator-${{ github.ref_name }}
+          files: |
+            sbom-spdx.json
+            sbom-cyclonedx.json
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   docs-release:
     name: 📚 Publish documentation
