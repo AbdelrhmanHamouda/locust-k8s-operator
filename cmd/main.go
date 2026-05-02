@@ -242,7 +242,12 @@ func parseFlags() *flagConfig {
 // can be unit-tested without poking the global flag set.
 //
 // Precedence: explicit --enable-webhooks flag wins over the env var.
-func applyEnableWebhooksEnv(cfg *flagConfig, envVal string, flagExplicitlySet bool, logf func(msg string, keysAndValues ...any)) {
+func applyEnableWebhooksEnv(
+	cfg *flagConfig,
+	envVal string,
+	flagExplicitlySet bool,
+	logf func(msg string, keysAndValues ...any),
+) {
 	logf("ENABLE_WEBHOOKS env var is deprecated, use --enable-webhooks=true|false")
 	if flagExplicitlySet {
 		return
