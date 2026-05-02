@@ -547,10 +547,10 @@ Categories:
 =============================================================================
 */}}
 {{- define "locust-k8s-operator.envVars" -}}
-# Webhook configuration
-# Controls whether the operator registers conversion and validation webhooks
-- name: ENABLE_WEBHOOKS
-  value: {{ .Values.webhook.enabled | quote }}
+# Webhook enable/disable is now passed via the --enable-webhooks flag in the
+# Deployment args (single source of truth). The previous ENABLE_WEBHOOKS env
+# var is still honoured by the binary as a deprecated alias for one release
+# but the chart no longer emits it.
 # Resource limits for Locust test pods (master and workers)
 # These define the default resources when not specified in the LocustTest CR
 - name: POD_CPU_REQUEST

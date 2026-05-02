@@ -165,16 +165,45 @@ The Go operator requires significantly fewer resources than the Java version:
 
 ### Webhook Configuration (optional)
 
-The conversion webhook is meant for cases where both the old and new CRDs are present in the cluster. 
-Required when `webhook.enabled: true`:
+The webhook bundle covers two things: v1→v2 LocustTest conversion (for clusters
+that still hold v1 CRs) and v2 admission validation. It is **disabled by
+default** because it requires TLS certificates that the chart cannot provision
+on its own.
+
+When you turn it on, you must provide TLS certs in one of two ways:
+
+1. **cert-manager** (recommended): set `webhook.certManager.enabled=true` and
+   ensure cert-manager is installed in the cluster ahead of time. The chart
+   creates a `Certificate` resource and cert-manager mounts the issued
+   `Secret` into the operator pod.
+2. **Manual**: pre-create a `Secret` named `<release>-webhook-certs` (e.g.
+   `locust-operator-webhook-certs`) with `tls.crt` and `tls.key` keys, then
+   set `webhook.enabled=true` with `webhook.certManager.enabled=false`.
 
 | Parameter | Description | Default |
 |---|---|---|
+| `webhook.enabled` | Enable conversion + validation webhooks. Requires TLS certs. | `false` |
 | `webhook.port` | Webhook server port. | `9443` |
 | `webhook.certManager.enabled` | Use cert-manager for TLS certificate management. | `true` |
 
-!!! note
-    The conversion webhook requires [cert-manager](https://cert-manager.io/) to be installed in your cluster for automatic TLS certificate management.
+Example install with the webhook enabled (cert-manager already present):
+
+```bash
+# Install cert-manager first (one-time, cluster-wide)
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.3/cert-manager.yaml
+
+# Install the operator with webhooks on
+helm install locust-operator locust-k8s-operator/locust-k8s-operator \
+  --namespace locust-system --create-namespace \
+  --set webhook.enabled=true \
+  --set webhook.certManager.enabled=true
+```
+
+!!! warning "Switching `webhook.enabled` from `true` to `false`"
+    The CRD's `spec.conversion` block is removed on the upgrade, so any v1
+    LocustTest CRs that haven't already been migrated to v2 become
+    unreadable. Migrate stored v1 resources first — see the [Migration
+    Guide](./migration.md).
 
 ### Locust Pod Configuration
 

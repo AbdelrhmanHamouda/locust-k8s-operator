@@ -52,15 +52,38 @@ func TestE2E(t *testing.T) {
 	RunSpecs(t, "e2e suite")
 }
 
+// The Ginkgo e2e suite covers the kustomize-based deploy path (`make deploy`)
+// because the test files hardcode kustomize-style resource names (namespace
+// "locust-k8s-operator-system", label selector "control-plane=controller-
+// manager", webhook service "locust-k8s-operator-webhook-service"). Aligning
+// these with the Helm chart's naming would require renaming across multiple
+// test files plus exposing additional knobs on the chart, which is well out
+// of scope for the #317 bug fix.
+//
+// The Helm install path is exercised by three CI jobs in
+// .github/workflows/ci.yaml:
+//   - lint-test-helm:    ct install with ci/default-values + ci/webhook-enabled
+//   - helm-default-smoke: fresh helm install with default values, asserts no restarts
+//   - helm-upgrade-smoke: helm install v2.1.1 → upgrade to fix-branch
+//
+// Together those cover the install/upgrade surface of the chart end-to-end.
+// Extending the Ginkgo suite to cover Helm-deployed installs is tracked as
+// a follow-up.
 var _ = BeforeSuite(func() {
+	setupClusterKustomize()
+})
+
+// setupClusterKustomize builds the operator image, loads it into kind,
+// installs cert-manager, and deploys via `make deploy`. Extracted into a
+// named helper so a future helm-mode equivalent can sit beside it without
+// further restructuring.
+func setupClusterKustomize() {
 	By("building the manager(Operator) image")
 	//nolint:gosec,lll // Test code with known safe projectImage
 	cmd := exec.Command("make", "docker-build", fmt.Sprintf("IMG=%s", projectImage))
 	_, err := utils.Run(cmd)
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to build the manager(Operator) image")
 
-	// TODO(user): If you want to change the e2e test vendor from Kind, ensure the image is
-	// built and available before running the tests. Also, remove the following block.
 	By("loading the manager(Operator) image on Kind")
 	err = utils.LoadImageToKindClusterWithName(projectImage)
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to load the manager(Operator) image into Kind")
@@ -68,7 +91,6 @@ var _ = BeforeSuite(func() {
 	// The tests-e2e are intended to run on a temporary cluster that is created and destroyed for testing.
 	// To prevent errors when tests run in environments with CertManager already installed,
 	// we check for its presence before execution.
-	// Setup CertManager before the suite if not skipped and if not already installed
 	if !skipCertManagerInstall {
 		By("checking if cert manager is installed already")
 		isCertManagerAlreadyInstalled = utils.IsCertManagerCRDsInstalled()
@@ -80,7 +102,7 @@ var _ = BeforeSuite(func() {
 		}
 	}
 
-	By("deploying the operator")
+	By("deploying the operator (kustomize)")
 	//nolint:gosec,lll // Test code with known safe projectImage
 	cmd = exec.Command("make", "deploy", fmt.Sprintf("IMG=%s", projectImage))
 	_, err = utils.Run(cmd)
@@ -97,7 +119,7 @@ var _ = BeforeSuite(func() {
 	By("waiting for the webhook service endpoint to be ready")
 	err = utils.WaitForWebhookReady("locust-k8s-operator-system", "locust-k8s-operator-webhook-service", "2m")
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Webhook service endpoint not ready")
-})
+}
 
 var _ = AfterSuite(func() {
 	By("undeploying the operator")

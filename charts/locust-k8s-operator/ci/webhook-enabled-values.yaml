@@ -1,0 +1,8 @@
+# ct install scenario: webhook + cert-manager path.
+# Requires cert-manager to be installed in the cluster BEFORE `ct install`
+# runs (the workflow installs it as a pre-step). This scenario validates that
+# the original 9ae57702 readyz fix still works end-to-end.
+webhook:
+  enabled: true
+  certManager:
+    enabled: true

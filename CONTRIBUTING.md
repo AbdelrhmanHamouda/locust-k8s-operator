@@ -131,6 +131,31 @@ For local development and testing, [Kind](https://kind.sigs.k8s.io/) (Kubernetes
     kind delete cluster --name locust-dev
     ```
 
+### CI test matrix
+
+Every PR runs the matrix below. If you change `cmd/`, `api/`, `internal/`, or
+the chart, expect all four to fire. The default-values smoke job is the one
+that catches regressions like #317 (operator crashing under the Quick Start
+install path) — keep it green.
+
+| Job in `ci.yaml`     | Deploy method        | webhook.enabled | cert-manager | What it proves                                              |
+| -------------------- | -------------------- | :-------------: | :----------: | ----------------------------------------------------------- |
+| `lint-test-helm`     | `ct install`         |  both scenarios |     yes      | Chart installs cleanly with default values AND with webhook |
+| `helm-default-smoke` | `helm install`       |     `false`     |      no      | Quick Start path: pod Ready, no restarts                    |
+| `helm-upgrade-smoke` | `helm upgrade`       | last good → fix |      no      | Upgrade from `v2.1.1` keeps the operator Ready              |
+| `test-e2e`           | `make deploy` (kust) |     `true`      |     yes      | Full CR lifecycle (master+worker Jobs) reconciles           |
+
+Notes on coverage gaps:
+
+- The Ginkgo e2e suite (`test/e2e/`) currently runs against the kustomize
+  deploy path only. The Helm install surface is covered by the three Helm
+  jobs above. Extending the Ginkgo suite to cover Helm is tracked as a
+  follow-up — it requires aligning chart resource names with kustomize
+  conventions used by hardcoded test constants.
+- Runners are `ubuntu-latest` (amd64). The published image is multi-arch;
+  arm64-specific regressions are caught only at release time via the
+  release workflow.
+
 ### Writing documentation
 
 All documentation is located under the `docs/` directory. The documentation is hosted

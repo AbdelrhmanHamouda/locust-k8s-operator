@@ -1,0 +1,4 @@
+# ct install scenario: chart defaults (webhook.enabled=false, no cert-manager).
+# This file is intentionally empty — `ct install` runs `helm install` without
+# extra values, exercising the same path users hit via the Quick Start guide.
+# Pinning this scenario in CI prevents the recurrence of issue #317.
