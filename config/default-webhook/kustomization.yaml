@@ -2,22 +2,29 @@
 #
 # The base `config/default` overlay deliberately leaves admission webhooks OFF
 # so a fresh `make deploy` cannot hit the issue #317 crash class (no certs
-# available -> CrashLoopBackOff). This overlay re-enables them by including
-# the [WEBHOOK] and [CERTMANAGER] resources and applying the manager patch
-# that flips --enable-webhooks=true and mounts the cert volume.
+# available -> CrashLoopBackOff). This overlay is a sibling of `config/default`
+# (not a child) so the namespace+namePrefix transforms below apply uniformly to
+# the webhook and cert-manager resources too — referencing `../default` as a
+# base would skip them and leave `namespace: system` placeholders unresolved.
 #
 # Prerequisite: cert-manager must already be installed cluster-wide
 # (helm install jetstack/cert-manager ... --set crds.enabled=true).
 
-# Build on top of the safe config/default base, then add the webhook and
-# cert-manager resources plus the manager patch that flips
-# --enable-webhooks=true and mounts the cert volume.
+namespace: locust-k8s-operator-system
+namePrefix: locust-k8s-operator-
+
 resources:
-  - ../default
+  - ../crd
+  - ../rbac
+  - ../manager
   - ../webhook
   - ../certmanager
+  - metrics_service.yaml
 
 patches:
+  - path: manager_metrics_patch.yaml
+    target:
+      kind: Deployment
   - path: manager_webhook_patch.yaml
     target:
       kind: Deployment
