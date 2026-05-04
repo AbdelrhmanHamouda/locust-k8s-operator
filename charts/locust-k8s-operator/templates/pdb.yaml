@@ -6,15 +6,11 @@ Optional PDB for High Availability deployments.
 
 When enabled (with replicaCount >= 2 and leader election), the PDB ensures
 at least one operator pod remains available during voluntary disruptions
-(node drains, upgrades, etc.). This protects:
+(node drains, upgrades, etc.).
 
-  1. Controller availability — reconciliation loops keep running across
-     node-drain windows, so in-flight LocustTest CRs are not stalled.
-  2. (When webhook.enabled=true and failurePolicy=Fail) admission webhook
-     availability — without a Ready operator pod the apiserver rejects all
-     CR writes, blocking unrelated cluster operations.
-
-The PDB is meaningful for case (1) regardless of whether webhooks are on.
+This prevents webhook unavailability during operator upgrades when
+failurePolicy: Fail is set on webhooks. The PDB is meaningful for
+controller availability regardless of whether webhooks are on.
 
 Enable via:
   podDisruptionBudget:

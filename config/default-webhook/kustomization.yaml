@@ -3,9 +3,10 @@
 # The base `config/default` overlay deliberately leaves admission webhooks OFF
 # so a fresh `make deploy` cannot hit the issue #317 crash class (no certs
 # available -> CrashLoopBackOff). This overlay is a sibling of `config/default`
-# (not a child) so the namespace+namePrefix transforms below apply uniformly to
-# the webhook and cert-manager resources too — referencing `../default` as a
-# base would skip them and leave `namespace: system` placeholders unresolved.
+# (not a child) because kustomize's default LoadRestrictionsRootOnly rejects
+# patch paths that resolve outside the kustomization root — referencing
+# `../default` as a base and adding the webhook patch from this directory
+# would fail with "security; file is not in or below ...".
 #
 # Prerequisite: cert-manager must already be installed cluster-wide
 # (helm install jetstack/cert-manager ... --set crds.enabled=true).

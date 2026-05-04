@@ -18,14 +18,12 @@ resources:
 - ../crd
 - ../rbac
 - ../manager
-# [WEBHOOK] To enable the admission/conversion webhook, uncomment the line
-# below AND the matching `manager_webhook_patch.yaml` patch entry below AND
-# the `[CERTMANAGER]` resource. Without all three, `make deploy` will pass
-# --enable-webhooks=true but the pod will fail to load TLS certs.
-#- ../webhook
-# [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER'. 'WEBHOOK' components are required.
-# Requires cert-manager to be installed cluster-wide (helm install jetstack/cert-manager).
-#- ../certmanager
+# [WEBHOOK] To enable admission/conversion webhooks, switch to the
+# `config/default-webhook/` overlay (`make deploy-with-webhook`) instead of
+# editing this file — the cert-manager wiring lives there. This base overlay
+# stays webhook-off so a fresh `make deploy` cannot hit the issue #317
+# crash class (no certs available -> CrashLoopBackOff).
+# [CERTMANAGER] cert-manager wiring also lives in `config/default-webhook/`.
 # [PROMETHEUS] To enable prometheus monitor, uncomment all sections with 'PROMETHEUS'.
 #- ../prometheus
 # [METRICS] Expose the controller manager metrics service.
@@ -44,21 +42,7 @@ patches:
   target:
     kind: Deployment
 
-# Uncomment the patches line if you enable Metrics and CertManager
-# [METRICS-WITH-CERTS] To enable metrics protected with certManager, uncomment the following line.
-# This patch will protect the metrics with certManager self-signed certs.
-#- path: cert_metrics_manager_patch.yaml
-#  target:
-#    kind: Deployment
-
-# [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
-# crd/kustomization.yaml. This patch flips --enable-webhooks=true and mounts
-# the cert volume; do NOT uncomment without also enabling [CERTMANAGER] above.
-#- path: manager_webhook_patch.yaml
-#  target:
-#    kind: Deployment
-
-# [CERTMANAGER] CA injection replacements live in config/default-webhook/
-# (they reference the webhook Service/Certificate, which aren't in this overlay).
-# Re-add them here only if you also uncomment the [WEBHOOK] and [CERTMANAGER]
-# resources above.
+# [WEBHOOK]/[CERTMANAGER]/[METRICS-WITH-CERTS] all live in
+# config/default-webhook/ (use `make deploy-with-webhook`). That overlay
+# brings in ../webhook + ../certmanager, the manager_webhook_patch.yaml,
+# and the cert-manager replacements as one unit.
