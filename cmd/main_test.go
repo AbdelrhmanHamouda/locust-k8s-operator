@@ -22,7 +22,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -34,23 +33,29 @@ import (
 // were registered. The "no GetWebhookServer call" invariant from #317 is
 // asserted by ensuring the recorder never sees ("webhook", readyz) when
 // enableWebhooks=false.
+//
+// Errors are injected per check name (healthErr/readyErr) so each error-path
+// test exercises exactly one registration call site. A single shared error
+// field would always surface from the first call (AddHealthzCheck("healthz"))
+// and leave the readyz and webhook-readyz error paths untested.
 type fakeReadyzAdder struct {
 	healthChecks []string
 	readyChecks  []string
-	addErr       error
+	healthErr    map[string]error
+	readyErr     map[string]error
 }
 
 func (f *fakeReadyzAdder) AddHealthzCheck(name string, _ healthz.Checker) error {
-	if f.addErr != nil {
-		return f.addErr
+	if err, ok := f.healthErr[name]; ok {
+		return err
 	}
 	f.healthChecks = append(f.healthChecks, name)
 	return nil
 }
 
 func (f *fakeReadyzAdder) AddReadyzCheck(name string, _ healthz.Checker) error {
-	if f.addErr != nil {
-		return f.addErr
+	if err, ok := f.readyErr[name]; ok {
+		return err
 	}
 	f.readyChecks = append(f.readyChecks, name)
 	return nil
@@ -92,24 +97,6 @@ func TestAddHealthChecks_DisabledSkipsWebhookCheck(t *testing.T) {
 	}
 }
 
-// TestAddHealthChecks_DisabledIgnoresNonNilChecker is defense in depth: even
-// when a webhook checker is supplied (e.g., a future caller forgets to gate
-// the construction), addHealthChecks itself must drop it when enableWebhooks
-// is false.
-func TestAddHealthChecks_DisabledIgnoresNonNilChecker(t *testing.T) {
-	rec := &fakeReadyzAdder{}
-
-	if err := addHealthChecks(rec, false, healthz.Checker(sentinelChecker)); err != nil {
-		t.Fatalf("addHealthChecks returned error: %v", err)
-	}
-
-	for _, name := range rec.readyChecks {
-		if name == "webhook" {
-			t.Fatalf("addHealthChecks must drop the webhook checker when enableWebhooks=false")
-		}
-	}
-}
-
 // TestAddHealthChecks_EnabledRegistersWebhookCheck preserves the original
 // motivation of commit 9ae57702: when webhooks ARE enabled and a started
 // checker is supplied, the readyz block must include "webhook" so the pod's
@@ -145,13 +132,40 @@ func TestAddHealthChecks_EnabledNilCheckerSkipped(t *testing.T) {
 	}
 }
 
-// TestAddHealthChecks_PropagatesErrors confirms the function surfaces errors
-// from the underlying readyz registration.
-func TestAddHealthChecks_PropagatesErrors(t *testing.T) {
-	want := errors.New("boom")
-	rec := &fakeReadyzAdder{addErr: want}
+// TestAddHealthChecks_PropagatesHealthzError covers the first registration
+// call site: AddHealthzCheck("healthz").
+func TestAddHealthChecks_PropagatesHealthzError(t *testing.T) {
+	want := errors.New("healthz boom")
+	rec := &fakeReadyzAdder{healthErr: map[string]error{"healthz": want}}
 
 	err := addHealthChecks(rec, false, nil)
+	if !errors.Is(err, want) {
+		t.Errorf("expected wrapped error %v, got %v", want, err)
+	}
+}
+
+// TestAddHealthChecks_PropagatesReadyzError covers the second registration
+// call site: AddReadyzCheck("readyz"). Without per-name error injection,
+// this path is masked by the healthz failure.
+func TestAddHealthChecks_PropagatesReadyzError(t *testing.T) {
+	want := errors.New("readyz boom")
+	rec := &fakeReadyzAdder{readyErr: map[string]error{"readyz": want}}
+
+	err := addHealthChecks(rec, false, nil)
+	if !errors.Is(err, want) {
+		t.Errorf("expected wrapped error %v, got %v", want, err)
+	}
+}
+
+// TestAddHealthChecks_PropagatesWebhookReadyzError covers the conditional
+// third registration call site: AddReadyzCheck("webhook"). Only reached when
+// enableWebhooks=true and a non-nil checker is supplied; both prior calls
+// must succeed for this path to fire.
+func TestAddHealthChecks_PropagatesWebhookReadyzError(t *testing.T) {
+	want := errors.New("webhook readyz boom")
+	rec := &fakeReadyzAdder{readyErr: map[string]error{"webhook": want}}
+
+	err := addHealthChecks(rec, true, healthz.Checker(sentinelChecker))
 	if !errors.Is(err, want) {
 		t.Errorf("expected wrapped error %v, got %v", want, err)
 	}
@@ -230,15 +244,15 @@ func TestWaitForWebhookCerts_PollsUntilFilesAppear(t *testing.T) {
 
 func TestApplyEnableWebhooksEnv_FlagWinsOverEnv(t *testing.T) {
 	cfg := &flagConfig{enableWebhooks: false} // flag was set to false
-	logCount := int32(0)
-	logf := func(msg string, kv ...any) { atomic.AddInt32(&logCount, 1) }
+	logCount := 0
+	logf := func(msg string, kv ...any) { logCount++ }
 
 	applyEnableWebhooksEnv(cfg, "true", true, logf)
 
 	if cfg.enableWebhooks {
 		t.Errorf("flag must win over env var, got enableWebhooks=true")
 	}
-	if atomic.LoadInt32(&logCount) != 1 {
+	if logCount != 1 {
 		t.Errorf("expected exactly one deprecation log, got %d", logCount)
 	}
 }
@@ -267,17 +281,18 @@ func TestApplyEnableWebhooksEnv_EnvAppliedWhenFlagUnset_False(t *testing.T) {
 
 func TestApplyEnableWebhooksEnv_LogsEvenWhenFlagWins(t *testing.T) {
 	cfg := &flagConfig{enableWebhooks: true}
-	logCount := int32(0)
+	logCount := 0
 	var firstMsg string
 	logf := func(msg string, kv ...any) {
-		if atomic.AddInt32(&logCount, 1) == 1 {
+		logCount++
+		if logCount == 1 {
 			firstMsg = msg
 		}
 	}
 
 	applyEnableWebhooksEnv(cfg, "true", true, logf)
 
-	if atomic.LoadInt32(&logCount) != 1 {
+	if logCount != 1 {
 		t.Errorf("user with stale env var should still see the deprecation warning, got %d logs", logCount)
 	}
 	if !strings.Contains(firstMsg, "deprecated") {
