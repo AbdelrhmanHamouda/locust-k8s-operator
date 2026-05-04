@@ -293,9 +293,8 @@ v1→v2 ConversionWebhook.
 
 If you have any v1-encoded LocustTest objects in etcd, **read the
 [migration guide](./migration.md#switching-webhookenabled-from-true-to-false-crd-downgrade)
-before flipping** — the chart ships a Helm pre-upgrade hook that will
-abort the upgrade if v1 is still in `storedVersions`, but you should
-migrate the data first.
+before flipping** — those objects become unreadable when the conversion
+route is removed, so migrate the data first.
 
 ### How do I monitor test progress programmatically?
 

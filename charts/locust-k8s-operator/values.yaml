@@ -65,20 +65,6 @@ webhook:
   port: 9443
   certManager:
     enabled: true  # Use cert-manager for TLS (requires webhook.enabled=true)
-  # -- Pre-upgrade safety check: when webhook.enabled=false, a Helm hook Job
-  # inspects the LocustTest CRD's storedVersions and aborts the upgrade if
-  # v1-encoded objects still exist (which would become unreadable after
-  # removing the conversion webhook). See MIGRATION.md, "Switching
-  # webhook.enabled from true to false". Disable only if you understand the
-  # consequences (e.g. you've already migrated v1 objects manually).
-  conversionDowngradeGuard:
-    enabled: true
-    # kubectl image used by the guard Job. Pin to a specific tag to avoid
-    # supply-chain surprises. The hook script invokes /bin/sh, so the image
-    # must not be distroless — `registry.k8s.io/kubectl` and `rancher/kubectl`
-    # are distroless and won't work here. `alpine/k8s` bundles kubectl on
-    # Alpine and is widely used by Helm hook patterns.
-    image: alpine/k8s:1.30.14
 
 # =============================================================================
 # Locust Test Pod Configuration (what the operator creates)
