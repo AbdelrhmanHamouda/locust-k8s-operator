@@ -74,8 +74,11 @@ webhook:
   conversionDowngradeGuard:
     enabled: true
     # kubectl image used by the guard Job. Pin to a specific tag to avoid
-    # supply-chain surprises.
-    image: bitnami/kubectl:1.30
+    # supply-chain surprises. The hook script invokes /bin/sh, so the image
+    # must not be distroless — `registry.k8s.io/kubectl` and `rancher/kubectl`
+    # are distroless and won't work here. `alpine/k8s` bundles kubectl on
+    # Alpine and is widely used by Helm hook patterns.
+    image: alpine/k8s:1.30.14
 
 # =============================================================================
 # Locust Test Pod Configuration (what the operator creates)
