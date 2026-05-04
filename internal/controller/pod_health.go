@@ -31,13 +31,9 @@ import (
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/resources"
 )
 
-const (
-	// podStartupGracePeriod is the time to wait before reporting pod failures.
-	// This prevents false positives during normal startup (scheduling, image pull, volume mount).
-	podStartupGracePeriod = 2 * time.Minute
-
-	msgAllPodsHealthy = "All pods are healthy"
-)
+// podStartupGracePeriod is the time to wait before reporting pod failures.
+// This prevents false positives during normal startup (scheduling, image pull, volume mount).
+const podStartupGracePeriod = 2 * time.Minute
 
 // PodHealthStatus represents the aggregated health status of all pods for a LocustTest.
 type PodHealthStatus struct {
@@ -115,7 +111,7 @@ func (r *LocustTestReconciler) checkPodHealth(ctx context.Context, lt *locustv2.
 		return PodHealthStatus{
 			Healthy: true,
 			Reason:  locustv2.ReasonPodsHealthy,
-			Message: msgAllPodsHealthy,
+			Message: "All pods are healthy",
 		}, 0
 	}
 
@@ -171,7 +167,7 @@ func analyzeContainerStatus(podName string, status corev1.ContainerStatus, isIni
 		message := waiting.Message
 
 		switch {
-		case reason == resources.ReasonCreateContainerCfgError:
+		case reason == "CreateContainerConfigError":
 			// Extract ConfigMap name if this is a config error
 			enhancedMsg := extractConfigMapError(message, lt)
 			return &PodFailureInfo{
@@ -187,7 +183,7 @@ func analyzeContainerStatus(podName string, status corev1.ContainerStatus, isIni
 				ErrorMessage: message,
 			}
 
-		case reason == resources.ReasonCrashLoopBackOff:
+		case reason == "CrashLoopBackOff":
 			return &PodFailureInfo{
 				Name:         podName,
 				FailureType:  locustv2.ReasonPodCrashLoop,
@@ -254,7 +250,7 @@ func extractConfigMapError(errorMsg string, lt *locustv2.LocustTest) string {
 // Returns failure type (reason) and formatted message.
 func buildFailureMessage(failures []PodFailureInfo) (string, string) {
 	if len(failures) == 0 {
-		return locustv2.ReasonPodsHealthy, msgAllPodsHealthy
+		return locustv2.ReasonPodsHealthy, "All pods are healthy"
 	}
 
 	// Group failures by type

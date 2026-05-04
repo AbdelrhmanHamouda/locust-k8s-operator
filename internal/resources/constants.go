@@ -122,22 +122,3 @@ const (
 	DefaultNodeMatchExpressionOperator = "In"
 )
 
-// Security context constants
-const (
-	// CapabilityAll is the wildcard capability used to drop all Linux capabilities.
-	CapabilityAll = "ALL"
-)
-
-// Kubernetes API identifier constants used for owner-reference matching and
-// event payloads.
-const (
-	KindJob           = "Job"
-	KindLocustTest    = "LocustTest"
-	APIVersionBatchV1 = "batch/v1"
-)
-
-// Container waiting reasons reported by the kubelet.
-const (
-	ReasonCreateContainerCfgError = "CreateContainerConfigError"
-	ReasonCrashLoopBackOff        = "CrashLoopBackOff"
-)

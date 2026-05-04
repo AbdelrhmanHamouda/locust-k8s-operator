@@ -24,27 +24,19 @@ import (
 	"github.com/go-logr/logr"
 )
 
-// Locust CLI flags managed by the operator. Centralized so each literal
-// appears once.
-const (
-	flagWorker      = "--worker"
-	flagOtel        = "--otel"
-	flagOnlySummary = "--only-summary"
-)
-
 // operatorManagedFlags is the registry of flags managed by the operator.
 // Users should not override these in extraArgs, but if they do, their value takes precedence.
 var operatorManagedFlags = map[string]bool{
 	"--master":             true,
-	flagWorker:             true,
+	"--worker":             true,
 	"--master-port":        true,
 	"--master-host":        true,
 	"--expect-workers":     true,
 	"--autostart":          true,
 	"--autoquit":           true,
-	flagOtel:               true,
+	"--otel":               true,
 	"--enable-rebalancing": true,
-	flagOnlySummary:        true,
+	"--only-summary":       true,
 }
 
 // detectFlagConflicts checks if extraArgs contain operator-managed flags.
@@ -73,7 +65,7 @@ func BuildMasterCommand(masterSpec *locustv2.MasterSpec, workerReplicas int32, o
 
 	// Add --otel flag if enabled (must come before other flags)
 	if otelEnabled {
-		cmdParts = append(cmdParts, flagOtel)
+		cmdParts = append(cmdParts, "--otel") //nolint:goconst
 	}
 
 	cmdParts = append(cmdParts,
@@ -98,7 +90,7 @@ func BuildMasterCommand(masterSpec *locustv2.MasterSpec, workerReplicas int32, o
 
 	cmdParts = append(cmdParts,
 		"--enable-rebalancing",
-		flagOnlySummary,
+		"--only-summary",
 	)
 
 	// Append extraArgs after operator-managed flags (user flags take precedence via POSIX last-occurrence-wins)
@@ -124,11 +116,11 @@ func BuildWorkerCommand(commandSeed string, masterHost string, otelEnabled bool,
 
 	// Add --otel flag if enabled (must come before other flags)
 	if otelEnabled {
-		cmdParts = append(cmdParts, flagOtel)
+		cmdParts = append(cmdParts, "--otel") //nolint:goconst
 	}
 
 	cmdParts = append(cmdParts,
-		flagWorker,
+		"--worker",
 		fmt.Sprintf("--master-port=%d", MasterPort),
 		fmt.Sprintf("--master-host=%s", masterHost),
 	)
