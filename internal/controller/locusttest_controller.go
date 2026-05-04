@@ -429,7 +429,7 @@ func (r *LocustTestReconciler) mapPodToLocustTest(ctx context.Context, obj clien
 
 	// Step 3: Find the LocustTest owner from the Job's owner references
 	for _, ref := range job.GetOwnerReferences() {
-		if ref.Kind == "LocustTest" {
+		if ref.Kind == "LocustTest" { //nolint:goconst
 			log.V(1).Info("Mapped pod to LocustTest", "pod", obj.GetName(), "job", jobName, "locustTest", ref.Name)
 			return []reconcile.Request{
 				{
