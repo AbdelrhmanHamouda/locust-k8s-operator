@@ -189,8 +189,8 @@ When you turn it on, you must provide TLS certs in one of two ways:
 Example install with the webhook enabled (cert-manager already present):
 
 ```bash
-# Install cert-manager first (one-time, cluster-wide)
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.3/cert-manager.yaml
+# Install cert-manager first (one-time, cluster-wide). v1.14+ required.
+# See https://cert-manager.io/docs/installation/ for current install instructions.
 
 # Install the operator with webhooks on
 helm install locust-operator locust-k8s-operator/locust-k8s-operator \

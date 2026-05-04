@@ -48,11 +48,8 @@ for the full set-up.
 
 ### When defaults are sufficient
 
-If your LocustTest CR-create RBAC is restricted to trusted users (e.g. a
-single platform team) the default webhook-off posture is reasonable and
-saves the cert-manager dependency. The reconciler will still execute the
-operator's logic, including the volume-mount injection — but a malicious
-or buggy CR can submit shapes the webhook would have rejected.
+With a small, trusted set of LocustTest writers, the default (webhook-off)
+posture is reasonable and saves the cert-manager dependency.
 
 ## Operator RBAC Permissions
 
