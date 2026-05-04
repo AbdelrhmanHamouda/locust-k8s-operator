@@ -121,4 +121,3 @@ const (
 	// DefaultNodeMatchExpressionOperator is the default operator for node selector requirements.
 	DefaultNodeMatchExpressionOperator = "In"
 )
-

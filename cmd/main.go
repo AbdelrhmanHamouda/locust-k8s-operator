@@ -242,7 +242,12 @@ func parseFlags() (*flagConfig, bool) {
 // strconv.ParseBool forms set cfg.enableWebhooks. Anything else is ignored
 // with a warning — the prior `envVal != "false"` check silently enabled
 // webhooks on every typo.
-func applyEnableWebhooksEnv(cfg *flagConfig, envVal string, flagWasSet bool, logf func(msg string, keysAndValues ...any)) {
+func applyEnableWebhooksEnv(
+	cfg *flagConfig,
+	envVal string,
+	flagWasSet bool,
+	logf func(msg string, keysAndValues ...any),
+) {
 	logf("ENABLE_WEBHOOKS env var is deprecated, use --enable-webhooks=true|false",
 		"removalRelease", "v2.3.0")
 	if flagWasSet {

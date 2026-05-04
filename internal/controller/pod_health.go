@@ -111,7 +111,7 @@ func (r *LocustTestReconciler) checkPodHealth(ctx context.Context, lt *locustv2.
 		return PodHealthStatus{
 			Healthy: true,
 			Reason:  locustv2.ReasonPodsHealthy,
-			Message: "All pods are healthy",
+			Message: "All pods are healthy", //nolint:goconst
 		}, 0
 	}
 
@@ -167,7 +167,7 @@ func analyzeContainerStatus(podName string, status corev1.ContainerStatus, isIni
 		message := waiting.Message
 
 		switch {
-		case reason == "CreateContainerConfigError":
+		case reason == "CreateContainerConfigError": //nolint:goconst
 			// Extract ConfigMap name if this is a config error
 			enhancedMsg := extractConfigMapError(message, lt)
 			return &PodFailureInfo{
@@ -183,7 +183,7 @@ func analyzeContainerStatus(podName string, status corev1.ContainerStatus, isIni
 				ErrorMessage: message,
 			}
 
-		case reason == "CrashLoopBackOff":
+		case reason == "CrashLoopBackOff": //nolint:goconst
 			return &PodFailureInfo{
 				Name:         podName,
 				FailureType:  locustv2.ReasonPodCrashLoop,

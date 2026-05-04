@@ -26,6 +26,8 @@ import (
 
 // operatorManagedFlags is the registry of flags managed by the operator.
 // Users should not override these in extraArgs, but if they do, their value takes precedence.
+//
+//nolint:goconst // flag literals are more readable than const indirection.
 var operatorManagedFlags = map[string]bool{
 	"--master":             true,
 	"--worker":             true,
