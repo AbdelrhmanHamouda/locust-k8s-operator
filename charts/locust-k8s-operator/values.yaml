@@ -55,11 +55,10 @@ metrics:
 # REQUIRES TLS certificates. Provide them either by:
 #   1. Setting webhook.certManager.enabled=true (cert-manager issues a
 #      Certificate that mounts at /tmp/k8s-webhook-server/serving-certs), or
-#   2. Manually creating a Secret named "<release>-webhook-certs" with
-#      tls.crt and tls.key keys before installing the chart.
+#   2. Manually creating a Secret named "<fullname>-webhook-certs" with
+#      tls.crt and tls.key keys before installing the chart (see the
+#      example in templates/certificate.yaml).
 # When disabled (default), no webhook server runs and no certs are needed.
-# This matches the Quick Start path — see issue #317 if you previously hit
-# CrashLoopBackOff on webhook cert lookup with the default install.
 webhook:
   enabled: false
   port: 9443
