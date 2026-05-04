@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -51,6 +52,17 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
+// Flag and environment variable names. Centralized so the env-var deprecation
+// alias and the explicit-flag map lookup cannot drift.
+const (
+	flagEnableWebhooks = "enable-webhooks"
+	envEnableWebhooks  = "ENABLE_WEBHOOKS"
+
+	// certWaitLogInterval throttles the "still waiting for certs" log line so
+	// a default 2-minute wait does not produce 120 identical lines.
+	certWaitLogInterval = 10 * time.Second
+)
+
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
@@ -67,15 +79,14 @@ func main() {
 	// Apply ENABLE_WEBHOOKS env-var deprecation alias AFTER the logger is
 	// configured so the deprecation warning is actually visible. Done before
 	// any validation so the resolved cfg.enableWebhooks is the one we check.
-	if envVal, ok := os.LookupEnv("ENABLE_WEBHOOKS"); ok {
-		applyEnableWebhooksEnv(flags, envVal, flags.explicitFlags["enable-webhooks"], setupLog.Info)
+	// Empty/unset env var is ignored so chart users with empty `extraEnvs`
+	// entries don't accidentally trip the deprecation path.
+	if envVal := os.Getenv(envEnableWebhooks); envVal != "" {
+		applyEnableWebhooksEnv(flags, envVal, flags.explicitFlags[flagEnableWebhooks], setupLog.Info)
 	}
 
-	// Validate flag combination: enabling webhooks without a cert path is
-	// almost always a misconfiguration and the silent fallback to controller-
-	// runtime's default temp dir is the regression vector behind #317.
-	if flags.enableWebhooks && flags.webhookCertPath == "" {
-		setupLog.Error(nil, "--webhook-cert-path is required when --enable-webhooks=true")
+	if err := validateFlags(flags); err != nil {
+		setupLog.Error(err, "invalid flag configuration")
 		os.Exit(1)
 	}
 
@@ -91,7 +102,12 @@ func main() {
 		webhookCertWatcher *certwatcher.CertWatcher
 	)
 	if flags.enableWebhooks {
-		webhookServer, webhookCertWatcher = setupWebhookServer(flags, tlsOpts)
+		var err error
+		webhookServer, webhookCertWatcher, err = setupWebhookServer(flags, tlsOpts)
+		if err != nil {
+			setupLog.Error(err, "unable to setup webhook server")
+			os.Exit(1)
+		}
 	}
 	metricsServerOptions, metricsCertWatcher := setupMetricsServer(flags, tlsOpts)
 
@@ -238,21 +254,48 @@ func parseFlags() *flagConfig {
 }
 
 // applyEnableWebhooksEnv applies the deprecated ENABLE_WEBHOOKS env var to cfg
-// and emits a one-time deprecation log via the supplied logf. Extracted so it
-// can be unit-tested without poking the global flag set.
+// and emits a deprecation log via the supplied logf. Extracted so it can be
+// unit-tested without poking the global flag set.
 //
 // Precedence: explicit --enable-webhooks flag wins over the env var.
+//
+// Value parsing: strconv.ParseBool, so "1"/"t"/"T"/"TRUE"/"true"/"True" enable
+// and "0"/"f"/"F"/"FALSE"/"false"/"False" disable. Anything else is logged and
+// ignored, leaving the flag default in place — this is a behaviour change vs
+// the prior `envVal != "false"` check, which silently enabled webhooks on any
+// typo and was the env-var path of the same class of regression as #317.
 func applyEnableWebhooksEnv(
 	cfg *flagConfig,
 	envVal string,
 	flagExplicitlySet bool,
 	logf func(msg string, keysAndValues ...any),
 ) {
-	logf("ENABLE_WEBHOOKS env var is deprecated, use --enable-webhooks=true|false")
+	logf("ENABLE_WEBHOOKS env var is deprecated, use --enable-webhooks=true|false",
+		"removalRelease", "v2.3.0")
 	if flagExplicitlySet {
 		return
 	}
-	cfg.enableWebhooks = envVal != "false"
+	parsed, err := strconv.ParseBool(envVal)
+	if err != nil {
+		logf("ignoring ENABLE_WEBHOOKS: not a valid boolean", "value", envVal)
+		return
+	}
+	cfg.enableWebhooks = parsed
+}
+
+// validateFlags rejects flag combinations that are almost always
+// misconfigurations. Extracted so it can be tested without os.Exit.
+//
+// Specifically: enabling webhooks without a cert path silently fell back to
+// controller-runtime's default temp dir on master and was the regression
+// vector behind issue #317. We fail loud instead.
+func validateFlags(cfg *flagConfig) error {
+	if cfg.enableWebhooks && cfg.webhookCertPath == "" {
+		return fmt.Errorf("--webhook-cert-path is required when --enable-webhooks=true " +
+			"(the chart default is /tmp/k8s-webhook-server/serving-certs); " +
+			"or set --enable-webhooks=false to run without admission webhooks")
+	}
+	return nil
 }
 
 // configureTLS creates TLS options based on HTTP/2 setting
@@ -280,7 +323,15 @@ func configureTLS(enableHTTP2 bool) []func(*tls.Config) {
 // Only call when webhooks are enabled — when disabled, leaving this unset is
 // fine because controller-runtime constructs a dormant default server that
 // never starts unless GetWebhookServer() is called.
-func setupWebhookServer(flags *flagConfig, tlsOpts []func(*tls.Config)) (webhook.Server, *certwatcher.CertWatcher) {
+//
+// Returns an error rather than calling os.Exit so the failure paths (cert
+// timeout, cert watcher init) are testable from main_test.go and so any
+// earlier setup (metrics cert watcher goroutines etc.) gets a chance to clean
+// up via the deferred manager-stop chain.
+func setupWebhookServer(
+	flags *flagConfig,
+	tlsOpts []func(*tls.Config),
+) (webhook.Server, *certwatcher.CertWatcher, error) {
 	webhookTLSOpts := tlsOpts
 	var webhookCertWatcher *certwatcher.CertWatcher
 
@@ -293,15 +344,13 @@ func setupWebhookServer(flags *flagConfig, tlsOpts []func(*tls.Config)) (webhook
 			"timeout", flags.webhookCertWaitTimeout)
 
 		if err := waitForWebhookCerts(certFile, keyFile, flags.webhookCertWaitTimeout); err != nil {
-			setupLog.Error(err, "Webhook certificate files not available")
-			os.Exit(1)
+			return nil, nil, fmt.Errorf("webhook certificate files not available: %w", err)
 		}
 
 		var err error
 		webhookCertWatcher, err = certwatcher.New(certFile, keyFile)
 		if err != nil {
-			setupLog.Error(err, "Failed to initialize webhook certificate watcher")
-			os.Exit(1)
+			return nil, nil, fmt.Errorf("failed to initialize webhook certificate watcher: %w", err)
 		}
 
 		webhookTLSOpts = append(webhookTLSOpts, func(config *tls.Config) {
@@ -311,16 +360,21 @@ func setupWebhookServer(flags *flagConfig, tlsOpts []func(*tls.Config)) (webhook
 
 	return webhook.NewServer(webhook.Options{
 		TLSOpts: webhookTLSOpts,
-	}), webhookCertWatcher
+	}), webhookCertWatcher, nil
 }
 
 // waitForWebhookCerts polls until both cert files exist or the timeout elapses.
 // timeout==0 means wait forever (legacy behaviour, opt-in via flag).
+//
+// Logs at info level on first attempt, then at most once per certWaitLogInterval
+// — bounded to avoid 120 identical lines during the default 2-minute wait.
 func waitForWebhookCerts(certFile, keyFile string, timeout time.Duration) error {
 	deadline := time.Time{}
 	if timeout > 0 {
 		deadline = time.Now().Add(timeout)
 	}
+	start := time.Now()
+	lastLog := time.Time{}
 	for {
 		_, certErr := os.Stat(certFile)
 		_, keyErr := os.Stat(keyFile)
@@ -329,10 +383,17 @@ func waitForWebhookCerts(certFile, keyFile string, timeout time.Duration) error 
 		}
 		if !deadline.IsZero() && time.Now().After(deadline) {
 			return fmt.Errorf("webhook cert files (%s, %s) not present after %s — "+
-				"is cert-manager configured and the Certificate ready?",
+				"is cert-manager installed and is the Certificate resource Ready? "+
+				"Check `kubectl describe certificate -A` and `kubectl -n cert-manager logs deploy/cert-manager`",
 				certFile, keyFile, timeout)
 		}
-		setupLog.Info("Webhook certificate files not ready, retrying in 1s...")
+		// Log on first attempt, then no more often than certWaitLogInterval.
+		if lastLog.IsZero() || time.Since(lastLog) >= certWaitLogInterval {
+			setupLog.Info("Webhook certificate files not ready, polling",
+				"elapsed", time.Since(start).Round(time.Second),
+				"timeout", timeout)
+			lastLog = time.Now()
+		}
 		time.Sleep(time.Second)
 	}
 }

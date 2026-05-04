@@ -268,10 +268,10 @@ func TestApplyEnableWebhooksEnv_EnvAppliedWhenFlagUnset_False(t *testing.T) {
 func TestApplyEnableWebhooksEnv_LogsEvenWhenFlagWins(t *testing.T) {
 	cfg := &flagConfig{enableWebhooks: true}
 	logCount := int32(0)
+	var firstMsg string
 	logf := func(msg string, kv ...any) {
-		atomic.AddInt32(&logCount, 1)
-		if !strings.Contains(msg, "deprecated") {
-			t.Errorf("deprecation log must mention 'deprecated', got %q", msg)
+		if atomic.AddInt32(&logCount, 1) == 1 {
+			firstMsg = msg
 		}
 	}
 
@@ -279,6 +279,96 @@ func TestApplyEnableWebhooksEnv_LogsEvenWhenFlagWins(t *testing.T) {
 
 	if atomic.LoadInt32(&logCount) != 1 {
 		t.Errorf("user with stale env var should still see the deprecation warning, got %d logs", logCount)
+	}
+	if !strings.Contains(firstMsg, "deprecated") {
+		t.Errorf("deprecation log must mention 'deprecated', got %q", firstMsg)
+	}
+}
+
+// TestApplyEnableWebhooksEnv_ParsesViaStrconvParseBool covers the H1 fix:
+// the prior `envVal != "false"` semantics silently enabled webhooks for
+// every typo. The new strconv.ParseBool path accepts the standard truthy
+// and falsy forms and ignores the rest with a warning.
+func TestApplyEnableWebhooksEnv_ParsesViaStrconvParseBool(t *testing.T) {
+	truthyValues := []string{"1", "t", "T", "TRUE", "true", "True"}
+	falsyValues := []string{"0", "f", "F", "FALSE", "false", "False"}
+	invalidValues := []string{"yes", "no", "on", "off", "True_typo", "True ", "  true"}
+
+	for _, v := range truthyValues {
+		t.Run("truthy/"+v, func(t *testing.T) {
+			cfg := &flagConfig{enableWebhooks: false}
+			applyEnableWebhooksEnv(cfg, v, false, func(string, ...any) {})
+			if !cfg.enableWebhooks {
+				t.Errorf("envVal=%q should enable webhooks", v)
+			}
+		})
+	}
+	for _, v := range falsyValues {
+		t.Run("falsy/"+v, func(t *testing.T) {
+			cfg := &flagConfig{enableWebhooks: true}
+			applyEnableWebhooksEnv(cfg, v, false, func(string, ...any) {})
+			if cfg.enableWebhooks {
+				t.Errorf("envVal=%q should disable webhooks", v)
+			}
+		})
+	}
+	for _, v := range invalidValues {
+		t.Run("invalid/"+v, func(t *testing.T) {
+			cfg := &flagConfig{enableWebhooks: false}
+			var warned bool
+			logf := func(msg string, _ ...any) {
+				if strings.Contains(msg, "ignoring") {
+					warned = true
+				}
+			}
+			applyEnableWebhooksEnv(cfg, v, false, logf)
+			if cfg.enableWebhooks {
+				t.Errorf("envVal=%q is not a valid boolean and must not flip the default; got enableWebhooks=true", v)
+			}
+			if !warned {
+				t.Errorf("envVal=%q is invalid and must produce an 'ignoring' log line", v)
+			}
+		})
+	}
+}
+
+// -----------------------------------------------------------------------------
+// validateFlags — fail-loud on misconfiguration that previously silently
+// fell back to the controller-runtime temp dir (the regression class of #317).
+// -----------------------------------------------------------------------------
+
+func TestValidateFlags_RejectsEnabledWebhooksWithoutCertPath(t *testing.T) {
+	cfg := &flagConfig{enableWebhooks: true, webhookCertPath: ""}
+
+	err := validateFlags(cfg)
+	if err == nil {
+		t.Fatal("expected error when --enable-webhooks=true without --webhook-cert-path, got nil")
+	}
+	for _, want := range []string{"--webhook-cert-path", "--enable-webhooks"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("error message must mention %q to be actionable, got: %v", want, err)
+		}
+	}
+}
+
+func TestValidateFlags_AcceptsEnabledWebhooksWithCertPath(t *testing.T) {
+	cfg := &flagConfig{enableWebhooks: true, webhookCertPath: "/tmp/k8s-webhook-server/serving-certs"}
+
+	if err := validateFlags(cfg); err != nil {
+		t.Errorf("validateFlags should accept webhooks=true with cert path, got: %v", err)
+	}
+}
+
+func TestValidateFlags_AcceptsDisabledWebhooksRegardlessOfCertPath(t *testing.T) {
+	cases := []*flagConfig{
+		{enableWebhooks: false, webhookCertPath: ""},
+		{enableWebhooks: false, webhookCertPath: "/tmp/whatever"},
+	}
+	for _, cfg := range cases {
+		if err := validateFlags(cfg); err != nil {
+			t.Errorf("validateFlags should accept webhooks=false (cert-path=%q), got: %v",
+				cfg.webhookCertPath, err)
+		}
 	}
 }
 
