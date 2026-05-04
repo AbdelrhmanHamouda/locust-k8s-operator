@@ -28,16 +28,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 )
 
-// fakeReadyzAdder is a test double for ctrl.Manager's healthz/readyz wiring.
-// It records every (name, kind) tuple so tests can assert exactly which checks
-// were registered. The "no GetWebhookServer call" invariant from #317 is
-// asserted by ensuring the recorder never sees ("webhook", readyz) when
-// enableWebhooks=false.
-//
-// Errors are injected per check name (healthErr/readyErr) so each error-path
-// test exercises exactly one registration call site. A single shared error
-// field would always surface from the first call (AddHealthzCheck("healthz"))
-// and leave the readyz and webhook-readyz error paths untested.
+// fakeReadyzAdder records each registration so tests can assert exactly
+// which checks were added. Errors are injected per check name so each
+// registration call site can be exercised independently.
 type fakeReadyzAdder struct {
 	healthChecks []string
 	readyChecks  []string
@@ -61,20 +54,19 @@ func (f *fakeReadyzAdder) AddReadyzCheck(name string, _ healthz.Checker) error {
 	return nil
 }
 
-// sentinelChecker returns nil; used to verify nil vs non-nil behaviour without
-// invoking real webhook plumbing.
 func sentinelChecker(_ *http.Request) error { return nil }
 
-// -----------------------------------------------------------------------------
-// addHealthChecks — the regression-prevention surface
-// -----------------------------------------------------------------------------
+func assertNoWebhookReadyz(t *testing.T, rec *fakeReadyzAdder, ctx string) {
+	t.Helper()
+	for _, name := range rec.readyChecks {
+		if name == "webhook" {
+			t.Fatalf("%s: webhook readyz must not be registered "+
+				"(adding it triggers GetWebhookServer, which loads TLS certs "+
+				"the chart deliberately does not mount)", ctx)
+		}
+	}
+}
 
-// TestAddHealthChecks_DisabledSkipsWebhookCheck pins the structural invariant
-// behind issue #317: when webhooks are disabled, the readyz registration MUST
-// NOT include the "webhook" check. If it does, the manager calls
-// GetWebhookServer() (the side-effect that adds the webhook server as a
-// runnable), which then tries to load TLS certs from the default temp dir and
-// crashes the operator on Helm-default installs.
 func TestAddHealthChecks_DisabledSkipsWebhookCheck(t *testing.T) {
 	rec := &fakeReadyzAdder{}
 
@@ -82,13 +74,7 @@ func TestAddHealthChecks_DisabledSkipsWebhookCheck(t *testing.T) {
 		t.Fatalf("addHealthChecks returned error: %v", err)
 	}
 
-	for _, name := range rec.readyChecks {
-		if name == "webhook" {
-			t.Fatalf("readyz check %q must not be registered when webhooks are disabled "+
-				"(see #317 — registering it forces the webhook server to start, which "+
-				"requires certs that the chart deliberately doesn't mount)", name)
-		}
-	}
+	assertNoWebhookReadyz(t, rec, "webhooks disabled")
 	if !contains(rec.readyChecks, "readyz") {
 		t.Errorf("expected baseline readyz check, got %v", rec.readyChecks)
 	}
@@ -97,10 +83,6 @@ func TestAddHealthChecks_DisabledSkipsWebhookCheck(t *testing.T) {
 	}
 }
 
-// TestAddHealthChecks_EnabledRegistersWebhookCheck preserves the original
-// motivation of commit 9ae57702: when webhooks ARE enabled and a started
-// checker is supplied, the readyz block must include "webhook" so the pod's
-// Endpoints don't go green before admission requests will succeed.
 func TestAddHealthChecks_EnabledRegistersWebhookCheck(t *testing.T) {
 	rec := &fakeReadyzAdder{}
 
@@ -114,10 +96,6 @@ func TestAddHealthChecks_EnabledRegistersWebhookCheck(t *testing.T) {
 	}
 }
 
-// TestAddHealthChecks_EnabledNilCheckerSkipped covers the edge where webhooks
-// are flagged on but no checker was constructed (e.g., manager creation
-// failed earlier). The function should not panic and should not register a
-// nil checker.
 func TestAddHealthChecks_EnabledNilCheckerSkipped(t *testing.T) {
 	rec := &fakeReadyzAdder{}
 
@@ -125,15 +103,9 @@ func TestAddHealthChecks_EnabledNilCheckerSkipped(t *testing.T) {
 		t.Fatalf("addHealthChecks returned error: %v", err)
 	}
 
-	for _, name := range rec.readyChecks {
-		if name == "webhook" {
-			t.Fatalf("addHealthChecks must not register a nil webhook checker")
-		}
-	}
+	assertNoWebhookReadyz(t, rec, "nil checker")
 }
 
-// TestAddHealthChecks_PropagatesHealthzError covers the first registration
-// call site: AddHealthzCheck("healthz").
 func TestAddHealthChecks_PropagatesHealthzError(t *testing.T) {
 	want := errors.New("healthz boom")
 	rec := &fakeReadyzAdder{healthErr: map[string]error{"healthz": want}}
@@ -144,9 +116,6 @@ func TestAddHealthChecks_PropagatesHealthzError(t *testing.T) {
 	}
 }
 
-// TestAddHealthChecks_PropagatesReadyzError covers the second registration
-// call site: AddReadyzCheck("readyz"). Without per-name error injection,
-// this path is masked by the healthz failure.
 func TestAddHealthChecks_PropagatesReadyzError(t *testing.T) {
 	want := errors.New("readyz boom")
 	rec := &fakeReadyzAdder{readyErr: map[string]error{"readyz": want}}
@@ -157,10 +126,6 @@ func TestAddHealthChecks_PropagatesReadyzError(t *testing.T) {
 	}
 }
 
-// TestAddHealthChecks_PropagatesWebhookReadyzError covers the conditional
-// third registration call site: AddReadyzCheck("webhook"). Only reached when
-// enableWebhooks=true and a non-nil checker is supplied; both prior calls
-// must succeed for this path to fire.
 func TestAddHealthChecks_PropagatesWebhookReadyzError(t *testing.T) {
 	want := errors.New("webhook readyz boom")
 	rec := &fakeReadyzAdder{readyErr: map[string]error{"webhook": want}}
@@ -170,10 +135,6 @@ func TestAddHealthChecks_PropagatesWebhookReadyzError(t *testing.T) {
 		t.Errorf("expected wrapped error %v, got %v", want, err)
 	}
 }
-
-// -----------------------------------------------------------------------------
-// waitForWebhookCerts — bounded poll, prevents silent hang
-// -----------------------------------------------------------------------------
 
 func TestWaitForWebhookCerts_TimesOutWhenAbsent(t *testing.T) {
 	dir := t.TempDir()
@@ -238,16 +199,12 @@ func TestWaitForWebhookCerts_PollsUntilFilesAppear(t *testing.T) {
 	}
 }
 
-// -----------------------------------------------------------------------------
-// applyEnableWebhooksEnv — deprecation alias precedence
-// -----------------------------------------------------------------------------
-
 func TestApplyEnableWebhooksEnv_FlagWinsOverEnv(t *testing.T) {
-	cfg := &flagConfig{enableWebhooks: false} // flag was set to false
+	cfg := &flagConfig{enableWebhooks: false, enableWebhooksFlagSet: true}
 	logCount := 0
 	logf := func(msg string, kv ...any) { logCount++ }
 
-	applyEnableWebhooksEnv(cfg, "true", true, logf)
+	applyEnableWebhooksEnv(cfg, "true", logf)
 
 	if cfg.enableWebhooks {
 		t.Errorf("flag must win over env var, got enableWebhooks=true")
@@ -261,7 +218,7 @@ func TestApplyEnableWebhooksEnv_EnvAppliedWhenFlagUnset_True(t *testing.T) {
 	cfg := &flagConfig{enableWebhooks: false}
 	logf := func(string, ...any) {}
 
-	applyEnableWebhooksEnv(cfg, "true", false, logf)
+	applyEnableWebhooksEnv(cfg, "true", logf)
 
 	if !cfg.enableWebhooks {
 		t.Errorf("env var 'true' with no flag should set enableWebhooks=true")
@@ -269,10 +226,10 @@ func TestApplyEnableWebhooksEnv_EnvAppliedWhenFlagUnset_True(t *testing.T) {
 }
 
 func TestApplyEnableWebhooksEnv_EnvAppliedWhenFlagUnset_False(t *testing.T) {
-	cfg := &flagConfig{enableWebhooks: true} // imagine the binary default flipped
+	cfg := &flagConfig{enableWebhooks: true}
 	logf := func(string, ...any) {}
 
-	applyEnableWebhooksEnv(cfg, "false", false, logf)
+	applyEnableWebhooksEnv(cfg, "false", logf)
 
 	if cfg.enableWebhooks {
 		t.Errorf("env var 'false' with no flag should set enableWebhooks=false")
@@ -280,7 +237,7 @@ func TestApplyEnableWebhooksEnv_EnvAppliedWhenFlagUnset_False(t *testing.T) {
 }
 
 func TestApplyEnableWebhooksEnv_LogsEvenWhenFlagWins(t *testing.T) {
-	cfg := &flagConfig{enableWebhooks: true}
+	cfg := &flagConfig{enableWebhooks: true, enableWebhooksFlagSet: true}
 	logCount := 0
 	var firstMsg string
 	logf := func(msg string, kv ...any) {
@@ -290,7 +247,7 @@ func TestApplyEnableWebhooksEnv_LogsEvenWhenFlagWins(t *testing.T) {
 		}
 	}
 
-	applyEnableWebhooksEnv(cfg, "true", true, logf)
+	applyEnableWebhooksEnv(cfg, "true", logf)
 
 	if logCount != 1 {
 		t.Errorf("user with stale env var should still see the deprecation warning, got %d logs", logCount)
@@ -300,10 +257,6 @@ func TestApplyEnableWebhooksEnv_LogsEvenWhenFlagWins(t *testing.T) {
 	}
 }
 
-// TestApplyEnableWebhooksEnv_ParsesViaStrconvParseBool covers the H1 fix:
-// the prior `envVal != "false"` semantics silently enabled webhooks for
-// every typo. The new strconv.ParseBool path accepts the standard truthy
-// and falsy forms and ignores the rest with a warning.
 func TestApplyEnableWebhooksEnv_ParsesViaStrconvParseBool(t *testing.T) {
 	truthyValues := []string{"1", "t", "T", "TRUE", "true", "True"}
 	falsyValues := []string{"0", "f", "F", "FALSE", "false", "False"}
@@ -312,7 +265,7 @@ func TestApplyEnableWebhooksEnv_ParsesViaStrconvParseBool(t *testing.T) {
 	for _, v := range truthyValues {
 		t.Run("truthy/"+v, func(t *testing.T) {
 			cfg := &flagConfig{enableWebhooks: false}
-			applyEnableWebhooksEnv(cfg, v, false, func(string, ...any) {})
+			applyEnableWebhooksEnv(cfg, v, func(string, ...any) {})
 			if !cfg.enableWebhooks {
 				t.Errorf("envVal=%q should enable webhooks", v)
 			}
@@ -321,7 +274,7 @@ func TestApplyEnableWebhooksEnv_ParsesViaStrconvParseBool(t *testing.T) {
 	for _, v := range falsyValues {
 		t.Run("falsy/"+v, func(t *testing.T) {
 			cfg := &flagConfig{enableWebhooks: true}
-			applyEnableWebhooksEnv(cfg, v, false, func(string, ...any) {})
+			applyEnableWebhooksEnv(cfg, v, func(string, ...any) {})
 			if cfg.enableWebhooks {
 				t.Errorf("envVal=%q should disable webhooks", v)
 			}
@@ -336,7 +289,7 @@ func TestApplyEnableWebhooksEnv_ParsesViaStrconvParseBool(t *testing.T) {
 					warned = true
 				}
 			}
-			applyEnableWebhooksEnv(cfg, v, false, logf)
+			applyEnableWebhooksEnv(cfg, v, logf)
 			if cfg.enableWebhooks {
 				t.Errorf("envVal=%q is not a valid boolean and must not flip the default; got enableWebhooks=true", v)
 			}
@@ -346,11 +299,6 @@ func TestApplyEnableWebhooksEnv_ParsesViaStrconvParseBool(t *testing.T) {
 		})
 	}
 }
-
-// -----------------------------------------------------------------------------
-// validateFlags — fail-loud on misconfiguration that previously silently
-// fell back to the controller-runtime temp dir (the regression class of #317).
-// -----------------------------------------------------------------------------
 
 func TestValidateFlags_RejectsEnabledWebhooksWithoutCertPath(t *testing.T) {
 	cfg := &flagConfig{enableWebhooks: true, webhookCertPath: ""}
@@ -386,10 +334,6 @@ func TestValidateFlags_AcceptsDisabledWebhooksRegardlessOfCertPath(t *testing.T)
 		}
 	}
 }
-
-// -----------------------------------------------------------------------------
-// Helpers
-// -----------------------------------------------------------------------------
 
 func contains(xs []string, want string) bool {
 	for _, x := range xs {

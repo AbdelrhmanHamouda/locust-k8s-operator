@@ -21,8 +21,7 @@ resources:
 # [WEBHOOK] To enable the admission/conversion webhook, uncomment the line
 # below AND the matching `manager_webhook_patch.yaml` patch entry below AND
 # the `[CERTMANAGER]` resource. Without all three, `make deploy` will pass
-# --enable-webhooks=true but the pod will fail to load TLS certs (the same
-# class of crash as issue #317).
+# --enable-webhooks=true but the pod will fail to load TLS certs.
 #- ../webhook
 # [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER'. 'WEBHOOK' components are required.
 # Requires cert-manager to be installed cluster-wide (helm install jetstack/cert-manager).
@@ -59,8 +58,7 @@ patches:
 #  target:
 #    kind: Deployment
 
-# [CERTMANAGER] cert-manager CA injection replacements are defined only in
-# config/default-webhook/kustomization.yaml — they reference the webhook
-# Service and Certificate resources which are not part of the default
-# overlay. Re-add them here only if you also uncomment the [WEBHOOK] and
-# [CERTMANAGER] resources above.
+# [CERTMANAGER] CA injection replacements live in config/default-webhook/
+# (they reference the webhook Service/Certificate, which aren't in this overlay).
+# Re-add them here only if you also uncomment the [WEBHOOK] and [CERTMANAGER]
+# resources above.

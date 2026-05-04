@@ -36,10 +36,7 @@ const (
 	// This prevents false positives during normal startup (scheduling, image pull, volume mount).
 	podStartupGracePeriod = 2 * time.Minute
 
-	// Pod health messages and Kubernetes container waiting reasons.
-	msgAllPodsHealthy             = "All pods are healthy"
-	reasonCreateContainerCfgError = "CreateContainerConfigError"
-	reasonCrashLoopBackOff        = "CrashLoopBackOff"
+	msgAllPodsHealthy = "All pods are healthy"
 )
 
 // PodHealthStatus represents the aggregated health status of all pods for a LocustTest.
@@ -174,7 +171,7 @@ func analyzeContainerStatus(podName string, status corev1.ContainerStatus, isIni
 		message := waiting.Message
 
 		switch {
-		case reason == reasonCreateContainerCfgError:
+		case reason == resources.ReasonCreateContainerCfgError:
 			// Extract ConfigMap name if this is a config error
 			enhancedMsg := extractConfigMapError(message, lt)
 			return &PodFailureInfo{
@@ -190,7 +187,7 @@ func analyzeContainerStatus(podName string, status corev1.ContainerStatus, isIni
 				ErrorMessage: message,
 			}
 
-		case reason == reasonCrashLoopBackOff:
+		case reason == resources.ReasonCrashLoopBackOff:
 			return &PodFailureInfo{
 				Name:         podName,
 				FailureType:  locustv2.ReasonPodCrashLoop,

@@ -547,12 +547,8 @@ Categories:
 =============================================================================
 */}}
 {{- define "locust-k8s-operator.envVars" -}}
-# Webhook enable/disable is now passed via the --enable-webhooks flag in the
-# Deployment args (single source of truth). The previous ENABLE_WEBHOOKS env
-# var is still honoured by the binary as a deprecated alias for one release
-# but the chart no longer emits it.
-# Resource limits for Locust test pods (master and workers)
-# These define the default resources when not specified in the LocustTest CR
+# Resource limits for Locust test pods (master and workers).
+# These define the defaults when not specified in the LocustTest CR.
 - name: POD_CPU_REQUEST
   value: {{ include "locust.podCpuRequest" . | quote }}
 - name: POD_MEM_REQUEST
