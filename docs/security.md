@@ -12,6 +12,48 @@ tags:
 
 This guide covers security best practices for deploying and operating the Locust Kubernetes Operator in production environments. It provides practical examples for RBAC configuration, secret management, and security hardening.
 
+## Admission Webhook (Defense in Depth)
+
+The operator ships a v2 ValidatingWebhookConfiguration that enforces
+invariants the reconciler does **not** re-check, including:
+
+- **Reserved secret-mount path conflicts** (`/lotest/src`, `/opt/locust/lib`)
+  — prevents a CR author from shadowing operator-injected paths with
+  arbitrary cluster Secrets.
+- **Reserved volume name prefixes** (`secret-*`, `locust-lib`,
+  `<cr>-master`, `<cr>-worker`) — prevents overriding operator-managed
+  volume mounts.
+- **DNS-label length** on the CR name.
+- **OpenTelemetry config** validation.
+
+### Off by default
+
+As of chart v2.2.2 the webhook is **disabled by default** (`webhook.enabled=false`).
+The default install does not require cert-manager and does not enforce the
+checks above. If you operate a multi-tenant cluster where users have
+LocustTest write permissions but you do not fully trust them, enable the
+webhook:
+
+```yaml
+# values.yaml
+webhook:
+  enabled: true
+  certManager:
+    enabled: true   # cert-manager must be pre-installed cluster-wide
+```
+
+This requires cert-manager. See
+[Helm Deploy → Webhook Configuration](./helm_deploy.md#webhook-configuration-optional)
+for the full set-up.
+
+### When defaults are sufficient
+
+If your LocustTest CR-create RBAC is restricted to trusted users (e.g. a
+single platform team) the default webhook-off posture is reasonable and
+saves the cert-manager dependency. The reconciler will still execute the
+operator's logic, including the volume-mount injection — but a malicious
+or buggy CR can submit shapes the webhook would have rejected.
+
 ## Operator RBAC Permissions
 
 ### What the Operator Needs

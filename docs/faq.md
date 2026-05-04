@@ -235,6 +235,68 @@ The metrics sidecar is maintained for legacy compatibility. Use it only if:
 
 See [Advanced Topics - OpenTelemetry Integration](how-to-guides/observability/configure-opentelemetry.md) for configuration details.
 
+## Operator Troubleshooting
+
+### Operator pod crashes with `tls.crt: no such file or directory`
+
+This is [issue #317](https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues/317),
+fixed in chart v2.2.2. If you see:
+
+```
+ERROR setup problem running manager {"error": "open /tmp/k8s-webhook-server/serving-certs/tls.crt: no such file or directory"}
+```
+
+— upgrade the chart:
+
+```bash
+helm upgrade locust-operator locust-k8s-operator/locust-k8s-operator \
+  --version 2.2.2 --namespace locust-system --reuse-values
+```
+
+Root cause: master defaulted the admission webhook ON whenever the
+`ENABLE_WEBHOOKS` env var was unset, and the operator unconditionally
+constructed a webhook server that then tried to load TLS certs that the
+default install does not provision. The fix introduces an explicit
+`--enable-webhooks` flag (default `false`) and only constructs the webhook
+plumbing when it's on.
+
+### My operator is hanging waiting for cert files
+
+If logs show:
+
+```
+INFO setup Webhook certificate files not ready, polling
+```
+
+— and they never become ready, the most likely causes are:
+
+1. **cert-manager is not installed.** `webhook.enabled=true` requires
+   cert-manager (or a manually pre-created `<release>-webhook-certs` Secret
+   with `tls.crt` and `tls.key` keys).
+2. **The Certificate resource is not Ready.** Check
+   `kubectl describe certificate -A` and
+   `kubectl -n cert-manager logs deploy/cert-manager`.
+3. **`webhook.certManager.enabled=false`** but no Secret was pre-created.
+
+The operator bounds this wait at 2 minutes via
+`--webhook-cert-wait-timeout` and exits with an actionable error rather
+than hanging silently. Set the flag to `0` to wait indefinitely (not
+recommended).
+
+### How do I disable the admission webhook?
+
+Set `webhook.enabled=false` in your Helm values (this is the default for
+fresh installs since v2.2.2). The operator runs without admission
+validation and without a cert-manager dependency. Note: this disables
+both the v2 ValidatingWebhook (schema-checks LocustTest CRs) and the
+v1→v2 ConversionWebhook.
+
+If you have any v1-encoded LocustTest objects in etcd, **read the
+[migration guide](./migration.md#switching-webhookenabled-from-true-to-false-crd-downgrade)
+before flipping** — the chart ships a Helm pre-upgrade hook that will
+abort the upgrade if v1 is still in `storedVersions`, but you should
+migrate the data first.
+
 ### How do I monitor test progress programmatically?
 
 Use the LocustTest status conditions for automation:
