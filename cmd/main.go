@@ -69,17 +69,19 @@ func init() {
 }
 
 func main() {
-	flags := parseFlags()
+	flags, flagWasSet := parseFlags()
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&flags.zapOpts), coloredConsoleEncoder()))
 
 	// Empty/unset is ignored so chart users with blank `extraEnvs` entries
 	// don't accidentally trip the deprecation path.
 	if envVal := os.Getenv(envEnableWebhooks); envVal != "" {
-		applyEnableWebhooksEnv(flags, envVal, setupLog.Info)
+		applyEnableWebhooksEnv(flags, envVal, flagWasSet, setupLog.Info)
 	}
 
-	if err := validateFlags(flags); err != nil {
-		setupLog.Error(err, "invalid flag configuration")
+	if flags.enableWebhooks && flags.webhookCertPath == "" {
+		setupLog.Error(nil, "--webhook-cert-path is required when --enable-webhooks=true "+
+			"(the chart default is /tmp/k8s-webhook-server/serving-certs); "+
+			"or set --enable-webhooks=false to run without admission webhooks")
 		os.Exit(1)
 	}
 
@@ -131,6 +133,7 @@ func main() {
 	}
 
 	if metricsCertWatcher != nil {
+		setupLog.Info("Adding metrics certificate watcher to manager")
 		if err := mgr.Add(metricsCertWatcher); err != nil {
 			setupLog.Error(err, "unable to add metrics certificate watcher to manager")
 			os.Exit(1)
@@ -138,21 +141,28 @@ func main() {
 	}
 
 	if webhookCertWatcher != nil {
+		setupLog.Info("Adding webhook certificate watcher to manager")
 		if err := mgr.Add(webhookCertWatcher); err != nil {
 			setupLog.Error(err, "unable to add webhook certificate watcher to manager")
 			os.Exit(1)
 		}
 	}
 
+	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up health check")
+		os.Exit(1)
+	}
+	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
+	}
 	// Calling mgr.GetWebhookServer() is only safe in the enabled branch:
 	// the call itself adds the webhook server as a manager runnable.
-	var webhookStartedChecker healthz.Checker
 	if flags.enableWebhooks {
-		webhookStartedChecker = mgr.GetWebhookServer().StartedChecker()
-	}
-	if err := addHealthChecks(mgr, flags.enableWebhooks, webhookStartedChecker); err != nil {
-		setupLog.Error(err, "failed to setup health checks")
-		os.Exit(1)
+		if err := mgr.AddReadyzCheck("webhook", mgr.GetWebhookServer().StartedChecker()); err != nil {
+			setupLog.Error(err, "unable to set up webhook ready check")
+			os.Exit(1)
+		}
 	}
 
 	setupLog.Info("starting manager")
@@ -177,19 +187,13 @@ type flagConfig struct {
 	secureMetrics          bool
 	enableHTTP2            bool
 	zapOpts                zap.Options
-	// Captured at parse time so the env-var fallback (applied later, once the
-	// logger is up) can honour "explicit flag wins over env var".
-	enableWebhooksFlagSet bool
 }
 
-// readyzAdder is the narrow slice of ctrl.Manager that addHealthChecks uses,
-// so tests can pass a fake recorder without spinning up envtest.
-type readyzAdder interface {
-	AddHealthzCheck(name string, check healthz.Checker) error
-	AddReadyzCheck(name string, check healthz.Checker) error
-}
-
-func parseFlags() *flagConfig {
+// parseFlags returns the parsed configuration plus a bool indicating whether
+// --enable-webhooks was explicitly set on the command line, so the env-var
+// fallback (applied later, once the logger is up) can honour
+// "explicit flag wins over env var".
+func parseFlags() (*flagConfig, bool) {
 	cfg := &flagConfig{}
 
 	flag.StringVar(&cfg.metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
@@ -223,13 +227,14 @@ func parseFlags() *flagConfig {
 	cfg.zapOpts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
+	var flagWasSet bool
 	flag.Visit(func(f *flag.Flag) {
 		if f.Name == "enable-webhooks" {
-			cfg.enableWebhooksFlagSet = true
+			flagWasSet = true
 		}
 	})
 
-	return cfg
+	return cfg, flagWasSet
 }
 
 // applyEnableWebhooksEnv resolves the deprecated ENABLE_WEBHOOKS env var
@@ -237,10 +242,10 @@ func parseFlags() *flagConfig {
 // strconv.ParseBool forms set cfg.enableWebhooks. Anything else is ignored
 // with a warning — the prior `envVal != "false"` check silently enabled
 // webhooks on every typo.
-func applyEnableWebhooksEnv(cfg *flagConfig, envVal string, logf func(msg string, keysAndValues ...any)) {
+func applyEnableWebhooksEnv(cfg *flagConfig, envVal string, flagWasSet bool, logf func(msg string, keysAndValues ...any)) {
 	logf("ENABLE_WEBHOOKS env var is deprecated, use --enable-webhooks=true|false",
 		"removalRelease", "v2.3.0")
-	if cfg.enableWebhooksFlagSet {
+	if flagWasSet {
 		return
 	}
 	parsed, err := strconv.ParseBool(envVal)
@@ -251,20 +256,13 @@ func applyEnableWebhooksEnv(cfg *flagConfig, envVal string, logf func(msg string
 	cfg.enableWebhooks = parsed
 }
 
-// validateFlags rejects flag combinations that previously fell back silently
-// to controller-runtime's default temp dir for cert loading.
-func validateFlags(cfg *flagConfig) error {
-	if cfg.enableWebhooks && cfg.webhookCertPath == "" {
-		return fmt.Errorf("--webhook-cert-path is required when --enable-webhooks=true " +
-			"(the chart default is /tmp/k8s-webhook-server/serving-certs); " +
-			"or set --enable-webhooks=false to run without admission webhooks")
-	}
-	return nil
-}
-
 // configureTLS creates TLS options based on HTTP/2 setting
 func configureTLS(enableHTTP2 bool) []func(*tls.Config) {
 	var tlsOpts []func(*tls.Config)
+
+	tlsOpts = append(tlsOpts, func(c *tls.Config) {
+		c.MinVersion = tls.VersionTLS12
+	})
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -442,24 +440,5 @@ func registerControllersAndWebhooks(mgr ctrl.Manager, enableWebhooks bool) error
 	}
 	// +kubebuilder:scaffold:builder
 
-	return nil
-}
-
-// addHealthChecks registers /healthz and /readyz. When webhooks are enabled
-// and webhookStartedChecker is non-nil, also gates readiness on the webhook
-// server having started listening so Endpoints don't go green before
-// admission requests will succeed.
-func addHealthChecks(mgr readyzAdder, enableWebhooks bool, webhookStartedChecker healthz.Checker) error {
-	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		return fmt.Errorf("unable to set up health check: %w", err)
-	}
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		return fmt.Errorf("unable to set up ready check: %w", err)
-	}
-	if enableWebhooks && webhookStartedChecker != nil {
-		if err := mgr.AddReadyzCheck("webhook", webhookStartedChecker); err != nil {
-			return fmt.Errorf("unable to set up webhook ready check: %w", err)
-		}
-	}
 	return nil
 }
