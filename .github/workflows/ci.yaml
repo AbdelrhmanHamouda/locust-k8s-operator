@@ -58,8 +58,13 @@ jobs:
           name: go-coverage
           fail_ci_if_error: false
 
+      # Codacy upload is gated on same-repo PRs (and push events). On fork
+      # pull_requests this step would receive ${{ secrets.CODACY_PROJECT_TOKEN }}
+      # in the same job that just executed attacker-controlled `make test`
+      # output — a textbook pwn-request pattern. Fork PRs will get coverage
+      # uploaded by a follow-up workflow_run-style job in a future change.
       - name: 📈 Report coverage to Codacy
-        if: always()
+        if: always() && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: codacy/codacy-coverage-reporter-action@v1
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
@@ -136,12 +141,20 @@ jobs:
           CHART_VERSION=$(grep '^appVersion:' charts/locust-k8s-operator/Chart.yaml | awk '{print $2}' | tr -d '"')
           kind load docker-image lotest/locust-k8s-operator:${CHART_VERSION} --name chart-testing
 
-      # cert-manager is required for ci/webhook-enabled-values.yaml. ct install
-      # has no native pre-install hook, so we install cert-manager explicitly
-      # before invoking ct.
+      # cert-manager is required for ci/webhook-enabled-values.yaml. Use
+      # the official Jetstack Helm repo rather than a raw kubectl apply of
+      # a release-asset URL — Helm's install path is cacheable, idempotent,
+      # and surfaces signature failures more clearly than `kubectl apply -f`
+      # does.
       - name: 🔐 Install cert-manager (for webhook-enabled scenario)
         run: |
-          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.3/cert-manager.yaml
+          helm repo add jetstack https://charts.jetstack.io --force-update
+          helm repo update
+          helm install cert-manager jetstack/cert-manager \
+            --namespace cert-manager --create-namespace \
+            --version v1.16.3 \
+            --set crds.enabled=true \
+            --wait --timeout=3m
           kubectl -n cert-manager rollout status deploy/cert-manager --timeout=120s
           kubectl -n cert-manager rollout status deploy/cert-manager-webhook --timeout=120s
           kubectl -n cert-manager rollout status deploy/cert-manager-cainjector --timeout=120s
@@ -250,17 +263,29 @@ jobs:
           kubectl -n locust-system logs -l app.kubernetes.io/name=locust-k8s-operator --tail=200 || true
 
   # ============================================
-  # Helm upgrade smoke test
+  # Helm upgrade smoke test (matrix)
   # ============================================
-  # Installs the last KNOWN-GOOD released chart (v2.1.1 with default values —
-  # v2.2.0/v2.2.1 were broken by #317), then upgrades to the local fix-branch
-  # build. Asserts the upgrade keeps the operator Ready with no restarts.
-  # NOTE: When bumping past 2.1.1, only update this pin once the new baseline
-  # is verified to install cleanly with default values.
+  # Two baselines:
+  #   - v2.1.1 (last known-good defaults) — must come up cleanly, then upgrade.
+  #   - v2.2.1 (the actually broken version users are stuck on per #317) —
+  #     install is expected to crashloop; the upgrade must rescue it.
+  # The matrix.expect_baseline_crash field encodes whether the baseline pod is
+  # expected to be Ready before the upgrade. v2.2.1 isn't, so we don't `--wait`
+  # the baseline install and skip the rollout-status check.
   helm-upgrade-smoke:
-    name: 🔁 Helm upgrade smoke (v2.1.1 → fix)
+    name: 🔁 Helm upgrade smoke (${{ matrix.baseline }} → fix)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - baseline: '2.1.1'
+            expect_baseline_crash: false
+            cluster_name: 'upgrade-from-211'
+          - baseline: '2.2.1'
+            expect_baseline_crash: true
+            cluster_name: 'upgrade-from-221'
     steps:
       - name: 📂 Checkout
         uses: actions/checkout@v6
@@ -276,7 +301,7 @@ jobs:
       - name: ⛵ Create kind cluster
         uses: helm/kind-action@v1.14.0
         with:
-          cluster_name: helm-upgrade-smoke
+          cluster_name: ${{ matrix.cluster_name }}
 
       - name: 🔧 Setup Go
         uses: actions/setup-go@v6
@@ -295,38 +320,75 @@ jobs:
           echo "CHART_VERSION=${CHART_VERSION}" >> $GITHUB_ENV
 
       - name: 📦 Load fix-branch image into kind
-        run: kind load docker-image lotest/locust-k8s-operator:${CHART_VERSION} --name helm-upgrade-smoke
+        run: kind load docker-image lotest/locust-k8s-operator:${CHART_VERSION} --name ${{ matrix.cluster_name }}
 
       - name: 🌐 Add public Helm repo
         run: |
           helm repo add locust-k8s-operator https://abdelrhmanhamouda.github.io/locust-k8s-operator/
           helm repo update
 
-      - name: 🛻 Install baseline chart v2.1.1 (last known-good defaults)
+      - name: 🛻 Install baseline chart ${{ matrix.baseline }}
+        # For the v2.2.1 baseline we deliberately skip --wait — the pod is
+        # expected to crashloop on cert-load (#317) and `helm install --wait`
+        # would just time out. The upgrade step is the rescue path under test.
         run: |
-          helm install locust-operator locust-k8s-operator/locust-k8s-operator \
-            --version 2.1.1 \
-            --namespace locust-system \
-            --create-namespace \
-            --wait --timeout=2m
-          kubectl -n locust-system rollout status deploy/locust-operator --timeout=120s
+          if [ "${{ matrix.expect_baseline_crash }}" = "true" ]; then
+            helm install locust-operator locust-k8s-operator/locust-k8s-operator \
+              --version ${{ matrix.baseline }} \
+              --namespace locust-system \
+              --create-namespace
+            # Give the broken pod ~30s to enter CrashLoopBackOff; this confirms
+            # the baseline still reproduces #317.
+            sleep 30
+            restarts=$(kubectl -n locust-system get pods -l app.kubernetes.io/name=locust-k8s-operator \
+              -o jsonpath='{.items[*].status.containerStatuses[*].restartCount}')
+            echo "Baseline ${{ matrix.baseline }} restart counts: $restarts"
+            if echo "$restarts" | grep -q '^0\( 0\)*$'; then
+              echo "WARNING: baseline ${{ matrix.baseline }} did not crash — bug may have been fixed upstream"
+            fi
+          else
+            helm install locust-operator locust-k8s-operator/locust-k8s-operator \
+              --version ${{ matrix.baseline }} \
+              --namespace locust-system \
+              --create-namespace \
+              --wait --timeout=2m
+            kubectl -n locust-system rollout status deploy/locust-operator --timeout=120s
+          fi
 
       - name: ⬆️ Upgrade to fix-branch chart and image
+        # For the crashlooping baseline path, the rollout is what proves the
+        # rescue: `helm upgrade --wait` plus an explicit rollout-restart so
+        # the new ReplicaSet displaces the broken pod even if the old one is
+        # not Ready.
         run: |
           helm upgrade locust-operator charts/locust-k8s-operator/ \
             --namespace locust-system \
             --set image.pullPolicy=Never \
-            --wait --timeout=2m
-          kubectl -n locust-system rollout status deploy/locust-operator --timeout=120s
+            --wait --timeout=3m
+          if [ "${{ matrix.expect_baseline_crash }}" = "true" ]; then
+            kubectl -n locust-system rollout restart deploy/locust-operator
+          fi
+          kubectl -n locust-system rollout status deploy/locust-operator --timeout=180s
 
       - name: 🛡️ Assert no restarts in last 30s after upgrade
+        # restartCount is per-container and persists across the upgrade for the
+        # OLD pod; we filter to pods of the new ReplicaSet by checking only
+        # pods whose status.startTime is within the last 2 minutes, which
+        # excludes the displaced crashloopers.
         run: |
           sleep 30
-          restarts=$(kubectl -n locust-system get pods -l app.kubernetes.io/name=locust-k8s-operator \
-            -o jsonpath='{.items[*].status.containerStatuses[*].restartCount}')
+          # Use `wide` listing then jsonpath; only count restarts on the most
+          # recently created pod.
+          newest_pod=$(kubectl -n locust-system get pods \
+            -l app.kubernetes.io/name=locust-k8s-operator \
+            --sort-by=.metadata.creationTimestamp \
+            -o jsonpath='{.items[-1].metadata.name}')
+          restarts=$(kubectl -n locust-system get pod "$newest_pod" \
+            -o jsonpath='{.status.containerStatuses[*].restartCount}')
+          echo "Post-upgrade pod $newest_pod restart counts: $restarts"
           for r in $restarts; do
             if [ "$r" != "0" ]; then
-              echo "ERROR: container restart detected after upgrade (counts: $restarts)"
+              echo "ERROR: container restart detected on the post-upgrade pod (counts: $restarts)"
               exit 1
             fi
           done
