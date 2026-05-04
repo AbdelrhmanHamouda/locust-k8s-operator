@@ -102,9 +102,13 @@ func setupClusterKustomize() {
 		}
 	}
 
-	By("deploying the operator (kustomize)")
+	By("deploying the operator (kustomize, webhook-enabled overlay)")
+	// `make deploy` now defaults to a webhook-disabled overlay (see issue
+	// #317 — webhooks-on without cert-manager is the historical crash
+	// vector). The e2e suite asserts on webhook resources, so it explicitly
+	// targets the deploy-with-webhook target instead.
 	//nolint:gosec,lll // Test code with known safe projectImage
-	cmd = exec.Command("make", "deploy", fmt.Sprintf("IMG=%s", projectImage))
+	cmd = exec.Command("make", "deploy-with-webhook", fmt.Sprintf("IMG=%s", projectImage))
 	_, err = utils.Run(cmd)
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to deploy the operator")
 
@@ -122,8 +126,8 @@ func setupClusterKustomize() {
 }
 
 var _ = AfterSuite(func() {
-	By("undeploying the operator")
-	cmd := exec.Command("make", "undeploy")
+	By("undeploying the operator (webhook-enabled overlay)")
+	cmd := exec.Command("make", "undeploy-with-webhook")
 	_, _ = utils.Run(cmd)
 
 	// Teardown CertManager after the suite if not skipped and if it was not already installed

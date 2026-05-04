@@ -1,0 +1,132 @@
+# Webhook-enabled overlay used by `make deploy-with-webhook`.
+#
+# The base `config/default` overlay deliberately leaves admission webhooks OFF
+# so a fresh `make deploy` cannot hit the issue #317 crash class (no certs
+# available -> CrashLoopBackOff). This overlay re-enables them by including
+# the [WEBHOOK] and [CERTMANAGER] resources and applying the manager patch
+# that flips --enable-webhooks=true and mounts the cert volume.
+#
+# Prerequisite: cert-manager must already be installed cluster-wide
+# (helm install jetstack/cert-manager ... --set crds.enabled=true).
+
+# Build on top of the safe config/default base, then add the webhook and
+# cert-manager resources plus the manager patch that flips
+# --enable-webhooks=true and mounts the cert volume.
+resources:
+  - ../default
+  - ../webhook
+  - ../certmanager
+
+patches:
+  - path: manager_webhook_patch.yaml
+    target:
+      kind: Deployment
+
+# Replacements identical to config/default/kustomization.yaml so the cert-
+# manager CA injection works for the ValidatingWebhookConfiguration and the
+# CRD's spec.conversion block.
+replacements:
+  - source:
+      kind: Service
+      version: v1
+      name: webhook-service
+      fieldPath: .metadata.name
+    targets:
+      - select:
+          kind: Certificate
+          group: cert-manager.io
+          version: v1
+          name: serving-cert
+        fieldPaths:
+          - .spec.dnsNames.0
+          - .spec.dnsNames.1
+        options:
+          delimiter: '.'
+          index: 0
+          create: true
+  - source:
+      kind: Service
+      version: v1
+      name: webhook-service
+      fieldPath: .metadata.namespace
+    targets:
+      - select:
+          kind: Certificate
+          group: cert-manager.io
+          version: v1
+          name: serving-cert
+        fieldPaths:
+          - .spec.dnsNames.0
+          - .spec.dnsNames.1
+        options:
+          delimiter: '.'
+          index: 1
+          create: true
+  - source:
+      kind: Certificate
+      group: cert-manager.io
+      version: v1
+      name: serving-cert
+      fieldPath: .metadata.namespace
+    targets:
+      - select:
+          kind: CustomResourceDefinition
+          group: apiextensions.k8s.io
+          version: v1
+          name: locusttests.locust.io
+        fieldPaths:
+          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+        options:
+          delimiter: '/'
+          index: 0
+          create: true
+  - source:
+      kind: Certificate
+      group: cert-manager.io
+      version: v1
+      name: serving-cert
+      fieldPath: .metadata.name
+    targets:
+      - select:
+          kind: CustomResourceDefinition
+          group: apiextensions.k8s.io
+          version: v1
+          name: locusttests.locust.io
+        fieldPaths:
+          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+        options:
+          delimiter: '/'
+          index: 1
+          create: true
+  - source:
+      kind: Certificate
+      group: cert-manager.io
+      version: v1
+      name: serving-cert
+      fieldPath: .metadata.namespace
+    targets:
+      - select:
+          kind: ValidatingWebhookConfiguration
+          name: validating-webhook-configuration
+        fieldPaths:
+          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+        options:
+          delimiter: '/'
+          index: 0
+          create: true
+  - source:
+      kind: Certificate
+      group: cert-manager.io
+      version: v1
+      name: serving-cert
+      fieldPath: .metadata.name
+    targets:
+      - select:
+          kind: ValidatingWebhookConfiguration
+          name: validating-webhook-configuration
+        fieldPaths:
+          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+        options:
+          delimiter: '/'
+          index: 1
+          create: true
