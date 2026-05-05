@@ -23,11 +23,6 @@ jobs:
     name: 🏗️ Build Go Operator
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # SECURITY: this job runs attacker-controlled code from fork PRs. The
-    # Codacy upload step (the only consumer of `secrets.*`) is gated to
-    # same-repo PRs and push events. Do not add other `secrets.*` references
-    # or widen the workflow-level `permissions: contents: read` —
-    # the checkout is fork-controlled.
     steps:
       - name: 📂 Checkout repo
         uses: actions/checkout@v6
@@ -98,10 +93,6 @@ jobs:
     name: 🌊 Lint & Test chart
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # SECURITY: this job runs attacker-controlled code from fork PRs. It
-    # intentionally references NO secrets and relies on the workflow-level
-    # `permissions: contents: read`. Do not add `secrets.*` references or
-    # widen permissions — the checkout is fork-controlled.
     steps:
       - name: 📂 Checkout
         uses: actions/checkout@v6
@@ -193,11 +184,6 @@ jobs:
     name: 📚 Test documentation
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # SECURITY: this job runs attacker-controlled code from fork PRs. The only
-    # `secrets.*` reference is the auto-injected GITHUB_TOKEN, which is
-    # read-only on fork PRs by GitHub policy. Do not add other `secrets.*`
-    # references or widen the workflow-level `permissions: contents: read` —
-    # the checkout is fork-controlled.
     steps:
       - name: 📂 Checkout
         uses: actions/checkout@v6
@@ -240,11 +226,6 @@ jobs:
     name: 🔒 Security scan
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # SECURITY: this job runs attacker-controlled code from fork PRs. SARIF
-    # upload uses the auto-injected GITHUB_TOKEN; even though the workflow
-    # declares `security-events: write`, fork PRs receive a read-only token
-    # by GitHub policy. Do not add `secrets.*` references or other write
-    # permissions inside this job — the checkout is fork-controlled.
     steps:
       - name: 📂 Checkout
         uses: actions/checkout@v6
