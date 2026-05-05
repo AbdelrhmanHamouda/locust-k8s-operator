@@ -35,6 +35,13 @@ import (
 // This prevents false positives during normal startup (scheduling, image pull, volume mount).
 const podStartupGracePeriod = 2 * time.Minute
 
+// Container waiting reasons surfaced by the kubelet on the Pod status.
+// These are string contracts from the K8s API, not constants exposed by client-go.
+const (
+	reasonCreateContainerConfigError = "CreateContainerConfigError"
+	reasonCrashLoopBackOff           = "CrashLoopBackOff"
+)
+
 // PodHealthStatus represents the aggregated health status of all pods for a LocustTest.
 type PodHealthStatus struct {
 	Healthy       bool
@@ -111,7 +118,7 @@ func (r *LocustTestReconciler) checkPodHealth(ctx context.Context, lt *locustv2.
 		return PodHealthStatus{
 			Healthy: true,
 			Reason:  locustv2.ReasonPodsHealthy,
-			Message: "All pods are healthy", //nolint:goconst
+			Message: "All pods are healthy",
 		}, 0
 	}
 
@@ -167,7 +174,7 @@ func analyzeContainerStatus(podName string, status corev1.ContainerStatus, isIni
 		message := waiting.Message
 
 		switch {
-		case reason == "CreateContainerConfigError": //nolint:goconst
+		case reason == reasonCreateContainerConfigError:
 			// Extract ConfigMap name if this is a config error
 			enhancedMsg := extractConfigMapError(message, lt)
 			return &PodFailureInfo{
@@ -183,7 +190,7 @@ func analyzeContainerStatus(podName string, status corev1.ContainerStatus, isIni
 				ErrorMessage: message,
 			}
 
-		case reason == "CrashLoopBackOff": //nolint:goconst
+		case reason == reasonCrashLoopBackOff:
 			return &PodFailureInfo{
 				Name:         podName,
 				FailureType:  locustv2.ReasonPodCrashLoop,

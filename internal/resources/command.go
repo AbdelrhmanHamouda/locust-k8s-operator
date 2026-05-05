@@ -24,10 +24,10 @@ import (
 	"github.com/go-logr/logr"
 )
 
+const flagOtel = "--otel"
+
 // operatorManagedFlags is the registry of flags managed by the operator.
 // Users should not override these in extraArgs, but if they do, their value takes precedence.
-//
-//nolint:goconst // flag literals are more readable than const indirection.
 var operatorManagedFlags = map[string]bool{
 	"--master":             true,
 	"--worker":             true,
@@ -36,7 +36,7 @@ var operatorManagedFlags = map[string]bool{
 	"--expect-workers":     true,
 	"--autostart":          true,
 	"--autoquit":           true,
-	"--otel":               true,
+	flagOtel:               true,
 	"--enable-rebalancing": true,
 	"--only-summary":       true,
 }
@@ -67,7 +67,7 @@ func BuildMasterCommand(masterSpec *locustv2.MasterSpec, workerReplicas int32, o
 
 	// Add --otel flag if enabled (must come before other flags)
 	if otelEnabled {
-		cmdParts = append(cmdParts, "--otel") //nolint:goconst
+		cmdParts = append(cmdParts, flagOtel)
 	}
 
 	cmdParts = append(cmdParts,
@@ -118,7 +118,7 @@ func BuildWorkerCommand(commandSeed string, masterHost string, otelEnabled bool,
 
 	// Add --otel flag if enabled (must come before other flags)
 	if otelEnabled {
-		cmdParts = append(cmdParts, "--otel") //nolint:goconst
+		cmdParts = append(cmdParts, flagOtel)
 	}
 
 	cmdParts = append(cmdParts,

@@ -87,11 +87,6 @@ type OperatorConfig struct {
 // LoadConfig loads operator configuration from environment variables.
 // Default values match those in the Java operator's application.yml.
 // Returns error if any resource values are invalid Kubernetes quantities.
-//
-// Env-var names appear once here and once in validateResourceQuantities;
-// the literal pairing is more readable than a const-indirection block.
-//
-//nolint:goconst
 func LoadConfig() (*OperatorConfig, error) {
 	cfg := &OperatorConfig{
 		// Job configuration
@@ -153,11 +148,6 @@ func LoadConfig() (*OperatorConfig, error) {
 }
 
 // validateResourceQuantities validates all resource quantity strings in config.
-//
-// Env-var names mirror the LoadConfig getEnv() calls; pairing is part of the
-// contract, and the inline literals are easier to verify than a const block.
-//
-//nolint:goconst
 func validateResourceQuantities(cfg *OperatorConfig) error {
 	quantities := map[string]string{
 		"POD_CPU_REQUEST":                    cfg.PodCPURequest,
