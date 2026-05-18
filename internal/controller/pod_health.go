@@ -40,6 +40,7 @@ const podStartupGracePeriod = 2 * time.Minute
 const (
 	reasonCreateContainerConfigError = "CreateContainerConfigError"
 	reasonCrashLoopBackOff           = "CrashLoopBackOff"
+	msgAllPodsHealthy                = "All pods are healthy"
 )
 
 // PodHealthStatus represents the aggregated health status of all pods for a LocustTest.
@@ -118,7 +119,7 @@ func (r *LocustTestReconciler) checkPodHealth(ctx context.Context, lt *locustv2.
 		return PodHealthStatus{
 			Healthy: true,
 			Reason:  locustv2.ReasonPodsHealthy,
-			Message: "All pods are healthy",
+			Message: msgAllPodsHealthy,
 		}, 0
 	}
 
@@ -257,7 +258,7 @@ func extractConfigMapError(errorMsg string, lt *locustv2.LocustTest) string {
 // Returns failure type (reason) and formatted message.
 func buildFailureMessage(failures []PodFailureInfo) (string, string) {
 	if len(failures) == 0 {
-		return locustv2.ReasonPodsHealthy, "All pods are healthy"
+		return locustv2.ReasonPodsHealthy, msgAllPodsHealthy
 	}
 
 	// Group failures by type
