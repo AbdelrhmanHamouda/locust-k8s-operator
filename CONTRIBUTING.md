@@ -131,6 +131,34 @@ For local development and testing, [Kind](https://kind.sigs.k8s.io/) (Kubernetes
     kind delete cluster --name locust-dev
     ```
 
+### CI test matrix
+
+Across the two PR workflows (`ci.yaml` and `go-test-e2e.yml`), the matrix
+below runs on every PR. If you change `cmd/`, `api/`, `internal/`, or the
+chart, expect both jobs to fire. `lint-test-helm` is the one that catches
+regressions like #317 (operator crashing under the Quick Start install
+path) via its `ci/default-values.yaml` scenario — keep it green.
+
+| Job              | Workflow            | Deploy method        | webhook.enabled | cert-manager | What it proves                                              |
+| ---------------- | ------------------- | -------------------- | :-------------: | :----------: | ----------------------------------------------------------- |
+| `lint-test-helm` | `ci.yaml`           | `ct install`         |  both scenarios |     yes      | Chart installs cleanly with default values AND with webhook |
+| `test-e2e`       | `go-test-e2e.yml`   | `make deploy` (kust) |     `true`      |     yes      | Full CR lifecycle (master+worker Jobs) reconciles           |
+
+Notes on coverage gaps:
+
+- The Ginkgo e2e suite (`test/e2e/`) currently runs against the kustomize
+  deploy path only. The Helm install surface is covered by `lint-test-helm`.
+  Extending the Ginkgo suite to cover Helm is tracked as a follow-up — it
+  requires aligning chart resource names with kustomize conventions used by
+  hardcoded test constants.
+- Dedicated `helm-default-smoke` and `helm-upgrade-smoke` jobs are tracked
+  as a separate follow-up; they were split out of this PR to land with
+  structural fixes (e.g. replacing the post-`rollout-restart` restart-count
+  peek with `kubectl wait --for=condition=Available`).
+- Runners are `ubuntu-latest` (amd64). The published image is multi-arch;
+  arm64-specific regressions are caught only at release time via the
+  release workflow.
+
 ### Writing documentation
 
 All documentation is located under the `docs/` directory. The documentation is hosted

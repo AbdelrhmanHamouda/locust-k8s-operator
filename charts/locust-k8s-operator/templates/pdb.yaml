@@ -9,7 +9,8 @@ at least one operator pod remains available during voluntary disruptions
 (node drains, upgrades, etc.).
 
 This prevents webhook unavailability during operator upgrades when
-failurePolicy: Fail is set on webhooks.
+failurePolicy: Fail is set on webhooks. The PDB is meaningful for
+controller availability regardless of whether webhooks are on.
 
 Enable via:
   podDisruptionBudget:

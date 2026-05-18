@@ -28,12 +28,19 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
+	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/resources"
 )
 
+// podStartupGracePeriod is the time to wait before reporting pod failures.
+// This prevents false positives during normal startup (scheduling, image pull, volume mount).
+const podStartupGracePeriod = 2 * time.Minute
+
+// Container waiting reasons surfaced by the kubelet on the Pod status.
+// These are string contracts from the K8s API, not constants exposed by client-go.
 const (
-	// podStartupGracePeriod is the time to wait before reporting pod failures.
-	// This prevents false positives during normal startup (scheduling, image pull, volume mount).
-	podStartupGracePeriod = 2 * time.Minute
+	reasonCreateContainerConfigError = "CreateContainerConfigError"
+	reasonCrashLoopBackOff           = "CrashLoopBackOff"
+	msgAllPodsHealthy                = "All pods are healthy"
 )
 
 // PodHealthStatus represents the aggregated health status of all pods for a LocustTest.
@@ -62,7 +69,7 @@ func (r *LocustTestReconciler) checkPodHealth(ctx context.Context, lt *locustv2.
 	listOpts := []client.ListOption{
 		client.InNamespace(lt.Namespace),
 		client.MatchingLabels{
-			"performance-test-name": lt.Name,
+			resources.LabelTestName: lt.Name,
 		},
 	}
 
@@ -112,7 +119,7 @@ func (r *LocustTestReconciler) checkPodHealth(ctx context.Context, lt *locustv2.
 		return PodHealthStatus{
 			Healthy: true,
 			Reason:  locustv2.ReasonPodsHealthy,
-			Message: "All pods are healthy",
+			Message: msgAllPodsHealthy,
 		}, 0
 	}
 
@@ -168,7 +175,7 @@ func analyzeContainerStatus(podName string, status corev1.ContainerStatus, isIni
 		message := waiting.Message
 
 		switch {
-		case reason == "CreateContainerConfigError":
+		case reason == reasonCreateContainerConfigError:
 			// Extract ConfigMap name if this is a config error
 			enhancedMsg := extractConfigMapError(message, lt)
 			return &PodFailureInfo{
@@ -184,7 +191,7 @@ func analyzeContainerStatus(podName string, status corev1.ContainerStatus, isIni
 				ErrorMessage: message,
 			}
 
-		case reason == "CrashLoopBackOff":
+		case reason == reasonCrashLoopBackOff:
 			return &PodFailureInfo{
 				Name:         podName,
 				FailureType:  locustv2.ReasonPodCrashLoop,
@@ -251,7 +258,7 @@ func extractConfigMapError(errorMsg string, lt *locustv2.LocustTest) string {
 // Returns failure type (reason) and formatted message.
 func buildFailureMessage(failures []PodFailureInfo) (string, string) {
 	if len(failures) == 0 {
-		return locustv2.ReasonPodsHealthy, "All pods are healthy"
+		return locustv2.ReasonPodsHealthy, msgAllPodsHealthy
 	}
 
 	// Group failures by type

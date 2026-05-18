@@ -476,3 +476,36 @@ When listing LocustTests, the following columns are displayed:
 | CONNECTED | Connected worker count |
 | IMAGE | Container image (priority column) |
 | AGE | Time since creation |
+
+---
+
+## Operator Binary Flags
+
+These flags configure the operator pod itself (not LocustTest CRs). The
+Helm chart passes them through `deployment.yaml`; users running the binary
+directly or via custom kustomize overlays can pass them on the command line.
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--enable-webhooks` | `false` | Enable conversion + validation webhooks. When `true`, `--webhook-cert-path` is required. Chart binding: `webhook.enabled`. |
+| `--webhook-cert-path` | `""` | Directory holding `tls.crt` / `tls.key`. Chart binding: hardcoded to `/tmp/k8s-webhook-server/serving-certs`. |
+| `--webhook-cert-name` | `tls.crt` | Filename of the TLS certificate. |
+| `--webhook-cert-key` | `tls.key` | Filename of the TLS key. |
+| `--webhook-cert-wait-timeout` | `2m` | Maximum time to wait for cert files to appear. Set to `0` to wait indefinitely (not recommended). |
+| `--metrics-bind-address` | `0` | Metrics endpoint bind address (`0` disables, `:8080` HTTP, `:8443` HTTPS). |
+| `--metrics-secure` | `true` | Serve metrics over HTTPS with TLS. |
+| `--metrics-cert-path` | `""` | Directory holding metrics TLS files. |
+| `--health-probe-bind-address` | `:8081` | Health probe endpoint bind address. |
+| `--leader-elect` | `false` | Enable leader election for HA deployments. |
+| `--enable-http2` | `false` | Enable HTTP/2 for metrics + webhook servers. Off by default to avoid the Rapid Reset CVE class. |
+
+### Deprecated environment variables
+
+| Variable | Replacement | Removal |
+|----------|-------------|---------|
+| `ENABLE_WEBHOOKS` | `--enable-webhooks` | v2.3.0 |
+
+When both are set, the explicit flag wins. Empty `ENABLE_WEBHOOKS=""` is
+ignored (the prior `envVal != "false"` check would have silently enabled
+webhooks on a typo). Valid values are those accepted by Go's
+`strconv.ParseBool`.

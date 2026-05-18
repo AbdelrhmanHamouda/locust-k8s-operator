@@ -148,6 +148,8 @@ func LoadConfig() (*OperatorConfig, error) {
 }
 
 // validateResourceQuantities validates all resource quantity strings in config.
+//
+//nolint:goconst // env-var names intentionally mirror the getEnv() calls in LoadConfig; extracting 18 constants adds noise.
 func validateResourceQuantities(cfg *OperatorConfig) error {
 	quantities := map[string]string{
 		"POD_CPU_REQUEST":                    cfg.PodCPURequest,

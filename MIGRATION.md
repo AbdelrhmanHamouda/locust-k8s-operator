@@ -80,6 +80,12 @@ Most users will not need to make any changes. The Go operator is a drop-in repla
 
 For detailed migration guidance, see the [Migration Guide](https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/) in the documentation.
 
+## v2.2 → v2.2.2 (webhook default flip)
+
+Crashlooping after a fresh `v2.2.0` / `v2.2.1` install? Upgrade to `v2.2.2`. See the
+[v2.2 → v2.2.2 migration notes](https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/#v22--v222)
+for the full breakdown.
+
 ## Rationale
 
 The rewrite to Go was motivated by:

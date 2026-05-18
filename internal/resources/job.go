@@ -163,7 +163,7 @@ func buildMetricsExporterContainer(cfg *config.OperatorConfig) corev1.Container 
 		SecurityContext: &corev1.SecurityContext{
 			AllowPrivilegeEscalation: ptr.To(false),
 			Capabilities: &corev1.Capabilities{
-				Drop: []corev1.Capability{"ALL"},
+				Drop: []corev1.Capability{"ALL"}, //nolint:goconst // idiomatic K8s security context literal
 			},
 			ReadOnlyRootFilesystem: ptr.To(true),
 		},

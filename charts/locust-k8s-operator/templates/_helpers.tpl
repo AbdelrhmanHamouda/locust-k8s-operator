@@ -547,12 +547,8 @@ Categories:
 =============================================================================
 */}}
 {{- define "locust-k8s-operator.envVars" -}}
-# Webhook configuration
-# Controls whether the operator registers conversion and validation webhooks
-- name: ENABLE_WEBHOOKS
-  value: {{ .Values.webhook.enabled | quote }}
-# Resource limits for Locust test pods (master and workers)
-# These define the default resources when not specified in the LocustTest CR
+# Resource limits for Locust test pods (master and workers).
+# These define the defaults when not specified in the LocustTest CR.
 - name: POD_CPU_REQUEST
   value: {{ include "locust.podCpuRequest" . | quote }}
 - name: POD_MEM_REQUEST

@@ -58,8 +58,13 @@ jobs:
           name: go-coverage
           fail_ci_if_error: false
 
+      # Codacy upload is gated on same-repo PRs (and push events). On fork
+      # pull_requests this step would receive ${{ secrets.CODACY_PROJECT_TOKEN }}
+      # in the same job that just executed attacker-controlled `make test`
+      # output — a textbook pwn-request pattern. Fork PRs will get coverage
+      # uploaded by a follow-up workflow_run-style job in a future change.
       - name: 📈 Report coverage to Codacy
-        if: always()
+        if: always() && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: codacy/codacy-coverage-reporter-action@v1
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
@@ -78,6 +83,12 @@ jobs:
   # ============================================
   # Helm Chart Lint & Test
   # ============================================
+  # Runs ct lint always; runs ct install (with kind cluster) on EVERY PR —
+  # not just when charts/ changes. Issue #317 was a cmd/ change that broke the
+  # default Helm install but no chart files moved, so the previous
+  # "list-changed" gate let the regression through. Always installing closes
+  # that hole. ct install picks up scenarios from charts/locust-k8s-operator/ci/
+  # (default-values + webhook-enabled-values).
   lint-test-helm:
     name: 🌊 Lint & Test chart
     runs-on: ubuntu-latest
@@ -104,33 +115,21 @@ jobs:
       - name: 📊 Set up chart-testing
         uses: helm/chart-testing-action@v2.7.0
 
-      - name: 📋 Run chart-testing (list-changed)
-        id: list-changed
-        run: |
-          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
-          if [[ -n "$changed" ]]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          fi
-
       - name: 🔎 Run chart-testing (lint)
         run: ct lint --target-branch ${{ github.event.repository.default_branch }} --config .github/ct.yaml
 
       - name: ⛵ Create kind cluster
         uses: helm/kind-action@v1.14.0
-        if: steps.list-changed.outputs.changed == 'true'
 
       - name: 🔧 Setup Go
-        if: steps.list-changed.outputs.changed == 'true'
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
 
       - name: 🛠️ Install ko
-        if: steps.list-changed.outputs.changed == 'true'
         uses: ko-build/setup-ko@v0.9
 
       - name: 🐳 Build operator image with ko
-        if: steps.list-changed.outputs.changed == 'true'
         env:
           KO_DOCKER_REPO: lotest/locust-k8s-operator
         run: |
@@ -138,20 +137,42 @@ jobs:
           ko build ./cmd --local --bare --tags=${CHART_VERSION}
 
       - name: 📦 Load image into kind cluster
-        if: steps.list-changed.outputs.changed == 'true'
         run: |
           CHART_VERSION=$(grep '^appVersion:' charts/locust-k8s-operator/Chart.yaml | awk '{print $2}' | tr -d '"')
           kind load docker-image lotest/locust-k8s-operator:${CHART_VERSION} --name chart-testing
 
+      # cert-manager is required for ci/webhook-enabled-values.yaml. Use
+      # the official Jetstack Helm repo rather than a raw kubectl apply of
+      # a release-asset URL — Helm's install path is cacheable, idempotent,
+      # and surfaces signature failures more clearly than `kubectl apply -f`
+      # does.
+      - name: 🔐 Install cert-manager (for webhook-enabled scenario)
+        run: |
+          helm repo add jetstack https://charts.jetstack.io --force-update
+          helm repo update
+          helm install cert-manager jetstack/cert-manager \
+            --namespace cert-manager --create-namespace \
+            --version v1.16.3 \
+            --set crds.enabled=true \
+            --wait --timeout=3m
+          kubectl -n cert-manager rollout status deploy/cert-manager --timeout=120s
+          kubectl -n cert-manager rollout status deploy/cert-manager-webhook --timeout=120s
+          kubectl -n cert-manager rollout status deploy/cert-manager-cainjector --timeout=120s
+
       - name: 🚀 Run chart-testing (install)
-        run: ct install --target-branch ${{ github.event.repository.default_branch }} --config .github/ct.yaml --helm-extra-set-args "--set=image.pullPolicy=Never"
+        # --all forces ct to install regardless of git-changed scope; pairs
+        # with removing the list-changed gate so this runs on every PR.
+        run: |
+          ct install --all --target-branch ${{ github.event.repository.default_branch }} \
+            --config .github/ct.yaml \
+            --helm-extra-set-args "--set=image.pullPolicy=Never"
 
       - name: 📦 Collect kind cluster logs on failure
-        if: failure() && steps.list-changed.outputs.changed == 'true'
+        if: failure()
         run: kind export logs kind-logs --name chart-testing
 
       - name: 📦 Upload Helm test artifacts on failure
-        if: failure() && steps.list-changed.outputs.changed == 'true'
+        if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: helm-test-artifacts

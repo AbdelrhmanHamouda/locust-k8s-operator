@@ -1,6 +1,6 @@
 ---
-title: Migration Guide
-description: Guide for migrating from v1 to v2 of the Locust Kubernetes Operator
+title: Upgrade Notes
+description: Per-release upgrade and migration notes for the Locust Kubernetes Operator
 tags:
   - migration
   - upgrade
@@ -8,14 +8,150 @@ tags:
   - guide
 ---
 
-# Migration Guide: v1 to v2
+# Upgrade Notes
+
+Per-release upgrade and migration notes, newest first.
+
+- [v2.2 → v2.2.2 (webhook default flip)](#v22-v222-webhook-default-flip) — `ENABLE_WEBHOOKS` deprecation, `--enable-webhooks` flag, mandatory `--webhook-cert-path`
+- [v1 → v2 (Java/Go rewrite)](#v1-v2-javago-rewrite) — full rewrite walkthrough, including the CRD storedVersions caveat for downgrades
+
+---
+
+## v2.2 → v2.2.2 (webhook default flip)
+
+### Recovering from a crashlooping v2.2.0 / v2.2.1 install
+
+If your operator pod is currently in `CrashLoopBackOff` with this error:
+
+```
+ERROR setup problem running manager {"error": "open /tmp/k8s-webhook-server/serving-certs/tls.crt: no such file or directory"}
+```
+
+— this is [issue #317](https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues/317).
+A `helm upgrade` to v2.2.2 fixes it:
+
+```bash
+helm repo update
+helm upgrade locust-operator locust-k8s-operator/locust-k8s-operator \
+  --version 2.2.2 \
+  --namespace locust-system \
+  --reuse-values
+```
+
+If `helm upgrade --wait` times out because the old pod is not Ready, force a
+new ReplicaSet rollout: `kubectl -n locust-system rollout restart deploy/locust-operator`.
+
+### Webhook configuration: env var → flag
+
+The operator binary previously gated webhook registration on the
+`ENABLE_WEBHOOKS` environment variable, which the Helm chart set from
+`.Values.webhook.enabled`. As of v2.2.2 this is replaced by an explicit
+`--enable-webhooks` command-line flag. The chart's `deployment.yaml` now
+passes `--enable-webhooks={{ .Values.webhook.enabled }}` directly.
+
+**For chart users**: no action required. `helm upgrade` rolls out the new
+flag automatically.
+
+**For users running the binary directly or with custom Kustomize / ArgoCD
+overlays that set `ENABLE_WEBHOOKS`**: the env var is still honoured for one
+release as a deprecated alias and the binary logs a deprecation warning each
+time the binary starts. Migrate to `--enable-webhooks=true|false` before
+v2.3.0, when the env var will be removed. Empty values (`ENABLE_WEBHOOKS=""`)
+are now ignored — the prior `envVal != "false"` check would have silently
+enabled webhooks on a typo. Valid values are those accepted by Go's
+`strconv.ParseBool`: `1`/`t`/`T`/`TRUE`/`true`/`True` and the matching false
+forms. Anything else is logged and ignored.
+
+When both are set, the explicit flag wins.
+
+### Breaking: `--enable-webhooks` default is now `false`
+
+The binary default flipped from on (the master `os.Getenv("ENABLE_WEBHOOKS") != "false"`
+check defaulted to enabled when the env var was unset) to off (the new flag
+default is `false`). The Helm chart was already explicit, so chart users see
+no behaviour change.
+
+This affects you only if you run the binary **directly** (no chart) or via
+**kustomize without the webhook overlay** — your install loses admission
+webhooks unless you pass `--enable-webhooks=true` (or set the env var).
+
+### Breaking: `--webhook-cert-path` is now mandatory when webhooks are on
+
+If you pass `--enable-webhooks=true` (or `ENABLE_WEBHOOKS=true`) without
+`--webhook-cert-path`, the binary now exits at startup with:
+
+```
+--webhook-cert-path is required when --enable-webhooks=true
+```
+
+Master silently fell back to controller-runtime's default temp dir, which is
+the regression vector behind issue #317. The chart already passes
+`--webhook-cert-path=/tmp/k8s-webhook-server/serving-certs` whenever
+`webhook.enabled=true`, so chart users are unaffected.
+
+### Security posture: admission webhook is off by default
+
+The v2 ValidatingWebhook enforces invariants the reconciler does **not**
+re-check. With `webhook.enabled=false` (the default), CR authors can submit
+resources that bypass those checks. See [Security → Admission Webhook](./security.md#admission-webhook-defense-in-depth)
+for the invariants enforced and when to enable the webhook.
+
+### New flag: `--webhook-cert-wait-timeout`
+
+When webhooks are enabled, the operator polls for the cert files mounted by
+cert-manager. Previously this poll was unbounded — a misconfigured
+cert-manager would cause the operator to hang silently with no health probe
+registered yet. The new `--webhook-cert-wait-timeout` flag (default `2m`)
+bounds the wait and exits with a clear error message if certs never appear.
+Set to `0` to wait indefinitely (not recommended; a misconfigured cert path
+will hang the pod forever).
+
+### Switching `webhook.enabled` from `true` to `false` (CRD downgrade)
+
+The CRD's `spec.conversion` block is rendered only when
+`webhook.enabled=true`. If you upgrade an installation from `webhook.enabled=true`
+to `webhook.enabled=false`, Helm removes that block on the next upgrade. Any
+`LocustTest` objects whose **stored** apiVersion is still `v1` then become
+unreadable because the apiserver no longer has a conversion route to `v2`.
+
+**Before flipping `webhook.enabled` to `false`:**
+
+```bash
+# 1. Inspect the CRD's storedVersions — these are the on-disk encodings the
+#    apiserver still maintains. If "v1" is listed, real v1-encoded objects
+#    exist in etcd and would become unreadable after the flip.
+kubectl get crd locusttests.locust.io \
+  -o jsonpath='{.status.storedVersions}'
+
+# 2. If "v1" is in the output, force every existing object to be re-stored
+#    at v2 by reading and re-applying it (apiserver writes back at the
+#    storage version):
+kubectl get locusttests.locust.io -A -o yaml \
+  | kubectl replace --force -f -
+
+# 3. Then drop "v1" from storedVersions (kubectl can't do this directly;
+#    use a strategic-merge patch on /status):
+kubectl patch crd locusttests.locust.io --subresource status --type=merge \
+  -p '{"status":{"storedVersions":["v2"]}}'
+
+# 4. Re-check storedVersions — should print ["v2"] only.
+kubectl get crd locusttests.locust.io \
+  -o jsonpath='{.status.storedVersions}'
+```
+
+Only after `storedVersions` contains `v2` alone is it safe to flip
+`webhook.enabled` to `false`.
+
+---
+
+## v1 → v2 (Java/Go rewrite)
 
 This guide helps existing users of the Locust Kubernetes Operator upgrade from v1 to v2. The v2 release is a complete rewrite in Go, bringing significant performance improvements and new features.
 
 
-## Overview
+### Overview
 
-### Why We Rewrote in Go
+#### Why We Rewrote in Go
 
 The v2 operator was rewritten from Java to Go for several key reasons:
 
@@ -26,14 +162,14 @@ The v2 operator was rewritten from Java to Go for several key reasons:
 | **Framework** | Java Operator SDK | Operator SDK / controller-runtime |
 | **Ecosystem alignment** | Minority | Majority of K8s operators |
 
-### What Changes for Users
+#### What Changes for Users
 
 - **API Version:** New `locust.io/v2` API with grouped configuration
 - **Backward Compatibility:** v1 CRs continue to work via automatic conversion
 - **New Features:** OpenTelemetry, secret injection, volume mounting, separate resource specs
 - **Helm Chart:** Updated values structure (backward compatible)
 
-### Compatibility Guarantees
+#### Compatibility Guarantees
 
 - **v1 API:** Fully supported via conversion webhook (deprecated, will be removed in v3)
 - **Existing CRs:** Work without modification
@@ -41,15 +177,15 @@ The v2 operator was rewritten from Java to Go for several key reasons:
 
 ---
 
-## Before You Begin
+### Before You Begin
 
-### Prerequisites
+#### Prerequisites
 
 - Kubernetes 1.25+
 - Helm 3.x
 - cert-manager v1.14+ (required for conversion webhook)
 
-### Backup Recommendations
+#### Backup Recommendations
 
 Before upgrading, back up your existing resources:
 
@@ -74,9 +210,9 @@ helm get values locust-operator -n <namespace> > values-backup.yaml
 
 ---
 
-## Step 1: Update Helm Chart
+### Step 1: Update Helm Chart
 
-### Upgrade Command
+#### Upgrade Command
 
 ```bash
 # Update Helm repository
@@ -94,7 +230,7 @@ helm upgrade locust-operator locust-k8s-operator/locust-k8s-operator \
 !!! note "CRD Upgrade"
     Helm automatically upgrades the CRD when using `helm upgrade`. The v2 CRD includes conversion webhook configuration when webhooks are enabled, allowing the API server to convert between v1 and v2 formats transparently.
 
-### New Helm Values
+#### New Helm Values
 
 The v2 chart introduces a cleaner structure. Key changes:
 
@@ -108,7 +244,7 @@ The v2 chart introduces a cleaner structure. Key changes:
 | N/A | `webhook.enabled` | New: Enable conversion webhook |
 | N/A | `leaderElection.enabled` | New: Enable leader election |
 
-### Operator Resource Defaults
+#### Operator Resource Defaults
 
 The Go operator controller requires significantly fewer resources than the Java version:
 
@@ -124,7 +260,7 @@ resources:
 
 ---
 
-## Step 2: Verify Existing CRs
+### Step 2: Verify Existing CRs
 
 The conversion webhook automatically converts v1 CRs to v2 format when stored. Verify your existing CRs work:
 
@@ -136,7 +272,7 @@ kubectl get locusttests -A
 kubectl describe locusttest <name>
 ```
 
-### Verify Conversion
+#### Verify Conversion
 
 You can read a v1 CR as v2 to verify conversion:
 
@@ -151,11 +287,11 @@ kubectl get locusttest <name> -o yaml | grep "apiVersion:"
 
 ---
 
-## Step 3: Migrate CRs to v2 Format (Recommended)
+### Step 3: Migrate CRs to v2 Format (Recommended)
 
 While v1 CRs continue to work, migrating to v2 format is recommended to access new features.
 
-### Field Mapping Reference
+#### Field Mapping Reference
 
 | v1 Field | v2 Field | Notes |
 |----------|----------|-------|
@@ -182,7 +318,7 @@ While v1 CRs continue to work, migrating to v2 format is recommended to access n
 
 [^1]: **Affinity Conversion Note**: When converting v2 → v1, complex affinity rules may be simplified. Only `NodeSelectorOpIn` operators are preserved, and only the first value from multi-value expressions is kept. Pod affinity/anti-affinity and preferred scheduling rules are not preserved in v1.
 
-### Example Transformation
+#### Example Transformation
 
 === "v1 Format (Deprecated)"
 
@@ -226,7 +362,7 @@ While v1 CRs continue to work, migrating to v2 format is recommended to access n
         configMapRef: test-scripts
     ```
 
-### Lossy Conversion Details
+#### Lossy Conversion Details
 
 !!! warning "V2-Only Fields Not Preserved in V1"
     When reading v2 CRs as v1 (or during rollback to v1), the following v2-exclusive fields **will be lost**:
@@ -274,11 +410,11 @@ While v1 CRs continue to work, migrating to v2 format is recommended to access n
 
 ---
 
-## Step 4: Leverage New Features
+### Step 4: Leverage New Features
 
 After migrating to v2, you can use new features:
 
-### OpenTelemetry Support
+#### OpenTelemetry Support
 
 ```yaml
 spec:
@@ -291,7 +427,7 @@ spec:
 
 [:octicons-arrow-right-24: Learn more about OpenTelemetry](how-to-guides/observability/configure-opentelemetry.md)
 
-### Secret & ConfigMap Injection
+#### Secret & ConfigMap Injection
 
 ```yaml
 spec:
@@ -308,7 +444,7 @@ spec:
 
 [:octicons-arrow-right-24: Learn more about Environment Injection](how-to-guides/security/inject-secrets.md)
 
-### Volume Mounting
+#### Volume Mounting
 
 ```yaml
 spec:
@@ -324,7 +460,7 @@ spec:
 
 [:octicons-arrow-right-24: Learn more about Volume Mounting](how-to-guides/configuration/mount-volumes.md)
 
-### Separate Resource Specs
+#### Separate Resource Specs
 
 ```yaml
 spec:
@@ -344,11 +480,11 @@ spec:
 
 ---
 
-## Troubleshooting
+### Troubleshooting
 
-### Common Issues
+#### Common Issues
 
-#### Conversion Webhook Not Working
+##### Conversion Webhook Not Working
 
 **Symptom:** v1 CRs fail with schema validation errors
 
@@ -363,7 +499,7 @@ helm upgrade locust-operator locust-k8s-operator/locust-k8s-operator \
   --set webhook.enabled=true
 ```
 
-#### Resources Not Created
+##### Resources Not Created
 
 **Symptom:** LocustTest CR created but no Jobs/Services appear
 
@@ -373,7 +509,7 @@ helm upgrade locust-operator locust-k8s-operator/locust-k8s-operator \
 kubectl logs -n locust-system -l app.kubernetes.io/name=locust-k8s-operator
 ```
 
-#### Status Not Updating
+##### Status Not Updating
 
 **Symptom:** LocustTest status remains empty
 
@@ -383,13 +519,13 @@ kubectl logs -n locust-system -l app.kubernetes.io/name=locust-k8s-operator
 kubectl auth can-i update locusttests/status --as=system:serviceaccount:locust-system:locust-operator
 ```
 
-### How to Get Help
+#### How to Get Help
 
 - [GitHub Issues](https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues)
 
 ---
 
-## Rollback Procedure
+### Rollback Procedure
 
 If you need to revert to v1:
 
