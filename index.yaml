@@ -34,6 +34,66 @@ entries:
       artifacthub.io/operatorCapabilities: Basic Install
       artifacthub.io/prerelease: "false"
     apiVersion: v2
+    appVersion: 2.2.3
+    created: "2026-05-23T16:56:33.033132966Z"
+    description: Production-ready Kubernetes operator for distributed Locust load
+      testing with native OpenTelemetry, HA support, and automatic v1→v2 migration
+    digest: e43fe5383f8935dba8c471a7a0cefcfb13b53b83459e31e37b6f4a5b1cff8129
+    home: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
+    icon: https://raw.githubusercontent.com/AbdelrhmanHamouda/locust-k8s-operator/master/docs/assets/images/favicon.png
+    keywords:
+    - locust
+    - load-testing
+    - performance-testing
+    - kubernetes-operator
+    - distributed-testing
+    - opentelemetry
+    - observability
+    - stress-testing
+    kubeVersion: '>= 1.25.0-0'
+    maintainers:
+    - name: Abdelrhman Hamouda
+      url: https://github.com/AbdelrhmanHamouda
+    name: locust-k8s-operator
+    sources:
+    - https://github.com/AbdelrhmanHamouda/locust-k8s-operator
+    type: application
+    urls:
+    - https://github.com/AbdelrhmanHamouda/locust-k8s-operator/releases/download/locust-k8s-operator-2.2.3/locust-k8s-operator-2.2.3.tgz
+    version: 2.2.3
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: changed
+          description: Rewritten for Go operator with clean-slate design
+        - kind: changed
+          description: Updated health probes to /healthz and /readyz on port 8081
+        - kind: changed
+          description: Reduced default memory from 1Gi to 128Mi (Go binary)
+        - kind: added
+          description: Leader election support for HA deployments
+        - kind: added
+          description: Optional webhook configuration with cert-manager
+        - kind: added
+          description: Optional OTel Collector deployment
+        - kind: deprecated
+          description: Micronaut/JVM configuration removed (no longer applicable)
+      artifacthub.io/containsSecurityUpdates: "false"
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: Documentation
+          url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/
+        - name: Getting Started
+          url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/getting_started/
+        - name: Migration Guide (v1→v2)
+          url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/
+        - name: GitHub Discussions
+          url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/discussions
+        - name: GitHub Issues
+          url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues
+      artifacthub.io/operator: "true"
+      artifacthub.io/operatorCapabilities: Basic Install
+      artifacthub.io/prerelease: "false"
+    apiVersion: v2
     appVersion: 2.2.2
     created: "2026-05-19T00:09:28.43490474Z"
     description: Production-ready Kubernetes operator for distributed Locust load
@@ -505,4 +565,4 @@ entries:
     urls:
     - https://github.com/AbdelrhmanHamouda/locust-k8s-operator/releases/download/locust-k8s-operator-0.1.0/locust-k8s-operator-0.1.0.tgz
     version: 0.1.0
-generated: "2026-05-19T00:09:28.435086721Z"
+generated: "2026-05-23T16:56:33.033268456Z"
