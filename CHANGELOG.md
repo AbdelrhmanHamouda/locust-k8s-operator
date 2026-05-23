@@ -1,3 +1,9 @@
+## 2.2.3 (2026-05-23)
+
+### Fix
+
+- **security**: bump Go from 1.26.2 to 1.26.3 to resolve stdlib CVEs (#325)
+
 ## 2.2.2 (2026-05-19)
 
 ### Fix
