@@ -383,8 +383,9 @@ func TestReconcile_VerifyMasterJobConfiguration(t *testing.T) {
 	require.NotNil(t, job.Spec.Parallelism)
 	assert.Equal(t, int32(1), *job.Spec.Parallelism)
 
-	// Verify master has 2 containers (locust + metrics exporter)
-	assert.Len(t, job.Spec.Template.Spec.Containers, 2)
+	// Verify master has 1 main container (locust); metrics exporter is now a native sidecar initContainer.
+	assert.Len(t, job.Spec.Template.Spec.Containers, 1)
+	assert.Len(t, job.Spec.Template.Spec.InitContainers, 1)
 
 	// Verify RestartPolicy is Never
 	assert.Equal(t, corev1.RestartPolicyNever, job.Spec.Template.Spec.RestartPolicy)

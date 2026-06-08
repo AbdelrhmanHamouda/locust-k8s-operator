@@ -123,7 +123,8 @@ var _ = Describe("LocustTest Controller Integration", func() {
 			// Verify master Job properties
 			Expect(*createdJob.Spec.Parallelism).To(Equal(int32(1)))
 			// Completions is not explicitly set in the builder (nil means 1 by default)
-			Expect(createdJob.Spec.Template.Spec.Containers).To(HaveLen(2)) // locust + metrics
+			Expect(createdJob.Spec.Template.Spec.Containers).To(HaveLen(1))     // locust
+			Expect(createdJob.Spec.Template.Spec.InitContainers).To(HaveLen(1)) // metrics exporter (native sidecar)
 		})
 
 		It("should create worker Job when LocustTest is created", func() {
