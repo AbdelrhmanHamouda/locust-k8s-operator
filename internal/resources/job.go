@@ -76,7 +76,7 @@ func buildJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, mode Operatio
 	}
 
 	// Build native sidecar containers (initContainers with restartPolicy: Always)
-	// Native sidecars (k8s 1.28+) auto-terminate when main containers complete
+	// Native sidecars (k8s 1.29+) auto-terminate when main containers complete
 	var initContainers []corev1.Container
 	if mode == Master && !IsOTelEnabled(lt) {
 		initContainers = append(initContainers, buildMetricsExporterSidecar(cfg))
@@ -143,7 +143,7 @@ func buildLocustContainer(lt *locustv2.LocustTest, name string, command []string
 	return container
 }
 
-// buildMetricsExporterSidecar creates a native sidecar (k8s 1.28+) for the metrics exporter.
+// buildMetricsExporterSidecar creates a native sidecar (k8s 1.29+) for the metrics exporter.
 // Native sidecars are initContainers with restartPolicy: Always that auto-terminate when main containers complete.
 func buildMetricsExporterSidecar(cfg *config.OperatorConfig) corev1.Container {
 	return corev1.Container{
