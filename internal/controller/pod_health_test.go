@@ -126,6 +126,49 @@ func TestAnalyzePodFailure(t *testing.T) {
 			expectedNil:    false,
 			expectedReason: locustv2.ReasonPodCrashLoop,
 		},
+		{
+			// Race-condition guard at the caller level: pod has the metrics-exporter
+			// as a native sidecar (initContainer with RestartPolicy: Always). After the
+			// main container exits, kubelet SIGTERMs the sidecar; the resulting non-zero
+			// exit must not flag the pod as failed.
+			name: "native sidecar terminated by SIGTERM does not fail pod",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{Name: "succeeded-pod"},
+				Spec: corev1.PodSpec{
+					InitContainers: []corev1.Container{
+						{
+							Name:          "locust-metrics-exporter",
+							RestartPolicy: func() *corev1.ContainerRestartPolicy { p := corev1.ContainerRestartPolicyAlways; return &p }(),
+						},
+					},
+				},
+				Status: corev1.PodStatus{
+					InitContainerStatuses: []corev1.ContainerStatus{
+						{
+							Name: "locust-metrics-exporter",
+							State: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 2,
+									Reason:   "Error",
+								},
+							},
+						},
+					},
+					ContainerStatuses: []corev1.ContainerStatus{
+						{
+							Name: "locust",
+							State: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+									Reason:   "Completed",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedNil: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -157,6 +200,7 @@ func TestAnalyzeContainerStatus(t *testing.T) {
 		name            string
 		status          corev1.ContainerStatus
 		isInitContainer bool
+		isNativeSidecar bool
 		expectedNil     bool
 		expectedReason  string
 	}{
@@ -267,11 +311,47 @@ func TestAnalyzeContainerStatus(t *testing.T) {
 			},
 			expectedNil: true,
 		},
+		{
+			// Race-condition guard: native sidecar (e.g. metrics exporter) was SIGTERM'd by
+			// kubelet at pod end-of-life. Without this exemption, the non-zero exit code
+			// would race the JobComplete signal and mark a successful test as Failed.
+			name: "native sidecar terminated with non-zero exit returns nil",
+			status: corev1.ContainerStatus{
+				Name: "locust-metrics-exporter",
+				State: corev1.ContainerState{
+					Terminated: &corev1.ContainerStateTerminated{
+						ExitCode: 2,
+						Reason:   "Error",
+					},
+				},
+			},
+			isInitContainer: true,
+			isNativeSidecar: true,
+			expectedNil:     true,
+		},
+		{
+			// Native sidecar exemption must NOT mask genuine startup failures —
+			// CrashLoopBackOff still surfaces because it lives in Waiting, not Terminated.
+			name: "native sidecar in CrashLoopBackOff still returns ReasonPodCrashLoop",
+			status: corev1.ContainerStatus{
+				Name: "locust-metrics-exporter",
+				State: corev1.ContainerState{
+					Waiting: &corev1.ContainerStateWaiting{
+						Reason:  "CrashLoopBackOff",
+						Message: "back-off 5m0s restarting failed container",
+					},
+				},
+			},
+			isInitContainer: true,
+			isNativeSidecar: true,
+			expectedNil:     false,
+			expectedReason:  locustv2.ReasonPodCrashLoop,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := analyzeContainerStatus("test-pod", tt.status, tt.isInitContainer, lt)
+			result := analyzeContainerStatus("test-pod", tt.status, tt.isInitContainer, tt.isNativeSidecar, lt)
 			if tt.expectedNil {
 				assert.Nil(t, result)
 			} else {

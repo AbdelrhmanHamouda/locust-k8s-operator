@@ -148,16 +148,26 @@ func analyzePodFailure(pod *corev1.Pod, lt *locustv2.LocustTest) *PodFailureInfo
 		}
 	}
 
+	// Identify native sidecars (initContainers with restartPolicy: Always, KEP-753).
+	// Kubelet SIGTERMs these when the main containers exit; that termination is expected
+	// and must not race the JobComplete signal to incorrectly mark the test Failed.
+	nativeSidecars := make(map[string]bool)
+	for _, c := range pod.Spec.InitContainers {
+		if c.RestartPolicy != nil && *c.RestartPolicy == corev1.ContainerRestartPolicyAlways {
+			nativeSidecars[c.Name] = true
+		}
+	}
+
 	// Check init containers
 	for _, initStatus := range pod.Status.InitContainerStatuses {
-		if failure := analyzeContainerStatus(pod.Name, initStatus, true, lt); failure != nil {
+		if failure := analyzeContainerStatus(pod.Name, initStatus, true, nativeSidecars[initStatus.Name], lt); failure != nil {
 			return failure
 		}
 	}
 
 	// Check main containers
 	for _, containerStatus := range pod.Status.ContainerStatuses {
-		if failure := analyzeContainerStatus(pod.Name, containerStatus, false, lt); failure != nil {
+		if failure := analyzeContainerStatus(pod.Name, containerStatus, false, false, lt); failure != nil {
 			return failure
 		}
 	}
@@ -167,7 +177,11 @@ func analyzePodFailure(pod *corev1.Pod, lt *locustv2.LocustTest) *PodFailureInfo
 }
 
 // analyzeContainerStatus checks a container status for failures.
-func analyzeContainerStatus(podName string, status corev1.ContainerStatus, isInitContainer bool, lt *locustv2.LocustTest) *PodFailureInfo {
+// isNativeSidecar=true means the container's RestartPolicy is Always (KEP-753 native sidecar).
+// Native sidecars have their Terminated state ignored because kubelet SIGTERMs them at
+// pod end-of-life; genuine failures still surface via the Waiting checks (CrashLoopBackOff,
+// ImagePullBackOff, CreateContainerConfigError), which run for all containers.
+func analyzeContainerStatus(podName string, status corev1.ContainerStatus, isInitContainer bool, isNativeSidecar bool, lt *locustv2.LocustTest) *PodFailureInfo {
 	// Check waiting state
 	if status.State.Waiting != nil {
 		waiting := status.State.Waiting
@@ -200,8 +214,11 @@ func analyzeContainerStatus(podName string, status corev1.ContainerStatus, isIni
 		}
 	}
 
-	// Check terminated state (for init containers or recently failed containers)
-	if status.State.Terminated != nil {
+	// Check terminated state (for init containers or recently failed containers).
+	// Skip for native sidecars: kubelet SIGTERMs them when main containers exit, so
+	// their non-zero terminated exit is expected and would otherwise race the
+	// JobComplete signal and flag a successful test as Failed.
+	if !isNativeSidecar && status.State.Terminated != nil {
 		terminated := status.State.Terminated
 		if terminated.ExitCode != 0 {
 			failureType := locustv2.ReasonPodInitError

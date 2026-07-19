@@ -75,9 +75,11 @@ func buildJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, mode Operatio
 		buildLocustContainer(lt, nodeName, command, ports, cfg, mode),
 	}
 
-	// Master gets the metrics exporter sidecar ONLY if OTel is disabled
+	// Build native sidecar containers (initContainers with restartPolicy: Always)
+	// Native sidecars (k8s 1.28+) auto-terminate when main containers complete
+	var initContainers []corev1.Container
 	if mode == Master && !IsOTelEnabled(lt) {
-		containers = append(containers, buildMetricsExporterContainer(cfg))
+		initContainers = append(initContainers, buildMetricsExporterSidecar(cfg))
 	}
 
 	backoffLimit := int32(BackoffLimit)
@@ -99,6 +101,7 @@ func buildJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, mode Operatio
 				Spec: corev1.PodSpec{
 					RestartPolicy:    corev1.RestartPolicyNever,
 					ImagePullSecrets: buildImagePullSecrets(lt),
+					InitContainers:   initContainers,
 					Containers:       containers,
 					Volumes:          buildVolumes(lt, nodeName, mode),
 					Affinity:         buildAffinity(lt, cfg),
@@ -140,12 +143,14 @@ func buildLocustContainer(lt *locustv2.LocustTest, name string, command []string
 	return container
 }
 
-// buildMetricsExporterContainer creates the Prometheus metrics exporter sidecar container.
-func buildMetricsExporterContainer(cfg *config.OperatorConfig) corev1.Container {
+// buildMetricsExporterSidecar creates a native sidecar (k8s 1.28+) for the metrics exporter.
+// Native sidecars are initContainers with restartPolicy: Always that auto-terminate when main containers complete.
+func buildMetricsExporterSidecar(cfg *config.OperatorConfig) corev1.Container {
 	return corev1.Container{
 		Name:            MetricsExporterContainerName,
 		Image:           cfg.MetricsExporterImage,
 		ImagePullPolicy: corev1.PullPolicy(cfg.MetricsExporterPullPolicy),
+		RestartPolicy:   ptr.To(corev1.ContainerRestartPolicyAlways),
 		Ports: []corev1.ContainerPort{
 			{ContainerPort: cfg.MetricsExporterPort},
 		},

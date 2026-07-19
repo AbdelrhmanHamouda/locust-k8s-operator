@@ -118,15 +118,12 @@ func TestBuildMasterJob_Containers(t *testing.T) {
 	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	containers := job.Spec.Template.Spec.Containers
-	assert.Len(t, containers, 2, "Master should have 2 containers (locust + metrics exporter)")
+	assert.Len(t, containers, 1, "Master should have 1 main container (locust); metrics exporter is a native sidecar")
+	assert.Equal(t, "my-test-master", containers[0].Name)
 
-	// Find container names
-	containerNames := make([]string, len(containers))
-	for i, c := range containers {
-		containerNames[i] = c.Name
-	}
-	assert.Contains(t, containerNames, "my-test-master")
-	assert.Contains(t, containerNames, MetricsExporterContainerName)
+	initContainers := job.Spec.Template.Spec.InitContainers
+	assert.Len(t, initContainers, 1, "Master should have the metrics exporter as a native sidecar initContainer")
+	assert.Equal(t, MetricsExporterContainerName, initContainers[0].Name)
 }
 
 func TestBuildMasterJob_WithTTL(t *testing.T) {
@@ -809,13 +806,11 @@ func TestBuildMasterJob_OTelDisabled_HasSidecar(t *testing.T) {
 	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	containers := job.Spec.Template.Spec.Containers
-	assert.Len(t, containers, 2, "Master should have 2 containers (locust + metrics exporter) when OTel disabled")
+	assert.Len(t, containers, 1, "Master should have 1 main container (locust); metrics exporter is a native sidecar")
 
-	containerNames := make([]string, len(containers))
-	for i, c := range containers {
-		containerNames[i] = c.Name
-	}
-	assert.Contains(t, containerNames, MetricsExporterContainerName)
+	initContainers := job.Spec.Template.Spec.InitContainers
+	assert.Len(t, initContainers, 1, "Metrics exporter should be a native sidecar (initContainer) when OTel disabled")
+	assert.Equal(t, MetricsExporterContainerName, initContainers[0].Name)
 }
 
 func TestBuildMasterJob_OTelEnabled_NoSidecar(t *testing.T) {
@@ -833,6 +828,7 @@ func TestBuildMasterJob_OTelEnabled_NoSidecar(t *testing.T) {
 	containers := job.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 1, "Master should have 1 container only when OTel enabled")
 	assert.Equal(t, "my-test-master", containers[0].Name)
+	assert.Empty(t, job.Spec.Template.Spec.InitContainers, "No native-sidecar exporter should be added when OTel enabled")
 }
 
 func TestBuildMasterJob_NoObservability_HasSidecar(t *testing.T) {
@@ -843,7 +839,11 @@ func TestBuildMasterJob_NoObservability_HasSidecar(t *testing.T) {
 	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	containers := job.Spec.Template.Spec.Containers
-	assert.Len(t, containers, 2, "Master should have 2 containers when observability is nil")
+	assert.Len(t, containers, 1, "Master should have 1 main container (locust) when observability is nil")
+
+	initContainers := job.Spec.Template.Spec.InitContainers
+	assert.Len(t, initContainers, 1, "Metrics exporter should be a native sidecar (initContainer) when observability is nil")
+	assert.Equal(t, MetricsExporterContainerName, initContainers[0].Name)
 }
 
 func TestBuildWorkerJob_OTelEnabled_NoSidecar(t *testing.T) {
@@ -1405,11 +1405,12 @@ func TestBuildMasterJob_MetricsExporter_NoUserSecurityContext(t *testing.T) {
 
 	job := BuildMasterJob(lt, cfg, logr.Discard())
 
-	// Master job has 2 containers: locust + metrics exporter (OTel is disabled by default)
-	require.Len(t, job.Spec.Template.Spec.Containers, 2)
+	// Master job has 1 main container (locust); metrics exporter is now a native sidecar initContainer.
+	require.Len(t, job.Spec.Template.Spec.Containers, 1)
+	require.Len(t, job.Spec.Template.Spec.InitContainers, 1)
 
 	// Metrics exporter sidecar should have its own hardcoded security context, NOT the user's
-	metricsContainer := job.Spec.Template.Spec.Containers[1]
+	metricsContainer := job.Spec.Template.Spec.InitContainers[0]
 	assert.Equal(t, MetricsExporterContainerName, metricsContainer.Name)
 	require.NotNil(t, metricsContainer.SecurityContext, "Metrics exporter should have its own hardcoded security context")
 	// Verify it has the hardcoded values, not the user's AllowPrivilegeEscalation=false
@@ -1472,10 +1473,10 @@ func TestBuildMasterJob_ContainerSecurityOnly_PodGetsDefault(t *testing.T) {
 	assert.False(t, *locustContainer.SecurityContext.AllowPrivilegeEscalation)
 }
 
-func TestBuildMetricsExporterContainer_HasHardenedSecurityContext(t *testing.T) {
+func TestBuildMetricsExporterSidecar_HasHardenedSecurityContext(t *testing.T) {
 	cfg := newTestConfig()
 
-	container := buildMetricsExporterContainer(cfg)
+	container := buildMetricsExporterSidecar(cfg)
 
 	require.NotNil(t, container.SecurityContext)
 	require.NotNil(t, container.SecurityContext.AllowPrivilegeEscalation)
@@ -1484,6 +1485,23 @@ func TestBuildMetricsExporterContainer_HasHardenedSecurityContext(t *testing.T) 
 	assert.Equal(t, []corev1.Capability{"ALL"}, container.SecurityContext.Capabilities.Drop)
 	require.NotNil(t, container.SecurityContext.ReadOnlyRootFilesystem)
 	assert.True(t, *container.SecurityContext.ReadOnlyRootFilesystem)
+}
+
+// Regression guard: the metrics exporter must remain a native sidecar.
+// Dropping RestartPolicy: Always silently degrades it back to a one-shot init container,
+// which blocks Job completion and reintroduces the bug this PR fixes.
+func TestBuildMasterJob_MetricsExporterIsNativeSidecar(t *testing.T) {
+	lt := newTestLocustTest()
+	cfg := newTestConfig()
+
+	job := BuildMasterJob(lt, cfg, logr.Discard())
+
+	require.Len(t, job.Spec.Template.Spec.InitContainers, 1, "exporter must be in InitContainers")
+	exporter := job.Spec.Template.Spec.InitContainers[0]
+	assert.Equal(t, MetricsExporterContainerName, exporter.Name)
+	require.NotNil(t, exporter.RestartPolicy, "exporter must have RestartPolicy set")
+	assert.Equal(t, corev1.ContainerRestartPolicyAlways, *exporter.RestartPolicy,
+		"exporter must be a native sidecar (restartPolicy: Always); without this, the initContainer blocks Job completion")
 }
 
 func boolPtr(b bool) *bool {

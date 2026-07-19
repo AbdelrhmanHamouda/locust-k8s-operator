@@ -27,15 +27,15 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 2.2.3
+version: 2.3.0
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "2.2.3"
+appVersion: "2.3.0"
 
-kubeVersion: ">= 1.25.0-0"
+kubeVersion: ">= 1.29.0-0"
 home: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
 sources:
   - https://github.com/AbdelrhmanHamouda/locust-k8s-operator
@@ -62,17 +62,7 @@ annotations:
     - name: GitHub Issues
       url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues
   artifacthub.io/changes: |
+    - kind: fixed
+      description: Metrics exporter now runs as a native sidecar so load-test Jobs complete instead of hanging indefinitely
     - kind: changed
-      description: Rewritten for Go operator with clean-slate design
-    - kind: changed
-      description: Updated health probes to /healthz and /readyz on port 8081
-    - kind: changed
-      description: Reduced default memory from 1Gi to 128Mi (Go binary)
-    - kind: added
-      description: Leader election support for HA deployments
-    - kind: added
-      description: Optional webhook configuration with cert-manager
-    - kind: added
-      description: Optional OTel Collector deployment
-    - kind: deprecated
-      description: Micronaut/JVM configuration removed (no longer applicable)
+      description: Minimum supported Kubernetes version raised to 1.29 (required for native sidecar containers)

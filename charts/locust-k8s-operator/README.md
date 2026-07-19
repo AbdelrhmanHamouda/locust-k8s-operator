@@ -17,7 +17,7 @@ Production-ready Kubernetes operator for distributed Locust load testing with na
 
 ### Prerequisites
 
-- Kubernetes 1.25+
+- Kubernetes 1.29+
 - Helm 3.x
 
 ### Quick Start

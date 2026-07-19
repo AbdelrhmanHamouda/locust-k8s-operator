@@ -181,7 +181,7 @@ The v2 operator was rewritten from Java to Go for several key reasons:
 
 #### Prerequisites
 
-- Kubernetes 1.25+
+- Kubernetes 1.29+
 - Helm 3.x
 - cert-manager v1.14+ (required for conversion webhook)
 
