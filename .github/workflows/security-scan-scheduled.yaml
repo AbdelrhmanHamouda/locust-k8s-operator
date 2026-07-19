@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: 🔍 Run Trivy scan on latest image
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         id: trivy-scan
         with:
           image-ref: lotest/locust-k8s-operator:latest
