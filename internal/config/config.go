@@ -82,6 +82,10 @@ type OperatorConfig struct {
 	EnableAffinityCRInjection bool
 	// EnableTolerationsCRInjection enables injecting tolerations from CR spec
 	EnableTolerationsCRInjection bool
+
+	// DefaultRuntimeClassName is the operator-wide default runtimeClassName applied to
+	// generated Locust master/worker pods when the CR does not specify one. Empty means unset.
+	DefaultRuntimeClassName string
 }
 
 // LoadConfig loads operator configuration from environment variables.
@@ -137,6 +141,9 @@ func LoadConfig() (*OperatorConfig, error) {
 		// Feature flags
 		EnableAffinityCRInjection:    getEnvBool("ENABLE_AFFINITY_CR_INJECTION", false),
 		EnableTolerationsCRInjection: getEnvBool("ENABLE_TAINT_TOLERATIONS_CR_INJECTION", false),
+
+		// Scheduling defaults
+		DefaultRuntimeClassName: getEnv("DEFAULT_RUNTIME_CLASS_NAME", ""),
 	}
 
 	// Validate all resource quantities at startup
