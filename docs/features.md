@@ -81,9 +81,9 @@ Everything the Locust Kubernetes Operator can do. Click any feature to learn how
 
     ---
 
-    Control where your Locust pods are scheduled using Kubernetes affinity and taint tolerations. This allows you to run tests on dedicated nodes or in specific availability zones.
+    Control where and how your Locust pods run using Kubernetes affinity, taint tolerations, and runtime classes. Run tests on dedicated nodes, in specific availability zones, or under sandboxed runtimes such as gVisor or Kata Containers via `runtimeClassName`.
 
-    [:octicons-arrow-right-24: Use node affinity](how-to-guides/scaling/use-node-affinity.md) · [:octicons-arrow-right-24: Configure tolerations](how-to-guides/scaling/configure-tolerations.md) · [:octicons-arrow-right-24: Use node selector](how-to-guides/scaling/use-node-selector.md)
+    [:octicons-arrow-right-24: Use node affinity](how-to-guides/scaling/use-node-affinity.md) · [:octicons-arrow-right-24: Configure tolerations](how-to-guides/scaling/configure-tolerations.md) · [:octicons-arrow-right-24: Use node selector](how-to-guides/scaling/use-node-selector.md) · [:octicons-arrow-right-24: Use a runtime class](how-to-guides/scaling/use-runtime-class.md)
 
 -   :material-apache-kafka: **Kafka & AWS MSK Integration**
 

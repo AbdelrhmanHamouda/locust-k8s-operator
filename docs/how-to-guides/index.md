@@ -37,6 +37,7 @@ Scale tests for high load and optimize resource placement:
 - **[Use node affinity for dedicated test nodes](scaling/use-node-affinity.md)** — Target specific nodes using labels and affinity rules
 - **[Configure tolerations for tainted nodes](scaling/configure-tolerations.md)** — Schedule pods on nodes with taints
 - **[Use node selector for simple node targeting](scaling/use-node-selector.md)** — Target nodes using simple label matching
+- **[Use a runtime class for sandboxed pods](scaling/use-runtime-class.md)** — Run Locust pods under gVisor or Kata Containers
 
 ## Security
 

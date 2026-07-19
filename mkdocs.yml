@@ -224,6 +224,7 @@ nav:
           - Use node affinity: how-to-guides/scaling/use-node-affinity.md
           - Configure tolerations: how-to-guides/scaling/configure-tolerations.md
           - Use node selector: how-to-guides/scaling/use-node-selector.md
+          - Use a runtime class: how-to-guides/scaling/use-runtime-class.md
       - Security:
           - Inject secrets: how-to-guides/security/inject-secrets.md
           - Configure pod security: how-to-guides/security/configure-pod-security.md
