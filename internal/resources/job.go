@@ -175,6 +175,18 @@ func buildMetricsExporterSidecar(cfg *config.OperatorConfig) corev1.Container {
 	}
 }
 
+// IsNativeSidecar reports whether the container is a native sidecar (KEP-753
+// initContainer with restartPolicy: Always). The pod-health checker exempts
+// native sidecars' Terminated state — kubelet SIGTERMs them at pod
+// end-of-life, and that applies equally to sidecars injected by third parties
+// (e.g. a service mesh), so the check is deliberately structural rather than
+// scoped to the operator's own metrics exporter. Genuine mid-run failures
+// still surface as CrashLoopBackOff, which is never exempted. A test verifies
+// the built metrics exporter satisfies this predicate.
+func IsNativeSidecar(c corev1.Container) bool {
+	return c.RestartPolicy != nil && *c.RestartPolicy == corev1.ContainerRestartPolicyAlways
+}
+
 // buildImagePullSecrets creates LocalObjectReferences for image pull secrets.
 func buildImagePullSecrets(lt *locustv2.LocustTest) []corev1.LocalObjectReference {
 	return lt.Spec.ImagePullSecrets

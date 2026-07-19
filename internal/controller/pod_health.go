@@ -151,9 +151,12 @@ func analyzePodFailure(pod *corev1.Pod, lt *locustv2.LocustTest) *PodFailureInfo
 	// Identify native sidecars (initContainers with restartPolicy: Always, KEP-753).
 	// Kubelet SIGTERMs these when the main containers exit; that termination is expected
 	// and must not race the JobComplete signal to incorrectly mark the test Failed.
+	// Deliberately structural (not scoped to the operator's exporter): injected sidecars
+	// such as a service mesh proxy get the same end-of-life SIGTERM, and genuine mid-run
+	// failures still surface as CrashLoopBackOff, which is never exempted.
 	nativeSidecars := make(map[string]bool)
 	for _, c := range pod.Spec.InitContainers {
-		if c.RestartPolicy != nil && *c.RestartPolicy == corev1.ContainerRestartPolicyAlways {
+		if resources.IsNativeSidecar(c) {
 			nativeSidecars[c.Name] = true
 		}
 	}
