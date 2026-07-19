@@ -1502,6 +1502,8 @@ func TestBuildMasterJob_MetricsExporterIsNativeSidecar(t *testing.T) {
 	require.NotNil(t, exporter.RestartPolicy, "exporter must have RestartPolicy set")
 	assert.Equal(t, corev1.ContainerRestartPolicyAlways, *exporter.RestartPolicy,
 		"exporter must be a native sidecar (restartPolicy: Always); without this, the initContainer blocks Job completion")
+	assert.True(t, IsNativeSidecar(exporter),
+		"IsNativeSidecar must accept the container the builder produces; pod health relies on it to exempt the exporter")
 }
 
 func boolPtr(b bool) *bool {
