@@ -119,7 +119,7 @@ kubectl get nodes
 Expected output:
 ```
 NAME                        STATUS   ROLES           AGE   VERSION
-locust-test-control-plane   Ready    control-plane   30s   v1.27.3
+locust-test-control-plane   Ready    control-plane   30s   v1.29.2
 ```
 
 ### Step 2: Install Operator via Helm
