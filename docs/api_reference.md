@@ -92,6 +92,16 @@ The v2 API provides a cleaner, grouped configuration structure with new features
 | `affinity` | corev1.Affinity | No | - | Standard Kubernetes affinity rules |
 | `tolerations` | []corev1.Toleration | No | - | Standard Kubernetes tolerations |
 | `nodeSelector` | map[string]string | No | - | Node selector labels |
+| `runtimeClassName` | string | No | - | Pod `runtimeClassName` for master and worker pods (e.g. `gvisor`). Falls back to the operator-wide default (`DEFAULT_RUNTIME_CLASS_NAME` / Helm `locustPods.runtimeClassName`) when unset. |
+
+!!! note "Sandboxed runtimes (gVisor / Kata)"
+    Set `scheduling.runtimeClassName` to run Locust master and worker pods under a sandboxed container runtime. The named [RuntimeClass](https://kubernetes.io/docs/concepts/containers/runtime-class/) must already exist in the cluster. Example:
+
+    ```yaml
+    spec:
+      scheduling:
+        runtimeClassName: gvisor
+    ```
 
 #### EnvConfig
 
@@ -366,6 +376,7 @@ spec:
     libConfigMapRef: my-lib-files
   
   scheduling:
+    runtimeClassName: gvisor
     nodeSelector:
       node-type: performance
     tolerations:

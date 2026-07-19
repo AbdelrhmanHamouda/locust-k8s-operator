@@ -407,6 +407,83 @@ func TestBuildTolerations_ExistsOperator(t *testing.T) {
 	assert.Empty(t, job.Spec.Template.Spec.Tolerations[0].Value, "Value should be empty for Exists operator")
 }
 
+func TestBuildRuntimeClassName_FromCR(t *testing.T) {
+	gvisor := "gvisor"
+	lt := newTestLocustTest()
+	lt.Spec.Scheduling = &locustv2.SchedulingConfig{
+		RuntimeClassName: &gvisor,
+	}
+	cfg := newTestConfig() // no operator default
+
+	master := BuildMasterJob(lt, cfg, logr.Discard())
+	worker := BuildWorkerJob(lt, cfg, logr.Discard())
+
+	require.NotNil(t, master.Spec.Template.Spec.RuntimeClassName)
+	assert.Equal(t, "gvisor", *master.Spec.Template.Spec.RuntimeClassName)
+	require.NotNil(t, worker.Spec.Template.Spec.RuntimeClassName)
+	assert.Equal(t, "gvisor", *worker.Spec.Template.Spec.RuntimeClassName)
+}
+
+func TestBuildRuntimeClassName_FromOperatorDefault(t *testing.T) {
+	lt := newTestLocustTest() // no scheduling config
+	cfg := newTestConfig()
+	cfg.DefaultRuntimeClassName = "kata"
+
+	master := BuildMasterJob(lt, cfg, logr.Discard())
+	worker := BuildWorkerJob(lt, cfg, logr.Discard())
+
+	require.NotNil(t, master.Spec.Template.Spec.RuntimeClassName)
+	assert.Equal(t, "kata", *master.Spec.Template.Spec.RuntimeClassName)
+	require.NotNil(t, worker.Spec.Template.Spec.RuntimeClassName)
+	assert.Equal(t, "kata", *worker.Spec.Template.Spec.RuntimeClassName)
+}
+
+func TestBuildRuntimeClassName_CRPrecedenceOverDefault(t *testing.T) {
+	gvisor := "gvisor"
+	lt := newTestLocustTest()
+	lt.Spec.Scheduling = &locustv2.SchedulingConfig{
+		RuntimeClassName: &gvisor,
+	}
+	cfg := newTestConfig()
+	cfg.DefaultRuntimeClassName = "kata" // must be overridden by the CR value
+
+	master := BuildMasterJob(lt, cfg, logr.Discard())
+	worker := BuildWorkerJob(lt, cfg, logr.Discard())
+
+	require.NotNil(t, master.Spec.Template.Spec.RuntimeClassName)
+	assert.Equal(t, "gvisor", *master.Spec.Template.Spec.RuntimeClassName)
+	require.NotNil(t, worker.Spec.Template.Spec.RuntimeClassName)
+	assert.Equal(t, "gvisor", *worker.Spec.Template.Spec.RuntimeClassName)
+}
+
+func TestBuildRuntimeClassName_NilScheduling(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Scheduling = nil
+	cfg := newTestConfig() // no operator default
+
+	master := BuildMasterJob(lt, cfg, logr.Discard())
+	worker := BuildWorkerJob(lt, cfg, logr.Discard())
+
+	assert.Nil(t, master.Spec.Template.Spec.RuntimeClassName, "RuntimeClassName should be nil when scheduling is nil and no default is set")
+	assert.Nil(t, worker.Spec.Template.Spec.RuntimeClassName, "RuntimeClassName should be nil when scheduling is nil and no default is set")
+}
+
+func TestBuildRuntimeClassName_Unset(t *testing.T) {
+	lt := newTestLocustTest()
+	// Scheduling present but runtimeClassName unset; empty string must also be treated as unset.
+	empty := ""
+	lt.Spec.Scheduling = &locustv2.SchedulingConfig{
+		RuntimeClassName: &empty,
+	}
+	cfg := newTestConfig() // no operator default
+
+	master := BuildMasterJob(lt, cfg, logr.Discard())
+	worker := BuildWorkerJob(lt, cfg, logr.Discard())
+
+	assert.Nil(t, master.Spec.Template.Spec.RuntimeClassName, "RuntimeClassName should be nil when unset and no default is set")
+	assert.Nil(t, worker.Spec.Template.Spec.RuntimeClassName, "RuntimeClassName should be nil when unset and no default is set")
+}
+
 func TestBuildMasterJob_EmptyImagePullPolicy(t *testing.T) {
 	lt := newTestLocustTest()
 	lt.Spec.ImagePullPolicy = "" // Empty should default to IfNotPresent

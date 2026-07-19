@@ -217,6 +217,7 @@ helm install locust-operator locust-k8s-operator/locust-k8s-operator \
 | `locustPods.resources.limits.ephemeralStorage` | Ephemeral storage limit for Locust pods. | `50M` |
 | `locustPods.affinityInjection` | Enable affinity injection from CRs. | `true` |
 | `locustPods.tolerationsInjection` | Enable tolerations injection from CRs. | `true` |
+| `locustPods.runtimeClassName` | Default `runtimeClassName` (e.g. `gvisor`) applied to generated Locust master/worker pods when the CR does not set `scheduling.runtimeClassName`. Empty means the cluster default runtime. | `""` |
 
 ### Metrics Exporter
 
@@ -277,6 +278,7 @@ Deploy an OTel Collector alongside the operator:
 | `nodeSelector` | Node selector for scheduling the operator pod. | `{}` |
 | `tolerations` | Tolerations for scheduling the operator pod. | `[]` |
 | `affinity` | Affinity rules for scheduling the operator pod. | `{}` |
+| `runtimeClassName` | `runtimeClassName` for the operator pod (e.g. `gvisor`). Empty means the cluster default runtime. | `""` |
 | `podAnnotations` | Annotations to add to the operator pod. | `{}` |
 
 ### Backward Compatibility

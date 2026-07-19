@@ -1521,6 +1521,12 @@ spec:
                       type: string
                     description: NodeSelector for pod scheduling.
                     type: object
+                  runtimeClassName:
+                    description: RuntimeClassName sets the pod spec runtimeClassName
+                      (e.g. gvisor) for master and worker pods.
+                    maxLength: 253
+                    pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                    type: string
                   tolerations:
                     description: Tolerations for pod scheduling.
                     items:

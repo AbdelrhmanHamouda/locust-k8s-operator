@@ -147,6 +147,12 @@ type SchedulingConfig struct {
 	// NodeSelector for pod scheduling.
 	// +optional
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+
+	// RuntimeClassName sets the pod spec runtimeClassName (e.g. gvisor) for master and worker pods.
+	// +optional
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
+	RuntimeClassName *string `json:"runtimeClassName,omitempty"`
 }
 
 // ============================================

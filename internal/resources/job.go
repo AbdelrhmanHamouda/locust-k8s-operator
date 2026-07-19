@@ -107,6 +107,7 @@ func buildJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, mode Operatio
 					Affinity:         buildAffinity(lt, cfg),
 					Tolerations:      buildTolerations(lt, cfg),
 					NodeSelector:     buildNodeSelector(lt),
+					RuntimeClassName: buildRuntimeClassName(lt, cfg),
 					SecurityContext:  buildPodSecurityContext(lt),
 				},
 			},
@@ -483,4 +484,21 @@ func buildNodeSelector(lt *locustv2.LocustTest) map[string]string {
 	}
 
 	return lt.Spec.Scheduling.NodeSelector
+}
+
+// buildRuntimeClassName determines the pod runtimeClassName for master and worker pods.
+// Precedence: the CR value (scheduling.runtimeClassName) wins when set and non-empty;
+// otherwise the operator-wide default (cfg.DefaultRuntimeClassName) is used when non-empty;
+// otherwise nil so the pod spec field is left unset (cluster default runtime).
+func buildRuntimeClassName(lt *locustv2.LocustTest, cfg *config.OperatorConfig) *string {
+	if lt.Spec.Scheduling != nil && lt.Spec.Scheduling.RuntimeClassName != nil && *lt.Spec.Scheduling.RuntimeClassName != "" {
+		return lt.Spec.Scheduling.RuntimeClassName
+	}
+
+	if cfg != nil && cfg.DefaultRuntimeClassName != "" {
+		name := cfg.DefaultRuntimeClassName
+		return &name
+	}
+
+	return nil
 }

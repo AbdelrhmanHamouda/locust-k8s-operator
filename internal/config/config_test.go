@@ -64,6 +64,7 @@ func TestLoadConfig_DefaultValues(t *testing.T) {
 		"KAFKA_SASL_JAAS_CONFIG",
 		"ENABLE_AFFINITY_CR_INJECTION",
 		"ENABLE_TAINT_TOLERATIONS_CR_INJECTION",
+		"DEFAULT_RUNTIME_CLASS_NAME",
 	}
 	for _, env := range envVars {
 		_ = os.Unsetenv(env)
@@ -106,6 +107,9 @@ func TestLoadConfig_DefaultValues(t *testing.T) {
 	// Feature flags
 	assert.False(t, cfg.EnableAffinityCRInjection)
 	assert.False(t, cfg.EnableTolerationsCRInjection)
+
+	// Scheduling defaults
+	assert.Equal(t, "", cfg.DefaultRuntimeClassName)
 }
 
 func TestLoadConfig_EnvironmentOverrides(t *testing.T) {
@@ -122,6 +126,7 @@ func TestLoadConfig_EnvironmentOverrides(t *testing.T) {
 	t.Setenv("METRICS_EXPORTER_IMAGE_PULL_POLICY", "IfNotPresent")
 	t.Setenv("ENABLE_AFFINITY_CR_INJECTION", "true")
 	t.Setenv("ENABLE_TAINT_TOLERATIONS_CR_INJECTION", "true")
+	t.Setenv("DEFAULT_RUNTIME_CLASS_NAME", "gvisor")
 
 	cfg, err := LoadConfig()
 	require.NoError(t, err)
@@ -140,6 +145,7 @@ func TestLoadConfig_EnvironmentOverrides(t *testing.T) {
 	assert.Equal(t, "IfNotPresent", cfg.MetricsExporterPullPolicy)
 	assert.True(t, cfg.EnableAffinityCRInjection)
 	assert.True(t, cfg.EnableTolerationsCRInjection)
+	assert.Equal(t, "gvisor", cfg.DefaultRuntimeClassName)
 }
 
 func TestLoadConfig_TTLSecondsAfterFinished_ZeroValue(t *testing.T) {
