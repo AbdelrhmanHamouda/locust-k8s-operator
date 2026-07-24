@@ -256,9 +256,11 @@ func validateVolumeName(lt *LocustTest, name string) error {
 		return fmt.Errorf("volume name %q is reserved by the operator", name)
 	}
 
-	// Check for CR-based names
-	masterName := lt.Name + "-master"
-	workerName := lt.Name + "-worker"
+	// Check for CR-based names. These must be built with GeneratedNodeName —
+	// the operator names its ConfigMap volume after the sanitized node name, so
+	// comparing against the raw CR name misses the conflict for dotted CR names.
+	masterName := GeneratedNodeName(lt.Name, NodeModeMaster)
+	workerName := GeneratedNodeName(lt.Name, NodeModeWorker)
 	if name == masterName || name == workerName {
 		return fmt.Errorf("volume name %q conflicts with operator-generated name", name)
 	}
