@@ -277,6 +277,15 @@ func (r *LocustTestReconciler) handleExternalResourceDeletion(
 	// Try to fetch the resource
 	if err := r.Get(ctx, client.ObjectKey{Name: resourceName, Namespace: lt.Namespace}, obj); err != nil {
 		if apierrors.IsNotFound(err) {
+			// Don't trigger recovery for terminal states - resources may have been cleaned up
+			// legitimately (e.g. Job TTL after the test finished)
+			if shouldSkipStatusUpdate(lt) {
+				log.V(1).Info(fmt.Sprintf("%s not found but test is in terminal state, skipping recovery", resourceKind),
+					resourceKind, resourceName,
+					"phase", lt.Status.Phase)
+				return false, 0, nil
+			}
+
 			// Resource was externally deleted — transition to Pending for recovery
 			log.Info(fmt.Sprintf("%s externally deleted, transitioning to Pending for recovery", resourceKind),
 				resourceKind, resourceName)
@@ -325,8 +334,10 @@ func (r *LocustTestReconciler) checkResourcesExist(
 	ctx context.Context,
 	lt *locustv2.LocustTest,
 ) (*batchv1.Job, *batchv1.Job, bool, time.Duration, error) {
-	// Check for externally deleted Service
-	masterServiceName := lt.Name + "-master"
+	// Check for externally deleted Service.
+	// Look up by the sanitized resource name (dots replaced with dashes) that the
+	// builders actually use — a raw lt.Name lookup never matches dotted CR names.
+	masterServiceName := resources.NodeName(lt.Name, resources.Master)
 	masterService := &corev1.Service{}
 	if shouldRequeue, requeueAfter, err := r.handleExternalResourceDeletion(
 		ctx, lt, masterServiceName, "Master Service", masterService,
@@ -338,7 +349,7 @@ func (r *LocustTestReconciler) checkResourcesExist(
 
 	// Check for externally deleted master Job
 	masterJob := &batchv1.Job{}
-	masterJobName := lt.Name + "-master"
+	masterJobName := resources.NodeName(lt.Name, resources.Master)
 	if shouldRequeue, requeueAfter, err := r.handleExternalResourceDeletion(
 		ctx, lt, masterJobName, "Master Job", masterJob,
 	); err != nil {
@@ -349,7 +360,7 @@ func (r *LocustTestReconciler) checkResourcesExist(
 
 	// Check for externally deleted worker Job
 	workerJob := &batchv1.Job{}
-	workerJobName := lt.Name + "-worker"
+	workerJobName := resources.NodeName(lt.Name, resources.Worker)
 	if shouldRequeue, requeueAfter, err := r.handleExternalResourceDeletion(
 		ctx, lt, workerJobName, "Worker Job", workerJob,
 	); err != nil {
