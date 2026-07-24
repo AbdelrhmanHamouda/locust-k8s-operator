@@ -16,14 +16,18 @@ limitations under the License.
 
 package resources
 
+import (
+	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
+)
+
 // OperationalMode represents the mode of operation for a Locust node.
 type OperationalMode string
 
 const (
 	// Master represents the master node mode.
-	Master OperationalMode = "master"
+	Master OperationalMode = locustv2.NodeModeMaster
 	// Worker represents the worker node mode.
-	Worker OperationalMode = "worker"
+	Worker OperationalMode = locustv2.NodeModeWorker
 )
 
 // String returns the string representation of the OperationalMode.

@@ -330,6 +330,12 @@ func (r *LocustTestReconciler) handleExternalResourceDeletion(
 // checkResourcesExist verifies that all required resources (Service, Master Job, Worker Job) exist.
 // If any resource is missing, it handles external deletion recovery.
 // Returns (masterJob, workerJob, shouldRequeue, requeueAfter, error).
+//
+// Caveat: when the test is in a terminal phase, handleExternalResourceDeletion
+// skips recovery for missing resources and reports them as present, so the
+// returned Jobs may be zero-valued. Callers must not derive phase from them —
+// reconcileStatus relies on its own shouldSkipStatusUpdate check to return
+// before that happens. Keep that check in place if this is refactored.
 func (r *LocustTestReconciler) checkResourcesExist(
 	ctx context.Context,
 	lt *locustv2.LocustTest,
