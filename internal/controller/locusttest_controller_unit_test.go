@@ -94,6 +94,34 @@ func newTestOperatorConfig() *config.OperatorConfig {
 }
 
 // newTestLocustTestCR creates a test LocustTest CR.
+// drainEvents empties the recorder's buffered events so that later assertions
+// only observe events emitted after this point.
+func drainEvents(recorder *record.FakeRecorder) {
+	for {
+		select {
+		case <-recorder.Events:
+		default:
+			return
+		}
+	}
+}
+
+// assertNoResourceDeletedEvent drains every buffered event and fails if any of
+// them reports an external deletion. Draining all of them matters: a single
+// non-blocking read inspects only the first buffered event and would miss a
+// ResourceDeleted queued behind an unrelated one.
+func assertNoResourceDeletedEvent(t *testing.T, recorder *record.FakeRecorder, msg string) {
+	t.Helper()
+	for {
+		select {
+		case event := <-recorder.Events:
+			assert.NotContains(t, event, "ResourceDeleted", msg)
+		default:
+			return
+		}
+	}
+}
+
 func newTestLocustTestCR(name, namespace string) *locustv2.LocustTest {
 	return &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1141,12 +1169,7 @@ func TestReconcile_DottedName_NoSpuriousRecovery(t *testing.T) {
 	require.NoError(t, err, "master Service should exist under the sanitized name")
 
 	// Drain creation events from first reconcile
-	for i := 0; i < 3; i++ {
-		select {
-		case <-recorder.Events:
-		default:
-		}
-	}
+	drainEvents(recorder)
 
 	// Mark the Jobs as actively running so status derivation keeps Running
 	for _, jobName := range []string{"my-test-v2-master", "my-test-v2-worker"} {
@@ -1172,12 +1195,8 @@ func TestReconcile_DottedName_NoSpuriousRecovery(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, time.Duration(0), result.RequeueAfter, "healthy test should not trigger recovery requeue")
 
-	select {
-	case event := <-recorder.Events:
-		assert.NotContains(t, event, "ResourceDeleted",
-			"healthy dotted-name test must not be treated as externally deleted")
-	default:
-	}
+	assertNoResourceDeletedEvent(t, recorder,
+		"healthy dotted-name test must not be treated as externally deleted")
 
 	// Phase must remain Running, not be reset to Pending
 	err = reconciler.Get(ctx, types.NamespacedName{
@@ -1207,12 +1226,7 @@ func TestReconcile_TerminalPhase_SkipsRecoveryAfterCleanup(t *testing.T) {
 	require.NoError(t, err)
 
 	// Drain creation events from first reconcile
-	for i := 0; i < 3; i++ {
-		select {
-		case <-recorder.Events:
-		default:
-		}
-	}
+	drainEvents(recorder)
 
 	// Simulate a completed test
 	err = reconciler.Get(ctx, types.NamespacedName{
@@ -1243,12 +1257,8 @@ func TestReconcile_TerminalPhase_SkipsRecoveryAfterCleanup(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, ctrl.Result{}, result, "terminal test should not requeue")
 
-	select {
-	case event := <-recorder.Events:
-		assert.NotContains(t, event, "ResourceDeleted",
-			"terminal-phase cleanup must not be treated as external deletion")
-	default:
-	}
+	assertNoResourceDeletedEvent(t, recorder,
+		"terminal-phase cleanup must not be treated as external deletion")
 
 	// Phase must remain Succeeded and resources must not be recreated
 	err = reconciler.Get(ctx, types.NamespacedName{
