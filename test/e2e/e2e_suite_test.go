@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -91,6 +93,15 @@ var _ = BeforeSuite(func() {
 	By("waiting for the webhook service endpoint to be ready")
 	err = utils.WaitForWebhookReady("locust-k8s-operator-system", "locust-k8s-operator-webhook-service", "2m")
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Webhook service endpoint not ready")
+
+	// An endpoint address only means the pod passed its readiness probe on the
+	// health port; the webhook's TLS listener starts separately. Probe the
+	// admission path itself so specs cannot race the webhook coming up.
+	By("waiting for the webhook to serve admission requests")
+	probeManifest, err := filepath.Abs(filepath.Join("testdata", "v2", "locusttest-basic.yaml"))
+	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to resolve webhook probe manifest")
+	err = utils.WaitForWebhookServing("locust-k8s-operator-system", probeManifest, 2*time.Minute)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Webhook not serving admission requests")
 })
 
 var _ = AfterSuite(func() {
