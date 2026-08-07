@@ -67,7 +67,7 @@ jobs:
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
         with:
-          version: 'v1.28.0'
+          version: 'v1.29.0'
 
       - name: Configure kubeconfig
         run: |
