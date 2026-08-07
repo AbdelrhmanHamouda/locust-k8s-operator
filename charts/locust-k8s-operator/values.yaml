@@ -109,6 +109,13 @@ locustPods:
   affinityInjection: true
   tolerationsInjection: true
 
+  # -- Default runtimeClassName (e.g. "gvisor") applied to generated Locust master/worker
+  # pods when the LocustTest CR does not set scheduling.runtimeClassName. Empty means unset.
+  # This is a default, not an enforcement boundary: a CR can override it, or opt out with
+  # scheduling.runtimeClassName: "". Enforce mandatory sandboxing with a cluster policy engine.
+  # Must be a valid DNS-1123 subdomain; the operator refuses to start otherwise.
+  runtimeClassName: ""
+
   # -- Job TTL after completion (empty = Kubernetes default)
   ttlSecondsAfterFinished: ""
 
@@ -209,6 +216,8 @@ containerSecurityContext:
 nodeSelector: {}
 tolerations: []
 affinity: {}
+# -- RuntimeClassName for the operator pod (e.g. "gvisor"). Empty means the cluster default runtime.
+runtimeClassName: ""
 
 # =============================================================================
 # Backward Compatibility (DEPRECATED - use new paths above)

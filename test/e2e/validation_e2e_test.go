@@ -44,6 +44,8 @@ var _ = Describe("Validation Webhook", Ordered, func() {
 		By("cleaning up any leftover CRs")
 		_, _ = utils.DeleteFromFile(testNamespace, filepath.Join(testdataDir, "v2", "locusttest-invalid.yaml"))
 		_, _ = utils.DeleteFromFile(testNamespace, filepath.Join(testdataDir, "v2", "locusttest-basic.yaml"))
+		_, _ = utils.DeleteFromFile(testNamespace, filepath.Join(testdataDir, "v2", "locusttest-invalid-runtimeclass.yaml"))
+		_, _ = utils.DeleteFromFile(testNamespace, filepath.Join(testdataDir, "v2", "locusttest-runtimeclass-optout.yaml"))
 	})
 
 	It("should reject CR with invalid workerReplicas (0)", func() {
@@ -55,6 +57,31 @@ var _ = Describe("Validation Webhook", Ordered, func() {
 			ContainSubstring("Invalid value"),
 			ContainSubstring("spec.worker.replicas"),
 		))
+	})
+
+	It("should reject CR with a malformed runtimeClassName", func() {
+		By("applying LocustTest CR with a non-DNS-1123 runtimeClassName")
+		_, err := utils.ApplyFromFile(testNamespace, filepath.Join(testdataDir, "v2", "locusttest-invalid-runtimeclass.yaml"))
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(Or(
+			ContainSubstring("pattern"),
+			ContainSubstring("Invalid value"),
+			ContainSubstring("runtimeClassName"),
+		))
+	})
+
+	It("should accept an empty runtimeClassName as an explicit opt-out", func() {
+		By("applying LocustTest CR with runtimeClassName: \"\"")
+		_, err := utils.ApplyFromFile(testNamespace, filepath.Join(testdataDir, "v2", "locusttest-runtimeclass-optout.yaml"))
+		Expect(err).NotTo(HaveOccurred())
+
+		By("verifying CR was created")
+		Eventually(func() bool {
+			return utils.ResourceExists("locusttest", testNamespace, "e2e-test-runtimeclass-optout")
+		}, 30*time.Second, time.Second).Should(BeTrue())
+
+		By("cleaning up")
+		_, _ = utils.DeleteFromFile(testNamespace, filepath.Join(testdataDir, "v2", "locusttest-runtimeclass-optout.yaml"))
 	})
 
 	It("should accept valid CR", func() {

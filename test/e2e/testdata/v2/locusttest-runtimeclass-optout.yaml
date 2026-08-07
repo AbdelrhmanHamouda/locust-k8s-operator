@@ -1,0 +1,17 @@
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: e2e-test-runtimeclass-optout
+spec:
+  master:
+    command: "-f /lotest/src/locustfile.py"
+  worker:
+    replicas: 1
+    command: "-f /lotest/src/locustfile.py"
+  image: locustio/locust:latest
+  testFiles:
+    configMapRef: e2e-test-configmap
+  scheduling:
+    # Explicit opt-out from any operator-wide default runtimeClassName. The CRD schema must
+    # accept the empty string, and the generated pods must carry no runtimeClassName.
+    runtimeClassName: ""

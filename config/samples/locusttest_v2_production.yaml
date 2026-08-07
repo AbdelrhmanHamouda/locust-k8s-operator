@@ -139,6 +139,10 @@ spec:
     #     value: "load-testing"
     #     effect: "NoSchedule"
 
+    # Optional: Run master/worker pods under a sandboxed runtime (requires a
+    # matching RuntimeClass in the cluster; expect throughput overhead)
+    # runtimeClassName: gvisor
+
   # ==============================================================================
   # NOTES ON WHAT'S NOT INCLUDED
   # ==============================================================================
