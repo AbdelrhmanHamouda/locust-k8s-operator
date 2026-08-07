@@ -249,6 +249,21 @@ jobs:
           ko build ./cmd --local --bare --tags=${CHART_VERSION}
           echo "IMAGE_TAG=${CHART_VERSION}" >> $GITHUB_ENV
 
+      # `severity` alone does NOT gate this job. When `format: sarif`,
+      # trivy-action's entrypoint unsets TRIVY_SEVERITY unless
+      # `limit-severities-for-sarif` is true — it logs "Building SARIF report
+      # with all severities" and scans UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL. Paired
+      # with `exit-code: 1` that failed the build on any LOW/MEDIUM finding,
+      # contradicting the CRITICAL/HIGH policy documented in SECURITY.md.
+      # `limit-severities-for-sarif: true` makes the declared severity the real
+      # gate. It must be exactly lowercase `true`: upstream's
+      # `${INPUT_LIMIT_SEVERITIES_FOR_SARIF:-false,,}` is a no-op lowercasing
+      # attempt, so `True`/`yes`/`1` silently fall back to all severities.
+      # Tradeoff: the uploaded SARIF then carries only CRITICAL/HIGH, so
+      # LOW/MEDIUM findings no longer appear in the Security tab from this
+      # scan. The daily scheduled scan still reports the full range, but only
+      # for the released `:latest` image — LOW/MEDIUM introduced by a merged
+      # but unreleased change stay invisible until the next release.
       - name: 🔍 Run Trivy security scan
         uses: aquasecurity/trivy-action@v0.35.0
         with:
@@ -256,7 +271,8 @@ jobs:
           format: sarif
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
-          exit-code: 1 # Fail the build if vulnerabilities are found
+          limit-severities-for-sarif: true
+          exit-code: 1 # Fail the build if CRITICAL/HIGH vulnerabilities are found
 
       - name: 📊 Upload Trivy results to GitHub Security tab
         if: always()

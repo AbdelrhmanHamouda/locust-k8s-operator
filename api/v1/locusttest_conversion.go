@@ -142,6 +142,7 @@ func (dst *LocustTest) ConvertFrom(srcRaw conversion.Hub) error {
 			dst.Spec.Tolerations = convertTolerationsToV1(src.Spec.Scheduling.Tolerations)
 		}
 		// Note: nodeSelector is lost (v2-only field)
+		// Note: runtimeClassName is lost (v2-only field)
 	}
 
 	// The following v2-only fields are NOT preserved in v1:
@@ -149,6 +150,7 @@ func (dst *LocustTest) ConvertFrom(srcRaw conversion.Hub) error {
 	// - worker.resources, worker.extraArgs
 	// - testFiles.srcMountPath, testFiles.libMountPath
 	// - scheduling.nodeSelector
+	// - scheduling.runtimeClassName
 	// - env (configMapRefs, secretRefs, variables, secretMounts)
 	// - volumes, volumeMounts
 	// - security (podSecurityContext, containerSecurityContext)

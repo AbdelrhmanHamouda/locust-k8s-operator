@@ -21,6 +21,17 @@ jobs:
       - name: 📂 Checkout
         uses: actions/checkout@v6
 
+      # Deliberately NOT setting `limit-severities-for-sarif` here, unlike the
+      # PR gate in ci.yaml. With `format: sarif` trivy-action unsets
+      # TRIVY_SEVERITY and scans every severity, so `severity: CRITICAL,HIGH`
+      # below is inert — that is the behaviour this job wants. It never fails
+      # (`exit-code: 0`), it reports, and the wide SARIF keeps LOW/MEDIUM
+      # findings visible in the Security tab that the narrowed PR scan no
+      # longer uploads — though only for the released `:latest` image, so
+      # LOW/MEDIUM in merged but unreleased changes surface only at the next
+      # release. Consequence to keep in mind: the grep for
+      # `"level": "warning"` in the next step matches MEDIUM findings, so this
+      # job files issues for MEDIUMs too, not only CRITICAL/HIGH.
       - name: 🔍 Run Trivy scan on latest image
         uses: aquasecurity/trivy-action@v0.35.0
         id: trivy-scan

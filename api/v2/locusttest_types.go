@@ -147,6 +147,14 @@ type SchedulingConfig struct {
 	// NodeSelector for pod scheduling.
 	// +optional
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+
+	// RuntimeClassName sets the pod spec runtimeClassName (e.g. gvisor) for master and worker pods.
+	// Omit the field to inherit the operator-wide default (DEFAULT_RUNTIME_CLASS_NAME). Set it to
+	// the empty string to explicitly opt out of that default and use the cluster default runtime.
+	// +optional
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:Pattern=`^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
+	RuntimeClassName *string `json:"runtimeClassName,omitempty"`
 }
 
 // ============================================

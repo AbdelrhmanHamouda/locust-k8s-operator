@@ -20,6 +20,7 @@ tags:
 | Node Affinity | [Use node affinity](how-to-guides/scaling/use-node-affinity.md) |
 | Tolerations | [Configure tolerations](how-to-guides/scaling/configure-tolerations.md) |
 | Node Selector | [Use node selector](how-to-guides/scaling/use-node-selector.md) |
+| Runtime Class | [Use a runtime class](how-to-guides/scaling/use-runtime-class.md) |
 | Resource Management | [Configure resources](how-to-guides/configuration/configure-resources.md) |
 | Private Registry | [Use private registry](how-to-guides/configuration/use-private-registry.md) |
 | Automatic Cleanup | [Configure TTL](how-to-guides/configuration/configure-ttl.md) |

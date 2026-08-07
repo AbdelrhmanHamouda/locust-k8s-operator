@@ -107,6 +107,7 @@ func buildJob(lt *locustv2.LocustTest, cfg *config.OperatorConfig, mode Operatio
 					Affinity:         buildAffinity(lt, cfg),
 					Tolerations:      buildTolerations(lt, cfg),
 					NodeSelector:     buildNodeSelector(lt),
+					RuntimeClassName: buildRuntimeClassName(lt, cfg),
 					SecurityContext:  buildPodSecurityContext(lt),
 				},
 			},
@@ -173,6 +174,18 @@ func buildMetricsExporterSidecar(cfg *config.OperatorConfig) corev1.Container {
 			ReadOnlyRootFilesystem: ptr.To(true),
 		},
 	}
+}
+
+// IsNativeSidecar reports whether the container is a native sidecar (KEP-753
+// initContainer with restartPolicy: Always). The pod-health checker exempts
+// native sidecars' Terminated state — kubelet SIGTERMs them at pod
+// end-of-life, and that applies equally to sidecars injected by third parties
+// (e.g. a service mesh), so the check is deliberately structural rather than
+// scoped to the operator's own metrics exporter. Genuine mid-run failures
+// still surface as CrashLoopBackOff, which is never exempted. A test verifies
+// the built metrics exporter satisfies this predicate.
+func IsNativeSidecar(c corev1.Container) bool {
+	return c.RestartPolicy != nil && *c.RestartPolicy == corev1.ContainerRestartPolicyAlways
 }
 
 // buildImagePullSecrets creates LocalObjectReferences for image pull secrets.
@@ -483,4 +496,32 @@ func buildNodeSelector(lt *locustv2.LocustTest) map[string]string {
 	}
 
 	return lt.Spec.Scheduling.NodeSelector
+}
+
+// buildRuntimeClassName determines the pod runtimeClassName for master and worker pods.
+// Precedence:
+//   - CR sets a non-empty scheduling.runtimeClassName: that value wins.
+//   - CR sets scheduling.runtimeClassName to "": explicit opt-out. The field is left unset even
+//     when an operator-wide default is configured, so the pod uses the cluster default runtime.
+//   - CR omits the field: the operator-wide default (cfg.DefaultRuntimeClassName) is used when
+//     non-empty.
+//   - Otherwise nil, so the pod spec field is left unset (cluster default runtime).
+func buildRuntimeClassName(lt *locustv2.LocustTest, cfg *config.OperatorConfig) *string {
+	if lt.Spec.Scheduling != nil && lt.Spec.Scheduling.RuntimeClassName != nil {
+		if *lt.Spec.Scheduling.RuntimeClassName == "" {
+			return nil
+		}
+
+		// Copy rather than alias the CR field: the returned pointer is shared by the master and
+		// worker pod specs.
+		name := *lt.Spec.Scheduling.RuntimeClassName
+		return &name
+	}
+
+	if cfg != nil && cfg.DefaultRuntimeClassName != "" {
+		name := cfg.DefaultRuntimeClassName
+		return &name
+	}
+
+	return nil
 }

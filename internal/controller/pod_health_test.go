@@ -26,10 +26,12 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
+	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/resources"
 )
 
 // --- analyzePodFailure tests ---
@@ -137,15 +139,15 @@ func TestAnalyzePodFailure(t *testing.T) {
 				Spec: corev1.PodSpec{
 					InitContainers: []corev1.Container{
 						{
-							Name:          "locust-metrics-exporter",
-							RestartPolicy: func() *corev1.ContainerRestartPolicy { p := corev1.ContainerRestartPolicyAlways; return &p }(),
+							Name:          resources.MetricsExporterContainerName,
+							RestartPolicy: ptr.To(corev1.ContainerRestartPolicyAlways),
 						},
 					},
 				},
 				Status: corev1.PodStatus{
 					InitContainerStatuses: []corev1.ContainerStatus{
 						{
-							Name: "locust-metrics-exporter",
+							Name: resources.MetricsExporterContainerName,
 							State: corev1.ContainerState{
 								Terminated: &corev1.ContainerStateTerminated{
 									ExitCode: 2,
@@ -161,6 +163,39 @@ func TestAnalyzePodFailure(t *testing.T) {
 								Terminated: &corev1.ContainerStateTerminated{
 									ExitCode: 0,
 									Reason:   "Completed",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedNil: true,
+		},
+		{
+			// The Terminated exemption is structural: sidecars injected by third
+			// parties (e.g. a service mesh proxy) get the same end-of-life SIGTERM
+			// as the operator's exporter and can exit non-zero (137/143), which
+			// must not fail a successful test. Genuine mid-run failures surface as
+			// CrashLoopBackOff, which is never exempted.
+			name: "injected native sidecar terminated with non-zero exit is also exempt",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{Name: "mesh-sidecar-pod"},
+				Spec: corev1.PodSpec{
+					InitContainers: []corev1.Container{
+						{
+							Name:          "istio-proxy",
+							RestartPolicy: ptr.To(corev1.ContainerRestartPolicyAlways),
+						},
+					},
+				},
+				Status: corev1.PodStatus{
+					InitContainerStatuses: []corev1.ContainerStatus{
+						{
+							Name: "istio-proxy",
+							State: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 137,
+									Reason:   "Error",
 								},
 							},
 						},
@@ -317,7 +352,7 @@ func TestAnalyzeContainerStatus(t *testing.T) {
 			// would race the JobComplete signal and mark a successful test as Failed.
 			name: "native sidecar terminated with non-zero exit returns nil",
 			status: corev1.ContainerStatus{
-				Name: "locust-metrics-exporter",
+				Name: resources.MetricsExporterContainerName,
 				State: corev1.ContainerState{
 					Terminated: &corev1.ContainerStateTerminated{
 						ExitCode: 2,
@@ -334,7 +369,7 @@ func TestAnalyzeContainerStatus(t *testing.T) {
 			// CrashLoopBackOff still surfaces because it lives in Waiting, not Terminated.
 			name: "native sidecar in CrashLoopBackOff still returns ReasonPodCrashLoop",
 			status: corev1.ContainerStatus{
-				Name: "locust-metrics-exporter",
+				Name: resources.MetricsExporterContainerName,
 				State: corev1.ContainerState{
 					Waiting: &corev1.ContainerStateWaiting{
 						Reason:  "CrashLoopBackOff",

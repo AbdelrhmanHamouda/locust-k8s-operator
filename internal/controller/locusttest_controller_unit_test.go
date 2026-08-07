@@ -94,6 +94,34 @@ func newTestOperatorConfig() *config.OperatorConfig {
 }
 
 // newTestLocustTestCR creates a test LocustTest CR.
+// drainEvents empties the recorder's buffered events so that later assertions
+// only observe events emitted after this point.
+func drainEvents(recorder *record.FakeRecorder) {
+	for {
+		select {
+		case <-recorder.Events:
+		default:
+			return
+		}
+	}
+}
+
+// assertNoResourceDeletedEvent drains every buffered event and fails if any of
+// them reports an external deletion. Draining all of them matters: a single
+// non-blocking read inspects only the first buffered event and would miss a
+// ResourceDeleted queued behind an unrelated one.
+func assertNoResourceDeletedEvent(t *testing.T, recorder *record.FakeRecorder, msg string) {
+	t.Helper()
+	for {
+		select {
+		case event := <-recorder.Events:
+			assert.NotContains(t, event, "ResourceDeleted", msg)
+		default:
+			return
+		}
+	}
+}
+
 func newTestLocustTestCR(name, namespace string) *locustv2.LocustTest {
 	return &locustv2.LocustTest{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1111,6 +1139,137 @@ func TestReconcile_ExternalDeletion_WorkerJob(t *testing.T) {
 	}, lt)
 	require.NoError(t, err)
 	assert.Equal(t, locustv2.PhaseRunning, lt.Status.Phase, "Phase should be Running after recreation")
+}
+
+// Regression test for the recovery loop with dotted CR names: resources are
+// created via resources.NodeName (dots replaced with dashes), so the existence
+// checks must look them up by the same sanitized name. Before the fix,
+// checkResourcesExist used the raw CR name, saw NotFound on every reconcile,
+// and reset a healthy Running test to Pending forever.
+func TestReconcile_DottedName_NoSpuriousRecovery(t *testing.T) {
+	lt := newTestLocustTestCR("my-test.v2", "default")
+	reconciler, recorder := newTestReconciler(lt)
+	ctx := context.Background()
+
+	// First reconcile - creates resources and transitions to Running
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "my-test.v2",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+
+	// Resources are created under the sanitized name
+	masterService := &corev1.Service{}
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test-v2-master",
+		Namespace: "default",
+	}, masterService)
+	require.NoError(t, err, "master Service should exist under the sanitized name")
+
+	// Drain creation events from first reconcile
+	drainEvents(recorder)
+
+	// Mark the Jobs as actively running so status derivation keeps Running
+	for _, jobName := range []string{"my-test-v2-master", "my-test-v2-worker"} {
+		job := &batchv1.Job{}
+		err = reconciler.Get(ctx, types.NamespacedName{
+			Name:      jobName,
+			Namespace: "default",
+		}, job)
+		require.NoError(t, err, "Job should exist under the sanitized name")
+		job.Status.Active = 1
+		require.NoError(t, reconciler.Status().Update(ctx, job))
+		require.NoError(t, reconciler.Get(ctx, types.NamespacedName{Name: jobName, Namespace: "default"}, job))
+		require.Equal(t, int32(1), job.Status.Active, "job Active status must persist in fake client")
+	}
+
+	// Second reconcile - resources exist, so no recovery must be triggered
+	result, err := reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "my-test.v2",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, time.Duration(0), result.RequeueAfter, "healthy test should not trigger recovery requeue")
+
+	assertNoResourceDeletedEvent(t, recorder,
+		"healthy dotted-name test must not be treated as externally deleted")
+
+	// Phase must remain Running, not be reset to Pending
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test.v2",
+		Namespace: "default",
+	}, lt)
+	require.NoError(t, err)
+	assert.Equal(t, locustv2.PhaseRunning, lt.Status.Phase,
+		"Phase must stay Running; before the fix it thrashed to Pending on every reconcile")
+}
+
+// Terminal tests must not be resurrected when their resources are cleaned up
+// legitimately (e.g. Job TTL after completion): missing resources in a
+// terminal phase skip recovery instead of resetting the test to Pending.
+func TestReconcile_TerminalPhase_SkipsRecoveryAfterCleanup(t *testing.T) {
+	lt := newTestLocustTestCR("my-test", "default")
+	reconciler, recorder := newTestReconciler(lt)
+	ctx := context.Background()
+
+	// First reconcile - creates resources and transitions to Running
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "my-test",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+
+	// Drain creation events from first reconcile
+	drainEvents(recorder)
+
+	// Simulate a completed test
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test",
+		Namespace: "default",
+	}, lt)
+	require.NoError(t, err)
+	lt.Status.Phase = locustv2.PhaseSucceeded
+	require.NoError(t, reconciler.Status().Update(ctx, lt))
+
+	// Simulate TTL cleanup: all owned resources are gone
+	masterService := &corev1.Service{}
+	require.NoError(t, reconciler.Get(ctx, types.NamespacedName{Name: "my-test-master", Namespace: "default"}, masterService))
+	require.NoError(t, reconciler.Delete(ctx, masterService))
+	for _, jobName := range []string{"my-test-master", "my-test-worker"} {
+		job := &batchv1.Job{}
+		require.NoError(t, reconciler.Get(ctx, types.NamespacedName{Name: jobName, Namespace: "default"}, job))
+		require.NoError(t, reconciler.Delete(ctx, job))
+	}
+
+	// Reconcile - must not trigger recovery for a finished test
+	result, err := reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "my-test",
+			Namespace: "default",
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, ctrl.Result{}, result, "terminal test should not requeue")
+
+	assertNoResourceDeletedEvent(t, recorder,
+		"terminal-phase cleanup must not be treated as external deletion")
+
+	// Phase must remain Succeeded and resources must not be recreated
+	err = reconciler.Get(ctx, types.NamespacedName{
+		Name:      "my-test",
+		Namespace: "default",
+	}, lt)
+	require.NoError(t, err)
+	assert.Equal(t, locustv2.PhaseSucceeded, lt.Status.Phase, "finished test must not be reset to Pending")
+
+	err = reconciler.Get(ctx, types.NamespacedName{Name: "my-test-master", Namespace: "default"}, &corev1.Service{})
+	assert.True(t, apierrors.IsNotFound(err), "master Service must not be recreated for a finished test")
 }
 
 // conflictOnUpdateClient wraps a client.Client and returns 409 Conflict errors
