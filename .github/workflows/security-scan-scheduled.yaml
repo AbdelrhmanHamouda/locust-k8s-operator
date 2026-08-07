@@ -33,7 +33,7 @@ jobs:
       # `"level": "warning"` in the next step matches MEDIUM findings, so this
       # job files issues for MEDIUMs too, not only CRITICAL/HIGH.
       - name: 🔍 Run Trivy scan on latest image
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         id: trivy-scan
         with:
           image-ref: lotest/locust-k8s-operator:latest
@@ -61,7 +61,7 @@ jobs:
 
       - name: 🚨 Create issue for vulnerabilities
         if: steps.check-vulns.outputs.vulnerabilities_found == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
