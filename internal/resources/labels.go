@@ -18,7 +18,6 @@ package resources
 
 import (
 	"fmt"
-	"strings"
 
 	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
 	"github.com/AbdelrhmanHamouda/locust-k8s-operator/internal/config"
@@ -27,9 +26,11 @@ import (
 // NodeName constructs the node name from the CR name and operational mode.
 // Format: "{cr-name}-{mode}" with dots replaced by dashes.
 // Example: "team-a.load-test" -> "team-a-load-test-master"
+//
+// Delegates to locustv2.GeneratedNodeName so that name generation, lookup and
+// webhook validation all derive names from one implementation.
 func NodeName(crName string, mode OperationalMode) string {
-	name := fmt.Sprintf("%s-%s", crName, mode.String())
-	return strings.ReplaceAll(name, ".", "-")
+	return locustv2.GeneratedNodeName(crName, mode.String())
 }
 
 // BuildLabels constructs the labels for a pod based on the LocustTest CR and mode.

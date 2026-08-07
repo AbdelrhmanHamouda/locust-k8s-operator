@@ -388,7 +388,11 @@ func WaitForControllerReady(namespace string, timeout string) error {
 	return err
 }
 
-// WaitForWebhookReady waits for the webhook service endpoint to be ready
+// WaitForWebhookReady waits for the webhook service endpoint to be ready.
+//
+// Note that this only proves an Endpoints address exists. It is a necessary but
+// not sufficient precondition for sending admission requests — use
+// WaitForWebhookServing for that.
 func WaitForWebhookReady(namespace, serviceName string, timeout string) error {
 	_, _ = fmt.Fprintf(GinkgoWriter, "Waiting for webhook service endpoint to be ready...\n")
 	//nolint:gosec // G204 - test helper, args are controlled
@@ -398,6 +402,91 @@ func WaitForWebhookReady(namespace, serviceName string, timeout string) error {
 		"--timeout", timeout)
 	_, err := Run(cmd)
 	return err
+}
+
+// webhookUnavailableMarkers are the errors the API server reports when it cannot
+// get an admission response from the webhook, as opposed to the webhook
+// answering with a rejection. These are transient during startup.
+var webhookUnavailableMarkers = []string{
+	"connection refused",       // TLS listener not accepting yet
+	"connection reset by peer", // listener came up mid-handshake
+	"no endpoints available",   // Service has no ready backend yet
+	"tls: internal error",      // serving cert not injected yet
+	"context deadline exceeded",
+	"i/o timeout",
+	"EOF",
+}
+
+// isWebhookUnavailable reports whether err is the API server failing to get an
+// admission response from the webhook, rather than the webhook answering.
+//
+// A rejection is a definitive answer and must never be retried. Errors that are
+// not about reaching the webhook at all — schema validation, a bad manifest path
+// — are not startup races either. Only a failure to call the webhook with a
+// transport cause we recognise is treated as transient; an unrecognised cause
+// fails fast rather than burning the whole timeout.
+func isWebhookUnavailable(err error) bool {
+	msg := err.Error()
+
+	// The webhook answered and rejected the object.
+	if strings.Contains(msg, "denied the request") {
+		return false
+	}
+	// Not a failure to reach the webhook.
+	if !strings.Contains(msg, "failed calling webhook") &&
+		!strings.Contains(msg, "failed to call webhook") {
+		return false
+	}
+	for _, marker := range webhookUnavailableMarkers {
+		if strings.Contains(msg, marker) {
+			return true
+		}
+	}
+	return false
+}
+
+// WaitForWebhookServing waits until the webhook actually answers admission
+// requests for the object in the given manifest.
+//
+// WaitForWebhookReady is not enough on its own: an Endpoints address appears as
+// soon as the manager pod passes its readiness probe on the health port, but
+// controller-runtime starts the webhook's TLS listener separately. That leaves a
+// window in which the pod is Ready, the Service has an endpoint, and the webhook
+// port still refuses connections — so a spec that applies a CR right after
+// WaitForWebhookReady can fail with "failed calling webhook: connect: connection
+// refused".
+//
+// Driving a server-side dry-run through the admission chain is what actually
+// proves the webhook is serving: it issues a real CREATE admission request and
+// persists nothing.
+//
+// Only connection-level failures are retried. Any other error — a genuine
+// rejection or a misconfigured webhook — is returned immediately, so a real
+// problem surfaces as itself instead of as a timeout.
+func WaitForWebhookServing(namespace, path string, timeout time.Duration) error {
+	_, _ = fmt.Fprintf(GinkgoWriter, "Waiting for webhook to serve admission requests...\n")
+
+	deadline := time.Now().Add(timeout)
+	var lastErr error
+	for {
+		//nolint:gosec // G204 - test helper, args are controlled
+		cmd := exec.Command("kubectl", "apply", "-f", path,
+			"-n", namespace,
+			"--dry-run=server")
+		_, err := Run(cmd)
+		if err == nil {
+			return nil
+		}
+		if !isWebhookUnavailable(err) {
+			return err
+		}
+		lastErr = err
+
+		if time.Now().After(deadline) {
+			return fmt.Errorf("webhook did not start serving admission requests within %s: %w", timeout, lastErr)
+		}
+		time.Sleep(2 * time.Second)
+	}
 }
 
 // WaitForCertificateReady waits for the serving certificate to be ready
