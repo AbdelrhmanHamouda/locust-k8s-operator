@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"log"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -146,6 +147,37 @@ func TestLoadConfig_EnvironmentOverrides(t *testing.T) {
 	assert.True(t, cfg.EnableAffinityCRInjection)
 	assert.True(t, cfg.EnableTolerationsCRInjection)
 	assert.Equal(t, "gvisor", cfg.DefaultRuntimeClassName)
+}
+
+func TestLoadConfig_InvalidDefaultRuntimeClassName(t *testing.T) {
+	// An invalid value here would be rejected by the API server on every Job create, so it must
+	// fail at startup instead.
+	invalid := []string{"gVisor", "gvisor_sandbox", "-gvisor", "gvisor ", strings.Repeat("a", 254)}
+
+	for _, value := range invalid {
+		t.Run(value, func(t *testing.T) {
+			t.Setenv("DEFAULT_RUNTIME_CLASS_NAME", value)
+
+			cfg, err := LoadConfig()
+			require.Error(t, err)
+			assert.Nil(t, cfg)
+			assert.Contains(t, err.Error(), "DEFAULT_RUNTIME_CLASS_NAME")
+		})
+	}
+}
+
+func TestLoadConfig_ValidDefaultRuntimeClassName(t *testing.T) {
+	valid := []string{"gvisor", "kata-containers", "sandbox.example.com"}
+
+	for _, value := range valid {
+		t.Run(value, func(t *testing.T) {
+			t.Setenv("DEFAULT_RUNTIME_CLASS_NAME", value)
+
+			cfg, err := LoadConfig()
+			require.NoError(t, err)
+			assert.Equal(t, value, cfg.DefaultRuntimeClassName)
+		})
+	}
 }
 
 func TestLoadConfig_TTLSecondsAfterFinished_ZeroValue(t *testing.T) {

@@ -487,12 +487,23 @@ func buildNodeSelector(lt *locustv2.LocustTest) map[string]string {
 }
 
 // buildRuntimeClassName determines the pod runtimeClassName for master and worker pods.
-// Precedence: the CR value (scheduling.runtimeClassName) wins when set and non-empty;
-// otherwise the operator-wide default (cfg.DefaultRuntimeClassName) is used when non-empty;
-// otherwise nil so the pod spec field is left unset (cluster default runtime).
+// Precedence:
+//   - CR sets a non-empty scheduling.runtimeClassName: that value wins.
+//   - CR sets scheduling.runtimeClassName to "": explicit opt-out. The field is left unset even
+//     when an operator-wide default is configured, so the pod uses the cluster default runtime.
+//   - CR omits the field: the operator-wide default (cfg.DefaultRuntimeClassName) is used when
+//     non-empty.
+//   - Otherwise nil, so the pod spec field is left unset (cluster default runtime).
 func buildRuntimeClassName(lt *locustv2.LocustTest, cfg *config.OperatorConfig) *string {
-	if lt.Spec.Scheduling != nil && lt.Spec.Scheduling.RuntimeClassName != nil && *lt.Spec.Scheduling.RuntimeClassName != "" {
-		return lt.Spec.Scheduling.RuntimeClassName
+	if lt.Spec.Scheduling != nil && lt.Spec.Scheduling.RuntimeClassName != nil {
+		if *lt.Spec.Scheduling.RuntimeClassName == "" {
+			return nil
+		}
+
+		// Copy rather than alias the CR field: the returned pointer is shared by the master and
+		// worker pod specs.
+		name := *lt.Spec.Scheduling.RuntimeClassName
+		return &name
 	}
 
 	if cfg != nil && cfg.DefaultRuntimeClassName != "" {

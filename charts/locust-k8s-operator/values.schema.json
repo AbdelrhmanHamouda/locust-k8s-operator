@@ -176,7 +176,9 @@
         },
         "runtimeClassName": {
           "type": "string",
-          "description": "Default runtimeClassName applied to generated Locust master/worker pods when the CR does not set one"
+          "description": "Default runtimeClassName applied to generated Locust master/worker pods when the CR does not set one. A default, not an enforcement boundary: CRs may override it or opt out with an empty value",
+          "pattern": "^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+          "maxLength": 253
         },
         "ttlSecondsAfterFinished": {
           "oneOf": [
@@ -299,7 +301,9 @@
     },
     "runtimeClassName": {
       "type": "string",
-      "description": "RuntimeClassName for the operator pod (e.g. gvisor)"
+      "description": "RuntimeClassName for the operator pod (e.g. gvisor)",
+      "pattern": "^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+      "maxLength": 253
     }
   }
 }

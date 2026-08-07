@@ -470,11 +470,8 @@ func TestBuildRuntimeClassName_NilScheduling(t *testing.T) {
 
 func TestBuildRuntimeClassName_Unset(t *testing.T) {
 	lt := newTestLocustTest()
-	// Scheduling present but runtimeClassName unset; empty string must also be treated as unset.
-	empty := ""
-	lt.Spec.Scheduling = &locustv2.SchedulingConfig{
-		RuntimeClassName: &empty,
-	}
+	// Scheduling present but runtimeClassName omitted.
+	lt.Spec.Scheduling = &locustv2.SchedulingConfig{}
 	cfg := newTestConfig() // no operator default
 
 	master := BuildMasterJob(lt, cfg, logr.Discard())
@@ -482,6 +479,43 @@ func TestBuildRuntimeClassName_Unset(t *testing.T) {
 
 	assert.Nil(t, master.Spec.Template.Spec.RuntimeClassName, "RuntimeClassName should be nil when unset and no default is set")
 	assert.Nil(t, worker.Spec.Template.Spec.RuntimeClassName, "RuntimeClassName should be nil when unset and no default is set")
+}
+
+func TestBuildRuntimeClassName_EmptyStringOptsOutOfDefault(t *testing.T) {
+	empty := ""
+	lt := newTestLocustTest()
+	// An explicitly empty value means "use the cluster default runtime" and must not fall back
+	// to the operator-wide default.
+	lt.Spec.Scheduling = &locustv2.SchedulingConfig{
+		RuntimeClassName: &empty,
+	}
+	cfg := newTestConfig()
+	cfg.DefaultRuntimeClassName = "gvisor"
+
+	master := BuildMasterJob(lt, cfg, logr.Discard())
+	worker := BuildWorkerJob(lt, cfg, logr.Discard())
+
+	assert.Nil(t, master.Spec.Template.Spec.RuntimeClassName, "explicit empty runtimeClassName must opt out of the operator default")
+	assert.Nil(t, worker.Spec.Template.Spec.RuntimeClassName, "explicit empty runtimeClassName must opt out of the operator default")
+}
+
+func TestBuildRuntimeClassName_DoesNotAliasCRField(t *testing.T) {
+	gvisor := "gvisor"
+	lt := newTestLocustTest()
+	lt.Spec.Scheduling = &locustv2.SchedulingConfig{
+		RuntimeClassName: &gvisor,
+	}
+	cfg := newTestConfig()
+
+	master := BuildMasterJob(lt, cfg, logr.Discard())
+	worker := BuildWorkerJob(lt, cfg, logr.Discard())
+
+	require.NotNil(t, master.Spec.Template.Spec.RuntimeClassName)
+	require.NotNil(t, worker.Spec.Template.Spec.RuntimeClassName)
+	assert.NotSame(t, lt.Spec.Scheduling.RuntimeClassName, master.Spec.Template.Spec.RuntimeClassName,
+		"pod spec must not alias the CR field")
+	assert.NotSame(t, master.Spec.Template.Spec.RuntimeClassName, worker.Spec.Template.Spec.RuntimeClassName,
+		"master and worker pod specs must not share a pointer")
 }
 
 func TestBuildMasterJob_EmptyImagePullPolicy(t *testing.T) {

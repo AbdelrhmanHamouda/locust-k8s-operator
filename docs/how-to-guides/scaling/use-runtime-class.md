@@ -72,8 +72,9 @@ kubectl apply -f locusttest-sandboxed.yaml
 ```
 
 The field applies to both master and worker pods. The value must be a valid
-[DNS-1123 subdomain](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names);
-the CRD schema rejects malformed names at admission time.
+[DNS-1123 subdomain](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names)
+— or the empty string, which is the explicit opt-out described below. The CRD schema rejects
+malformed names at admission time.
 
 ## Configure an operator-wide default
 
@@ -85,9 +86,46 @@ locustPods:
   runtimeClassName: gvisor
 ```
 
-This sets the `DEFAULT_RUNTIME_CLASS_NAME` environment variable on the operator, which applies to every generated master and worker pod.
+This sets the `DEFAULT_RUNTIME_CLASS_NAME` environment variable on the operator, which applies to every generated master and worker pod. The operator validates this value at startup and refuses to start if it is not a valid DNS-1123 subdomain — a typo fails loudly once rather than breaking every test run.
 
-**Precedence:** a `scheduling.runtimeClassName` set in a LocustTest CR always wins over the operator-wide default. If neither is set, pods use the cluster's default runtime.
+**Precedence:**
+
+| CR `scheduling.runtimeClassName` | Result |
+| --- | --- |
+| Set to a name | That name is used; the operator-wide default is ignored. |
+| Omitted | The operator-wide default is used, if one is configured. |
+| Set to `""` (empty string) | Explicit opt-out — the pod runs on the cluster's default runtime even when an operator-wide default is configured. |
+
+Opting a single test out of the operator-wide default:
+
+```yaml
+spec:
+  scheduling:
+    runtimeClassName: ""  # Ignore the operator default; use the cluster default runtime
+```
+
+!!! note "Resolved once, at creation"
+
+    The runtime class is resolved when the operator creates the test's Jobs. Editing
+    `scheduling.runtimeClassName` on an existing LocustTest has no effect — the operator does not
+    support in-place updates. Delete and re-create the LocustTest to change it.
+
+    The field is also v2-only: a LocustTest round-tripped through the `v1` API loses it, so an
+    explicit `""` opt-out becomes "inherit the operator default" again. Use `locust.io/v2`.
+
+!!! warning "The operator-wide default is a default, not an enforcement boundary"
+
+    `locustPods.runtimeClassName` sets a *starting value*, not a guarantee. Anyone who can create a
+    LocustTest can override it — with a different RuntimeClass, or with `""` to opt out entirely.
+    That is deliberate: the operator defaults, it does not police.
+
+    If your environment *requires* that every Locust pod runs sandboxed, enforce it where
+    enforcement belongs — at admission, with a cluster policy engine such as
+    [Kyverno](https://kyverno.io/) or a built-in
+    [ValidatingAdmissionPolicy](https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/),
+    which can reject or mutate any pod that does not carry the required `runtimeClassName`
+    regardless of what the CR asked for. Restricting who may create LocustTest resources via RBAC
+    is a useful complement, not a substitute.
 
 ## Sandbox the operator pod itself
 
@@ -110,12 +148,16 @@ kubectl get pods -l performance-test-name=<test-name> \
 
 Expected: every master/worker pod lists the configured class.
 
-## Troubleshoot scheduling failures
+## Troubleshoot runtime failures
 
-If pods remain `Pending`:
+A pod that names a RuntimeClass the cluster cannot honour is still admitted and still scheduled — it
+then enters the `Failed` phase rather than sitting in `Pending`. The Job retries until it hits its
+backoff limit, and the LocustTest ends up `Failed`.
 
 ```bash
+kubectl get pods -l performance-test-name=<test-name>
 kubectl describe pod <pod-name> | grep -A 10 "Events:"
+kubectl get events -n <namespace> --sort-by=.lastTimestamp | tail -20
 ```
 
 **Common issue:**
