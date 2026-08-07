@@ -449,6 +449,38 @@ func TestValidateVolumeName_WorkerConflict(t *testing.T) {
 	assert.Contains(t, err.Error(), "conflicts with operator-generated name")
 }
 
+// Regression test: the operator names its generated ConfigMap volume after the
+// sanitized node name, so for a dotted CR name the conflicting volume is
+// "my-test-v2-master", not "my-test.v2-master". Comparing against the raw CR
+// name let the real conflict through while rejecting a name that can never be
+// generated.
+func TestValidateVolumeName_DottedNameConflict(t *testing.T) {
+	lt := &LocustTest{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-test.v2", Namespace: "default"},
+	}
+
+	// The names the operator actually generates must be rejected.
+	err := validateVolumeName(lt, "my-test-v2-master")
+	require.Error(t, err, "sanitized master volume name must conflict")
+	assert.Contains(t, err.Error(), "conflicts with operator-generated name")
+
+	err = validateVolumeName(lt, "my-test-v2-worker")
+	require.Error(t, err, "sanitized worker volume name must conflict")
+	assert.Contains(t, err.Error(), "conflicts with operator-generated name")
+
+	// The raw, unsanitized names are never generated, so they are not conflicts.
+	assert.NoError(t, validateVolumeName(lt, "my-test.v2-master"))
+	assert.NoError(t, validateVolumeName(lt, "my-test.v2-worker"))
+}
+
+func TestGeneratedNodeName(t *testing.T) {
+	assert.Equal(t, "my-test-master", GeneratedNodeName("my-test", NodeModeMaster))
+	assert.Equal(t, "my-test-worker", GeneratedNodeName("my-test", NodeModeWorker))
+	assert.Equal(t, "team-a-load-test-master", GeneratedNodeName("team-a.load.test", NodeModeMaster))
+	assert.Equal(t, "no-dots-here", SanitizeResourceName("no-dots-here"))
+	assert.Equal(t, "a-b-c", SanitizeResourceName("a.b.c"))
+}
+
 func TestValidateVolumes_PathConflict(t *testing.T) {
 	lt := &LocustTest{
 		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},

@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 // OperatorConfig holds all operator configuration loaded from environment variables.
@@ -82,6 +83,10 @@ type OperatorConfig struct {
 	EnableAffinityCRInjection bool
 	// EnableTolerationsCRInjection enables injecting tolerations from CR spec
 	EnableTolerationsCRInjection bool
+
+	// DefaultRuntimeClassName is the operator-wide default runtimeClassName applied to
+	// generated Locust master/worker pods when the CR does not specify one. Empty means unset.
+	DefaultRuntimeClassName string
 }
 
 // LoadConfig loads operator configuration from environment variables.
@@ -137,6 +142,9 @@ func LoadConfig() (*OperatorConfig, error) {
 		// Feature flags
 		EnableAffinityCRInjection:    getEnvBool("ENABLE_AFFINITY_CR_INJECTION", false),
 		EnableTolerationsCRInjection: getEnvBool("ENABLE_TAINT_TOLERATIONS_CR_INJECTION", false),
+
+		// Scheduling defaults
+		DefaultRuntimeClassName: getEnv("DEFAULT_RUNTIME_CLASS_NAME", ""),
 	}
 
 	// Validate all resource quantities at startup
@@ -144,7 +152,29 @@ func LoadConfig() (*OperatorConfig, error) {
 		return nil, fmt.Errorf("invalid operator configuration: %w", err)
 	}
 
+	// Validate scheduling defaults at startup
+	if err := validateSchedulingDefaults(cfg); err != nil {
+		return nil, fmt.Errorf("invalid operator configuration: %w", err)
+	}
+
 	return cfg, nil
+}
+
+// validateSchedulingDefaults validates scheduling defaults that the operator injects into every
+// generated pod. Unlike the CR fields, these values never pass through CRD schema validation, so
+// an invalid value would be rejected by the API server on every single Job create. Failing at
+// startup surfaces the typo once, loudly, instead of at test-run time for every user.
+func validateSchedulingDefaults(cfg *OperatorConfig) error {
+	if cfg.DefaultRuntimeClassName == "" {
+		return nil // Empty string means "not set", which is valid
+	}
+
+	if msgs := validation.IsDNS1123Subdomain(cfg.DefaultRuntimeClassName); len(msgs) > 0 {
+		return fmt.Errorf("invalid value for DEFAULT_RUNTIME_CLASS_NAME: %q is not a valid RuntimeClass name: %s",
+			cfg.DefaultRuntimeClassName, strings.Join(msgs, "; "))
+	}
+
+	return nil
 }
 
 // validateResourceQuantities validates all resource quantity strings in config.

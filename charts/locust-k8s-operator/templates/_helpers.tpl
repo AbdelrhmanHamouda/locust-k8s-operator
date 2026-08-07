@@ -227,6 +227,17 @@ Tolerations Injection - new path with fallback to old path
 {{- end }}
 
 {{/*
+Default RuntimeClassName for generated Locust pods - new path only (no legacy fallback)
+*/}}
+{{- define "locust.runtimeClassName" -}}
+{{- if and .Values.locustPods .Values.locustPods.runtimeClassName }}
+{{- .Values.locustPods.runtimeClassName }}
+{{- else }}
+{{- "" }}
+{{- end }}
+{{- end }}
+
+{{/*
 TTL Seconds After Finished - new path with fallback to old path
 */}}
 {{- define "locust.ttlSecondsAfterFinished" -}}
@@ -631,6 +642,13 @@ Categories:
   value: {{ include "locust.affinityInjection" . | quote }}
 - name: ENABLE_TAINT_TOLERATIONS_CR_INJECTION
   value: {{ include "locust.tolerationsInjection" . | quote }}
+# Operator-wide default runtimeClassName for generated Locust pods.
+# Only emitted when set; empty means pods use the cluster default runtime.
+{{- $runtimeClassName := include "locust.runtimeClassName" . }}
+{{- if $runtimeClassName }}
+- name: DEFAULT_RUNTIME_CLASS_NAME
+  value: {{ $runtimeClassName | quote }}
+{{- end }}
 # Metrics exporter sidecar configuration
 # This Prometheus exporter runs alongside the Locust master to expose metrics
 # Note: Not used when OpenTelemetry is enabled (OTel replaces the sidecar)
