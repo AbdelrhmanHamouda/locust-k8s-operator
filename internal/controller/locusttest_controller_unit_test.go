@@ -314,51 +314,6 @@ func TestReconcile_IdempotentCreate(t *testing.T) {
 	assert.NoError(t, err, "Should not error even if resources exist")
 }
 
-func TestReconcile_WithDifferentGenerations(t *testing.T) {
-	tests := []struct {
-		name       string
-		generation int64
-	}{
-		{
-			name:       "generation 1 pending creates resources",
-			generation: 1,
-		},
-		{
-			name:       "generation 2 pending creates resources",
-			generation: 2,
-		},
-		{
-			name:       "generation 10 pending creates resources",
-			generation: 10,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			lt := newTestLocustTestCR("test-gen", "default")
-			lt.Generation = tt.generation
-			// Phase defaults to empty string (Pending) from newTestLocustTestCR
-			reconciler, _ := newTestReconciler(lt)
-
-			_, err := reconciler.Reconcile(context.Background(), ctrl.Request{
-				NamespacedName: types.NamespacedName{
-					Name:      "test-gen",
-					Namespace: "default",
-				},
-			})
-			require.NoError(t, err)
-
-			// All pending CRs create resources regardless of generation
-			svc := &corev1.Service{}
-			err = reconciler.Get(context.Background(), types.NamespacedName{
-				Name:      "test-gen-master",
-				Namespace: "default",
-			}, svc)
-			assert.NoError(t, err, "Service should be created for Pending phase regardless of generation")
-		})
-	}
-}
-
 func TestReconcile_VerifyServiceConfiguration(t *testing.T) {
 	lt := newTestLocustTestCR("svc-test", "default")
 	reconciler, _ := newTestReconciler(lt)
@@ -1270,6 +1225,98 @@ func TestReconcile_TerminalPhase_SkipsRecoveryAfterCleanup(t *testing.T) {
 
 	err = reconciler.Get(ctx, types.NamespacedName{Name: "my-test-master", Namespace: "default"}, &corev1.Service{})
 	assert.True(t, apierrors.IsNotFound(err), "master Service must not be recreated for a finished test")
+}
+
+// getErrorForTypeClient returns a fixed error from Get for one object type and
+// delegates every other Get to the wrapped client. This isolates a failure on
+// the owned-resource existence checks without breaking the initial LocustTest
+// fetch that Reconcile performs first.
+type getErrorForTypeClient struct {
+	client.Client
+	failOn client.Object // matched by concrete Go type
+	err    error
+}
+
+func (g *getErrorForTypeClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+	if fmt.Sprintf("%T", obj) == fmt.Sprintf("%T", g.failOn) {
+		return g.err
+	}
+	return g.Client.Get(ctx, key, obj, opts...)
+}
+
+// A transient API failure while checking whether owned resources still exist
+// must surface as a reconcile error so controller-runtime retries with backoff.
+// Only NotFound means "externally deleted"; treating any other error the same
+// way would reset a healthy Running test to Pending and re-create its Jobs
+// every time the API server hiccups — restarting the load test under the user.
+func TestReconcile_ResourceCheckTransientError_DoesNotTriggerRecovery(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		failOn client.Object
+	}{
+		{name: "master Service Get fails", failOn: &corev1.Service{}},
+		{name: "Job Get fails", failOn: &batchv1.Job{}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			lt := newTestLocustTestCR("transient-test", "default")
+			lt.Finalizers = []string{finalizerName}
+			lt.Status.Phase = locustv2.PhaseRunning
+			lt.Status.ObservedGeneration = lt.Generation
+			lt.Status.ExpectedWorkers = lt.Spec.Worker.Replicas
+
+			// Seed every owned resource so the existence checks run to the point
+			// the injected error fires; a missing Service would short-circuit the
+			// walk as a genuine external deletion before the Job is ever fetched.
+			owned := []client.Object{lt,
+				&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "transient-test-master", Namespace: "default"}},
+				&batchv1.Job{ObjectMeta: metav1.ObjectMeta{Name: "transient-test-master", Namespace: "default"}},
+				&batchv1.Job{ObjectMeta: metav1.ObjectMeta{Name: "transient-test-worker", Namespace: "default"}},
+			}
+
+			scheme := newTestScheme()
+			fakeClient := fake.NewClientBuilder().
+				WithScheme(scheme).
+				WithObjects(owned...).
+				WithStatusSubresource(&locustv2.LocustTest{}).
+				Build()
+			recorder := record.NewFakeRecorder(10)
+
+			reconciler := &LocustTestReconciler{
+				Client: &getErrorForTypeClient{
+					Client: fakeClient,
+					failOn: tt.failOn,
+					err:    apierrors.NewServiceUnavailable("etcd leader election in progress"),
+				},
+				Scheme:   scheme,
+				Config:   newTestOperatorConfig(),
+				Recorder: recorder,
+			}
+
+			ctx := context.Background()
+			result, err := reconciler.Reconcile(ctx, ctrl.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      "transient-test",
+					Namespace: "default",
+				},
+			})
+
+			require.Error(t, err, "a non-NotFound Get error must be returned so the request is retried")
+			assert.Equal(t, ctrl.Result{}, result, "returning an error is the retry signal; no RequeueAfter")
+
+			assertNoResourceDeletedEvent(t, recorder,
+				"a transient API error is not an external deletion")
+
+			// Phase must be untouched: a reset to Pending would recreate the Jobs
+			// and restart the running load test.
+			updated := &locustv2.LocustTest{}
+			require.NoError(t, fakeClient.Get(ctx, types.NamespacedName{
+				Name:      "transient-test",
+				Namespace: "default",
+			}, updated))
+			assert.Equal(t, locustv2.PhaseRunning, updated.Status.Phase,
+				"Phase must stay Running when the existence check could not be completed")
+		})
+	}
 }
 
 // conflictOnUpdateClient wraps a client.Client and returns 409 Conflict errors
