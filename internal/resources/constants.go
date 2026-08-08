@@ -26,8 +26,6 @@ const (
 	WebUIPort = 8089
 	// WorkerPort is the port exposed by worker nodes.
 	WorkerPort = 8080
-	// DefaultMetricsExporterPort is the default port for the Prometheus metrics exporter.
-	DefaultMetricsExporterPort = 9646
 )
 
 // Mount path constants
@@ -114,10 +112,4 @@ const (
 	PortNamePrefix = "port"
 	// MetricsPortName is the name for the metrics port.
 	MetricsPortName = "prometheus-metrics"
-)
-
-// Node affinity constants
-const (
-	// DefaultNodeMatchExpressionOperator is the default operator for node selector requirements.
-	DefaultNodeMatchExpressionOperator = "In"
 )

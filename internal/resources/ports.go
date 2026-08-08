@@ -42,8 +42,3 @@ func WorkerPorts() []corev1.ContainerPort {
 func MasterPortInts() []int32 {
 	return []int32{MasterPort, MasterBindPort, WebUIPort}
 }
-
-// WorkerPortInts returns the worker ports as int32 slice.
-func WorkerPortInts() []int32 {
-	return []int32{WorkerPort}
-}

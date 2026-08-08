@@ -313,13 +313,6 @@ func TestBuildAnnotations_NilAnnotationsSpec(t *testing.T) {
 	assert.Equal(t, "true", annotations[AnnotationPrometheusScrape])
 }
 
-func TestWorkerPortInts(t *testing.T) {
-	ports := WorkerPortInts()
-
-	assert.Contains(t, ports, int32(WorkerPort))
-	assert.Len(t, ports, 1)
-}
-
 func TestMasterPortInts(t *testing.T) {
 	ports := MasterPortInts()
 

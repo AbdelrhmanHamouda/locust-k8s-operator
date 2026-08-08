@@ -37,7 +37,6 @@ const (
 const (
 	OTelExporterOTLP = "otlp"
 	OTelProtocolGRPC = "grpc"
-	OTelProtocolHTTP = "http/protobuf"
 )
 
 // IsOTelEnabled returns true if OpenTelemetry is enabled in the spec.
