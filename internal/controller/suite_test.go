@@ -113,9 +113,11 @@ var _ = BeforeSuite(func() {
 	operatorConfig, err := config.LoadConfig()
 	Expect(err).NotTo(HaveOccurred())
 	err = (&LocustTestReconciler{
-		Client:   k8sManager.GetClient(),
-		Scheme:   k8sManager.GetScheme(),
-		Config:   operatorConfig,
+		Client: k8sManager.GetClient(),
+		Scheme: k8sManager.GetScheme(),
+		Config: operatorConfig,
+		// See cmd/main.go: GetEventRecorder is not a drop-in replacement.
+		//nolint:staticcheck // SA1019: deliberate, see cmd/main.go
 		Recorder: k8sManager.GetEventRecorderFor("locust-controller"),
 	}).SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
