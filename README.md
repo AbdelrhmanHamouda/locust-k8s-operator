@@ -64,7 +64,7 @@ All documentation for this project is available at [github.io/locust-k8s-operato
 
 ### Prerequisites
 
-- **Go 1.24+** for local development
+- **Go 1.26+** for local development
 - **Docker** for building container images
 - **kubectl** configured for your cluster
 - **Helm 3.x** for chart installation

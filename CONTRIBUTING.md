@@ -31,7 +31,7 @@ Please note that we have a code of conduct and thus you are kindly asked to foll
 
 1. Clone this repository.
 2. Install prerequisites:
-    - [Go 1.24+](https://go.dev/dl/)
+    - [Go 1.26+](https://go.dev/dl/)
     - [Docker](https://docs.docker.com/get-docker/)
     - [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) (Kubernetes in Docker)
     - [Helm 3](https://helm.sh/docs/intro/install/)
@@ -77,7 +77,7 @@ For local development and testing, [Kind](https://kind.sigs.k8s.io/) (Kubernetes
 
 #### Prerequisites
 
-- [Go 1.24+](https://go.dev/dl/)
+- [Go 1.26+](https://go.dev/dl/)
 - [Docker](https://docs.docker.com/get-docker/)
 - [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
 - [Helm 3](https://helm.sh/docs/intro/install/)

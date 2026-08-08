@@ -85,11 +85,6 @@ spec:
   worker:
     command: "--locustfile /lotest/src/demo_test.py"
     replicas: 2
-  observability:
-    openTelemetry:
-      enabled: true
-      endpoint: "otel-collector:4317"
-      insecure: true
 EOF
 
 # 5. Watch progress
@@ -147,10 +142,11 @@ kubectl get pods -n locust-system
 kubectl logs -f -n locust-system -l app.kubernetes.io/name=locust-k8s-operator
 ```
 
-Expected output:
+Expected output (the chart deploys 2 replicas by default for high availability):
 ```
-NAME                                      READY   STATUS    RESTARTS   AGE
-locust-operator-controller-manager-xxx    2/2     Running   0          30s
+NAME                               READY   STATUS    RESTARTS   AGE
+locust-operator-5d8b6c7f9d-abcde   1/1     Running   0          30s
+locust-operator-5d8b6c7f9d-fghij   1/1     Running   0          30s
 ```
 
 !!! success "Verify CRD Registration"
@@ -217,11 +213,6 @@ spec:
   worker:
     command: "--locustfile /lotest/src/demo_test.py"
     replicas: 2
-  observability:
-    openTelemetry:
-      enabled: true
-      endpoint: "otel-collector:4317"
-      insecure: true
 EOF
 ```
 
@@ -232,7 +223,6 @@ This creates a distributed load test with:
 - **Spawn rate**: 2 users per second
 - **Duration**: 1 minute
 - **Workers**: 2 worker replicas
-- **OpenTelemetry**: Enabled
 
 ### Step 5: Watch Test Execution
 
@@ -261,14 +251,14 @@ kubectl get locusttests,jobs,pods
 # Check master job logs
 kubectl logs job/demo-master
 
-# Check worker deployment logs
-kubectl logs -l app=locust,role=worker --prefix=true
+# Check worker job logs
+kubectl logs -l performance-test-pod-name=demo-worker --prefix=true
 ```
 
 ??? info "Understanding Test Phases"
     The `LocustTest` CR transitions through these phases:
 
-    - **Pending**: Operator is creating resources (Job, Deployment, Service)
+    - **Pending**: Operator is creating resources (master Job, worker Job, Service)
     - **Running**: Test is actively executing, workers are connected
     - **Succeeded**: Test completed successfully (master job finished)
     - **Failed**: Test encountered errors (check logs for details)
@@ -290,14 +280,14 @@ Then open http://localhost:8089 in your browser to see:
 - Worker status
 
 !!! note "Web UI Availability"
-    The web UI is available while the master job is running. After the test completes (1 minute runtime), the job stays in completed state and you can still port-forward to view final results.
+    The web UI is only available while the master pod is running. After the test completes (1 minute runtime), the master pod moves to `Completed` state and port-forwarding no longer works — use `kubectl logs job/demo-master` to view the final results instead.
 
 ### Step 7: Cleanup
 
 Remove test resources and optionally the cluster:
 
 ```bash
-# Delete the test (also removes Job and Deployment)
+# Delete the test (also removes the master Job, worker Job, and Service)
 kubectl delete locusttest demo
 
 # Delete the ConfigMap
@@ -328,7 +318,7 @@ kubectl get crd locusttests.locust.io
 
 - [ ] LocustTest CR transitions from `Pending` → `Running` → `Succeeded`
 - [ ] Master job is created and completes successfully
-- [ ] Worker deployment scales to 2 replicas
+- [ ] Worker Job creates 2 worker pods
 - [ ] Workers connect to master (CONNECTED count matches WORKERS count)
 
 ### ✅ Validation Commands
@@ -388,7 +378,7 @@ kubectl get events --sort-by='.lastTimestamp'
 
 ```bash
 # Check worker pod logs
-kubectl logs -l app=locust,role=worker
+kubectl logs -l performance-test-pod-name=demo-worker
 
 # Verify service exists
 kubectl get svc demo-master
@@ -413,7 +403,7 @@ kubectl get endpoints demo-master
 kubectl logs job/demo-master
 
 # Check worker logs for errors
-kubectl logs -l app=locust,role=worker --tail=50
+kubectl logs -l performance-test-pod-name=demo-worker --tail=50
 ```
 
 **Common causes**:
@@ -454,9 +444,7 @@ kubectl apply -f config/samples/locusttest_v2_production.yaml
 This sample includes:
 
 - Resource requests and limits
-- Node affinity and tolerations
-- Horizontal Pod Autoscaler configuration
-- OpenTelemetry integration
+- Pod anti-affinity to spread workers across nodes (with nodeSelector, tolerations, and runtimeClassName shown as commented options)
 - Autostart/autoquit for automated testing
 
 ## Next Steps

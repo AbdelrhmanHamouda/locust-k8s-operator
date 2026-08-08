@@ -193,7 +193,7 @@ spec:
       - name: api-credentials  # All keys become env vars
 ```
 
-See [Advanced Topics - Environment Variables](how-to-guides/security/inject-secrets.md) for detailed examples of all three approaches.
+See [Inject secrets and configuration into test pods](how-to-guides/security/inject-secrets.md) for detailed examples of all three approaches.
 
 ### Secret Rotation
 

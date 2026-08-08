@@ -43,19 +43,19 @@ helm install my-locust-operator locust-k8s-operator/locust-k8s-operator \
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `replicas` | Number of operator replicas | `1` |
-| `resources.limits.memory` | Memory limit | `128Mi` |
+| `replicaCount` | Number of operator replicas | `2` |
+| `resources.limits.memory` | Memory limit | `256Mi` |
 | `resources.limits.cpu` | CPU limit | `500m` |
 | `webhook.enabled` | Enable conversion webhooks | `false` |
-| `webhook.certManager.enabled` | Use cert-manager for webhook certs | `false` |
-| `otelCollector.enabled` | Deploy OTel collector sidecar | `false` |
+| `webhook.certManager.enabled` | Use cert-manager for webhook certs | `true` |
+| `otelCollector.enabled` | Deploy standalone OTel collector (Deployment + Service) | `false` |
 | `leaderElection.enabled` | Enable leader election for HA | `true` |
 
 ### Example: Production Deployment with HA
 
 ```bash
 helm install locust-operator locust-k8s-operator/locust-k8s-operator \
-  --set replicas=3 \
+  --set replicaCount=3 \
   --set leaderElection.enabled=true \
   --set webhook.enabled=true \
   --set webhook.certManager.enabled=true \

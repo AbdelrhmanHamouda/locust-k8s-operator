@@ -65,7 +65,7 @@ This document outlines the process for submitting pull requests to the Locust K8
 ### Documentation
 
 - [ ] API changes are reflected in `docs/api_reference.md`
-- [ ] New features are documented in `docs/features.md` or `docs/advanced_topics.md`
+- [ ] New features are documented in `docs/features.md` or the relevant `docs/how-to-guides/` section
 - [ ] Breaking changes are noted in the PR description
 - [ ] Helm chart updates include `docs/helm_deploy.md` changes
 

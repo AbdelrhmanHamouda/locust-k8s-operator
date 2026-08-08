@@ -81,7 +81,7 @@ stateDiagram-v2
 
 **Pending** — The controller creates three core resources:
 
-- A master Service (headless, for worker-to-master communication)
+- A master Service (for worker-to-master communication)
 - A master Job (single pod running Locust master)
 - A worker Job (N pods running Locust workers)
 
@@ -218,6 +218,6 @@ status:
     - type: Ready
       status: "True"
       lastTransitionTime: "2026-01-15T10:00:05Z"
-      reason: AllWorkersConnected
-      message: "All 5 workers connected to master"
+      reason: ResourcesCreated
+      message: "All resources created"
 ```

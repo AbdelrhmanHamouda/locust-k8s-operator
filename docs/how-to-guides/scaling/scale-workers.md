@@ -199,10 +199,10 @@ kubectl get pods -l performance-test-pod-name=high-load-test-worker -o wide
 Output shows pod-to-node distribution:
 
 ```
-NAME                        NODE            STATUS
-high-load-test-worker-0     node-pool-1-a   Running
-high-load-test-worker-1     node-pool-1-b   Running
-high-load-test-worker-2     node-pool-1-c   Running
+NAME                            NODE            STATUS
+high-load-test-worker-xxxxx     node-pool-1-a   Running
+high-load-test-worker-yyyyy     node-pool-1-b   Running
+high-load-test-worker-zzzzz     node-pool-1-c   Running
 ...
 ```
 

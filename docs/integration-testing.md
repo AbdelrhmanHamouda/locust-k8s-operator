@@ -14,36 +14,25 @@ The operator uses a multi-layered testing strategy:
 
 ## Test Structure
 
+Tests live next to the code they cover (`*_test.go` files in each package):
+
 ```
 locust-k8s-operator/
 ├── api/
-│   ├── v1/
-│   │   └── *_test.go              # v1 API tests
-│   └── v2/
-│       ├── *_test.go              # v2 API tests
-│       └── locusttest_webhook_test.go  # Webhook validation tests
+│   ├── v1/          # v1 API type and conversion tests
+│   └── v2/          # v2 API type and webhook validation tests
 ├── internal/
-│   ├── config/
-│   │   └── config_test.go         # Configuration tests
-│   ├── controller/
-│   │   ├── suite_test.go          # envtest setup
-│   │   ├── locusttest_controller_test.go  # Unit tests
-│   │   └── integration_test.go    # Integration tests
-│   └── resources/
-│       ├── job_test.go            # Job builder tests
-│       ├── service_test.go        # Service builder tests
-│       ├── labels_test.go         # Label builder tests
-│       ├── env_test.go            # Environment builder tests
-│       └── command_test.go        # Command builder tests
+│   ├── config/      # Operator configuration tests
+│   ├── controller/  # Controller unit tests, envtest suite, and integration tests
+│   └── resources/   # Resource builder tests (jobs, services, labels, env, commands, volumes, OTel)
 └── test/
-    └── e2e/
-        ├── e2e_suite_test.go      # E2E test setup
-        └── e2e_test.go            # E2E test scenarios
+    ├── e2e/         # Ginkgo E2E suites run against a Kind cluster (incl. v1 compatibility and conversion tests)
+    └── utils/       # Shared E2E test helpers
 ```
 
 ## Prerequisites
 
-- **Go 1.24+**: Required for running tests
+- **Go 1.26+**: Required for running tests
 - **Docker**: Required for E2E tests (Kind)
 - **Kind**: Required for E2E tests
 
@@ -105,7 +94,6 @@ make ci
 
 Test fixtures and sample data are located in:
 
-- `internal/testdata/` - Test fixtures for unit tests
 - `config/samples/` - Sample CRs for integration/E2E tests
 
 ## Troubleshooting

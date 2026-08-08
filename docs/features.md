@@ -75,7 +75,7 @@ Everything the Locust Kubernetes Operator can do. Click any feature to learn how
 
     ---
 
-    Mount lib directories via ConfigMap for your Locust tests. This feature allows you to include shared libraries and modules without modifying test files or patching images, similar to the helm chart's `locust_lib_configmap` functionality.
+    Mount lib directories via ConfigMap for your Locust tests. This feature allows you to include shared libraries and modules without modifying test files or patching images, similar to the community Locust Helm chart's `locust_lib_configmap` functionality.
 
 -   :material-kubernetes: **Advanced Scheduling**
 

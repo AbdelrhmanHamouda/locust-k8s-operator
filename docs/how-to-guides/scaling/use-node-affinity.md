@@ -274,7 +274,7 @@ Warning  FailedScheduling  No nodes are available that match all of the followin
 !!! tip "podAffinity and podAntiAffinity"
 
     The `scheduling.affinity` field also supports `podAffinity` and `podAntiAffinity` for
-    inter-pod scheduling rules. See the [production deployment sample](../../samples/production-deployment.md)
+    inter-pod scheduling rules. See the [production deployment sample](../../tutorials/production-deployment.md)
     for a worked example.
 
 ## Combine with tolerations

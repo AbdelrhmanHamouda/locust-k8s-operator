@@ -161,7 +161,7 @@ The Go operator requires significantly fewer resources than the Java version:
 | `metrics.enabled` | Enable Prometheus metrics endpoint. | `false` |
 | `metrics.port` | Metrics server port. | `8080` |
 | `metrics.secure` | Use HTTPS for metrics endpoint. | `false` |
-| `webhook.enabled` | Enable conversion webhook (requires cert-manager). | `false` |
+| `webhook.enabled` | Enable conversion webhook (requires TLS certs: cert-manager or manual Secret). | `false` |
 
 ### Webhook Configuration (optional)
 
@@ -215,6 +215,8 @@ helm install locust-operator locust-k8s-operator/locust-k8s-operator \
 | `locustPods.resources.limits.cpu` | CPU limit for Locust pods. Set to `""` to unbind. | `1000m` |
 | `locustPods.resources.limits.memory` | Memory limit for Locust pods. Set to `""` to unbind. | `1024Mi` |
 | `locustPods.resources.limits.ephemeralStorage` | Ephemeral storage limit for Locust pods. | `50M` |
+| `locustPods.masterResources` | Role-specific resources for master Locust containers. When set, overrides `locustPods.resources` for the master. | `{}` |
+| `locustPods.workerResources` | Role-specific resources for worker Locust containers. When set, overrides `locustPods.resources` for workers. | `{}` |
 | `locustPods.affinityInjection` | Enable affinity injection from CRs. | `true` |
 | `locustPods.tolerationsInjection` | Enable tolerations injection from CRs. | `true` |
 | `locustPods.runtimeClassName` | Default `runtimeClassName` (e.g. `gvisor`) applied to generated Locust master/worker pods when the CR does not set `scheduling.runtimeClassName`. Empty means the cluster default runtime. A default, not an enforcement boundary — CRs can override it or opt out with `runtimeClassName: ""`. Invalid values fail operator startup. | `""` |

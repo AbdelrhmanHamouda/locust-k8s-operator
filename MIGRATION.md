@@ -29,8 +29,8 @@ The `LocustTest` Custom Resource Definition (CRD) maintains full backward compat
 
 ### Behavior
 The operator provides the same functionality:
-- Creates master and worker Pods with Locust
-- Manages Services for master UI and headless communication
+- Creates master and worker Jobs that run the Locust pods
+- Manages a master Service for worker-to-master communication (the web UI port 8089 is not exposed via the Service)
 - Handles ConfigMap-based Locust script injection
 - Supports Secret and environment variable configuration
 
@@ -83,7 +83,7 @@ For detailed migration guidance, see the [Migration Guide](https://abdelrhmanham
 ## v2.2 → v2.2.2 (webhook default flip)
 
 Crashlooping after a fresh `v2.2.0` / `v2.2.1` install? Upgrade to `v2.2.2`. See the
-[v2.2 → v2.2.2 migration notes](https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/#v22--v222)
+[v2.2 → v2.2.2 migration notes](https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/#v22-v222-webhook-default-flip)
 for the full breakdown.
 
 ## Rationale

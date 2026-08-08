@@ -44,6 +44,7 @@ The v2 API provides a cleaner, grouped configuration structure with new features
 | `env` | [EnvConfig](#envconfig) | No | - | Environment variable injection |
 | `volumes` | []corev1.Volume | No | - | Additional volumes to mount |
 | `volumeMounts` | [][TargetedVolumeMount](#targetedvolumemount) | No | - | Volume mounts with target filtering |
+| `security` | [SecurityConfig](#securityconfig) | No | - | Pod and container security context configuration |
 | `observability` | [ObservabilityConfig](#observabilityconfig) | No | - | OpenTelemetry configuration |
 
 #### MasterSpec
@@ -148,6 +149,15 @@ The v2 API provides a cleaner, grouped configuration structure with new features
 | `subPath` | string | No | - | Sub-path within the volume |
 | `readOnly` | bool | No | `false` | Mount as read-only |
 | `target` | string | No | `both` | Target pods: `master`, `worker`, or `both` |
+
+#### SecurityConfig
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `podSecurityContext` | corev1.PodSecurityContext | No | `seccompProfile: RuntimeDefault` | Pod-level security context applied to all containers in the pod. When set, this completely overrides the operator's default. On OpenShift, leave unset or configure it to comply with your SCC. |
+| `containerSecurityContext` | corev1.SecurityContext | No | - | Security context applied to the Locust container in each pod |
+
+See [Configure pod security settings](how-to-guides/security/configure-pod-security.md) for the default security posture and hardening examples.
 
 #### ObservabilityConfig
 

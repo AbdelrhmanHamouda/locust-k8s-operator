@@ -19,7 +19,7 @@ Configure Locust pods to connect to authenticated Kafka clusters, including AWS 
 - Basic understanding of Kafka security protocols
 
 !!! warning "Deprecated Feature"
-    The operator-level Kafka configuration via Helm values is deprecated and will be removed in a future release. For new deployments, configure Kafka directly in your locustfile using [locust-plugins](https://github.com/SvenskaSpworker/locust-plugins) or a similar library. This approach gives you full control over Kafka client settings and is independent of the operator.
+    The operator-level Kafka configuration via Helm values is deprecated and will be removed in a future release. For new deployments, configure Kafka directly in your locustfile using [locust-plugins](https://github.com/SvenskaSpel/locust-plugins) or a similar library. This approach gives you full control over Kafka client settings and is independent of the operator.
 
 ## Two-level configuration model
 

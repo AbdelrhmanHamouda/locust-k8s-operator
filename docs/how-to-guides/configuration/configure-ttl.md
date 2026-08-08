@@ -14,7 +14,7 @@ Automatically clean up finished master and worker jobs and their pods after test
 
 ## Prerequisites
 
-- Kubernetes 1.12+ (TTL controller support)
+- Kubernetes 1.29+ (operator minimum; the TTL controller itself is GA since Kubernetes 1.23)
 - Locust Kubernetes Operator installed
 
 ## What gets cleaned up

@@ -6,7 +6,7 @@ This guide describes the setup and workflow for local development on the Locust 
 
 ### Prerequisites
 
-- **Go 1.24+**: Required for building the operator
+- **Go 1.26+**: Required for building the operator
 - **Docker**: Running Docker daemon for building images
 - **kubectl**: Kubernetes CLI for cluster interaction
 - **Kind** or **Minikube**: Local Kubernetes cluster for testing
@@ -122,7 +122,7 @@ For local development and testing, Kind (Kubernetes in Docker) is the recommende
    Option B: Using Helm (for production-like testing):
    ```bash
    # Package the Helm chart
-   helm package ../charts/locust-k8s-operator
+   helm package charts/locust-k8s-operator
    
    # Install with local image
    helm install locust-operator locust-k8s-operator-*.tgz \
