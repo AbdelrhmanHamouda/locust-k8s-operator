@@ -1,3 +1,21 @@
+## 2.3.0 (2026-08-08)
+
+### Feat
+
+- **scheduling**: add runtimeClassName support for Locust and operator pods (#293) (#336)
+
+### Fix
+
+- **security**: bump grpc to 1.82.1 and cel-go to 0.29.0 to resolve GHSA-hrxh-6v49-42gf and GHSA-gcjh-h69q-9w9g (#345)
+- **naming**: make generated resource names a single source of truth (#341)
+- look up resources by sanitized names to stop recovery loop (#326)
+- **security**: bump Go to 1.26.5 and x/net to v0.55.0 to resolve stdlib and dependency CVEs (#328) (#335)
+- use native sidecar for metrics exporter (k8s 1.29+) (#327)
+
+### Refactor
+
+- codify native-sidecar exit-code policy (#338)
+
 ## 2.2.3 (2026-05-23)
 
 ### Fix
