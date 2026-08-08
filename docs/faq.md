@@ -101,7 +101,7 @@ Resource requirements depend on test complexity:
 | Medium complexity | 500m | 256Mi | JSON parsing, simple logic |
 | Heavy tests | 1000m | 512Mi-1Gi | Complex business logic, large payloads |
 
-Start conservative and observe resource usage via `kubectl top pods`. See [Advanced Topics - Resource Management](how-to-guides/configuration/configure-resources.md) for detailed sizing guidance.
+Start conservative and observe resource usage via `kubectl top pods`. See [Configure resource limits and requests](how-to-guides/configuration/configure-resources.md) for detailed sizing guidance.
 
 !!! tip "Resource Precedence"
     The operator applies resources in order of specificity: (1) CR spec resources (highest), (2) Helm role-specific resources (`masterResources`/`workerResources`), (3) Helm unified resources (`locustPods.resources`).
@@ -146,10 +146,10 @@ Workers typically connect within 30-60 seconds after pod startup.
 
 ### How do I access the Locust web UI?
 
-Port-forward to the master service:
+Port-forward to the master job:
 
 ```bash
-kubectl port-forward svc/<test-name>-master 8089:8089
+kubectl port-forward job/<test-name>-master 8089:8089
 ```
 
 Then visit [http://localhost:8089](http://localhost:8089) in your browser.
@@ -170,7 +170,7 @@ kubectl create configmap my-test-scripts --from-file=test.py=./test.py
 # If LocustTest already exists, the operator detects recovery automatically
 ```
 
-The operator monitors pod status every 30 seconds and updates conditions when ConfigMaps become available.
+The operator watches pod events and updates conditions when pod state changes, so it detects when ConfigMaps become available.
 
 ## Migration
 
@@ -231,9 +231,9 @@ This allows global defaults with role-specific overrides and per-test customizat
 The metrics sidecar is maintained for legacy compatibility. Use it only if:
 
 - Your monitoring stack doesn't support OTLP
-- You have existing dashboards built on the CSV metrics format
+- You have existing dashboards built on the Prometheus metrics format
 
-See [Advanced Topics - OpenTelemetry Integration](how-to-guides/observability/configure-opentelemetry.md) for configuration details.
+See [Configure OpenTelemetry integration](how-to-guides/observability/configure-opentelemetry.md) for configuration details.
 
 ## Operator Troubleshooting
 

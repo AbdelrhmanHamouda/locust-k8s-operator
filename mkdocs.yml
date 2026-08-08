@@ -197,6 +197,10 @@ markdown_extensions:
       custom_checkbox: true
   - pymdownx.tilde
 
+# Pages intentionally kept out of the nav (redirect stubs preserved for old inbound links)
+not_in_nav: |
+  advanced_topics.md
+
 # Page tree
 nav:
   - Home: index.md
