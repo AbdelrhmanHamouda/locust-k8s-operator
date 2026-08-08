@@ -24,140 +24,96 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLocustTestSpec_JSONRoundTrip(t *testing.T) {
-	spec := LocustTestSpec{
+// v1 is the deprecated spoke version, but the API server still serves and
+// decodes it, so its JSON tags are a frozen wire contract: renaming one
+// silently drops the field off existing CRs on the way into the conversion
+// webhook. This test pins the serialized key names and the omitempty
+// behaviour that keeps minimal v1 manifests free of empty optional fields.
+func TestLocustTestSpec_WireFormat(t *testing.T) {
+	required := LocustTestSpec{
 		MasterCommandSeed: "--locustfile /lotest/src/test.py --host https://example.com",
 		WorkerCommandSeed: "--locustfile /lotest/src/test.py",
 		WorkerReplicas:    3,
 		Image:             "locustio/locust:latest",
-		ImagePullPolicy:   "Always",
-		ConfigMap:         "test-config",
-		Labels: &PodLabels{
-			Master: map[string]string{"app": "locust-master"},
-			Worker: map[string]string{"app": "locust-worker"},
-		},
 	}
 
-	// Marshal to JSON
-	data, err := json.Marshal(spec)
-	require.NoError(t, err)
-
-	// Unmarshal back
-	var decoded LocustTestSpec
-	err = json.Unmarshal(data, &decoded)
-	require.NoError(t, err)
-
-	// Verify roundtrip
-	assert.Equal(t, spec.MasterCommandSeed, decoded.MasterCommandSeed)
-	assert.Equal(t, spec.WorkerReplicas, decoded.WorkerReplicas)
-	assert.Equal(t, spec.Labels.Master["app"], decoded.Labels.Master["app"])
-}
-
-func TestLocustTestSpec_JSONFieldNames(t *testing.T) {
-	spec := LocustTestSpec{
-		MasterCommandSeed: "test",
-		WorkerCommandSeed: "test",
-		WorkerReplicas:    1,
-		Image:             "test",
+	optionalKeys := []string{
+		"imagePullPolicy",
+		"imagePullSecrets",
+		"configMap",
+		"libConfigMap",
+		"labels",
+		"annotations",
+		"affinity",
+		"tolerations",
 	}
 
-	data, err := json.Marshal(spec)
-	require.NoError(t, err)
+	t.Run("required fields always serialize under their documented keys", func(t *testing.T) {
+		data, err := json.Marshal(required)
+		require.NoError(t, err)
 
-	// Verify camelCase JSON field names
-	jsonStr := string(data)
-	assert.Contains(t, jsonStr, `"masterCommandSeed"`)
-	assert.Contains(t, jsonStr, `"workerCommandSeed"`)
-	assert.Contains(t, jsonStr, `"workerReplicas"`)
-}
+		jsonStr := string(data)
+		for _, key := range []string{"masterCommandSeed", "workerCommandSeed", "workerReplicas", "image"} {
+			assert.Contains(t, jsonStr, `"`+key+`"`, "required field %q must always be serialized", key)
+		}
+	})
 
-func TestLocustTestSpec_AllFields(t *testing.T) {
-	spec := LocustTestSpec{
-		MasterCommandSeed: "--locustfile /lotest/src/test.py --host https://example.com",
-		WorkerCommandSeed: "--locustfile /lotest/src/test.py",
-		WorkerReplicas:    5,
-		Image:             "locustio/locust:2.15.1",
-		ImagePullPolicy:   "IfNotPresent",
-		ImagePullSecrets:  []string{"my-registry-secret"},
-		ConfigMap:         "locust-test-config",
-		LibConfigMap:      "locust-lib-config",
-		Labels: &PodLabels{
-			Master: map[string]string{"role": "master", "team": "platform"},
-			Worker: map[string]string{"role": "worker", "team": "platform"},
-		},
-		Annotations: &PodAnnotations{
+	t.Run("unset optional fields are omitted", func(t *testing.T) {
+		data, err := json.Marshal(required)
+		require.NoError(t, err)
+
+		jsonStr := string(data)
+		for _, key := range optionalKeys {
+			assert.NotContains(t, jsonStr, `"`+key+`"`, "unset optional field %q must be omitted", key)
+		}
+	})
+
+	t.Run("set optional fields serialize under their documented keys", func(t *testing.T) {
+		full := required
+		full.ImagePullPolicy = "IfNotPresent"
+		full.ImagePullSecrets = []string{"my-registry-secret"}
+		full.ConfigMap = "locust-test-config"
+		full.LibConfigMap = "locust-lib-config"
+		full.Labels = &PodLabels{
+			Master: map[string]string{"role": "master"},
+			Worker: map[string]string{"role": "worker"},
+		}
+		full.Annotations = &PodAnnotations{
 			Master: map[string]string{"prometheus.io/scrape": "true"},
 			Worker: map[string]string{"prometheus.io/scrape": "true"},
-		},
-		Affinity: &LocustTestAffinity{
+		}
+		full.Affinity = &LocustTestAffinity{
 			NodeAffinity: &LocustTestNodeAffinity{
 				RequiredDuringSchedulingIgnoredDuringExecution: map[string]string{
 					"node-type": "compute",
 				},
 			},
-		},
-		Tolerations: []LocustTestToleration{
-			{
-				Key:      "dedicated",
-				Operator: "Equal",
-				Value:    "locust",
-				Effect:   "NoSchedule",
-			},
-		},
-	}
+		}
+		full.Tolerations = []LocustTestToleration{
+			{Key: "dedicated", Operator: "Equal", Value: "locust", Effect: "NoSchedule"},
+		}
 
-	// Marshal to JSON
-	data, err := json.Marshal(spec)
-	require.NoError(t, err)
+		data, err := json.Marshal(full)
+		require.NoError(t, err)
 
-	// Unmarshal back
-	var decoded LocustTestSpec
-	err = json.Unmarshal(data, &decoded)
-	require.NoError(t, err)
+		jsonStr := string(data)
+		for _, key := range optionalKeys {
+			assert.Contains(t, jsonStr, `"`+key+`"`, "set optional field %q must be serialized", key)
+		}
 
-	// Verify all fields
-	assert.Equal(t, spec.MasterCommandSeed, decoded.MasterCommandSeed)
-	assert.Equal(t, spec.WorkerCommandSeed, decoded.WorkerCommandSeed)
-	assert.Equal(t, spec.WorkerReplicas, decoded.WorkerReplicas)
-	assert.Equal(t, spec.Image, decoded.Image)
-	assert.Equal(t, spec.ImagePullPolicy, decoded.ImagePullPolicy)
-	assert.Equal(t, spec.ImagePullSecrets, decoded.ImagePullSecrets)
-	assert.Equal(t, spec.ConfigMap, decoded.ConfigMap)
-	assert.Equal(t, spec.LibConfigMap, decoded.LibConfigMap)
-	assert.Equal(t, spec.Labels.Master, decoded.Labels.Master)
-	assert.Equal(t, spec.Labels.Worker, decoded.Labels.Worker)
-	assert.Equal(t, spec.Annotations.Master, decoded.Annotations.Master)
-	assert.Equal(t, spec.Annotations.Worker, decoded.Annotations.Worker)
-	assert.Equal(t, spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution,
-		decoded.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution)
-	assert.Len(t, decoded.Tolerations, 1)
-	assert.Equal(t, spec.Tolerations[0].Key, decoded.Tolerations[0].Key)
-	assert.Equal(t, spec.Tolerations[0].Operator, decoded.Tolerations[0].Operator)
-	assert.Equal(t, spec.Tolerations[0].Value, decoded.Tolerations[0].Value)
-	assert.Equal(t, spec.Tolerations[0].Effect, decoded.Tolerations[0].Effect)
-}
-
-func TestLocustTestSpec_OmitEmptyFields(t *testing.T) {
-	// Only required fields
-	spec := LocustTestSpec{
-		MasterCommandSeed: "test",
-		WorkerCommandSeed: "test",
-		WorkerReplicas:    1,
-		Image:             "test",
-	}
-
-	data, err := json.Marshal(spec)
-	require.NoError(t, err)
-
-	jsonStr := string(data)
-
-	// Optional fields should not be present
-	assert.NotContains(t, jsonStr, `"imagePullPolicy"`)
-	assert.NotContains(t, jsonStr, `"imagePullSecrets"`)
-	assert.NotContains(t, jsonStr, `"configMap"`)
-	assert.NotContains(t, jsonStr, `"libConfigMap"`)
-	assert.NotContains(t, jsonStr, `"labels"`)
-	assert.NotContains(t, jsonStr, `"annotations"`)
-	assert.NotContains(t, jsonStr, `"affinity"`)
-	assert.NotContains(t, jsonStr, `"tolerations"`)
+		// Nested keys carry the same contract; a rename here loses affinity and
+		// toleration data on every stored v1 CR.
+		for _, key := range []string{
+			"nodeAffinity",
+			"requiredDuringSchedulingIgnoredDuringExecution",
+			"master",
+			"worker",
+			"key",
+			"operator",
+			"value",
+			"effect",
+		} {
+			assert.Contains(t, jsonStr, `"`+key+`"`, "nested field %q must be serialized", key)
+		}
+	})
 }

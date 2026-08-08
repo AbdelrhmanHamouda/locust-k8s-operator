@@ -194,22 +194,10 @@ var _ = Describe("LocustTest Controller Integration", func() {
 			Expect(workerJob.OwnerReferences[0].Name).To(Equal("owner-ref-test"))
 		})
 
-		It("should create all resources with correct labels", func() {
+		It("should create Jobs with the operator's identifying pod labels", func() {
 			lt := createLocustTest("labels-test")
 			Expect(k8sClient.Create(ctx, lt)).To(Succeed())
 
-			// Verify Service labels
-			svc := &corev1.Service{}
-			Eventually(func() error {
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name: "labels-test-master", Namespace: testNamespace,
-				}, svc)
-			}, timeout, interval).Should(Succeed())
-
-			// Service doesn't have labels set in BuildMasterService - verify it was created
-			Expect(svc.Name).To(Equal("labels-test-master"))
-
-			// Verify Job labels
 			job := &batchv1.Job{}
 			Eventually(func() error {
 				return k8sClient.Get(ctx, types.NamespacedName{
@@ -285,67 +273,6 @@ var _ = Describe("LocustTest Controller Integration", func() {
 			}, timeout, interval).Should(Succeed())
 
 			Expect(workerJob.Spec.Template.Annotations).To(HaveKeyWithValue("custom-annotation", "worker-value"))
-		})
-
-		It("should handle LocustTest with affinity configuration", func() {
-			lt := createLocustTest("affinity-test")
-			lt.Spec.Scheduling = &locustv2.SchedulingConfig{
-				Affinity: &corev1.Affinity{
-					NodeAffinity: &corev1.NodeAffinity{
-						RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-							NodeSelectorTerms: []corev1.NodeSelectorTerm{
-								{
-									MatchExpressions: []corev1.NodeSelectorRequirement{
-										{
-											Key:      "node-type",
-											Operator: corev1.NodeSelectorOpIn,
-											Values:   []string{"performance"},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-			Expect(k8sClient.Create(ctx, lt)).To(Succeed())
-
-			masterJob := &batchv1.Job{}
-			Eventually(func() error {
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name: "affinity-test-master", Namespace: testNamespace,
-				}, masterJob)
-			}, timeout, interval).Should(Succeed())
-
-			// Verify affinity is set (feature flag may disable injection)
-			// The affinity structure depends on EnableAffinityCRInjection config
-			// Just verify the Job was created successfully
-			Expect(masterJob.Name).To(Equal("affinity-test-master"))
-		})
-
-		It("should handle LocustTest with tolerations", func() {
-			lt := createLocustTest("tolerations-test")
-			lt.Spec.Scheduling = &locustv2.SchedulingConfig{
-				Tolerations: []corev1.Toleration{
-					{
-						Key:      "dedicated",
-						Operator: corev1.TolerationOpEqual,
-						Value:    "performance",
-						Effect:   corev1.TaintEffectNoSchedule,
-					},
-				},
-			}
-			Expect(k8sClient.Create(ctx, lt)).To(Succeed())
-
-			masterJob := &batchv1.Job{}
-			Eventually(func() error {
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name: "tolerations-test-master", Namespace: testNamespace,
-				}, masterJob)
-			}, timeout, interval).Should(Succeed())
-
-			// Verify Job was created (tolerations depend on EnableTolerationsCRInjection)
-			Expect(masterJob.Name).To(Equal("tolerations-test-master"))
 		})
 
 		It("should handle LocustTest with single worker", func() {
@@ -588,20 +515,6 @@ var _ = Describe("LocustTest Controller Integration", func() {
 			}, timeout, interval).Should(BeTrue())
 		})
 
-		It("should handle deletion of non-existent LocustTest gracefully", func() {
-			// This tests that the reconciler handles NotFound errors
-			lt := &locustv2.LocustTest{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "nonexistent-test",
-					Namespace: testNamespace,
-				},
-			}
-
-			// Attempting to delete non-existent resource should not cause issues
-			err := k8sClient.Delete(ctx, lt)
-			// The error should indicate not found, which is fine
-			Expect(err).To(HaveOccurred()) // NotFound is expected
-		})
 	})
 
 	// ==================== POD HEALTH MONITORING TESTS ====================

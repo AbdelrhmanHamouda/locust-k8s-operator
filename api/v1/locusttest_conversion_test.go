@@ -509,6 +509,88 @@ func TestNilAffinityConversion(t *testing.T) {
 	assert.Nil(t, result4)
 }
 
+// v1 can only express node affinity as a flat key→value map, so
+// convertAffinityToV1 keeps just the first value of each `In` expression and
+// drops everything else. Downconversion must degrade to nil rather than emit a
+// half-populated affinity that reads as an accurate constraint — the v2 rule
+// stays authoritative, and nil is the only honest v1 rendering of a rule v1
+// cannot represent.
+func TestConvertAffinityToV1_DropsUnrepresentableRules(t *testing.T) {
+	nodeAffinity := func(exprs ...corev1.NodeSelectorRequirement) *corev1.Affinity {
+		return &corev1.Affinity{
+			NodeAffinity: &corev1.NodeAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+					NodeSelectorTerms: []corev1.NodeSelectorTerm{{MatchExpressions: exprs}},
+				},
+			},
+		}
+	}
+
+	t.Run("nil NodeAffinity", func(t *testing.T) {
+		assert.Nil(t, convertAffinityToV1(&corev1.Affinity{}))
+	})
+
+	t.Run("nil required scheduling term", func(t *testing.T) {
+		assert.Nil(t, convertAffinityToV1(&corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{}}))
+	})
+
+	t.Run("no node selector terms", func(t *testing.T) {
+		src := &corev1.Affinity{
+			NodeAffinity: &corev1.NodeAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{},
+			},
+		}
+		assert.Nil(t, convertAffinityToV1(src))
+	})
+
+	t.Run("only non-In operators yields nil, not an empty affinity", func(t *testing.T) {
+		src := nodeAffinity(
+			corev1.NodeSelectorRequirement{
+				Key:      "node-type",
+				Operator: corev1.NodeSelectorOpNotIn,
+				Values:   []string{"spot"},
+			},
+			corev1.NodeSelectorRequirement{
+				Key:      "gpu",
+				Operator: corev1.NodeSelectorOpExists,
+			},
+		)
+		assert.Nil(t, convertAffinityToV1(src),
+			"NotIn/Exists have no v1 representation; emitting an empty map would invert the constraint")
+	})
+
+	t.Run("In operator with no values yields nil", func(t *testing.T) {
+		src := nodeAffinity(corev1.NodeSelectorRequirement{
+			Key:      "node-type",
+			Operator: corev1.NodeSelectorOpIn,
+		})
+		assert.Nil(t, convertAffinityToV1(src))
+	})
+
+	t.Run("mixed operators keep only the In expressions", func(t *testing.T) {
+		src := nodeAffinity(
+			corev1.NodeSelectorRequirement{
+				Key:      "node-type",
+				Operator: corev1.NodeSelectorOpIn,
+				Values:   []string{"performance", "high-cpu"},
+			},
+			corev1.NodeSelectorRequirement{
+				Key:      "lifecycle",
+				Operator: corev1.NodeSelectorOpNotIn,
+				Values:   []string{"spot"},
+			},
+		)
+
+		result := convertAffinityToV1(src)
+
+		require.NotNil(t, result)
+		require.NotNil(t, result.NodeAffinity)
+		reqs := result.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution
+		assert.Equal(t, map[string]string{"node-type": "performance"}, reqs,
+			"only the first value of each In expression survives; NotIn is dropped entirely")
+	})
+}
+
 func TestEmptyTolerationsConversion(t *testing.T) {
 	// Test empty tolerations in v1
 	result := convertTolerationsToV2(nil)

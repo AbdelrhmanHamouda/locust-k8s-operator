@@ -219,6 +219,27 @@ func TestDerivePhaseFromJob(t *testing.T) {
 			},
 			expectedPhase: locustv2.PhaseFailed,
 		},
+		{
+			// Conditions are scanned in order, so a Job carrying both must resolve
+			// to Succeeded — reporting Failed for a test that completed would send
+			// the CR to a terminal Failed phase it can never leave.
+			name: "both Complete and Failed conditions - Complete wins",
+			job: &batchv1.Job{
+				Status: batchv1.JobStatus{
+					Conditions: []batchv1.JobCondition{
+						{
+							Type:   batchv1.JobComplete,
+							Status: corev1.ConditionTrue,
+						},
+						{
+							Type:   batchv1.JobFailed,
+							Status: corev1.ConditionTrue,
+						},
+					},
+				},
+			},
+			expectedPhase: locustv2.PhaseSucceeded,
+		},
 	}
 
 	for _, tt := range tests {
@@ -546,58 +567,6 @@ func TestUpdateStatusFromJobs_ObservedGeneration(t *testing.T) {
 
 	// Verify ObservedGeneration was updated to match Generation
 	assert.Equal(t, lt.Generation, lt.Status.ObservedGeneration)
-}
-
-// TestDerivePhaseFromJob_TypeSafety verifies typed Phase return.
-func TestDerivePhaseFromJob_TypeSafety(t *testing.T) {
-	tests := []struct {
-		name          string
-		job           *batchv1.Job
-		expectedPhase locustv2.Phase
-	}{
-		{
-			name:          "nil job",
-			job:           nil,
-			expectedPhase: locustv2.PhasePending,
-		},
-		{
-			name: "both Complete and Failed conditions - Complete wins",
-			job: &batchv1.Job{
-				Status: batchv1.JobStatus{
-					Conditions: []batchv1.JobCondition{
-						{
-							Type:   batchv1.JobComplete,
-							Status: corev1.ConditionTrue,
-						},
-						{
-							Type:   batchv1.JobFailed,
-							Status: corev1.ConditionTrue,
-						},
-					},
-				},
-			},
-			expectedPhase: locustv2.PhaseSucceeded,
-		},
-		{
-			name: "active job",
-			job: &batchv1.Job{
-				Status: batchv1.JobStatus{
-					Active: 1,
-				},
-			},
-			expectedPhase: locustv2.PhaseRunning,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			phase := derivePhaseFromJob(tt.job)
-			assert.Equal(t, tt.expectedPhase, phase)
-
-			// Verify it's the typed Phase type
-			var _ locustv2.Phase = phase //nolint:staticcheck
-		})
-	}
 }
 
 // TestUpdateStatusFromJobs_WorkersConnectedCondition verifies WorkersConnected condition.

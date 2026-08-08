@@ -24,6 +24,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -87,16 +88,6 @@ func TestBuildMasterJob(t *testing.T) {
 	job := BuildMasterJob(lt, cfg, logr.Discard())
 
 	require.NotNil(t, job)
-	assert.Equal(t, "my-test-master", job.Name)
-	assert.Equal(t, "default", job.Namespace)
-}
-
-func TestBuildMasterJob_Metadata(t *testing.T) {
-	lt := newTestLocustTest()
-	cfg := newTestConfig()
-
-	job := BuildMasterJob(lt, cfg, logr.Discard())
-
 	assert.Equal(t, "my-test-master", job.Name)
 	assert.Equal(t, "default", job.Namespace)
 }
@@ -405,6 +396,74 @@ func TestBuildTolerations_ExistsOperator(t *testing.T) {
 	require.Len(t, job.Spec.Template.Spec.Tolerations, 1)
 	assert.Equal(t, corev1.TolerationOpExists, job.Spec.Template.Spec.Tolerations[0].Operator)
 	assert.Empty(t, job.Spec.Template.Spec.Tolerations[0].Value, "Value should be empty for Exists operator")
+}
+
+// nodeSelector is plumbed straight from the CR onto both pod specs with no
+// feature flag guarding it (unlike affinity and tolerations). Nothing else
+// asserts it reaches the pod, so a dropped buildNodeSelector call would
+// silently schedule load-test pods on the wrong nodes.
+func TestBuildNodeSelector_AppliedToBothPodSpecs(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Scheduling = &locustv2.SchedulingConfig{
+		NodeSelector: map[string]string{
+			"node-type":                   "performance",
+			"topology.kubernetes.io/zone": "us-west-2a",
+		},
+	}
+	cfg := newTestConfig()
+
+	master := BuildMasterJob(lt, cfg, logr.Discard())
+	worker := BuildWorkerJob(lt, cfg, logr.Discard())
+
+	for name, job := range map[string]*batchv1.Job{"master": master, "worker": worker} {
+		selector := job.Spec.Template.Spec.NodeSelector
+		require.Len(t, selector, 2, "%s pod should carry both node selector entries", name)
+		assert.Equal(t, "performance", selector["node-type"], "%s pod", name)
+		assert.Equal(t, "us-west-2a", selector["topology.kubernetes.io/zone"], "%s pod", name)
+	}
+}
+
+// An empty or absent nodeSelector must leave the field unset rather than
+// serialize an empty map, which would otherwise show up as spurious drift on
+// every generated Job.
+func TestBuildNodeSelector_UnsetLeavesFieldNil(t *testing.T) {
+	tests := []struct {
+		name       string
+		scheduling *locustv2.SchedulingConfig
+	}{
+		{name: "nil scheduling", scheduling: nil},
+		{name: "scheduling without nodeSelector", scheduling: &locustv2.SchedulingConfig{}},
+		{name: "explicitly empty nodeSelector", scheduling: &locustv2.SchedulingConfig{NodeSelector: map[string]string{}}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lt := newTestLocustTest()
+			lt.Spec.Scheduling = tt.scheduling
+			cfg := newTestConfig()
+
+			assert.Nil(t, BuildMasterJob(lt, cfg, logr.Discard()).Spec.Template.Spec.NodeSelector)
+			assert.Nil(t, BuildWorkerJob(lt, cfg, logr.Discard()).Spec.Template.Spec.NodeSelector)
+		})
+	}
+}
+
+// nodeSelector is intentionally not gated by the affinity/toleration feature
+// flags. Regression guard: wiring it behind EnableAffinityCRInjection would
+// make every existing CR's nodeSelector stop taking effect on upgrade.
+func TestBuildNodeSelector_NotGatedByInjectionFlags(t *testing.T) {
+	lt := newTestLocustTest()
+	lt.Spec.Scheduling = &locustv2.SchedulingConfig{
+		NodeSelector: map[string]string{"node-type": "performance"},
+	}
+	cfg := newTestConfig()
+	cfg.EnableAffinityCRInjection = false
+	cfg.EnableTolerationsCRInjection = false
+
+	job := BuildMasterJob(lt, cfg, logr.Discard())
+
+	assert.Equal(t, "performance", job.Spec.Template.Spec.NodeSelector["node-type"],
+		"nodeSelector must apply regardless of the affinity/toleration injection flags")
 }
 
 func TestBuildRuntimeClassName_FromCR(t *testing.T) {
