@@ -27,7 +27,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 2.4.2
+version: 2.4.3
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
@@ -63,6 +63,8 @@ annotations:
       url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues
   artifacthub.io/changes: |
     - kind: fixed
-      description: Metrics exporter now runs as a native sidecar so load-test Jobs complete instead of hanging indefinitely
-    - kind: changed
-      description: Minimum supported Kubernetes version raised to 1.29 (required for native sidecar containers)
+      description: Chart README now documents the correct replicaCount name and default, memory limit, cert-manager default, and standalone OpenTelemetry collector
+    - kind: fixed
+      description: Documentation corrected across the Helm deploy, API reference, FAQ, architecture, and kind validation guides, including broken links and stale version requirements
+    - kind: removed
+      description: Dead code from the original scaffolding and the Java-era port, including the internal/testdata package, unused constants, and orphaned e2e test helpers
