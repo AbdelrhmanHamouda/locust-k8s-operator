@@ -3,10 +3,22 @@ entries:
   locust-k8s-operator:
   - annotations:
       artifacthub.io/changes: |
+        - kind: added
+          description: RuntimeClass support for Locust pods and the operator, per test via the CR or operator-wide via chart values (#336, closes issue 293)
         - kind: fixed
-          description: Metrics exporter now runs as a native sidecar so load-test Jobs complete instead of hanging indefinitely
+          description: Metrics exporter now runs as a native sidecar so master Jobs complete and tests reach Succeeded (#327)
+        - kind: fixed
+          description: Recovery loop for CR names containing dots, lookups now use sanitized names and finished tests are no longer resurrected (#326, closes issue 50)
+        - kind: fixed
+          description: Webhook volume-name validation now shares generated-name computation with the resource builders (#341)
+        - kind: security
+          description: Go bumped to 1.26.5 and golang.org/x/net to v0.55.0, clearing flagged CVEs (#335, closes issue 328)
+        - kind: security
+          description: grpc bumped to v1.82.1 and cel-go to v0.29.0, resolving GHSA-hrxh-6v49-42gf and GHSA-gcjh-h69q-9w9g (#345)
         - kind: changed
-          description: Minimum supported Kubernetes version raised to 1.29 (required for native sidecar containers)
+          description: Kubernetes libraries bumped to v0.36.3 and controller-runtime to v0.24.1 (#348)
+        - kind: changed
+          description: Minimum supported Kubernetes version raised to 1.29, required for native sidecar containers
       artifacthub.io/containsSecurityUpdates: "false"
       artifacthub.io/license: Apache-2.0
       artifacthub.io/links: |
