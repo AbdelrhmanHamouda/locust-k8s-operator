@@ -3,6 +3,56 @@ entries:
   locust-k8s-operator:
   - annotations:
       artifacthub.io/changes: |
+        - kind: fixed
+          description: Metrics exporter now runs as a native sidecar so load-test Jobs complete instead of hanging indefinitely
+        - kind: changed
+          description: Minimum supported Kubernetes version raised to 1.29 (required for native sidecar containers)
+      artifacthub.io/containsSecurityUpdates: "false"
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: Documentation
+          url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/
+        - name: Getting Started
+          url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/getting_started/
+        - name: Migration Guide (v1→v2)
+          url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/
+        - name: GitHub Discussions
+          url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/discussions
+        - name: GitHub Issues
+          url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues
+      artifacthub.io/operator: "true"
+      artifacthub.io/operatorCapabilities: Basic Install
+      artifacthub.io/prerelease: "false"
+    apiVersion: v2
+    appVersion: 2.3.0
+    created: "2026-08-08T13:11:21.025546514Z"
+    description: Production-ready Kubernetes operator for distributed Locust load
+      testing with native OpenTelemetry, HA support, and automatic v1→v2 migration
+    digest: 78cfd7766a8acb7de17540036187cc6c10ada7686f10064c38ce21d5fa1eea17
+    home: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
+    icon: https://raw.githubusercontent.com/AbdelrhmanHamouda/locust-k8s-operator/master/docs/assets/images/favicon.png
+    keywords:
+    - locust
+    - load-testing
+    - performance-testing
+    - kubernetes-operator
+    - distributed-testing
+    - opentelemetry
+    - observability
+    - stress-testing
+    kubeVersion: '>= 1.29.0-0'
+    maintainers:
+    - name: Abdelrhman Hamouda
+      url: https://github.com/AbdelrhmanHamouda
+    name: locust-k8s-operator
+    sources:
+    - https://github.com/AbdelrhmanHamouda/locust-k8s-operator
+    type: application
+    urls:
+    - https://github.com/AbdelrhmanHamouda/locust-k8s-operator/releases/download/locust-k8s-operator-2.3.0/locust-k8s-operator-2.3.0.tgz
+    version: 2.3.0
+  - annotations:
+      artifacthub.io/changes: |
         - kind: changed
           description: Rewritten for Go operator with clean-slate design
         - kind: changed
@@ -565,4 +615,4 @@ entries:
     urls:
     - https://github.com/AbdelrhmanHamouda/locust-k8s-operator/releases/download/locust-k8s-operator-0.1.0/locust-k8s-operator-0.1.0.tgz
     version: 0.1.0
-generated: "2026-05-23T16:56:33.033268456Z"
+generated: "2026-08-08T13:11:21.02578962Z"
