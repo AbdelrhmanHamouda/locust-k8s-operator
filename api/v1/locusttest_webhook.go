@@ -22,7 +22,6 @@ import (
 
 // SetupWebhookWithManager registers the webhook for LocustTest with the manager.
 func (r *LocustTest) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
+	return ctrl.NewWebhookManagedBy(mgr, r).
 		Complete()
 }

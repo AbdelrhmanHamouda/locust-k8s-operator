@@ -352,15 +352,10 @@ func TestValidateDelete(t *testing.T) {
 	assert.Nil(t, warnings)
 }
 
-func TestValidateCreate_WrongType(t *testing.T) {
-	validator := &LocustTestCustomValidator{}
-
-	// Pass wrong type
-	warnings, err := validator.ValidateCreate(context.Background(), &LocustTestList{})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "expected LocustTest")
-	assert.Nil(t, warnings)
-}
+// The former TestValidateCreate_WrongType covered the runtime.Object type
+// assertion in ValidateCreate. The validator is now admission.Validator[*LocustTest],
+// so passing a non-LocustTest is a compile error rather than a runtime one and
+// there is no error path left to exercise.
 
 // ============================================
 // Volume Validation Tests

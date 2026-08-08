@@ -427,9 +427,16 @@ func registerControllersAndWebhooks(mgr ctrl.Manager, enableWebhooks bool) error
 		"tolerationsInjection", cfg.EnableTolerationsCRInjection)
 
 	if err := (&controller.LocustTestReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Config:   cfg,
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Config: cfg,
+		// controller-runtime v0.24 deprecated GetEventRecorderFor in favour of
+		// GetEventRecorder. That is not a drop-in swap: it returns the
+		// events.k8s.io/v1 recorder, whose interface has no Event method and
+		// requires an action verb on every call, so switching would rewrite all
+		// eight r.Recorder.Event sites and change the API the operator writes
+		// events to. Left for its own change.
+		//nolint:staticcheck // SA1019: deliberate, see above
 		Recorder: mgr.GetEventRecorderFor("locusttest-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller LocustTest: %w", err)
