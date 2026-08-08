@@ -79,7 +79,7 @@ entries:
           description: Optional OTel Collector deployment
         - kind: deprecated
           description: Micronaut/JVM configuration removed (no longer applicable)
-      artifacthub.io/containsSecurityUpdates: "false"
+      artifacthub.io/containsSecurityUpdates: "true"
       artifacthub.io/license: Apache-2.0
       artifacthub.io/links: |
         - name: Documentation
