@@ -29,6 +29,13 @@ var (
 	GroupVersion = schema.GroupVersion{Group: "locust.io", Version: "v2"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme.
+	//
+	// controller-runtime v0.24 deprecated scheme.Builder so that api packages
+	// need not import controller-runtime at all. Replacing it means hand-rolling
+	// runtime.NewSchemeBuilder here and rewriting the SchemeBuilder.Register
+	// call in locusttest_types.go — both kubebuilder-scaffolded — which is more
+	// than a dependency bump should carry.
+	//nolint:staticcheck // SA1019: deliberate, see above
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}
 
 	// AddToScheme adds the types in this group-version to the given scheme.

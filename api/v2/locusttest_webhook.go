@@ -21,10 +21,8 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -48,42 +46,34 @@ type LocustTestCustomValidator struct{}
 
 // SetupWebhookWithManager sets up the webhook with the Manager.
 func (r *LocustTest) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
+	return ctrl.NewWebhookManagedBy(mgr, r).
 		WithValidator(&LocustTestCustomValidator{}).
 		Complete()
 }
 
 // +kubebuilder:webhook:path=/validate-locust-io-v2-locusttest,mutating=false,failurePolicy=fail,sideEffects=None,groups=locust.io,resources=locusttests,verbs=create;update,versions=v2,name=vlocusttest-v2.kb.io,admissionReviewVersions=v1
 
-var _ webhook.CustomValidator = &LocustTestCustomValidator{}
+// admission.Validator is the typed replacement for the now-deprecated
+// admission.CustomValidator (= Validator[runtime.Object]). Binding to
+// *LocustTest lets the builder decode into the concrete type, so the old
+// runtime.Object type assertions — and the "expected LocustTest but got %T"
+// error path they guarded — are enforced by the compiler instead.
+var _ admission.Validator[*LocustTest] = &LocustTestCustomValidator{}
 
-// ValidateCreate implements webhook.CustomValidator.
-func (v *LocustTestCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-	lt, ok := obj.(*LocustTest)
-	if !ok {
-		return nil, fmt.Errorf("expected LocustTest but got %T", obj)
-	}
+// ValidateCreate implements admission.Validator.
+func (v *LocustTestCustomValidator) ValidateCreate(ctx context.Context, lt *LocustTest) (admission.Warnings, error) {
 	locusttestlog.Info("validate create", "name", lt.Name)
 	return validateLocustTest(lt)
 }
 
-// ValidateUpdate implements webhook.CustomValidator.
-func (v *LocustTestCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	lt, ok := newObj.(*LocustTest)
-	if !ok {
-		return nil, fmt.Errorf("expected LocustTest but got %T", newObj)
-	}
-	locusttestlog.Info("validate update", "name", lt.Name)
-	return validateLocustTest(lt)
+// ValidateUpdate implements admission.Validator.
+func (v *LocustTestCustomValidator) ValidateUpdate(ctx context.Context, oldLt, newLt *LocustTest) (admission.Warnings, error) {
+	locusttestlog.Info("validate update", "name", newLt.Name)
+	return validateLocustTest(newLt)
 }
 
-// ValidateDelete implements webhook.CustomValidator.
-func (v *LocustTestCustomValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-	lt, ok := obj.(*LocustTest)
-	if !ok {
-		return nil, fmt.Errorf("expected LocustTest but got %T", obj)
-	}
+// ValidateDelete implements admission.Validator.
+func (v *LocustTestCustomValidator) ValidateDelete(ctx context.Context, lt *LocustTest) (admission.Warnings, error) {
 	locusttestlog.Info("validate delete", "name", lt.Name)
 	return nil, nil
 }
