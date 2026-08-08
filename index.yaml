@@ -19,7 +19,7 @@ entries:
           description: Kubernetes libraries bumped to v0.36.3 and controller-runtime to v0.24.1 (#348)
         - kind: changed
           description: Minimum supported Kubernetes version raised to 1.29, required for native sidecar containers
-      artifacthub.io/containsSecurityUpdates: "false"
+      artifacthub.io/containsSecurityUpdates: "true"
       artifacthub.io/license: Apache-2.0
       artifacthub.io/links: |
         - name: Documentation
