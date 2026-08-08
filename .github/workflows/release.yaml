@@ -49,14 +49,14 @@ jobs:
             --tags=${{ github.ref_name }},latest
 
       - name: 📋 Generate SBOM (SPDX format)
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}
           format: spdx-json
           output: sbom-spdx.json
 
       - name: 📋 Generate SBOM (CycloneDX format)
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}
           format: cyclonedx
@@ -91,7 +91,7 @@ jobs:
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - name: 🌊 Install Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@v5
         with:
           version: v3.14.0
 
@@ -120,7 +120,7 @@ jobs:
           name: sboms
 
       - name: 📦 Attach SBOMs to chart release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: locust-k8s-operator-${{ github.ref_name }}
           files: |
