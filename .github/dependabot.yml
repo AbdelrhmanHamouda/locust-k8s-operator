@@ -34,14 +34,6 @@ updates:
       - "dependencies"
       - "docker"
 
-  - package-ecosystem: "gradle"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "gradle"
-
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
