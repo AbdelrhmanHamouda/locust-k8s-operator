@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: 📂 Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Deliberately NOT setting `limit-severities-for-sarif` here, unlike the
       # PR gate in ci.yaml. With `format: sarif` trivy-action unsets
