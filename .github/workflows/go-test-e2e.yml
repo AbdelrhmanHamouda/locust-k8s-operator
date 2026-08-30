@@ -1,6 +1,10 @@
 name: 🚀 Go E2E Tests
 
 on:
+  # On master the path filter is a pure cost saving: nothing gates on the
+  # result, so runs that cannot be affected by the change are skipped.
+  # '.github/workflows/**' is included because a change to this file or to
+  # ci.yaml can itself break the E2E run.
   push:
     branches: [main, master]
     paths:
@@ -11,15 +15,15 @@ on:
       - 'go.mod'
       - 'go.sum'
       - 'Makefile'
+      - '.github/workflows/**'
+      - '.github/kind-config.yaml'
+  # Deliberately NOT path-filtered. '🎯 Run E2E Tests' is a required status
+  # check on master, and GitHub blocks a pull request whose required check is
+  # expected but never reported. A filtered trigger therefore makes every
+  # pull request outside those paths permanently unmergeable rather than
+  # merely unverified: docs-only, chart-only, workflow-only, and every
+  # Dependabot action bump. A required check has to run on everything it gates.
   pull_request:
-    paths:
-      - 'cmd/**'
-      - 'api/**'
-      - 'internal/**'
-      - 'test/**'
-      - 'go.mod'
-      - 'go.sum'
-      - 'Makefile'
 
 permissions: read-all
 
