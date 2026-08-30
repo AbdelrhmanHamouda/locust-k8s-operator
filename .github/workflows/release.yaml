@@ -23,7 +23,7 @@ jobs:
       DOCKER_IMAGE: lotest/locust-k8s-operator
     steps:
       - name: 📂 Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: 🔧 Setup Go
         uses: actions/setup-go@v7
@@ -81,7 +81,7 @@ jobs:
       contents: write
     steps:
       - name: 📂 Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -138,7 +138,7 @@ jobs:
       contents: write
     steps:
       - name: 📂 Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

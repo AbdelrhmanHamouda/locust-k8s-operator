@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: 📂 Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -102,7 +102,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: 📂 Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
@@ -193,7 +193,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: 📂 Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
@@ -235,7 +235,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: 📂 Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
