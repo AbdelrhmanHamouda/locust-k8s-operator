@@ -20,28 +20,6 @@ Docs: [github.io/locust-k8s-operator/](https://abdelrhmanhamouda.github.io/locus
 
 -----------------------------
 
-## v2.0 - Complete Go Rewrite
-
-The operator has been completely rewritten in Go, bringing significant improvements:
-
-| Improvement   | Before (Java)     | After (Go)          |
-|---------------|-------------------|---------------------|
-| **Memory**    | ~256MB            | ~64MB               |
-| **Startup**   | ~60s              | <1s                 |
-| **Framework** | Java Operator SDK | Operator SDK / controller-runtime |
-
-### New Features in v2.0
-
-- **Native OpenTelemetry** - Export traces and metrics directly with `--otel` flag
-- **Secret & ConfigMap Injection** - Securely inject credentials as env vars or file mounts
-- **Volume Mounting** - Mount PVCs, ConfigMaps, Secrets with target filtering (master/worker/both)
-- **Separate Resource Specs** - Independent resource configuration for master and worker pods
-- **Enhanced Status** - Phase tracking, conditions, and worker connection status
-
-**[Migration Guide](https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/)** for existing v1 users
-
------------------------------
-
 [//]: # (Badges)
 [![CI Pipeline][pipeline-status]][pipeline-status-url]
 [![Security Scan][security-scan]][security-scan-url]
@@ -56,6 +34,20 @@ The operator has been completely rewritten in Go, bringing significant improveme
 
 The Operator is designed to unlock seamless and effortless distributed performance testing in the cloud and enable continuous integration for CI/CD. By design, the entire system is cloud native and focuses on automation and CI practices. One strong feature about the system is its ability to horizontally scale to meet any required performance demands.
 
+You describe a load test as a `LocustTest` custom resource. The operator creates the master and worker pods, wires them together, streams the results wherever you point them, and cleans everything up when the run finishes.
+
+## What You Get
+
+**Observability.** Export traces and metrics straight out of Locust with native OpenTelemetry, no sidecar involved. Prometheus scraping works out of the box for setups that aren't on OTLP yet.
+
+**Control over placement.** Node affinity, taint tolerations, node selectors, and `runtimeClassName` for sandboxed runtimes such as gVisor or Kata Containers. Master and worker pods take independent resource specs, and CPU limits can be lifted entirely for latency-sensitive runs.
+
+**Everything your test needs at runtime.** Inject credentials from Secrets and ConfigMaps as environment variables or file mounts. Mount test data and certificates from PVCs, ConfigMaps, or Secrets, targeted at the master, the workers, or both. Private registries are supported through `imagePullSecrets`.
+
+**Kafka and AWS MSK** integration for testing event-driven systems, with authentication handled for you.
+
+Tests run in isolation, so you can run many at once without cross-interference, and a configurable TTL tears down resources once a run is done. The [features page](https://abdelrhmanhamouda.github.io/locust-k8s-operator/features/) covers the full list.
+
 ## Documentation
 
 All documentation for this project is available at [github.io/locust-k8s-operator/](https://abdelrhmanhamouda.github.io/locust-k8s-operator/).
@@ -64,11 +56,9 @@ All documentation for this project is available at [github.io/locust-k8s-operato
 
 ### Prerequisites
 
-- **Go 1.26+** for local development
-- **Docker** for building container images
-- **kubectl** configured for your cluster
-- **Helm 3.x** for chart installation
-- **Kind** (optional, for local E2E testing)
+Kubernetes **1.29 or newer**, and Helm 3.x to install the chart.
+
+For local development you'll also want Go 1.26+, Docker for building images, kubectl pointed at your cluster, and Kind if you plan to run the E2E suite.
 
 ### Installation
 
@@ -84,6 +74,8 @@ Or from the repository:
 ```bash
 helm install locust-operator charts/locust-k8s-operator/
 ```
+
+Already running `locust.io/v1` resources? They keep working through the conversion webhook, and the [migration guide](https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/) walks through moving to `v2`. The v1 API is deprecated and slated for removal in v3.
 
 ### Development
 
