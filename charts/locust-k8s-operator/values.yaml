@@ -121,7 +121,7 @@ locustPods:
 
   # -- Metrics exporter sidecar (for v1 API / non-OTel mode)
   metricsExporter:
-    image: containersol/locust_exporter:v0.5.0
+    image: containersol/locust_exporter:v0.5.2
     port: 9646
     pullPolicy: IfNotPresent
     resources:
@@ -141,7 +141,7 @@ locustPods:
 otelCollector:
   enabled: false
   # Ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases
-  image: otel/opentelemetry-collector-contrib:0.145.0
+  image: otel/opentelemetry-collector-contrib:0.159.0
   replicas: 1
   resources:
     requests:
@@ -239,7 +239,7 @@ runtimeClassName: ""
 #     taintTolerations:
 #       enableCrInjection: true
 #     metricsExporter:
-#       image: "containersol/locust_exporter:v0.5.0"
+#       image: "containersol/locust_exporter:v0.5.2"
 #       port: 9646
 #     kafka:
 #       bootstrapServers: localhost:9092

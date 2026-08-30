@@ -27,7 +27,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 2.4.3
+version: 2.4.4
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
@@ -49,7 +49,7 @@ annotations:
   artifacthub.io/operator: "true"
   artifacthub.io/operatorCapabilities: Basic Install
   artifacthub.io/prerelease: "false"
-  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/containsSecurityUpdates: "true"
   artifacthub.io/links: |
     - name: Documentation
       url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/
@@ -62,6 +62,12 @@ annotations:
     - name: GitHub Issues
       url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues
   artifacthub.io/changes: |
+    - kind: security
+      description: Operator image now builds on Go 1.26.7, picking up the crypto/tls, net/http, html/template, encoding/asn1, and net/url standard library fixes
+    - kind: changed
+      description: Default metrics exporter image bumped to containersol/locust_exporter:v0.5.2
+    - kind: changed
+      description: Default OpenTelemetry collector image bumped to otel/opentelemetry-collector-contrib:0.159.0
     - kind: fixed
       description: Chart README now documents the correct replicaCount name and default, memory limit, cert-manager default, and standalone OpenTelemetry collector
     - kind: fixed

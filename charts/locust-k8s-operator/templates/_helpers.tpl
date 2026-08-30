@@ -259,7 +259,7 @@ Metrics Exporter Image - new path with fallback to old path
 {{- else if and .Values.config .Values.config.loadGenerationPods .Values.config.loadGenerationPods.metricsExporter .Values.config.loadGenerationPods.metricsExporter.image }}
 {{- .Values.config.loadGenerationPods.metricsExporter.image }}
 {{- else }}
-{{- "containersol/locust_exporter:v0.5.0" }}
+{{- "containersol/locust_exporter:v0.5.2" }}
 {{- end }}
 {{- end }}
 
