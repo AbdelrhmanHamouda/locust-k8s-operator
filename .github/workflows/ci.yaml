@@ -127,6 +127,10 @@ jobs:
 
       - name: ⛵ Create kind cluster
         uses: helm/kind-action@v1.15.1
+        with:
+          # Same node image as the E2E job, so the chart is installed on the
+          # Kubernetes version the operator is built and tested against.
+          config: .github/kind-config.yaml
 
       - name: 🔧 Setup Go
         uses: actions/setup-go@v7

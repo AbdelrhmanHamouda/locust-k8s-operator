@@ -45,7 +45,15 @@ jobs:
         uses: helm/kind-action@v1.15.1
         with:
           cluster_name: locust-k8s-operator-test-e2e
+          # The node image (Kubernetes version) is pinned in this file, not
+          # left to kind-action's default.
+          config: .github/kind-config.yaml
           wait: 120s
+
+      - name: 🔎 Show cluster version
+        run: |
+          kubectl version
+          kubectl get nodes -o wide
 
       - name: 🔍 Verify go mod tidy
         run: |
