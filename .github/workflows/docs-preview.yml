@@ -9,6 +9,7 @@ on:
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
+      - 'overrides/**'
       - '.github/workflows/docs-preview.yml'
 
 # Shared with docs-preview-cleanup.yml (same group string) so a build and the

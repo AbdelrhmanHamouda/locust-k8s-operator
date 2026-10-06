@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{#- Only load analytics when a measurement ID was provided at build time. -#}
+{% block analytics %}
+  {% if config.extra.analytics and config.extra.analytics.property %}
+    {{ super() }}
+  {% endif %}
+{% endblock %}

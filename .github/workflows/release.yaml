@@ -157,6 +157,10 @@ jobs:
       - name: 🚀 Build documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GA4 measurement ID (G-XXXXXXXXXX). It ends up in the public page
+          # source anyway, so it's a repository variable rather than a secret.
+          # When unset, the site builds without analytics.
+          GOOGLE_ANALYTICS_KEY: ${{ vars.GOOGLE_ANALYTICS_KEY }}
         run: |
           python -m mkdocs build
 
