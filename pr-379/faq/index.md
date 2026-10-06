@@ -1,0 +1,306 @@
+# Frequently Asked Questions
+
+This page answers the most common questions about operating the Locust Kubernetes Operator in production. For step-by-step tutorials, see [Getting Started](https://abdelrhmanhamouda.github.io/locust-k8s-operator/getting_started/index.md). For advanced configuration, see [How-To Guides](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/index.md).
+
+## Test Lifecycle
+
+### Why can't I update a running test?
+
+Tests are **immutable by design**. Once a LocustTest CR is created, the operator ignores all changes to the `spec` field and sets a `SpecDrifted` condition to indicate drift was detected.
+
+This ensures predictable behavior — each test run uses exactly the configuration it was created with, with no mid-flight configuration changes. See [How Does It Work - Immutable Tests](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how_does_it_work/#immutable-tests) for the design rationale.
+
+To change test parameters, use the delete-and-recreate pattern:
+
+```bash
+kubectl delete locusttest my-test
+# Edit your YAML with desired changes
+kubectl apply -f locusttest.yaml
+```
+
+### How do I change test parameters?
+
+Delete the LocustTest CR, edit your YAML file with the desired changes, and recreate it:
+
+```bash
+kubectl delete locusttest my-test
+# Edit locusttest.yaml (change image, replicas, commands, etc.)
+kubectl apply -f locusttest.yaml
+```
+
+The operator will create new Jobs with the updated configuration. Previous test results remain in your monitoring system (if using OpenTelemetry or metrics export).
+
+### What happens if I edit a LocustTest CR after creation?
+
+The operator detects spec changes but **ignores** them. It sets a `SpecDrifted` condition on the CR to indicate the spec has been modified:
+
+```bash
+kubectl get locusttest my-test -o jsonpath='{.status.conditions[?(@.type=="SpecDrifted")]}'
+```
+
+The test continues running with its original configuration. To apply changes, delete and recreate the CR.
+
+### How do I run the same test multiple times?
+
+Delete and recreate the CR with the same YAML:
+
+```bash
+kubectl delete locusttest my-test
+kubectl apply -f locusttest.yaml  # Same file
+```
+
+Or use unique names with a suffix to keep test history:
+
+```bash
+kubectl apply -f locusttest-run-01.yaml
+# Later...
+kubectl apply -f locusttest-run-02.yaml
+```
+
+## Scaling
+
+### Can I scale workers during a running test?
+
+No, due to immutability. The worker replica count (`worker.replicas`) is set at test creation time and cannot be changed while the test runs.
+
+To run with different worker counts:
+
+```bash
+kubectl delete locusttest my-test
+# Edit YAML to update worker.replicas
+kubectl apply -f locusttest.yaml
+```
+
+Note: Locust's web UI shows real-time user distribution across connected workers regardless of the replica count.
+
+### What's the maximum number of workers?
+
+The CRD enforces a maximum of **500 workers** per LocustTest. This limit prevents accidental resource exhaustion.
+
+For larger scales:
+
+- Run multiple LocustTest CRs against the same target (each test independently generates load)
+- Use fewer workers with more users per worker (adjust `--users` and `--spawn-rate` in `master.command`)
+
+### How do I size worker resources?
+
+Resource requirements depend on test complexity:
+
+| Test Type         | CPU per Worker | Memory per Worker | Notes                                  |
+| ----------------- | -------------- | ----------------- | -------------------------------------- |
+| Light HTTP tests  | 250m           | 128Mi             | Simple GET/POST requests               |
+| Medium complexity | 500m           | 256Mi             | JSON parsing, simple logic             |
+| Heavy tests       | 1000m          | 512Mi-1Gi         | Complex business logic, large payloads |
+
+Start conservative and observe resource usage via `kubectl top pods`. See [Configure resource limits and requests](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/configuration/configure-resources/index.md) for detailed sizing guidance.
+
+Resource Precedence
+
+The operator applies resources in order of specificity: (1) CR spec resources (highest), (2) Helm role-specific resources (`masterResources`/`workerResources`), (3) Helm unified resources (`locustPods.resources`).
+
+## Debugging
+
+### My test is stuck in Pending phase
+
+Check in this order:
+
+1. **Check operator events**: `kubectl describe locusttest <test-name>` — look for errors in the Events section
+1. **Check pod status**: `kubectl get pods -l performance-test-name=<test-name>` — look for scheduling errors or image pull failures
+1. **Check PodsHealthy condition**: `kubectl get locusttest <test-name> -o jsonpath='{.status.conditions[?(@.type=="PodsHealthy")]}'` — the operator reports pod issues here
+1. **Check ConfigMap exists**: If using `testFiles.configMapRef`, ensure the ConfigMap exists: `kubectl get configmap <name>`
+
+The operator has a 2-minute grace period before reporting pod failures, allowing time for image pulls and startup.
+
+### My test shows Failed phase
+
+Check the failure reason:
+
+1. **Check conditions**: `kubectl describe locusttest <test-name>` — the Status section shows why it failed
+1. **Check master logs**: `kubectl logs <test-name>-master-<hash>` — Locust errors appear here
+1. **Common causes**:
+   - **Locustfile syntax error**: Python errors in your test script
+   - **Target host unreachable**: Network connectivity issues
+   - **ConfigMap not found**: Missing test files
+   - **Image pull failure**: Invalid image name or missing pull secrets
+
+### Workers show 0/N connected
+
+The `connectedWorkers` field is an approximation from `Job.Status.Active`. Workers need time to start, pull images, and connect to the master.
+
+Check worker connectivity:
+
+1. **Verify worker pods are running**: `kubectl get pods -l performance-test-pod-name=<test-name>-worker`
+1. **Verify master service exists**: `kubectl get svc <test-name>-master`
+1. **Check worker logs**: `kubectl logs <test-name>-worker-<hash>` — workers should show "Connected to master"
+1. **Verify network connectivity**: Workers connect to the master on port 5557
+
+Workers typically connect within 30-60 seconds after pod startup.
+
+### How do I access the Locust web UI?
+
+Port-forward to the master job:
+
+```bash
+kubectl port-forward job/<test-name>-master 8089:8089
+```
+
+Then visit <http://localhost:8089> in your browser.
+
+Autostart Behavior
+
+If `autostart: true` (default), the test starts automatically and the web UI shows the running test. Set `autostart: false` to control test start from the web UI.
+
+### ConfigMap not found error
+
+The operator detects missing ConfigMaps via pod health monitoring and reports the issue in the `PodsHealthy` condition.
+
+You can create the ConfigMap **before or after** the LocustTest CR:
+
+```bash
+# Create ConfigMap from local files
+kubectl create configmap my-test-scripts --from-file=test.py=./test.py
+
+# If LocustTest already exists, the operator detects recovery automatically
+```
+
+The operator watches pod events and updates conditions when pod state changes, so it detects when ConfigMaps become available.
+
+## Installation
+
+### Can I install this operator alongside locustio/k8s-operator?
+
+No. [locustio/k8s-operator](https://github.com/locustio/k8s-operator) is a separate, Python-based operator from the Locust team. Both projects register a CRD with the same name, `locusttests.locust.io` (group `locust.io`, kind `LocustTest`), and a cluster can only hold one CRD with a given name.
+
+The schemas aren't compatible either. locustio/k8s-operator serves a single `locust.io/v1` version with fields such as `spec.workers`, `spec.args` and `spec.locustfile`. This operator stores `locust.io/v2` and also serves its own, different `v1` through the conversion webhook. Whichever operator you install second will either fail to install its CRD or end up running against the other project's schema, and both controllers would try to reconcile the same `LocustTest` objects.
+
+To check which one a cluster already has:
+
+```bash
+kubectl get crd locusttests.locust.io -o jsonpath='{.spec.versions[*].name}'
+# "v1 v2" -> this operator
+# "v1"    -> locustio/k8s-operator (or a very old release of this operator)
+```
+
+If you want to switch, use a separate cluster, or uninstall the current operator and delete its CRD first. Deleting the CRD also deletes every `LocustTest` in the cluster. [Compare alternatives](https://abdelrhmanhamouda.github.io/locust-k8s-operator/comparison/index.md) covers how the two operators differ.
+
+## Migration
+
+### Can I use v1 and v2 CRs at the same time?
+
+Yes, with the conversion webhook enabled. The operator automatically converts v1 CRs to v2 internally, allowing both versions to coexist.
+
+v1 CRs continue to work with their existing configuration. See [Migration Guide](https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/index.md) for conversion details.
+
+### Do I need to recreate existing v1 tests?
+
+No, existing v1 tests continue to work. However, new features (OpenTelemetry integration, environment variable injection, volume mounts) require the v2 API.
+
+Migrate when you need v2-only features or when convenient. See [Migration Guide](https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/index.md) for the conversion process.
+
+## Configuration
+
+### How do I pass extra CLI arguments to Locust?
+
+Use `master.extraArgs` and `worker.extraArgs` in the v2 API. These are appended after the command seed and operator-managed flags:
+
+```yaml
+apiVersion: locust.io/v2
+kind: LocustTest
+spec:
+  master:
+    command: "--locustfile /lotest/src/test.py --host https://api.example.com"
+    extraArgs:
+      - "--loglevel"
+      - "DEBUG"
+  worker:
+    command: "--locustfile /lotest/src/test.py"
+    extraArgs:
+      - "--loglevel"
+      - "DEBUG"
+    replicas: 5
+```
+
+Reserved Flags
+
+The operator manages these flags automatically: `--master`, `--worker`, `--master-host`, `--master-port`, `--expect-workers`, `--autostart`, `--autoquit`. Do not set them manually.
+
+### What resource precedence applies?
+
+The operator applies resources in this order (first non-empty value wins):
+
+1. **CR spec resources** (highest precedence): Set in `LocustTest.spec.master.resources` or `LocustTest.spec.worker.resources`
+1. **Helm role-specific resources**: Set in `values.yaml` as `locustPods.masterResources` or `locustPods.workerResources`
+1. **Helm unified resources**: Set in `values.yaml` as `locustPods.resources`
+
+This allows global defaults with role-specific overrides and per-test customization.
+
+## Observability
+
+### Should I use OpenTelemetry or the metrics sidecar?
+
+**Use OpenTelemetry for new deployments.** It provides traces and metrics without requiring a sidecar container, reducing resource overhead.
+
+The metrics sidecar is maintained for legacy compatibility. Use it only if:
+
+- Your monitoring stack doesn't support OTLP
+- You have existing dashboards built on the Prometheus metrics format
+
+See [Configure OpenTelemetry integration](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/observability/configure-opentelemetry/index.md) for configuration details.
+
+## Operator Troubleshooting
+
+### Operator pod crashes with `tls.crt: no such file or directory`
+
+This is [issue #317](https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues/317), fixed in chart v2.2.2. If you see:
+
+```text
+ERROR setup problem running manager {"error": "open /tmp/k8s-webhook-server/serving-certs/tls.crt: no such file or directory"}
+```
+
+— upgrade the chart:
+
+```bash
+helm upgrade locust-operator locust-k8s-operator/locust-k8s-operator \
+  --version 2.2.2 --namespace locust-system --reuse-values
+```
+
+Root cause: master defaulted the admission webhook ON whenever the `ENABLE_WEBHOOKS` env var was unset, and the operator unconditionally constructed a webhook server that then tried to load TLS certs that the default install does not provision. The fix introduces an explicit `--enable-webhooks` flag (default `false`) and only constructs the webhook plumbing when it's on.
+
+### My operator is hanging waiting for cert files
+
+If logs show:
+
+```text
+INFO setup Webhook certificate files not ready, polling
+```
+
+— and they never become ready, the most likely causes are:
+
+1. **cert-manager is not installed.** `webhook.enabled=true` requires cert-manager (or a manually pre-created `<release>-webhook-certs` Secret with `tls.crt` and `tls.key` keys).
+1. **The Certificate resource is not Ready.** Check `kubectl describe certificate -A` and `kubectl -n cert-manager logs deploy/cert-manager`.
+1. **`webhook.certManager.enabled=false`** but no Secret was pre-created.
+
+The operator bounds this wait at 2 minutes via `--webhook-cert-wait-timeout` and exits with an actionable error rather than hanging silently. Set the flag to `0` to wait indefinitely (not recommended).
+
+### How do I disable the admission webhook?
+
+Set `webhook.enabled=false` in your Helm values (this is the default for fresh installs since v2.2.2). The operator runs without admission validation and without a cert-manager dependency. Note: this disables both the v2 ValidatingWebhook (schema-checks LocustTest CRs) and the v1→v2 ConversionWebhook.
+
+If you have any v1-encoded LocustTest objects in etcd, **read the [migration guide](https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/#switching-webhookenabled-from-true-to-false-crd-downgrade) before flipping** — those objects become unreadable when the conversion route is removed, so migrate the data first.
+
+### How do I monitor test progress programmatically?
+
+Use the LocustTest status conditions for automation:
+
+```bash
+# Check if test is ready
+kubectl get locusttest my-test -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+
+# Get current phase
+kubectl get locusttest my-test -o jsonpath='{.status.phase}'
+
+# Get worker count
+kubectl get locusttest my-test -o jsonpath='{.status.connectedWorkers}/{.status.expectedWorkers}'
+```
+
+See [API Reference - Status Fields](https://abdelrhmanhamouda.github.io/locust-k8s-operator/api_reference/#status-fields) for all available status information.

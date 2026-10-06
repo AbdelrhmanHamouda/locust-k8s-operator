@@ -1,0 +1,41 @@
+# Locust Kubernetes Operator
+
+> Kubernetes operator for Locust. Run distributed Locust load tests on Kubernetes as a LocustTest custom resource, installed with Helm and built for CI pipelines.
+
+The Locust Kubernetes Operator runs distributed Locust load tests on Kubernetes. A test is a LocustTest custom resource (locust.io/v2); the operator creates the master and worker Jobs and the master Service, reports the phase (Pending, Running, Succeeded, Failed) and conditions, and cleans up. Installed with Helm.
+
+## Getting started
+
+- [Locust on Kubernetes guide](https://abdelrhmanhamouda.github.io/locust-k8s-operator/locust-on-kubernetes/index.md): How distributed Locust works on Kubernetes, deployment options, a full walkthrough, CI usage and scaling
+- [Quick Start](https://abdelrhmanhamouda.github.io/locust-k8s-operator/getting_started/index.md): Five-minute quick start
+- [Install the Operator](https://abdelrhmanhamouda.github.io/locust-k8s-operator/helm_deploy/index.md): Helm chart installation and values
+
+## Reference
+
+- [API Reference](https://abdelrhmanhamouda.github.io/locust-k8s-operator/api_reference/index.md): LocustTest field reference
+- [FAQ](https://abdelrhmanhamouda.github.io/locust-k8s-operator/faq/index.md): Common questions and troubleshooting
+- [Compare Alternatives](https://abdelrhmanhamouda.github.io/locust-k8s-operator/comparison/index.md): Comparison with locustio/k8s-operator, the k6 operator and plain manifests
+
+## Tutorials
+
+- [Your First Load Test (10 min)](https://abdelrhmanhamouda.github.io/locust-k8s-operator/tutorials/first-load-test/index.md): A realistic first load test
+- [CI/CD Integration (15 min)](https://abdelrhmanhamouda.github.io/locust-k8s-operator/tutorials/ci-cd-integration/index.md): Running load tests from GitHub Actions
+- [Production Deployment (20 min)](https://abdelrhmanhamouda.github.io/locust-k8s-operator/tutorials/production-deployment/index.md): Resources, scheduling and observability for larger runs
+
+## How-to guides
+
+- [Configure Kafka integration](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/configuration/configure-kafka/index.md)
+- [Configure resource limits](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/configuration/configure-resources/index.md)
+- [Configure automatic cleanup](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/configuration/configure-ttl/index.md)
+- [Mount volumes](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/configuration/mount-volumes/index.md)
+- [Use a private registry](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/configuration/use-private-registry/index.md)
+- [Configure OpenTelemetry](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/observability/configure-opentelemetry/index.md)
+- [Monitor test status](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/observability/monitor-test-status/index.md)
+- [Configure tolerations](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/scaling/configure-tolerations/index.md)
+- [Scale worker replicas](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/scaling/scale-workers/index.md)
+- [Use node affinity](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/scaling/use-node-affinity/index.md)
+- [Use node selector](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/scaling/use-node-selector/index.md)
+- [Use a runtime class](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/scaling/use-runtime-class/index.md)
+- [Configure pod security](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/security/configure-pod-security/index.md)
+- [Inject secrets](https://abdelrhmanhamouda.github.io/locust-k8s-operator/how-to-guides/security/inject-secrets/index.md)
+
