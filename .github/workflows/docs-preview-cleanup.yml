@@ -11,33 +11,65 @@ on:
       - master
       - main
 
+# Shared with the build-preview job in docs-preview.yml (same group string), so a
+# build and a cleanup for the same PR never touch gh-pages at the same time.
+# cancel-in-progress is false: a cleanup is never cancelled by a later run, and it
+# never cancels a running build halfway. It waits for that build to finish and then
+# deletes whatever the build pushed. A build that queues behind this cleanup checks
+# the live PR state before deploying (see docs-preview.yml), so it cannot recreate
+# pr-N for a closed PR.
+concurrency:
+  group: docs-preview-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
 jobs:
   # Clean up preview when PR is closed/merged
   cleanup-preview:
     permissions:
       contents: write       # Push to gh-pages branch
       pull-requests: write  # Update comment on cleanup
-    if: github.event.action == 'closed'
     runs-on: ubuntu-latest
     steps:
-      - name: 📂 Checkout main branch
+      - name: 📂 Checkout gh-pages branch
         uses: actions/checkout@v7
         with:
           ref: gh-pages
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🧹 Remove preview directory
+        env:
+          PREVIEW_DIR: pr-${{ github.event.pull_request.number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          if [ -d "pr-${{ github.event.number }}" ]; then
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
-            rm -rf "pr-${{ github.event.number }}"
-            git add .
-            git commit -m "Clean up docs preview for PR #${{ github.event.number }}" || echo "Nothing to clean up"
-            git push || echo "Nothing to push"
-          else
-            echo "Preview directory pr-${{ github.event.number }} not found, nothing to clean up"
+          set -euo pipefail
+          if [ ! -d "$PREVIEW_DIR" ]; then
+            echo "Preview directory $PREVIEW_DIR not found, nothing to clean up"
+            exit 0
           fi
+
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git rm -r --quiet -- "$PREVIEW_DIR"
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+            exit 0
+          fi
+          git commit -m "Clean up docs preview for PR #${PR_NUMBER}"
+
+          # Other workflows (release.yaml, other PRs' previews) also push to
+          # gh-pages, so a non-fast-forward rejection is expected now and then.
+          # Rebase onto the new tip and retry; fail the job if it never lands.
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:gh-pages; then
+              echo "Pushed cleanup of $PREVIEW_DIR on attempt $attempt"
+              exit 0
+            fi
+            echo "Push attempt $attempt failed; rebasing onto origin/gh-pages and retrying"
+            sleep $((attempt * 2))
+            git pull --rebase origin gh-pages
+          done
+          echo "::error::Could not push cleanup of $PREVIEW_DIR to gh-pages after 5 attempts"
+          exit 1
 
       - name: 💬 Update PR comment
         uses: actions/github-script@v9
@@ -45,14 +77,16 @@ jobs:
           script: |
             const prNumber = context.payload.pull_request.number;
 
-            // Find existing preview comment
-            const comments = await github.rest.issues.listComments({
+            // Find existing preview comment. Paginate: the default page holds only
+            // 30 comments, and on a busy PR the bot comment is often further back.
+            const comments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
+              per_page: 100,
             });
 
-            const botComment = comments.data.find(comment =>
+            const botComment = comments.find(comment =>
               comment.user.type === 'Bot' &&
               comment.body.includes('📚 Documentation Preview')
             );

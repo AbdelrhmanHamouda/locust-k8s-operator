@@ -11,6 +11,17 @@ on:
       - 'mkdocs.yml'
       - '.github/workflows/docs-preview.yml'
 
+# Shared with docs-preview-cleanup.yml (same group string) so a build and the
+# cleanup for the same PR are serialized instead of racing on gh-pages.
+# cancel-in-progress is false so a build can never cancel a running cleanup.
+# A newer build still replaces an older *pending* one, so pushes do not pile up.
+# Because a queued build can start after the PR was closed (and after, or in
+# place of, the cleanup), the first step re-reads the PR state and the job
+# removes the preview instead of deploying it when the PR is no longer open.
+concurrency:
+  group: docs-preview-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
 jobs:
   # Build and deploy docs preview for opened/updated PRs
   build-preview:
@@ -23,23 +34,80 @@ jobs:
     # privileged token.
     runs-on: ubuntu-latest
     steps:
+      - name: 🔎 Check the PR is still open
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          state=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq .state)
+          echo "PR #${PR_NUMBER} is ${state}"
+          echo "state=${state}" >> "$GITHUB_OUTPUT"
+
+      # Closed path: this run queued behind (or displaced) the cleanup. Do not
+      # deploy; make sure pr-N is gone instead. Only trusted gh-pages content
+      # is checked out here, never the PR head.
+      - name: 📂 Checkout gh-pages branch
+        if: steps.pr.outputs.state != 'open'
+        uses: actions/checkout@v7
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: 🧹 Remove preview of closed PR
+        if: steps.pr.outputs.state != 'open'
+        working-directory: gh-pages
+        env:
+          PREVIEW_DIR: pr-${{ github.event.pull_request.number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if [ ! -d "$PREVIEW_DIR" ]; then
+            echo "PR is closed and $PREVIEW_DIR does not exist, nothing to do"
+            exit 0
+          fi
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git rm -r --quiet -- "$PREVIEW_DIR"
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+            exit 0
+          fi
+          git commit -m "Clean up docs preview for PR #${PR_NUMBER}"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:gh-pages; then
+              echo "Pushed cleanup of $PREVIEW_DIR on attempt $attempt"
+              exit 0
+            fi
+            echo "Push attempt $attempt failed; rebasing onto origin/gh-pages and retrying"
+            sleep $((attempt * 2))
+            git pull --rebase origin gh-pages
+          done
+          echo "::error::Could not push cleanup of $PREVIEW_DIR to gh-pages after 5 attempts"
+          exit 1
+
       - name: 📂 Checkout PR code
+        if: steps.pr.outputs.state == 'open'
         uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
       - name: 🐍 Set up Python
+        if: steps.pr.outputs.state == 'open'
         uses: actions/setup-python@v7
 
 
       - name: 📦 Install dependencies
+        if: steps.pr.outputs.state == 'open'
         run: |
           pip install mkdocs-material
           pip install mkdocs-git-revision-date-localized-plugin
           pip install mkdocs-minify-plugin
 
       - name: 🔧 Configure MkDocs for preview
+        if: steps.pr.outputs.state == 'open'
         run: |
           # Create a temporary mkdocs config for preview
           cp mkdocs.yml mkdocs-preview.yml
@@ -58,9 +126,11 @@ jobs:
           fi
 
       - name: 🏗️ Build documentation
+        if: steps.pr.outputs.state == 'open'
         run: mkdocs build -f mkdocs-preview.yml -d site
 
       - name: 📤 Deploy to GitHub Pages subdirectory
+        if: steps.pr.outputs.state == 'open'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -70,6 +140,7 @@ jobs:
           commit_message: 'Deploy docs preview for PR #${{ github.event.number }}'
 
       - name: 💬 Comment on PR with preview link
+        if: steps.pr.outputs.state == 'open'
         uses: actions/github-script@v9
         with:
           script: |
@@ -77,13 +148,15 @@ jobs:
             const previewUrl = `https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${prNumber}/`;
 
             // Find existing preview comment
-            const comments = await github.rest.issues.listComments({
+            // Paginate: the default page holds only 30 comments.
+            const comments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
+              per_page: 100,
             });
 
-            const botComment = comments.data.find(comment =>
+            const botComment = comments.find(comment =>
               comment.user.type === 'Bot' &&
               comment.body.includes('📚 Documentation Preview')
             );
