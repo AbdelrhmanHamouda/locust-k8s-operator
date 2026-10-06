@@ -249,4 +249,5 @@ nav:
       - Integration Testing: integration-testing.md
       - Local Development: local-development.md
       - Pull Request Process: pull-request-process.md
+      - Helm Chart Signing: helm-chart-signing.md
   - License: license.md
