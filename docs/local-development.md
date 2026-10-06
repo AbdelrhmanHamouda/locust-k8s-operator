@@ -1,3 +1,8 @@
+---
+title: Local Development
+description: Set up a local development environment for the Locust Kubernetes Operator - Go toolchain, code generation, running the controller locally and testing on Kind.
+---
+
 # Local Development Guide
 
 This guide describes the setup and workflow for local development on the Locust K8s Operator project. It's intended for developers who want to contribute code changes.

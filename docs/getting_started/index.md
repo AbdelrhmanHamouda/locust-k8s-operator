@@ -1,6 +1,6 @@
 ---
 title: Quick Start
-description: Get your first distributed load test running on Kubernetes in 5 minutes
+description: Install the Locust Kubernetes Operator with Helm and run your first distributed Locust load test on Kubernetes in about five minutes.
 tags:
   - quickstart
   - tutorial

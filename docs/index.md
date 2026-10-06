@@ -1,14 +1,14 @@
 ---
-title: Locust Kubernetes Operator
-description: Enable performance testing for the modern era! Utilize the full power of Locust in the cloud with a fully automated, cloud-native approach.
+title: Run Locust load tests on Kubernetes
+description: Kubernetes operator for Locust. Run distributed Locust load tests on Kubernetes as a LocustTest custom resource, installed with Helm and built for CI pipelines.
 hide:
   - navigation
 ---
 
-# Performance testing that simply works
+# Locust Kubernetes Operator
 
 <div class="tx-hero">
-<p>Utilize the full power of <em>Locust</em> in the cloud with a fully automated, cloud-native approach, creating professional and reliable performance tests in minutes.</p>
+<p>Run distributed <em>Locust</em> load tests on Kubernetes. You describe a test as a <code>LocustTest</code> resource; the operator starts the master and workers, tracks the run, and cleans up when it's done.</p>
 <div class="tx-hero__image">
   <img src="assets/images/undraw_real_time_analytics_cropped.svg" alt="Locust K8s Operator" width="500" draggable="false">
 </div>

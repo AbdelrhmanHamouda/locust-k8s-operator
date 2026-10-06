@@ -1,6 +1,6 @@
 ---
 title: Frequently Asked Questions
-description: Common questions and answers about the Locust Kubernetes Operator
+description: Common questions about running Locust on Kubernetes with the operator - updating tests, scaling workers, debugging pods, webhooks and CRD conflicts.
 tags:
   - faq
   - troubleshooting

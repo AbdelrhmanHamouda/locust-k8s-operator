@@ -6,3 +6,40 @@
     {{ super() }}
   {% endif %}
 {% endblock %}
+
+{#-
+  Open Graph and Twitter card tags, so links shared in chat, social media and
+  issue trackers get a title, description and preview image. This is a static
+  stand-in for the Material social plugin, which needs Cairo installed on every
+  machine that builds the docs.
+-#}
+{% block extrahead %}
+  {%- set og_title = config.site_name -%}
+  {%- if page and page.meta and page.meta.title and not page.is_homepage -%}
+    {%- set og_title = page.meta.title ~ " - " ~ config.site_name -%}
+  {%- elif page and page.title and not page.is_homepage -%}
+    {%- set og_title = page.title ~ " - " ~ config.site_name -%}
+  {%- elif page and page.meta and page.meta.title -%}
+    {%- set og_title = config.site_name ~ " - " ~ page.meta.title -%}
+  {%- endif -%}
+  {%- set og_description = config.site_description -%}
+  {%- if page and page.meta and page.meta.description -%}
+    {%- set og_description = page.meta.description -%}
+  {%- endif -%}
+  {%- set og_image = config.site_url ~ "assets/images/run-anywhere.png" -%}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{ config.site_name }}">
+  <meta property="og:title" content="{{ og_title | striptags }}">
+  <meta property="og:description" content="{{ og_description }}">
+  {%- if page and page.canonical_url %}
+  <meta property="og:url" content="{{ page.canonical_url }}">
+  {%- endif %}
+  <meta property="og:image" content="{{ og_image }}">
+  <meta property="og:image:width" content="850">
+  <meta property="og:image:height" content="444">
+  <meta property="og:image:alt" content="Locust Kubernetes Operator">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ og_title | striptags }}">
+  <meta name="twitter:description" content="{{ og_description }}">
+  <meta name="twitter:image" content="{{ og_image }}">
+{% endblock %}

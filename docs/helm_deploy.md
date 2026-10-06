@@ -1,6 +1,6 @@
 ---
-title: HELM Deployment
-description: Instructions on how to deploy the Locust Kubernetes Operator with HELM.
+title: Install the operator with Helm
+description: Install, configure, upgrade and uninstall the Locust Kubernetes Operator with its Helm chart, including webhooks, cert-manager, Kafka and OpenTelemetry options.
 tags:
   - deployment
   - helm
