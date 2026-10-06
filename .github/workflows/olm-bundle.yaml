@@ -1,0 +1,56 @@
+name: 📦 OLM Bundle
+
+# Regenerates the OLM bundle and fails if the committed bundle/ (or the
+# generated config/ files it depends on) is out of date, then runs the same
+# `operator-sdk bundle validate` suites the OperatorHub.io and OpenShift
+# community pipelines run.
+#
+# Path-filtered on purpose. This is not a required status check, so a pull
+# request that doesn't touch these paths simply doesn't get the check (unlike
+# the E2E job, see go-test-e2e.yml). If it is ever made required, drop the
+# filter for the same reason.
+on:
+  pull_request:
+    paths:
+      - 'api/**'
+      - 'config/**'
+      - 'bundle/**'
+      - 'bundle.Dockerfile'
+      - 'Makefile'
+      - '.github/workflows/olm-bundle.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    name: 📦 Bundle up to date and valid
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: 📂 Checkout repo
+        uses: actions/checkout@v7
+
+      - name: 🔧 Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      # Also runs controller-gen (make manifests) and all three bundle
+      # validate passes (make bundle-validate).
+      - name: 🛠️ Regenerate bundle
+        run: make bundle
+
+      # createdAt is a generation timestamp, so it changes on every run.
+      - name: 🔍 Check for drift
+        run: |
+          git diff --exit-code -I '^    createdAt: ' -- bundle bundle.Dockerfile config api || {
+            echo "::error::The OLM bundle is out of date. Run 'make bundle' and commit the result."
+            exit 1
+          }
+          untracked="$(git ls-files --others --exclude-standard -- bundle config)"
+          if [ -n "$untracked" ]; then
+            echo "$untracked"
+            echo "::error::'make bundle' produced files that aren't committed. Run it locally and commit them."
+            exit 1
+          fi
