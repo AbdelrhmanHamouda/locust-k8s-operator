@@ -207,6 +207,7 @@ nav:
   - Getting Started:
       - Quick Start: getting_started/index.md
       - Install the Operator: helm_deploy.md
+      - Install with OLM (OperatorHub): olm_deploy.md
   - Tutorials:
       - Overview: tutorials/index.md
       - "Your First Load Test (10 min)": tutorials/first-load-test.md
