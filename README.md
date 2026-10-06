@@ -9,14 +9,10 @@
 <h1 align="center" style="margin-top: 0.01rem;">Locust Kubernetes Operator</h1>
 
 <p align="center">
-Enable performance testing for the modern era!
+Kubernetes operator for <a href="https://github.com/locustio/locust">Locust</a>. Run distributed Locust load tests on Kubernetes as a <code>LocustTest</code> custom resource, from a laptop cluster or a CI pipeline.
 </p>
 
-<p align="center">
-Utilize the full power of <em><a href="https://github.com/locustio/locust">Locust</a></em> in the cloud.
-</p>
-
-Docs: [github.io/locust-k8s-operator/](https://abdelrhmanhamouda.github.io/locust-k8s-operator/)
+Docs: [abdelrhmanhamouda.github.io/locust-k8s-operator](https://abdelrhmanhamouda.github.io/locust-k8s-operator/) · New to Locust on Kubernetes? Read the [practical guide](https://abdelrhmanhamouda.github.io/locust-k8s-operator/locust-on-kubernetes/).
 
 -----------------------------
 
@@ -32,7 +28,7 @@ Docs: [github.io/locust-k8s-operator/](https://abdelrhmanhamouda.github.io/locus
 
 ## At a Glance
 
-The Operator is designed to unlock seamless and effortless distributed performance testing in the cloud and enable continuous integration for CI/CD. By design, the entire system is cloud native and focuses on automation and CI practices. One strong feature about the system is its ability to horizontally scale to meet any required performance demands.
+The Locust Kubernetes Operator runs Locust in distributed mode on any Kubernetes cluster: one master, as many workers as you ask for, and the wiring between them. It's built for automated runs, so a load test can be started from a CI job, finish with a pass or fail result, and clean up after itself. Need more load? Add worker replicas.
 
 You describe a load test as a `LocustTest` custom resource. The operator creates the master and worker pods, wires them together, streams the results wherever you point them, and cleans everything up when the run finishes.
 
@@ -50,7 +46,11 @@ Tests run in isolation, so you can run many at once without cross-interference, 
 
 ## Documentation
 
-All documentation for this project is available at [github.io/locust-k8s-operator/](https://abdelrhmanhamouda.github.io/locust-k8s-operator/).
+All documentation for this project is available at [abdelrhmanhamouda.github.io/locust-k8s-operator](https://abdelrhmanhamouda.github.io/locust-k8s-operator/). Good places to start:
+
+- [Locust on Kubernetes](https://abdelrhmanhamouda.github.io/locust-k8s-operator/locust-on-kubernetes/): how distributed Locust works on Kubernetes, the ways to deploy it, and a full walkthrough
+- [Quick Start](https://abdelrhmanhamouda.github.io/locust-k8s-operator/getting_started/): a first test in about five minutes
+- [Compare alternatives](https://abdelrhmanhamouda.github.io/locust-k8s-operator/comparison/): this operator, the official locustio/k8s-operator, the k6 operator and plain manifests
 
 ## Quick Start
 
@@ -101,6 +101,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup.
 ## Project Status
 
 The project is actively maintained and under continuous development and improvement. If you have any request or want to chat, kindly open a ticket. If you wish to contribute code and/or ideas, kindly check the contribution section.
+
+## Adopters
+
+Using the operator? Add your organisation to [ADOPTERS.md](ADOPTERS.md) with a pull request. It helps other teams judge whether the project fits them, and it helps the maintainers decide what to work on next.
 
 ## Contribute
 
