@@ -10,13 +10,15 @@ on:
 permissions:
   contents: read
   security-events: write
-  issues: write # Required for creating issues on vulnerabilities
+  issues: write # Required for opening, updating and closing scan issues
 
 jobs:
   scan-published-image:
     name: 🔍 Scan published image
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      IMAGE: lotest/locust-k8s-operator:latest
     steps:
       - name: 📂 Checkout
         uses: actions/checkout@v7
@@ -29,18 +31,19 @@ jobs:
       # findings visible in the Security tab that the narrowed PR scan no
       # longer uploads — though only for the released `:latest` image, so
       # LOW/MEDIUM in merged but unreleased changes surface only at the next
-      # release. Consequence to keep in mind: the grep for
-      # `"level": "warning"` in the next step matches MEDIUM findings, so this
-      # job files issues for MEDIUMs too, not only CRITICAL/HIGH.
+      # release. Consequence to keep in mind: the issue step below reads the
+      # severity of each finding from the SARIF and reports CRITICAL, HIGH and
+      # MEDIUM, so this job files issues for MEDIUMs too, not only
+      # CRITICAL/HIGH. LOW findings only show up in the Security tab.
       - name: 🔍 Run Trivy scan on latest image
         uses: aquasecurity/trivy-action@v0.36.0
         id: trivy-scan
         with:
-          image-ref: lotest/locust-k8s-operator:latest
+          image-ref: ${{ env.IMAGE }}
           format: sarif
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
-          exit-code: 0 # Don't fail, we'll create an issue instead
+          exit-code: 0 # Don't fail, the next steps report instead
 
       - name: 📊 Upload Trivy results to GitHub Security tab
         if: always()
@@ -49,88 +52,240 @@ jobs:
           sarif_file: trivy-results.sarif
           category: trivy-daily-scan
 
-      - name: 🔍 Check for vulnerabilities
-        id: check-vulns
-        run: |
-          # Check if SARIF file contains vulnerabilities
-          if grep -q '"level": "error"' trivy-results.sarif || grep -q '"level": "warning"' trivy-results.sarif; then
-            echo "vulnerabilities_found=true" >> $GITHUB_OUTPUT
-          else
-            echo "vulnerabilities_found=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: 🚨 Create issue for vulnerabilities
-        if: steps.check-vulns.outputs.vulnerabilities_found == 'true'
+      # Keeps at most one open scan issue, and only opens a new one when the
+      # set of findings changes:
+      #   - same findings as the open issue: edit its "Last seen" line in place
+      #     (an edit doesn't notify anyone, a daily comment does)
+      #   - different findings: open a fresh issue that says which ids are new
+      #     and which carried over, then close the old one pointing at it
+      #   - nothing found: close any open scan issue as resolved
+      # The finding set is identified by a fingerprint (a hash of the sorted
+      # vulnerability ids) kept in a hidden comment in the issue body. Issues
+      # from the old version of this workflow have no fingerprint, so they're
+      # matched by title and always treated as a changed finding set.
+      # This step runs whether or not anything was found, and even if the
+      # SARIF upload failed, but not when the Trivy step failed: a missing
+      # scan must never close issues.
+      - name: 🚨 Sync scan issue
+        if: "!cancelled() && steps.trivy-scan.outcome == 'success'"
         uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
-            const sarif = JSON.parse(fs.readFileSync('trivy-results.sarif', 'utf8'));
+            const crypto = require('crypto');
 
-            let vulnerabilities = [];
-            for (const run of sarif.runs) {
-              for (const result of run.results || []) {
-                const severity = result.level === 'error' ? 'CRITICAL/HIGH' : 'MEDIUM';
-                const ruleId = result.ruleId || 'Unknown';
-                const message = result.message?.text || 'No description';
-                vulnerabilities.push(`- **${ruleId}** (${severity}): ${message}`);
-              }
+            const image = process.env.IMAGE;
+            const { owner, repo } = context.repo;
+            const today = new Date().toISOString().slice(0, 10);
+            const repoUrl = `${context.serverUrl}/${owner}/${repo}`;
+            const runUrl = `${repoUrl}/actions/runs/${context.runId}`;
+
+            // Every scan issue carries both labels, and they're how we find
+            // the open ones again.
+            const LABELS = ['security', 'automated'];
+            // Titles this workflow uses now, and the one it used before.
+            const TITLE_PREFIX = '🚨 Trivy:';
+            const LEGACY_TITLE = 'Security vulnerabilities found';
+            // Hidden markers in the issue body.
+            const FINGERPRINT_RE = /<!-- trivy-fingerprint: ([0-9a-f]+) -->/;
+            const IDS_RE = /<!-- trivy-ids: ([^>]*) -->/;
+            // Old-format bodies list findings as "- **CVE-...** (SEVERITY): ...".
+            const LEGACY_ID_RE = /^- \*\*([^*\s]+)\*\* \(/gm;
+            const LAST_SEEN_RE = /^\*\*Last seen:\*\* .*$/m;
+            // Keep the table readable; the full list is in the Security tab.
+            const MAX_ROWS = 50;
+
+            // Lower rank sorts first. Only these severities are reported;
+            // LOW and UNKNOWN stay in the Security tab only.
+            const SEVERITY_RANK = { CRITICAL: 0, HIGH: 1, MEDIUM: 2 };
+            const SEVERITIES = new Set(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'UNKNOWN']);
+            // Fallback when a rule has no severity tag (Trivy maps
+            // CRITICAL/HIGH to error, MEDIUM to warning, LOW/UNKNOWN to note).
+            const LEVEL_TO_SEVERITY = { error: 'HIGH', warning: 'MEDIUM', note: 'LOW' };
+
+            const shorten = (text, max) => text.length > max ? `${text.slice(0, max - 1)}…` : text;
+            const cell = (text) => text.replace(/\s+/g, ' ').replace(/\|/g, '\\|');
+
+            // ---- 1. Parse the SARIF into one finding per vulnerability id ----
+            let sarif;
+            try {
+              sarif = JSON.parse(fs.readFileSync('trivy-results.sarif', 'utf8'));
+            } catch (err) {
+              core.setFailed(`Could not read trivy-results.sarif: ${err.message}`);
+              return;
             }
-
-            if (vulnerabilities.length === 0) {
-              console.log('No vulnerabilities found in SARIF');
+            if (!Array.isArray(sarif.runs)) {
+              core.setFailed('SARIF file has no runs, leaving scan issues alone');
               return;
             }
 
-            const issueTitle = `🚨 Security vulnerabilities found in latest Docker image`;
-            const issueBody = `## Security Scan Alert
+            // Trivy writes one result per vulnerable package location, so the
+            // same CVE often appears several times. Merge those by id.
+            const findings = new Map();
+            for (const run of sarif.runs) {
+              const rules = run.tool?.driver?.rules || [];
+              const ruleById = new Map(rules.map((rule) => [rule.id, rule]));
+              for (const result of run.results || []) {
+                const id = result.ruleId || rules[result.ruleIndex]?.id;
+                if (!id) continue;
+                const rule = ruleById.get(id) || {};
+                const severity = (rule.properties?.tags || []).find((tag) => SEVERITIES.has(tag))
+                  || LEVEL_TO_SEVERITY[result.level] || 'UNKNOWN';
+                if (!(severity in SEVERITY_RANK)) continue;
 
-            Daily security scan detected vulnerabilities in \`lotest/locust-k8s-operator:latest\`.
+                const message = result.message?.text || '';
+                const pkg = /^Package: (.+)$/m.exec(message)?.[1];
+                const found = findings.get(id);
+                if (found) {
+                  if (SEVERITY_RANK[severity] < SEVERITY_RANK[found.severity]) found.severity = severity;
+                  if (pkg) found.packages.add(pkg);
+                  continue;
+                }
+                findings.set(id, {
+                  id,
+                  severity,
+                  summary: shorten(rule.shortDescription?.text || message.split('\n')[0] || 'No description', 100),
+                  url: rule.helpUri,
+                  packages: new Set(pkg ? [pkg] : []),
+                });
+              }
+            }
+            const sorted = [...findings.values()].sort((a, b) =>
+              SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
-            ### Vulnerabilities Found:
-            ${vulnerabilities.slice(0, 20).join('\n')}
-            ${vulnerabilities.length > 20 ? `\n\n... and ${vulnerabilities.length - 20} more` : ''}
+            // ---- 2. Fingerprint the finding set ----
+            const ids = sorted.map((f) => f.id).sort();
+            const fingerprint = crypto.createHash('sha256').update(ids.join('\n')).digest('hex').slice(0, 12);
+            console.log(`${ids.length} finding(s), fingerprint ${fingerprint}`);
 
-            ### Next Steps:
-            1. Review the full scan results in the [Security tab](${context.payload.repository.html_url}/security/code-scanning)
-            2. Update dependencies or Go version as needed
-            3. Rebuild and push a new image
-
-            **Scan Date:** ${new Date().toISOString().split('T')[0]}
-            **Image:** lotest/locust-k8s-operator:latest
-            `;
-
-            // Check if an open issue already exists
-            const issues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+            // ---- 3. Find open scan issues, newest first ----
+            const openIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
               state: 'open',
-              labels: 'security,automated'
+              labels: LABELS.join(','),
+              per_page: 100,
             });
+            const scanIssues = openIssues
+              .filter((issue) => !issue.pull_request)
+              .filter((issue) => FINGERPRINT_RE.test(issue.body || '')
+                || issue.title.startsWith(TITLE_PREFIX)
+                || issue.title.includes(LEGACY_TITLE))
+              .sort((a, b) => b.number - a.number);
 
-            const existingIssue = issues.data.find(issue =>
-              issue.title.includes('Security vulnerabilities found')
-            );
+            const fingerprintOf = (issue) => FINGERPRINT_RE.exec(issue.body || '')?.[1];
+            const idsOf = (issue) => {
+              const body = issue.body || '';
+              const marker = IDS_RE.exec(body);
+              if (marker) return marker[1].split(',').map((id) => id.trim()).filter(Boolean);
+              return [...body.matchAll(LEGACY_ID_RE)].map((m) => m[1]);
+            };
+            const closeIssue = async (issue, comment, stateReason) => {
+              await github.rest.issues.createComment({ owner, repo, issue_number: issue.number, body: comment });
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: issue.number,
+                state: 'closed',
+                state_reason: stateReason,
+              });
+              console.log(`Closed #${issue.number} (${stateReason})`);
+            };
 
-            if (existingIssue) {
-              // Update existing issue
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: existingIssue.number,
-                body: `## New Scan Results\n\n${issueBody}`
-              });
-              console.log(`Updated existing issue #${existingIssue.number}`);
-            } else {
-              // Create new issue
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: issueTitle,
-                body: issueBody,
-                labels: ['security', 'automated']
-              });
-              console.log('Created new security issue');
+            // ---- 4a. Clean scan: close whatever is still open ----
+            if (sorted.length === 0) {
+              if (scanIssues.length === 0) {
+                console.log('No vulnerabilities and no open scan issues, nothing to do');
+              }
+              for (const issue of scanIssues) {
+                await closeIssue(
+                  issue,
+                  `Resolved: latest scan of \`${image}\` found nothing (${today}, [scan run](${runUrl})).`,
+                  'completed',
+                );
+              }
+              return;
+            }
+
+            const lastSeenLine = `**Last seen:** ${today} ([scan run](${runUrl}))`;
+
+            // ---- 4b. Same findings as an open issue: bump "Last seen" ----
+            const current = scanIssues.find((issue) => fingerprintOf(issue) === fingerprint);
+            if (current) {
+              const body = current.body || '';
+              const updated = LAST_SEEN_RE.test(body)
+                ? body.replace(LAST_SEEN_RE, () => lastSeenLine)
+                : `${body}\n\n${lastSeenLine}`;
+              await github.rest.issues.update({ owner, repo, issue_number: current.number, body: updated });
+              console.log(`Findings unchanged, updated "Last seen" on #${current.number}`);
+              // Shouldn't happen, but don't leave stray duplicates open.
+              for (const other of scanIssues.filter((issue) => issue !== current)) {
+                await closeIssue(other, `Superseded by #${current.number}.`, 'not_planned');
+              }
+              return;
+            }
+
+            // ---- 4c. Findings changed: open a fresh issue, close the old ----
+            const previousIds = new Set(scanIssues.flatMap(idsOf));
+            const previousRefs = scanIssues.map((issue) => `#${issue.number}`).join(', ');
+            const newCount = ids.filter((id) => !previousIds.has(id)).length;
+            const gone = [...previousIds].filter((id) => !findings.has(id)).sort();
+
+            const counts = Object.keys(SEVERITY_RANK)
+              .map((severity) => [severity, sorted.filter((f) => f.severity === severity).length])
+              .filter(([, n]) => n > 0)
+              .map(([severity, n]) => `${n} ${severity}`)
+              .join(', ');
+            const noun = sorted.length === 1 ? 'vulnerability' : 'vulnerabilities';
+
+            const changes = [];
+            if (scanIssues.length > 0) {
+              changes.push(`- Compared with ${previousRefs}: ${newCount} new, ${sorted.length - newCount} carried over.`);
+              if (gone.length > 0) changes.push(`- No longer reported: ${gone.join(', ')}.`);
+            }
+
+            const rows = sorted.slice(0, MAX_ROWS).map((f) => {
+              const id = f.url ? `[${f.id}](${f.url})` : f.id;
+              const status = previousIds.has(f.id) ? 'carried over' : '**new**';
+              const packages = cell([...f.packages].sort().join(', ') || '-');
+              return `| ${id} | ${f.severity} | ${status} | ${packages} | ${cell(f.summary)} |`;
+            });
+            if (sorted.length > MAX_ROWS) {
+              rows.push(`\n…and ${sorted.length - MAX_ROWS} more, see the Security tab.`);
+            }
+
+            const title = `${TITLE_PREFIX} ${sorted.length} ${noun} in latest image (${today})`;
+            const body = [
+              `Daily Trivy scan of \`${image}\` found ${sorted.length} ${noun} (${counts}).`,
+              ...(changes.length > 0 ? ['', ...changes] : []),
+              '',
+              '| ID | Severity | Status | Package | Summary |',
+              '| --- | --- | --- | --- | --- |',
+              ...rows,
+              '',
+              '### Next steps',
+              `1. Review the full results in the [Security tab](${repoUrl}/security/code-scanning)`,
+              '2. Update dependencies or the Go version as needed',
+              '3. Rebuild and push a new image',
+              '',
+              'This issue is kept up to date by the daily scan. If the findings change, it gets closed and replaced by a new one.',
+              '',
+              `**First seen:** ${today}`,
+              lastSeenLine,
+              '',
+              `<!-- trivy-fingerprint: ${fingerprint} -->`,
+              `<!-- trivy-ids: ${ids.join(',')} -->`,
+            ].join('\n');
+
+            const { data: created } = await github.rest.issues.create({ owner, repo, title, body, labels: LABELS });
+            console.log(`Opened #${created.number}: ${title}`);
+
+            for (const old of scanIssues) {
+              await closeIssue(
+                old,
+                `Superseded by #${created.number}: the findings changed in the ${today} scan.`,
+                'not_planned',
+              );
             }
 
       - name: 📦 Upload scan results
