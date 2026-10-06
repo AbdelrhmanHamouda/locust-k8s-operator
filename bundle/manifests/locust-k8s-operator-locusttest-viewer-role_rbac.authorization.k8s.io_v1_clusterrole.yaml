@@ -1,0 +1,23 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: locust-k8s-operator
+  name: locust-k8s-operator-locusttest-viewer-role
+rules:
+- apiGroups:
+  - locust.io
+  resources:
+  - locusttests
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - locust.io
+  resources:
+  - locusttests/status
+  verbs:
+  - get
