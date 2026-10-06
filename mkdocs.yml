@@ -222,6 +222,11 @@ markdown_extensions:
       custom_checkbox: true
   - pymdownx.tilde
 
+# Source files that aren't site pages. dockerhub.md is the Docker Hub
+# repository description, pushed by the release workflow.
+exclude_docs: |
+  dockerhub.md
+
 # Pages intentionally kept out of the nav (redirect stubs preserved for old inbound links)
 not_in_nav: |
   advanced_topics.md
