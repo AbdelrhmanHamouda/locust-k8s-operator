@@ -86,6 +86,7 @@ type WorkerSpec struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=500
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Worker Replicas",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:podCount"}
 	Replicas int32 `json:"replicas"`
 
 	// Resources defines resource requests and limits for worker pods.
@@ -300,6 +301,7 @@ type LocustTestStatus struct {
 	// Phase is the current lifecycle phase of the test.
 	// +kubebuilder:validation:Enum=Pending;Running;Succeeded;Failed
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="Phase",xDescriptors={"urn:alm:descriptor:io.kubernetes.phase"}
 	Phase Phase `json:"phase,omitempty"`
 
 	// ObservedGeneration is the most recent generation observed by the controller.
@@ -308,6 +310,7 @@ type LocustTestStatus struct {
 
 	// ExpectedWorkers is the number of workers expected to connect.
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="Expected Workers",xDescriptors={"urn:alm:descriptor:text"}
 	ExpectedWorkers int32 `json:"expectedWorkers,omitempty"`
 
 	// ConnectedWorkers is the approximate number of connected workers,
@@ -315,14 +318,17 @@ type LocustTestStatus struct {
 	// This is an approximation as Kubernetes Job.Status.Active may lag behind
 	// actual Locust worker connections.
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="Connected Workers",xDescriptors={"urn:alm:descriptor:text"}
 	ConnectedWorkers int32 `json:"connectedWorkers,omitempty"`
 
 	// StartTime is when the test started.
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="Start Time",xDescriptors={"urn:alm:descriptor:timestamp"}
 	StartTime *metav1.Time `json:"startTime,omitempty"`
 
 	// CompletionTime is when the test completed.
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="Completion Time",xDescriptors={"urn:alm:descriptor:timestamp"}
 	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
 
 	// Conditions represent the latest available observations of the test's state.
@@ -331,6 +337,7 @@ type LocustTestStatus struct {
 	// +patchStrategy=merge
 	// +listType=map
 	// +listMapKey=type
+	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="Conditions",xDescriptors={"urn:alm:descriptor:io.kubernetes.conditions"}
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
@@ -342,52 +349,64 @@ type LocustTestStatus struct {
 type LocustTestSpec struct {
 	// Image is the container image for Locust pods.
 	// +kubebuilder:validation:Required
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Locust Image",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text"}
 	Image string `json:"image"`
 
 	// ImagePullPolicy for the Locust container.
 	// +optional
 	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
 	// +kubebuilder:default=IfNotPresent
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Image Pull Policy",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:imagePullPolicy"}
 	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
 
 	// ImagePullSecrets for pulling from private registries.
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Image Pull Secrets",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 
 	// Master configuration for the master node.
 	// +kubebuilder:validation:Required
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Master"
 	Master MasterSpec `json:"master"`
 
 	// Worker configuration for worker nodes.
 	// +kubebuilder:validation:Required
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Worker"
 	Worker WorkerSpec `json:"worker"`
 
 	// TestFiles configuration for locustfile and library mounting.
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Test Files"
 	TestFiles *TestFilesConfig `json:"testFiles,omitempty"`
 
 	// Scheduling configuration for pod placement.
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Scheduling",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
 
 	// Env configuration for environment variable injection.
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Environment",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Env *EnvConfig `json:"env,omitempty"`
 
 	// Volumes to add to pods.
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Volumes",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Volumes []corev1.Volume `json:"volumes,omitempty"`
 
 	// VolumeMounts for the locust container with target selection.
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Volume Mounts",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	VolumeMounts []TargetedVolumeMount `json:"volumeMounts,omitempty"`
 
 	// Security configuration for pod and container security contexts.
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Security",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Security *SecurityConfig `json:"security,omitempty"`
 
 	// Observability configuration for metrics and tracing.
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Observability",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Observability *ObservabilityConfig `json:"observability,omitempty"`
 }
 
@@ -405,6 +424,7 @@ type LocustTestSpec struct {
 // +kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.spec.image`,priority=1
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
+// +operator-sdk:csv:customresourcedefinitions:displayName="Locust Test",resources={{Job,v1},{Service,v1},{Pod,v1}}
 // LocustTest is the Schema for the locusttests API.
 type LocustTest struct {
 	metav1.TypeMeta   `json:",inline"`

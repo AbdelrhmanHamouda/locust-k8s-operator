@@ -1,0 +1,43 @@
+# OLM overlay, consumed by config/manifests to generate the OperatorHub bundle
+# (`make bundle`). Not meant to be applied to a cluster directly.
+#
+# It's a sibling of config/default-webhook rather than a child, for the same
+# load-restriction reason documented there. The differences from that overlay:
+#
+#   - No ../certmanager and no cert-manager CA-injection replacements. OLM
+#     generates the webhook serving cert itself, mounts it at
+#     /tmp/k8s-webhook-server/serving-certs (tls.crt/tls.key) and injects the
+#     CA bundle into the ValidatingWebhookConfiguration and the CRD's
+#     spec.conversion block. A cert-manager Certificate in the bundle would be
+#     rejected (OLM can't install cert-manager kinds) and the volume/mount from
+#     manager_webhook_patch.yaml would clash with the one OLM adds.
+#   - Webhooks (validating + v1<->v2 conversion) are on. Because the CRD has a
+#     conversion webhook, OLM only allows the AllNamespaces install mode; the
+#     base CSV declares exactly that.
+#   - The manager env mirrors the Helm chart's defaults, so an OLM install
+#     behaves like `helm install` with default values.
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: locust-k8s-operator-system
+namePrefix: locust-k8s-operator-
+
+resources:
+- ../crd
+- ../rbac
+- ../manager
+- ../webhook
+- metrics_service.yaml
+
+patches:
+- path: manager_olm_patch.yaml
+  target:
+    kind: Deployment
+    name: controller-manager
+
+# Written by `make bundle` from BUNDLE_OPERATOR_IMG; don't edit by hand.
+images:
+- name: controller
+  newName: docker.io/lotest/locust-k8s-operator
+  newTag: 2.3.1

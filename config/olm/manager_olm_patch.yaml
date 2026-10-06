@@ -1,0 +1,44 @@
+# Manager settings for OLM installs. OLM adds the webhook cert volume and
+# mount itself, so this patch only sets args, ports and env.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        args:
+        - --leader-elect
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=:8443
+        - --enable-webhooks=true
+        - --webhook-cert-path=/tmp/k8s-webhook-server/serving-certs
+        ports:
+        - containerPort: 8443
+          name: metrics
+          protocol: TCP
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        # Same defaults as charts/locust-k8s-operator/values.yaml. Users can
+        # override any of these through the Subscription's spec.config.env.
+        env:
+        - name: ENABLE_AFFINITY_CR_INJECTION
+          value: "true"
+        - name: ENABLE_TAINT_TOLERATIONS_CR_INJECTION
+          value: "true"
+        - name: METRICS_EXPORTER_IMAGE
+          value: docker.io/containersol/locust_exporter:v0.5.2
+        - name: METRICS_EXPORTER_IMAGE_PULL_POLICY
+          value: IfNotPresent
+        - name: METRICS_EXPORTER_CPU_REQUEST
+          value: 100m
+        - name: METRICS_EXPORTER_MEM_REQUEST
+          value: 64Mi
+        - name: METRICS_EXPORTER_CPU_LIMIT
+          value: 250m
+        - name: METRICS_EXPORTER_MEM_LIMIT
+          value: 128Mi
