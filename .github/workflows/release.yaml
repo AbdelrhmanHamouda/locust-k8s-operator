@@ -167,7 +167,8 @@ jobs:
           pip install \
           mkdocs-material \
           mkdocs-git-revision-date-localized-plugin \
-          mkdocs-minify-plugin
+          mkdocs-minify-plugin \
+          mkdocs-llmstxt
 
       - name: 🚀 Build documentation
         env:

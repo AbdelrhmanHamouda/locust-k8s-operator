@@ -19,12 +19,35 @@ copyright: >
   <a href="#__consent">Change cookie settings</a>
 
 # Plugins
-# Note: mkdocs-minify-plugin is a pip dependency (see CI workflows)
+# Note: mkdocs-minify-plugin and mkdocs-llmstxt are pip dependencies (see CI workflows)
 plugins:
   - search
   - git-revision-date-localized
   - privacy
   - tags
+  # Generates /llms.txt and Markdown copies of the listed pages for LLM tools.
+  - llmstxt:
+      markdown_description: >-
+        The Locust Kubernetes Operator runs distributed Locust load tests on
+        Kubernetes. A test is a LocustTest custom resource (locust.io/v2); the
+        operator creates the master and worker Jobs and the master Service,
+        reports the phase (Pending, Running, Succeeded, Failed) and conditions,
+        and cleans up. Installed with Helm.
+      sections:
+        Getting started:
+          - locust-on-kubernetes.md: How distributed Locust works on Kubernetes, deployment options, a full walkthrough, CI usage and scaling
+          - getting_started/index.md: Five-minute quick start
+          - helm_deploy.md: Helm chart installation and values
+        Reference:
+          - api_reference.md: LocustTest field reference
+          - faq.md: Common questions and troubleshooting
+          - comparison.md: Comparison with locustio/k8s-operator, the k6 operator and plain manifests
+        Tutorials:
+          - tutorials/first-load-test.md: A realistic first load test
+          - tutorials/ci-cd-integration.md: Running load tests from GitHub Actions
+          - tutorials/production-deployment.md: Resources, scheduling and observability for larger runs
+        How-to guides:
+          - how-to-guides/*/*.md
   - minify:
       minify_html: true
       minify_js: true

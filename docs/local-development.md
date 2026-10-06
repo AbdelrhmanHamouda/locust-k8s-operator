@@ -185,8 +185,9 @@ All documentation is located under the `docs/` directory. The documentation is h
 ### Preview Documentation Locally
 
 ```bash
-# Install MkDocs (if not installed)
-pip install mkdocs mkdocs-material
+# Install MkDocs, the theme and the plugins used by mkdocs.yml
+pip install mkdocs-material mkdocs-git-revision-date-localized-plugin \
+  mkdocs-minify-plugin mkdocs-llmstxt
 
 # Serve documentation locally
 mkdocs serve
