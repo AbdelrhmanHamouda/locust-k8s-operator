@@ -32,7 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -51,14 +51,14 @@ func newTestScheme() *runtime.Scheme {
 }
 
 // newTestReconciler creates a reconciler with a fake client for testing.
-func newTestReconciler(objs ...client.Object) (*LocustTestReconciler, *record.FakeRecorder) {
+func newTestReconciler(objs ...client.Object) (*LocustTestReconciler, *events.FakeRecorder) {
 	scheme := newTestScheme()
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithObjects(objs...).
 		WithStatusSubresource(&locustv2.LocustTest{}).
 		Build()
-	recorder := record.NewFakeRecorder(10)
+	recorder := events.NewFakeRecorder(10)
 
 	return &LocustTestReconciler{
 		Client:   fakeClient,
@@ -96,7 +96,7 @@ func newTestOperatorConfig() *config.OperatorConfig {
 // newTestLocustTestCR creates a test LocustTest CR.
 // drainEvents empties the recorder's buffered events so that later assertions
 // only observe events emitted after this point.
-func drainEvents(recorder *record.FakeRecorder) {
+func drainEvents(recorder *events.FakeRecorder) {
 	for {
 		select {
 		case <-recorder.Events:
@@ -110,7 +110,7 @@ func drainEvents(recorder *record.FakeRecorder) {
 // them reports an external deletion. Draining all of them matters: a single
 // non-blocking read inspects only the first buffered event and would miss a
 // ResourceDeleted queued behind an unrelated one.
-func assertNoResourceDeletedEvent(t *testing.T, recorder *record.FakeRecorder, msg string) {
+func assertNoResourceDeletedEvent(t *testing.T, recorder *events.FakeRecorder, msg string) {
 	t.Helper()
 	for {
 		select {
@@ -415,11 +415,11 @@ func TestReconcile_EventRecording(t *testing.T) {
 	require.NoError(t, err)
 
 	// Collect all events
-	var events []string
+	var recorded []string
 	for {
 		select {
 		case event := <-recorder.Events:
-			events = append(events, event)
+			recorded = append(recorded, event)
 		default:
 			goto done
 		}
@@ -427,14 +427,14 @@ func TestReconcile_EventRecording(t *testing.T) {
 done:
 
 	// Should have 3 events: Service, Master Job, Worker Job
-	assert.Len(t, events, 3)
+	assert.Len(t, recorded, 3)
 
 	// Verify event content
 	serviceEventFound := false
 	masterJobEventFound := false
 	workerJobEventFound := false
 
-	for _, event := range events {
+	for _, event := range recorded {
 		if strings.Contains(event, "Service") && strings.Contains(event, "event-test-master") {
 			serviceEventFound = true
 		}
@@ -612,7 +612,7 @@ func (e *errorClient) Create(ctx context.Context, obj client.Object, opts ...cli
 func TestReconcile_GetError(t *testing.T) {
 	scheme := newTestScheme()
 	fakeClient := fake.NewClientBuilder().WithScheme(scheme).Build()
-	recorder := record.NewFakeRecorder(10)
+	recorder := events.NewFakeRecorder(10)
 
 	// Wrap with error client that returns an error on Get
 	errClient := &errorClient{
@@ -645,7 +645,7 @@ func TestReconcile_CreateServiceError(t *testing.T) {
 		WithScheme(scheme).
 		WithObjects(lt).
 		Build()
-	recorder := record.NewFakeRecorder(10)
+	recorder := events.NewFakeRecorder(10)
 
 	// Wrap with error client that returns an error on Create
 	errClient := &errorClient{
@@ -694,7 +694,7 @@ func TestReconcile_CreateMasterJobError(t *testing.T) {
 		WithScheme(scheme).
 		WithObjects(lt).
 		Build()
-	recorder := record.NewFakeRecorder(10)
+	recorder := events.NewFakeRecorder(10)
 
 	// Error after first create (Service succeeds, Master Job fails)
 	errClient := &sequentialErrorClient{
@@ -728,7 +728,7 @@ func TestReconcile_CreateWorkerJobError(t *testing.T) {
 		WithScheme(scheme).
 		WithObjects(lt).
 		Build()
-	recorder := record.NewFakeRecorder(10)
+	recorder := events.NewFakeRecorder(10)
 
 	// Error after second create (Service and Master Job succeed, Worker Job fails)
 	errClient := &sequentialErrorClient{
@@ -788,7 +788,7 @@ func TestCreateResource_SetControllerReferenceError(t *testing.T) {
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(badScheme).
 		Build()
-	recorder := record.NewFakeRecorder(10)
+	recorder := events.NewFakeRecorder(10)
 
 	reconciler := &LocustTestReconciler{
 		Client:   fakeClient,
@@ -1279,7 +1279,7 @@ func TestReconcile_ResourceCheckTransientError_DoesNotTriggerRecovery(t *testing
 				WithObjects(owned...).
 				WithStatusSubresource(&locustv2.LocustTest{}).
 				Build()
-			recorder := record.NewFakeRecorder(10)
+			recorder := events.NewFakeRecorder(10)
 
 			reconciler := &LocustTestReconciler{
 				Client: &getErrorForTypeClient{
@@ -1363,7 +1363,7 @@ func TestCreateResources_RetryOnConflict(t *testing.T) {
 		WithObjects(lt).
 		WithStatusSubresource(&locustv2.LocustTest{}).
 		Build()
-	recorder := record.NewFakeRecorder(10)
+	recorder := events.NewFakeRecorder(10)
 
 	cc := &conflictOnUpdateClient{
 		Client:        fakeClient,
@@ -1423,7 +1423,7 @@ func TestReconcile_ExternalDeletion_RetryOnConflict(t *testing.T) {
 		WithObjects(lt, masterJob, workerJob).
 		WithStatusSubresource(&locustv2.LocustTest{}).
 		Build()
-	recorder := record.NewFakeRecorder(10)
+	recorder := events.NewFakeRecorder(10)
 
 	cc := &conflictOnUpdateClient{
 		Client:        fakeClient,

@@ -26,7 +26,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	locustv2 "github.com/AbdelrhmanHamouda/locust-k8s-operator/api/v2"
@@ -719,7 +719,7 @@ func TestUpdateStatusFromJobs_RetryOnConflict(t *testing.T) {
 		WithObjects(lt).
 		WithStatusSubresource(&locustv2.LocustTest{}).
 		Build()
-	recorder := record.NewFakeRecorder(10)
+	recorder := events.NewFakeRecorder(10)
 
 	cc := &conflictOnUpdateClient{
 		Client:        fakeClient,
@@ -791,20 +791,20 @@ func TestUpdateStatusFromJobs_PodHealthUnhealthy_TransitionsToFailed(t *testing.
 	assert.Contains(t, podsHealthyCond.Message, "ConfigMap not found")
 
 	// Two events should be emitted: TestFailed and PodFailure
-	var events []string
+	var recorded []string
 	for i := 0; i < 2; i++ {
 		select {
 		case event := <-recorder.Events:
-			events = append(events, event)
+			recorded = append(recorded, event)
 		default:
 		}
 	}
-	require.Len(t, events, 2, "Expected 2 events: TestFailed and PodFailure")
+	require.Len(t, recorded, 2, "Expected 2 events: TestFailed and PodFailure")
 
 	// Check that both events were emitted
 	hasTestFailed := false
 	hasPodFailure := false
-	for _, event := range events {
+	for _, event := range recorded {
 		if strings.Contains(event, "TestFailed") {
 			hasTestFailed = true
 		}
