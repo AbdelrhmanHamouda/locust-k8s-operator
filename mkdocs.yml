@@ -231,6 +231,7 @@ nav:
   - Home: index.md
   - Getting Started:
       - Quick Start: getting_started/index.md
+      - Locust on Kubernetes guide: locust-on-kubernetes.md
       - Install the Operator: helm_deploy.md
   - Tutorials:
       - Overview: tutorials/index.md

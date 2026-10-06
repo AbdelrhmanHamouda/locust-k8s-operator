@@ -8,7 +8,7 @@ hide:
 # Locust Kubernetes Operator
 
 <div class="tx-hero">
-<p>Run distributed <em>Locust</em> load tests on Kubernetes. You describe a test as a <code>LocustTest</code> resource; the operator starts the master and workers, tracks the run, and cleans up when it's done.</p>
+<p>Run distributed <em>Locust</em> load tests on Kubernetes. You describe a test as a <code>LocustTest</code> resource; the operator starts the master and workers, tracks the run, and cleans up when it's done. New to running Locust on Kubernetes? Start with the <a href="locust-on-kubernetes/">practical guide</a>.</p>
 <div class="tx-hero__image">
   <img src="assets/images/undraw_real_time_analytics_cropped.svg" alt="Locust K8s Operator" width="500" draggable="false">
 </div>
