@@ -30,6 +30,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -52,11 +53,17 @@ var (
 	testEnv   *envtest.Environment
 	cfg       *rest.Config
 	k8sClient client.Client
+	// eventRecorder is the manager's events.k8s.io/v1 recorder, shared with the
+	// reconciler so tests can drive the same recorder directly.
+	eventRecorder events.EventRecorder
 )
 
 const (
 	timeout  = time.Second * 10
 	interval = time.Millisecond * 250
+
+	// eventReportingController matches the name cmd/main.go gives the recorder.
+	eventReportingController = "locusttest-controller"
 )
 
 func TestControllers(t *testing.T) {
@@ -110,15 +117,16 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	// Setup reconciler with manager
+	eventRecorder = k8sManager.GetEventRecorder(eventReportingController)
 	operatorConfig, err := config.LoadConfig()
 	Expect(err).NotTo(HaveOccurred())
 	err = (&LocustTestReconciler{
 		Client: k8sManager.GetClient(),
 		Scheme: k8sManager.GetScheme(),
 		Config: operatorConfig,
-		// See cmd/main.go: GetEventRecorder is not a drop-in replacement.
-		//nolint:staticcheck // SA1019: deliberate, see cmd/main.go
-		Recorder: k8sManager.GetEventRecorderFor("locust-controller"),
+		// Same recorder and name as cmd/main.go, so the envtest suite exercises
+		// the real events.k8s.io/v1 path end to end.
+		Recorder: eventRecorder,
 	}).SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
 

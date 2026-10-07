@@ -66,7 +66,7 @@ The operator follows least-privilege principles. It requires specific permission
 | `secrets` | get, list, watch | Read credentials for env injection |
 | `services` | get, list, watch, create, delete | Master service for worker communication |
 | `pods` | get, list, watch | Monitor pod health for status reporting |
-| `events` | create, patch | Report status changes and errors |
+| `events` (core and `events.k8s.io`) | create, patch | Report status changes and errors |
 | `jobs` | get, list, watch, create, delete | Master and worker pods (immutable pattern) |
 | `leases` | get, list, watch, create, update, patch | Leader election (only when HA enabled) |
 
