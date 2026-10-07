@@ -33,7 +33,7 @@ metadata:
     capabilities: Basic Install
     categories: Developer Tools
     containerImage: docker.io/lotest/locust-k8s-operator:2.3.1
-    createdAt: "2026-10-06T17:10:00Z"
+    createdAt: "2026-10-07T08:57:05Z"
     description: Run distributed Locust load tests on Kubernetes, declared as a LocustTest
       custom resource.
     features.operators.openshift.io/cnf: "false"
