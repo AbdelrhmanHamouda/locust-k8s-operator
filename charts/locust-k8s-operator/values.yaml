@@ -141,7 +141,7 @@ locustPods:
 otelCollector:
   enabled: false
   # Ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases
-  image: otel/opentelemetry-collector-contrib:0.159.0
+  image: otel/opentelemetry-collector-contrib:0.162.0
   replicas: 1
   resources:
     requests:
