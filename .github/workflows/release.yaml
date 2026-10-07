@@ -72,6 +72,21 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      # Keeps the Docker Hub overview in step with docs/dockerhub.md.
+      # The token needs the "Read, Write, Delete" scope to change a
+      # repository description; a "Read & Write" token is enough to push
+      # images but not for this. continue-on-error stops a token problem
+      # from blocking the chart release, which depends on this job.
+      - name: 📝 Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v5
+        continue-on-error: true
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ env.DOCKER_IMAGE }}
+          short-description: Kubernetes operator for Locust. Run distributed Locust load tests on Kubernetes.
+          readme-filepath: ./docs/dockerhub.md
+
   helm-chart-release:
     name: 🌊 Publish Helm chart
     runs-on: ubuntu-latest
@@ -152,11 +167,16 @@ jobs:
           pip install \
           mkdocs-material \
           mkdocs-git-revision-date-localized-plugin \
-          mkdocs-minify-plugin
+          mkdocs-minify-plugin \
+          mkdocs-llmstxt
 
       - name: 🚀 Build documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GA4 measurement ID (G-XXXXXXXXXX). It ends up in the public page
+          # source anyway, so it's a repository variable rather than a secret.
+          # When unset, the site builds without analytics.
+          GOOGLE_ANALYTICS_KEY: ${{ vars.GOOGLE_ANALYTICS_KEY }}
         run: |
           python -m mkdocs build
 

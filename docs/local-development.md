@@ -1,3 +1,8 @@
+---
+title: Local Development
+description: Set up a local development environment for the Locust Kubernetes Operator - Go toolchain, code generation, running the controller locally and testing on Kind.
+---
+
 # Local Development Guide
 
 This guide describes the setup and workflow for local development on the Locust K8s Operator project. It's intended for developers who want to contribute code changes.
@@ -180,8 +185,9 @@ All documentation is located under the `docs/` directory. The documentation is h
 ### Preview Documentation Locally
 
 ```bash
-# Install MkDocs (if not installed)
-pip install mkdocs mkdocs-material
+# Install MkDocs, the theme and the plugins used by mkdocs.yml
+pip install mkdocs-material mkdocs-git-revision-date-localized-plugin \
+  mkdocs-minify-plugin mkdocs-llmstxt
 
 # Serve documentation locally
 mkdocs serve

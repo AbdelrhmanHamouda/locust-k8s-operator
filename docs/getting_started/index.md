@@ -1,6 +1,6 @@
 ---
 title: Quick Start
-description: Get your first distributed load test running on Kubernetes in 5 minutes
+description: Install the Locust Kubernetes Operator with Helm and run your first distributed Locust load test on Kubernetes in about five minutes.
 tags:
   - quickstart
   - tutorial
@@ -114,6 +114,7 @@ kubectl delete configmap demo-test
 
 ## What's Next?
 
+- **[Locust on Kubernetes guide](../locust-on-kubernetes.md)** - How distributed Locust maps onto Kubernetes, the deployment options, CI usage and scaling
 - **[Your First Load Test](../tutorials/first-load-test.md)** - Build a realistic test with multiple scenarios (10 minutes)
 - **[CI/CD Integration](../tutorials/ci-cd-integration.md)** - Automate tests in your pipeline (15 minutes)
 - **[API Reference](../api_reference.md)** - Complete LocustTest CR specification

@@ -1,6 +1,6 @@
 ---
 title: Metrics & Dashboards
-description: Information on Metrics & Dashboards.
+description: Collect Locust load test metrics on Kubernetes with native OpenTelemetry or the Prometheus exporter sidecar, plus the operator's own controller metrics.
 tags:
   - monitoring
   - metrics

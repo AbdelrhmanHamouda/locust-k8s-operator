@@ -1,6 +1,6 @@
 ---
 title: Features
-description: List of available features
+description: What the Locust Kubernetes Operator does - test lifecycle, CI/CD runs, worker scaling, secrets and volumes, pod scheduling, OpenTelemetry and Prometheus metrics.
 tags:
   - features
   - capabilities

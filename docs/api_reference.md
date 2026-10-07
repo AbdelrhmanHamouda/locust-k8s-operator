@@ -1,6 +1,6 @@
 ---
 title: API Reference
-description: Complete API reference for LocustTest custom resources
+description: Field reference for the LocustTest custom resource (locust.io/v2) - master, worker, test files, env, volumes, scheduling, OpenTelemetry and status.
 tags:
   - api
   - reference
