@@ -7,6 +7,9 @@ metadata:
   name: controller-manager
   namespace: system
 spec:
+  # Two replicas behind leader election (--leader-elect is a base arg), so
+  # the webhooks keep serving while one pod is drained or restarting.
+  replicas: 2
   template:
     spec:
       containers:

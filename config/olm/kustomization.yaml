@@ -29,6 +29,7 @@ resources:
 - ../manager
 - ../webhook
 - metrics_service.yaml
+- pdb.yaml
 
 patches:
 - path: manager_olm_patch.yaml
@@ -43,6 +44,10 @@ patches:
   target:
     kind: Role
     name: leader-election-role
+- path: webhook_service_patch.yaml
+  target:
+    kind: Service
+    name: webhook-service
 
 # `make bundle` sets this to BUNDLE_OPERATOR_IMG for the build and restores it
 # afterwards. The value here only matters for a plain `kustomize build`.

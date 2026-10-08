@@ -1,0 +1,17 @@
+# Keeps one manager pod up through node drains. The bundle always runs the
+# validating and conversion webhooks with failurePolicy Fail, so with no pod
+# left every LocustTest write in the cluster would fail.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: controller-manager
+  namespace: system
+  labels:
+    app.kubernetes.io/name: locust-k8s-operator
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+      app.kubernetes.io/name: locust-k8s-operator
