@@ -20,8 +20,15 @@ BUNDLE_METADATA_OPTS ?= --channels=$(CHANNELS) --default-channel=$(DEFAULT_CHANN
 # images are derived from it (<base>-bundle, <base>-catalog).
 IMAGE_TAG_BASE ?= docker.io/lotest/locust-k8s-operator
 
-# BUNDLE_OPERATOR_IMG is the operator image the generated CSV deploys.
+# BUNDLE_OPERATOR_IMG is the operator image the generated CSV deploys. It
+# defaults to the release image for VERSION. Passing IMG on the command line
+# (`make bundle IMG=quay.io/me/locust-op:dev`, to test an unreleased build
+# through OLM) uses that image instead.
+ifeq ($(origin IMG),command line)
+BUNDLE_OPERATOR_IMG ?= $(IMG)
+else
 BUNDLE_OPERATOR_IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
+endif
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
@@ -369,7 +376,7 @@ endif
 # `images:` entry, which is set for the build and restored afterwards so the
 # tracked kustomization doesn't change.
 .PHONY: bundle
-bundle: manifests kustomize operator-sdk ## Generate the OLM bundle (bundle/, bundle.Dockerfile) for VERSION, then validate it.
+bundle: manifests kustomize operator-sdk ## Generate and validate the OLM bundle (bundle/, bundle.Dockerfile) for VERSION. Operator image: BUNDLE_OPERATOR_IMG, or IMG if given.
 	rm -rf bundle/manifests bundle/metadata bundle/tests bundle.Dockerfile
 	$(OPERATOR_SDK) generate kustomize manifests -q --interactive=false
 	cp config/olm/kustomization.yaml config/olm/kustomization.yaml.orig ;\
