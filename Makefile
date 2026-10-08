@@ -8,13 +8,13 @@
 VERSION ?= $(shell git describe --tags --abbrev=0 --match '[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo 0.0.0)
 
 # CHANNELS / DEFAULT_CHANNEL are the OLM channels written into
-# bundle/metadata/annotations.yaml. Override per run, e.g.
-# `make bundle CHANNELS=candidate,stable DEFAULT_CHANNEL=stable`.
+# bundle/metadata/annotations.yaml. DEFAULT_CHANNEL defaults to the first
+# entry of CHANNELS, e.g. `make bundle CHANNELS=candidate,stable` makes
+# candidate the default.
+comma := ,
 CHANNELS ?= stable
-DEFAULT_CHANNEL ?= stable
-BUNDLE_CHANNELS := --channels=$(CHANNELS)
-BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
-BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
+DEFAULT_CHANNEL ?= $(firstword $(subst $(comma), ,$(CHANNELS)))
+BUNDLE_METADATA_OPTS ?= --channels=$(CHANNELS) --default-channel=$(DEFAULT_CHANNEL)
 
 # IMAGE_TAG_BASE is the operator image repository. The bundle and catalog
 # images are derived from it (<base>-bundle, <base>-catalog).
