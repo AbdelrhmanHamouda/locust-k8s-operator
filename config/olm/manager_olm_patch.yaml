@@ -1,5 +1,6 @@
-# Manager settings for OLM installs. OLM adds the webhook cert volume and
-# mount itself, so this patch only sets args, ports and env.
+# Manager settings for OLM installs, merged into config/manager/manager.yaml.
+# The extra args are in manager_args_patch.yaml. OLM adds the webhook cert
+# volume and mount itself.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -10,12 +11,6 @@ spec:
     spec:
       containers:
       - name: manager
-        args:
-        - --leader-elect
-        - --health-probe-bind-address=:8081
-        - --metrics-bind-address=:8443
-        - --enable-webhooks=true
-        - --webhook-cert-path=/tmp/k8s-webhook-server/serving-certs
         ports:
         - containerPort: 8443
           name: metrics

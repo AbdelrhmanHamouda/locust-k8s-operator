@@ -35,6 +35,10 @@ patches:
   target:
     kind: Deployment
     name: controller-manager
+- path: manager_args_patch.yaml
+  target:
+    kind: Deployment
+    name: controller-manager
 
 # `make bundle` sets this to BUNDLE_OPERATOR_IMG for the build and restores it
 # afterwards. The value here only matters for a plain `kustomize build`.
