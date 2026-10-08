@@ -39,6 +39,12 @@ BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 # same minor version envtest runs (ENVTEST_K8S_VERSION, defined below).
 BUNDLE_K8S_VERSION ?= $(ENVTEST_K8S_VERSION)
 
+# OPENSHIFT_VERSIONS is the com.redhat.openshift.versions value `make bundle`
+# adds to the bundle metadata. The OpenShift community-operators pipeline
+# rejects a bundle with a minKubeVersion and no such value. "v4.16" means 4.16
+# and later, which matches the CSV's minKubeVersion of 1.29.
+OPENSHIFT_VERSIONS ?= v4.16
+
 # BUNDLE_GEN_FLAGS are the flags passed to the operator-sdk generate bundle command
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 
@@ -385,6 +391,10 @@ bundle: manifests kustomize operator-sdk ## Generate and validate the OLM bundle
 	$(KUSTOMIZE) build config/manifests \
 		| sed -e 's|^\(    containerImage:\).*|\1 $(BUNDLE_OPERATOR_IMG)|' \
 		| $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
+	grep -q '^  com.redhat.openshift.versions:' bundle/metadata/annotations.yaml || \
+		printf '\n  # OpenShift versions the bundle supports.\n  com.redhat.openshift.versions: "%s"\n' '$(OPENSHIFT_VERSIONS)' >> bundle/metadata/annotations.yaml
+	grep -q '^LABEL com.redhat.openshift.versions=' bundle.Dockerfile || \
+		printf '\n# OpenShift versions the bundle supports.\nLABEL com.redhat.openshift.versions="%s"\n' '$(OPENSHIFT_VERSIONS)' >> bundle.Dockerfile
 	$(MAKE) bundle-validate
 
 .PHONY: bundle-validate
