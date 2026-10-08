@@ -20,6 +20,10 @@ metadata:
     operatorframework.io/suggested-namespace: locust-system
     repository: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
     support: Community
+  labels:
+    operatorframework.io/arch.amd64: supported
+    operatorframework.io/arch.arm64: supported
+    operatorframework.io/os.linux: supported
   name: locust-k8s-operator.v0.0.0
   namespace: placeholder
 spec:
@@ -192,6 +196,10 @@ spec:
     ### Prerequisites
 
     * Kubernetes 1.29 or newer (OpenShift 4.16 or newer). The metrics exporter runs as a native sidecar.
+    * The operator runs on linux/amd64 and linux/arm64. The default Prometheus exporter sidecar image
+      (`containersol/locust_exporter`) is amd64 only, so on arm64 nodes use the OpenTelemetry mode
+      (`spec.observability.openTelemetry`), which doesn't start the sidecar, or point
+      `METRICS_EXPORTER_IMAGE` at an arm64 build.
     * The operator watches every namespace, so it installs in AllNamespaces mode only. OLM issues and rotates
       the webhook certificates; cert-manager isn't needed.
     * The operator settings from the Helm chart's `locustPods` section are environment variables on the
