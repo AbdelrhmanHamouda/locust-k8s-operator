@@ -318,21 +318,46 @@ endef
 
 # operator-sdk ships as a release binary rather than a `go install`-able
 # module, so it gets its own download helper. Same layout as go-install-tool:
-# a versioned binary plus an unversioned symlink, never whatever is on PATH.
+# a versioned binary plus an unversioned symlink in $(LOCALBIN). The download
+# is checked against the release's checksums.txt; update the hashes below
+# together with OPERATOR_SDK_VERSION.
+#
+# Set OPERATOR_SDK to use a binary you already have. The target then leaves it
+# alone and downloads nothing.
 OPERATOR_SDK ?= $(LOCALBIN)/operator-sdk
+OPERATOR_SDK_SHA256_darwin_amd64 := 7cb0f24bb63b6383a117291ee4c808953c5dd789d5877da98051aa68b41f40ac
+OPERATOR_SDK_SHA256_darwin_arm64 := 098ae8b9dbe7dfd557e8e7ed0f1996736922dd4b984621df2aa033f225cae161
+OPERATOR_SDK_SHA256_linux_amd64 := 887a3bb0d63ccc4ca47a522d0c8ffac56d9d5246f6a2bd886b4ed23eb2e2672f
+OPERATOR_SDK_SHA256_linux_arm64 := 6db93cd821b429f0bb514cea4bbb5553827d273fc8aa211f13e14798599d31cd
 
 .PHONY: operator-sdk
-operator-sdk: $(LOCALBIN) ## Download operator-sdk locally if necessary.
+operator-sdk: ## Download operator-sdk into bin/ if necessary (skipped when OPERATOR_SDK is set).
+ifeq ($(OPERATOR_SDK),$(LOCALBIN)/operator-sdk)
+operator-sdk: $(LOCALBIN)
 	@[ -f "$(OPERATOR_SDK)-$(OPERATOR_SDK_VERSION)" ] || { \
 	set -e ;\
-	echo "Downloading operator-sdk $(OPERATOR_SDK_VERSION)" ;\
 	OS=$$(go env GOOS) ; ARCH=$$(go env GOARCH) ;\
-	curl -sSfL -o "$(OPERATOR_SDK)-$(OPERATOR_SDK_VERSION).tmp" \
+	case "$$OS-$$ARCH" in \
+		darwin-amd64) want=$(OPERATOR_SDK_SHA256_darwin_amd64) ;; \
+		darwin-arm64) want=$(OPERATOR_SDK_SHA256_darwin_arm64) ;; \
+		linux-amd64) want=$(OPERATOR_SDK_SHA256_linux_amd64) ;; \
+		linux-arm64) want=$(OPERATOR_SDK_SHA256_linux_arm64) ;; \
+		*) echo "No pinned operator-sdk checksum for $$OS/$$ARCH; set OPERATOR_SDK to your own binary." >&2 ; exit 1 ;; \
+	esac ;\
+	echo "Downloading operator-sdk $(OPERATOR_SDK_VERSION)" ;\
+	tmp="$(OPERATOR_SDK)-$(OPERATOR_SDK_VERSION).tmp" ;\
+	curl -sSfL -o "$$tmp" \
 		"https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk_$${OS}_$${ARCH}" ;\
-	chmod +x "$(OPERATOR_SDK)-$(OPERATOR_SDK_VERSION).tmp" ;\
-	mv "$(OPERATOR_SDK)-$(OPERATOR_SDK_VERSION).tmp" "$(OPERATOR_SDK)-$(OPERATOR_SDK_VERSION)" ;\
+	got=$$( { command -v sha256sum >/dev/null && sha256sum "$$tmp" || shasum -a 256 "$$tmp" ; } | cut -d' ' -f1 ) ;\
+	if [ "$$got" != "$$want" ]; then \
+		rm -f "$$tmp" ;\
+		echo "operator-sdk checksum mismatch: got $$got, want $$want" >&2 ; exit 1 ;\
+	fi ;\
+	chmod +x "$$tmp" ;\
+	mv "$$tmp" "$(OPERATOR_SDK)-$(OPERATOR_SDK_VERSION)" ;\
 	} ;\
 	ln -sf "$(OPERATOR_SDK)-$(OPERATOR_SDK_VERSION)" "$(OPERATOR_SDK)"
+endif
 
 ##@ OLM bundle
 
