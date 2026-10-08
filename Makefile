@@ -1,9 +1,11 @@
-# VERSION is the operator release the OLM bundle in bundle/ describes. It must
-# be a published tag of lotest/locust-k8s-operator, because the bundle points
-# at that image. It is bumped by hand when a release goes to OperatorHub
-# (`make bundle VERSION=x.y.z`), not by `cz bump`, so the committed bundle
-# keeps matching a real image between releases.
-VERSION ?= 2.3.1
+# VERSION is the operator release the OLM bundle describes. The bundle deploys
+# the operator image with this tag, so it should be a published tag of
+# lotest/locust-k8s-operator. bundle/ and bundle.Dockerfile are generated, not
+# committed: the release workflow runs `make bundle VERSION=<tag>` on the tag
+# it releases and attaches the result to the GitHub release. Locally it
+# defaults to the newest release tag reachable from HEAD (0.0.0 if the clone
+# has no tags); set it on the command line to build another version.
+VERSION ?= $(shell git describe --tags --abbrev=0 --match '[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo 0.0.0)
 
 # CHANNELS / DEFAULT_CHANNEL are the OLM channels written into
 # bundle/metadata/annotations.yaml. Override per run, e.g.
@@ -334,13 +336,20 @@ operator-sdk: $(LOCALBIN) ## Download operator-sdk locally if necessary.
 
 ##@ OLM bundle
 
-# The CSV's containerImage annotation and the Deployment image both come from
-# BUNDLE_OPERATOR_IMG. `kustomize edit` is run on config/olm only, so
-# `make deploy` and friends keep their own image setting in config/manager.
+# bundle/ and bundle.Dockerfile are generated output (ignored by git), so the
+# target starts from scratch: operator-sdk only ever adds files, and a resource
+# dropped from config/ would otherwise keep shipping in bundle/manifests.
+#
+# The operator image comes from BUNDLE_OPERATOR_IMG through config/olm's
+# `images:` entry, which is set for the build and restored afterwards so the
+# tracked kustomization doesn't change.
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate the OLM bundle (bundle/, bundle.Dockerfile) for VERSION, then validate it.
+	rm -rf bundle/manifests bundle/metadata bundle/tests bundle.Dockerfile
 	$(OPERATOR_SDK) generate kustomize manifests -q --interactive=false
-	cd config/olm && $(KUSTOMIZE) edit set image controller=$(BUNDLE_OPERATOR_IMG)
+	cp config/olm/kustomization.yaml config/olm/kustomization.yaml.orig ;\
+	trap 'mv config/olm/kustomization.yaml.orig config/olm/kustomization.yaml' EXIT ;\
+	(cd config/olm && $(KUSTOMIZE) edit set image controller=$(BUNDLE_OPERATOR_IMG)) ;\
 	$(KUSTOMIZE) build config/manifests \
 		| sed -e 's|^\(    containerImage:\).*|\1 $(BUNDLE_OPERATOR_IMG)|' \
 		| $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)

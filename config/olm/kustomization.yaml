@@ -36,8 +36,9 @@ patches:
     kind: Deployment
     name: controller-manager
 
-# Written by `make bundle` from BUNDLE_OPERATOR_IMG; don't edit by hand.
+# `make bundle` sets this to BUNDLE_OPERATOR_IMG for the build and restores it
+# afterwards. The value here only matters for a plain `kustomize build`.
 images:
 - name: controller
   newName: docker.io/lotest/locust-k8s-operator
-  newTag: 2.3.1
+  newTag: latest
