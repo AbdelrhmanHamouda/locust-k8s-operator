@@ -423,8 +423,8 @@ type LocustTestSpec struct {
 // +kubebuilder:printcolumn:name="Connected",type=integer,JSONPath=`.status.connectedWorkers`,description="Connected workers"
 // +kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.spec.image`,priority=1
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
-
 // +operator-sdk:csv:customresourcedefinitions:displayName="Locust Test",resources={{Job,v1},{Service,v1},{Pod,v1}}
+
 // LocustTest is the Schema for the locusttests API.
 type LocustTest struct {
 	metav1.TypeMeta   `json:",inline"`

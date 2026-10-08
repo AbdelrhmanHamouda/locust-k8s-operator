@@ -149,8 +149,8 @@ type LocustTestStatus struct {
 // +kubebuilder:printcolumn:name="worker_replica_count",type=integer,JSONPath=`.spec.workerReplicas`,description="Number of requested worker pods"
 // +kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.spec.image`,description="Locust image"
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
-
 // +operator-sdk:csv:customresourcedefinitions:displayName="Locust Test (v1, deprecated)",resources={{Job,v1},{Service,v1},{Pod,v1}}
+
 // LocustTest is the Schema for the locusttests API (v1 - DEPRECATED).
 type LocustTest struct {
 	metav1.TypeMeta   `json:",inline"`
