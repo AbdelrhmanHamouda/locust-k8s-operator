@@ -39,6 +39,10 @@ patches:
   target:
     kind: Deployment
     name: controller-manager
+- path: leader_election_role_patch.yaml
+  target:
+    kind: Role
+    name: leader-election-role
 
 # `make bundle` sets this to BUNDLE_OPERATOR_IMG for the build and restores it
 # afterwards. The value here only matters for a plain `kustomize build`.

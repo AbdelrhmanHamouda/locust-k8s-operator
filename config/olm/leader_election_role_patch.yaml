@@ -1,0 +1,27 @@
+# Leader election for OLM installs. The bundle only supports AllNamespaces,
+# and in that mode OLM turns this Role into a ClusterRole, so the scaffolded
+# rules (ConfigMaps, delete) would apply to every namespace. The manager only
+# uses a Lease lock and records events, so that's all it gets.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: leader-election-role
+rules:
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
