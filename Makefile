@@ -35,9 +35,9 @@ endif
 BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 
 # BUNDLE_K8S_VERSION is the Kubernetes version `make bundle-validate` checks
-# the bundle against for removed APIs. Keep it at or above the newest
-# Kubernetes release the bundle should install on (k8s.io/api in go.mod is 1.36).
-BUNDLE_K8S_VERSION ?= 1.36
+# the bundle against for removed APIs. It follows k8s.io/api in go.mod, the
+# same minor version envtest runs (ENVTEST_K8S_VERSION, defined below).
+BUNDLE_K8S_VERSION ?= $(ENVTEST_K8S_VERSION)
 
 # BUNDLE_GEN_FLAGS are the flags passed to the operator-sdk generate bundle command
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
@@ -390,7 +390,6 @@ bundle: manifests kustomize operator-sdk ## Generate and validate the OLM bundle
 .PHONY: bundle-validate
 bundle-validate: operator-sdk ## Validate bundle/ with the checks the OperatorHub and OpenShift community pipelines run.
 	$(OPERATOR_SDK) bundle validate ./bundle
-	$(OPERATOR_SDK) bundle validate ./bundle --select-optional name=operatorhub --optional-values=k8s-version=$(BUNDLE_K8S_VERSION)
 	$(OPERATOR_SDK) bundle validate ./bundle --select-optional suite=operatorframework --optional-values=k8s-version=$(BUNDLE_K8S_VERSION)
 
 .PHONY: bundle-build
