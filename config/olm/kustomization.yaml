@@ -14,8 +14,9 @@
 #   - Webhooks (validating + v1<->v2 conversion) are on. Because the CRD has a
 #     conversion webhook, OLM only allows the AllNamespaces install mode; the
 #     base CSV declares exactly that.
-#   - The manager env mirrors the Helm chart's defaults, so an OLM install
-#     behaves like `helm install` with default values.
+#   - The manager env is the env the Helm chart renders with default values
+#     (the olm-bundle workflow checks they match), so Locust pods get the
+#     same defaults either way.
 
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization

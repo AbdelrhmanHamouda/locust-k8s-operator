@@ -32,25 +32,45 @@ spec:
         - containerPort: 9443
           name: webhook-server
           protocol: TCP
-        # Same defaults as charts/locust-k8s-operator/values.yaml. Users can
-        # override any of these through the Subscription's spec.config.env.
+        # The env the Helm chart sets with its default values (see the
+        # locust-k8s-operator.envVars helper in charts/.../_helpers.tpl). CI
+        # checks the two stay the same. Users can override any of these
+        # through the Subscription's spec.config.env.
         env:
+        - name: POD_CPU_REQUEST
+          value: 250m
+        - name: POD_MEM_REQUEST
+          value: 128Mi
+        - name: POD_EPHEMERAL_REQUEST
+          value: 30M
+        - name: POD_CPU_LIMIT
+          value: 1000m
+        - name: POD_MEM_LIMIT
+          value: 1024Mi
+        - name: POD_EPHEMERAL_LIMIT
+          value: 50M
         - name: ENABLE_AFFINITY_CR_INJECTION
           value: "true"
         - name: ENABLE_TAINT_TOLERATIONS_CR_INJECTION
           value: "true"
         - name: METRICS_EXPORTER_IMAGE
           value: docker.io/containersol/locust_exporter:v0.5.2
+        - name: METRICS_EXPORTER_PORT
+          value: "9646"
         - name: METRICS_EXPORTER_IMAGE_PULL_POLICY
           value: IfNotPresent
         - name: METRICS_EXPORTER_CPU_REQUEST
           value: 100m
         - name: METRICS_EXPORTER_MEM_REQUEST
           value: 64Mi
+        - name: METRICS_EXPORTER_EPHEMERAL_REQUEST
+          value: 30M
         - name: METRICS_EXPORTER_CPU_LIMIT
           value: 250m
         - name: METRICS_EXPORTER_MEM_LIMIT
           value: 128Mi
+        - name: METRICS_EXPORTER_EPHEMERAL_LIMIT
+          value: 50M
       volumes:
       - name: tmp
         emptyDir: {}
