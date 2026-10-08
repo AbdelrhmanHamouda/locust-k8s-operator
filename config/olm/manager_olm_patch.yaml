@@ -18,6 +18,13 @@ spec:
         # Without this, an image set in config/manager (make deploy IMG=...,
         # make test-e2e) would end up in the bundle.
         image: controller
+        # Read-only root filesystem, as in the Helm chart. /tmp stays writable
+        # for the webhook server; OLM mounts the serving cert below it.
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
         ports:
         - containerPort: 8443
           name: metrics
@@ -44,3 +51,6 @@ spec:
           value: 250m
         - name: METRICS_EXPORTER_MEM_LIMIT
           value: 128Mi
+      volumes:
+      - name: tmp
+        emptyDir: {}
