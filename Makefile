@@ -380,7 +380,10 @@ endif
 #
 # The operator image comes from BUNDLE_OPERATOR_IMG through config/olm's
 # `images:` entry, which is set for the build and restored afterwards so the
-# tracked kustomization doesn't change.
+# tracked kustomization doesn't change. config/olm resets the manager image
+# first, so whatever `make deploy IMG=...` left in config/manager can't leak
+# in, and config/manifests copies the final image into the CSV's
+# containerImage annotation.
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate and validate the OLM bundle (bundle/, bundle.Dockerfile) for VERSION. Operator image: BUNDLE_OPERATOR_IMG, or IMG if given.
 	rm -rf bundle/manifests bundle/metadata bundle/tests bundle.Dockerfile
@@ -388,9 +391,7 @@ bundle: manifests kustomize operator-sdk ## Generate and validate the OLM bundle
 	cp config/olm/kustomization.yaml config/olm/kustomization.yaml.orig ;\
 	trap 'mv config/olm/kustomization.yaml.orig config/olm/kustomization.yaml' EXIT ;\
 	(cd config/olm && $(KUSTOMIZE) edit set image controller=$(BUNDLE_OPERATOR_IMG)) ;\
-	$(KUSTOMIZE) build config/manifests \
-		| sed -e 's|^\(    containerImage:\).*|\1 $(BUNDLE_OPERATOR_IMG)|' \
-		| $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
+	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
 	grep -q '^  com.redhat.openshift.versions:' bundle/metadata/annotations.yaml || \
 		printf '\n  # OpenShift versions the bundle supports.\n  com.redhat.openshift.versions: "%s"\n' '$(OPENSHIFT_VERSIONS)' >> bundle/metadata/annotations.yaml
 	grep -q '^LABEL com.redhat.openshift.versions=' bundle.Dockerfile || \

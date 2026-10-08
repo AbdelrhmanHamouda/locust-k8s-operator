@@ -9,3 +9,18 @@ resources:
 - ../olm
 - ../samples
 - ../scorecard
+
+# The CSV's containerImage annotation follows the operator Deployment's image,
+# which `make bundle` sets in config/olm from BUNDLE_OPERATOR_IMG.
+replacements:
+- source:
+    kind: Deployment
+    name: controller-manager
+    fieldPath: spec.template.spec.containers.[name=manager].image
+  targets:
+  - select:
+      kind: ClusterServiceVersion
+    fieldPaths:
+    - metadata.annotations.containerImage
+    options:
+      create: true

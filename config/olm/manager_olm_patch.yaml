@@ -11,6 +11,10 @@ spec:
     spec:
       containers:
       - name: manager
+        # Back to the placeholder that `images:` in kustomization.yaml rewrites.
+        # Without this, an image set in config/manager (make deploy IMG=...,
+        # make test-e2e) would end up in the bundle.
+        image: controller
         ports:
         - containerPort: 8443
           name: metrics
