@@ -2,6 +2,8 @@
 # so it must run on any cluster: no nodeSelector, modest resources.
 # Prerequisite: a ConfigMap named locust-scripts holding locustfile.py, e.g.
 #   kubectl create configmap locust-scripts --from-file=locustfile.py
+# The system under test comes from the locustfile (the `host` attribute of its
+# User class). Add `--host <url>` to master.command to set it here instead.
 apiVersion: locust.io/v2
 kind: LocustTest
 metadata:
@@ -9,7 +11,7 @@ metadata:
 spec:
   image: locustio/locust:2.43.1
   master:
-    command: "--locustfile /lotest/src/locustfile.py --host https://example.com --users 10 --spawn-rate 2 --run-time 1m"
+    command: "--locustfile /lotest/src/locustfile.py --users 10 --spawn-rate 2 --run-time 1m"
     autostart: true
     autoquit:
       enabled: true

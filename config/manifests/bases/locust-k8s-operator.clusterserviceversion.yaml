@@ -181,7 +181,8 @@ spec:
 
     ### Usage
 
-    1. Put your locustfile in a ConfigMap in the namespace where the test will run:
+    1. Put your locustfile in a ConfigMap in the namespace where the test will run. The example in this
+       listing takes the URL to test from the locustfile (`host` on its User class):
 
        ```
        kubectl create configmap locust-scripts --from-file=locustfile.py
