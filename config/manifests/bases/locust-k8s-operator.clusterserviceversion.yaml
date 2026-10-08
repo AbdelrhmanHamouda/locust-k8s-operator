@@ -99,7 +99,7 @@ spec:
         displayName: Worker Replicas
         path: worker.replicas
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:podCount
+        - urn:alm:descriptor:com.tectonic.ui:number
       statusDescriptors:
       - description: CompletionTime is when the test completed.
         displayName: Completion Time
@@ -141,6 +141,16 @@ spec:
       displayName: Locust Test (v1, deprecated)
       kind: LocustTest
       name: locusttests.locust.io
+      resources:
+      - kind: Job
+        name: ""
+        version: v1
+      - kind: Pod
+        name: ""
+        version: v1
+      - kind: Service
+        name: ""
+        version: v1
       version: v1
   description: |
     The Locust Kubernetes Operator runs distributed [Locust](https://locust.io) load tests on Kubernetes.

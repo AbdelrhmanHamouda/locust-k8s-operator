@@ -86,7 +86,7 @@ type WorkerSpec struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=500
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Worker Replicas",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:podCount"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Worker Replicas",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number"}
 	Replicas int32 `json:"replicas"`
 
 	// Resources defines resource requests and limits for worker pods.
