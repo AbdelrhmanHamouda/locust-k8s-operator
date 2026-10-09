@@ -3,9 +3,9 @@
 # lotest/locust-k8s-operator. bundle/ and bundle.Dockerfile are generated, not
 # committed: the release workflow runs `make bundle VERSION=<tag>` on the tag
 # it releases and attaches the result to the GitHub release. Locally it
-# defaults to the newest release tag reachable from HEAD (0.0.0 if the clone
+# defaults to the newest release tag reachable from HEAD (0.0.1 if the clone
 # has no tags); set it on the command line to build another version.
-VERSION ?= $(shell git describe --tags --abbrev=0 --match '[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo 0.0.0)
+VERSION ?= $(shell git describe --tags --abbrev=0 --match '[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo 0.0.1)
 
 # CHANNELS / DEFAULT_CHANNEL are the OLM channels written into
 # bundle/metadata/annotations.yaml. DEFAULT_CHANNEL defaults to the first

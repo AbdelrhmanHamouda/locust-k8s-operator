@@ -74,7 +74,8 @@ jobs:
 
       # Also runs controller-gen (make manifests) and the bundle validate
       # passes (make bundle-validate). The checkout has no tags, so the
-      # bundle is built for VERSION 0.0.0; that doesn't affect validation.
+      # bundle is built for VERSION 0.0.1 (operator-sdk rejects 0.0.0 as unset);
+      # the version doesn't affect validation otherwise.
       - name: 🛠️ Generate and validate bundle
         run: make bundle
 
