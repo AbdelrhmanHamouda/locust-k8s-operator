@@ -1,39 +1,49 @@
-# VERSION defines the project version for the bundle.
-# Update this value when you upgrade the version of your project.
-# To re-generate a bundle for another specific version without changing the standard setup, you can:
-# - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
-# - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 0.0.1
+# VERSION is the operator release the OLM bundle describes. The bundle deploys
+# the operator image with this tag, so it should be a published tag of
+# lotest/locust-k8s-operator. bundle/ and bundle.Dockerfile are generated, not
+# committed: the release workflow runs `make bundle VERSION=<tag>` on the tag
+# it releases and attaches the result to the GitHub release. Locally it
+# defaults to the newest release tag reachable from HEAD (0.0.1 if the clone
+# has no tags); set it on the command line to build another version.
+VERSION ?= $(shell git describe --tags --abbrev=0 --match '[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo 0.0.1)
 
-# CHANNELS define the bundle channels used in the bundle.
-# Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
-# To re-generate a bundle for other specific channels without changing the standard setup, you can:
-# - use the CHANNELS as arg of the bundle target (e.g make bundle CHANNELS=candidate,fast,stable)
-# - use environment variables to overwrite this value (e.g export CHANNELS="candidate,fast,stable")
-ifneq ($(origin CHANNELS), undefined)
-BUNDLE_CHANNELS := --channels=$(CHANNELS)
+# CHANNELS / DEFAULT_CHANNEL are the OLM channels written into
+# bundle/metadata/annotations.yaml. DEFAULT_CHANNEL defaults to the first
+# entry of CHANNELS, e.g. `make bundle CHANNELS=candidate,stable` makes
+# candidate the default.
+comma := ,
+CHANNELS ?= stable
+DEFAULT_CHANNEL ?= $(firstword $(subst $(comma), ,$(CHANNELS)))
+BUNDLE_METADATA_OPTS ?= --channels=$(CHANNELS) --default-channel=$(DEFAULT_CHANNEL)
+
+# IMAGE_TAG_BASE is the operator image repository. The bundle and catalog
+# images are derived from it (<base>-bundle, <base>-catalog).
+IMAGE_TAG_BASE ?= docker.io/lotest/locust-k8s-operator
+
+# BUNDLE_OPERATOR_IMG is the operator image the generated CSV deploys. It
+# defaults to the release image for VERSION. Passing IMG on the command line
+# (`make bundle IMG=quay.io/me/locust-op:dev`, to test an unreleased build
+# through OLM) uses that image instead.
+ifeq ($(origin IMG),command line)
+BUNDLE_OPERATOR_IMG ?= $(IMG)
+else
+BUNDLE_OPERATOR_IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
 endif
-
-# DEFAULT_CHANNEL defines the default channel used in the bundle.
-# Add a new line here if you would like to change its default config. (E.g DEFAULT_CHANNEL = "stable")
-# To re-generate a bundle for any other default channel without changing the default setup, you can:
-# - use the DEFAULT_CHANNEL as arg of the bundle target (e.g make bundle DEFAULT_CHANNEL=stable)
-# - use environment variables to overwrite this value (e.g export DEFAULT_CHANNEL="stable")
-ifneq ($(origin DEFAULT_CHANNEL), undefined)
-BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
-endif
-BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
-
-# IMAGE_TAG_BASE defines the docker.io namespace and part of the image name for remote images.
-# This variable is used to construct full image tags for bundle and catalog images.
-#
-# For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
-# io/locust-k8s-operator-bundle:$VERSION and io/locust-k8s-operator-catalog:$VERSION.
-IMAGE_TAG_BASE ?= io/locust-k8s-operator
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
 BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
+
+# BUNDLE_K8S_VERSION is the Kubernetes version `make bundle-validate` checks
+# the bundle against for removed APIs. It follows k8s.io/api in go.mod, the
+# same minor version envtest runs (ENVTEST_K8S_VERSION, defined below).
+BUNDLE_K8S_VERSION ?= $(ENVTEST_K8S_VERSION)
+
+# OPENSHIFT_VERSIONS is the com.redhat.openshift.versions value `make bundle`
+# adds to the bundle metadata. The OpenShift community-operators pipeline
+# rejects a bundle with a minKubeVersion and no such value. "v4.16" means 4.16
+# and later, which matches the CSV's minKubeVersion of 1.29.
+OPENSHIFT_VERSIONS ?= v4.16
 
 # BUNDLE_GEN_FLAGS are the flags passed to the operator-sdk generate bundle command
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
@@ -46,8 +56,8 @@ ifeq ($(USE_IMAGE_DIGESTS), true)
 	BUNDLE_GEN_FLAGS += --use-image-digests
 endif
 
-# Set the Operator SDK version to use. By default, what is installed on the system is used.
-# This is useful for CI or a project to utilize a specific version of the operator-sdk toolkit.
+# operator-sdk release downloaded into bin/ by `make operator-sdk`. Keep the
+# scorecard-test image tags in config/scorecard/patches/ on the same version.
 OPERATOR_SDK_VERSION ?= v1.42.3
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
@@ -319,29 +329,81 @@ mv $(1) $(1)-$(3) ;\
 ln -sf $(1)-$(3) $(1)
 endef
 
-.PHONY: operator-sdk
+# operator-sdk ships as a release binary rather than a `go install`-able
+# module, so it gets its own download helper. Same layout as go-install-tool:
+# a versioned binary plus an unversioned symlink in $(LOCALBIN). The download
+# is checked against the release's checksums.txt; update the hashes below
+# together with OPERATOR_SDK_VERSION.
+#
+# Set OPERATOR_SDK to use a binary you already have. The target then leaves it
+# alone and downloads nothing.
 OPERATOR_SDK ?= $(LOCALBIN)/operator-sdk
-operator-sdk: ## Download operator-sdk locally if necessary.
-ifeq (,$(wildcard $(OPERATOR_SDK)))
-ifeq (, $(shell which operator-sdk 2>/dev/null))
-	@{ \
+OPERATOR_SDK_SHA256_darwin_amd64 := 7cb0f24bb63b6383a117291ee4c808953c5dd789d5877da98051aa68b41f40ac
+OPERATOR_SDK_SHA256_darwin_arm64 := 098ae8b9dbe7dfd557e8e7ed0f1996736922dd4b984621df2aa033f225cae161
+OPERATOR_SDK_SHA256_linux_amd64 := 887a3bb0d63ccc4ca47a522d0c8ffac56d9d5246f6a2bd886b4ed23eb2e2672f
+OPERATOR_SDK_SHA256_linux_arm64 := 6db93cd821b429f0bb514cea4bbb5553827d273fc8aa211f13e14798599d31cd
+
+.PHONY: operator-sdk
+operator-sdk: ## Download operator-sdk into bin/ if necessary (skipped when OPERATOR_SDK is set).
+ifeq ($(OPERATOR_SDK),$(LOCALBIN)/operator-sdk)
+operator-sdk: $(LOCALBIN)
+	@[ -f "$(OPERATOR_SDK)-$(OPERATOR_SDK_VERSION)" ] || { \
 	set -e ;\
-	mkdir -p $(dir $(OPERATOR_SDK)) ;\
-	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(OPERATOR_SDK) https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk_$${OS}_$${ARCH} ;\
-	chmod +x $(OPERATOR_SDK) ;\
-	}
-else
-OPERATOR_SDK = $(shell which operator-sdk)
-endif
+	OS=$$(go env GOOS) ; ARCH=$$(go env GOARCH) ;\
+	case "$$OS-$$ARCH" in \
+		darwin-amd64) want=$(OPERATOR_SDK_SHA256_darwin_amd64) ;; \
+		darwin-arm64) want=$(OPERATOR_SDK_SHA256_darwin_arm64) ;; \
+		linux-amd64) want=$(OPERATOR_SDK_SHA256_linux_amd64) ;; \
+		linux-arm64) want=$(OPERATOR_SDK_SHA256_linux_arm64) ;; \
+		*) echo "No pinned operator-sdk checksum for $$OS/$$ARCH; set OPERATOR_SDK to your own binary." >&2 ; exit 1 ;; \
+	esac ;\
+	echo "Downloading operator-sdk $(OPERATOR_SDK_VERSION)" ;\
+	tmp="$(OPERATOR_SDK)-$(OPERATOR_SDK_VERSION).tmp" ;\
+	curl -sSfL -o "$$tmp" \
+		"https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk_$${OS}_$${ARCH}" ;\
+	got=$$( { command -v sha256sum >/dev/null && sha256sum "$$tmp" || shasum -a 256 "$$tmp" ; } | cut -d' ' -f1 ) ;\
+	if [ "$$got" != "$$want" ]; then \
+		rm -f "$$tmp" ;\
+		echo "operator-sdk checksum mismatch: got $$got, want $$want" >&2 ; exit 1 ;\
+	fi ;\
+	chmod +x "$$tmp" ;\
+	mv "$$tmp" "$(OPERATOR_SDK)-$(OPERATOR_SDK_VERSION)" ;\
+	} ;\
+	ln -sf "$(OPERATOR_SDK)-$(OPERATOR_SDK_VERSION)" "$(OPERATOR_SDK)"
 endif
 
+##@ OLM bundle
+
+# bundle/ and bundle.Dockerfile are generated output (ignored by git), so the
+# target starts from scratch: operator-sdk only ever adds files, and a resource
+# dropped from config/ would otherwise keep shipping in bundle/manifests.
+#
+# The operator image comes from BUNDLE_OPERATOR_IMG through config/olm's
+# `images:` entry, which is set for the build and restored afterwards so the
+# tracked kustomization doesn't change. config/olm resets the manager image
+# first, so whatever `make deploy IMG=...` left in config/manager can't leak
+# in, and config/manifests copies the final image into the CSV's
+# containerImage annotation.
 .PHONY: bundle
-bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
-	$(OPERATOR_SDK) generate kustomize manifests -q
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
+bundle: manifests kustomize operator-sdk ## Generate and validate the OLM bundle (bundle/, bundle.Dockerfile) for VERSION. Operator image: BUNDLE_OPERATOR_IMG, or IMG if given.
+	rm -rf bundle/manifests bundle/metadata bundle/tests bundle.Dockerfile
+	$(OPERATOR_SDK) generate kustomize manifests -q --interactive=false
+	set -e ;\
+	cp config/olm/kustomization.yaml config/olm/kustomization.yaml.orig ;\
+	trap 'mv config/olm/kustomization.yaml.orig config/olm/kustomization.yaml' EXIT ;\
+	(cd config/olm && $(KUSTOMIZE) edit set image controller=$(BUNDLE_OPERATOR_IMG)) ;\
+	manifests="$$($(KUSTOMIZE) build config/manifests)" ;\
+	printf '%s\n' "$$manifests" | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
+	grep -q '^  com.redhat.openshift.versions:' bundle/metadata/annotations.yaml || \
+		printf '\n  # OpenShift versions the bundle supports.\n  com.redhat.openshift.versions: "%s"\n' '$(OPENSHIFT_VERSIONS)' >> bundle/metadata/annotations.yaml
+	grep -q '^LABEL com.redhat.openshift.versions=' bundle.Dockerfile || \
+		printf '\n# OpenShift versions the bundle supports.\nLABEL com.redhat.openshift.versions="%s"\n' '$(OPENSHIFT_VERSIONS)' >> bundle.Dockerfile
+	$(MAKE) bundle-validate
+
+.PHONY: bundle-validate
+bundle-validate: operator-sdk ## Validate bundle/ with the checks the OperatorHub and OpenShift community pipelines run.
 	$(OPERATOR_SDK) bundle validate ./bundle
+	$(OPERATOR_SDK) bundle validate ./bundle --select-optional suite=operatorframework --optional-values=k8s-version=$(BUNDLE_K8S_VERSION)
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.

@@ -1,0 +1,23 @@
+# Minimal LocustTest. This is the example OperatorHub shows (alm-examples),
+# so it must run on any cluster: no nodeSelector, modest resources.
+# Prerequisite: a ConfigMap named locust-scripts holding locustfile.py, e.g.
+#   kubectl create configmap locust-scripts --from-file=locustfile.py
+# The system under test comes from the locustfile (the `host` attribute of its
+# User class). Add `--host <url>` to master.command to set it here instead.
+apiVersion: locust.io/v2
+kind: LocustTest
+metadata:
+  name: locusttest-sample
+spec:
+  image: locustio/locust:2.43.1
+  master:
+    command: "--locustfile /lotest/src/locustfile.py --users 10 --spawn-rate 2 --run-time 1m"
+    autostart: true
+    autoquit:
+      enabled: true
+      timeout: 60
+  worker:
+    command: "--locustfile /lotest/src/locustfile.py"
+    replicas: 2
+  testFiles:
+    configMapRef: locust-scripts

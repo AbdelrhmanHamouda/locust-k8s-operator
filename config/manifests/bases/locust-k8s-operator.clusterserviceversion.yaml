@@ -1,0 +1,250 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+    categories: Developer Tools
+    description: Run distributed Locust load tests on Kubernetes, declared as a LocustTest
+      custom resource.
+    features.operators.openshift.io/cnf: "false"
+    features.operators.openshift.io/cni: "false"
+    features.operators.openshift.io/csi: "false"
+    features.operators.openshift.io/disconnected: "false"
+    features.operators.openshift.io/fips-compliant: "false"
+    features.operators.openshift.io/proxy-aware: "false"
+    features.operators.openshift.io/tls-profiles: "false"
+    features.operators.openshift.io/token-auth-aws: "false"
+    features.operators.openshift.io/token-auth-azure: "false"
+    features.operators.openshift.io/token-auth-gcp: "false"
+    operatorframework.io/suggested-namespace: locust-system
+    repository: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
+    support: Community
+  labels:
+    operatorframework.io/arch.amd64: supported
+    operatorframework.io/arch.arm64: supported
+    operatorframework.io/os.linux: supported
+  name: locust-k8s-operator.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: LocustTest is the Schema for the locusttests API.
+      displayName: Locust Test
+      kind: LocustTest
+      name: locusttests.locust.io
+      resources:
+      - kind: Job
+        name: ""
+        version: v1
+      - kind: Pod
+        name: ""
+        version: v1
+      - kind: Service
+        name: ""
+        version: v1
+      specDescriptors:
+      - description: Env configuration for environment variable injection.
+        displayName: Environment
+        path: env
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Image is the container image for Locust pods.
+        displayName: Locust Image
+        path: image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: ImagePullPolicy for the Locust container.
+        displayName: Image Pull Policy
+        path: imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: ImagePullSecrets for pulling from private registries.
+        displayName: Image Pull Secrets
+        path: imagePullSecrets
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Master configuration for the master node.
+        displayName: Master
+        path: master
+      - description: Observability configuration for metrics and tracing.
+        displayName: Observability
+        path: observability
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Scheduling configuration for pod placement.
+        displayName: Scheduling
+        path: scheduling
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Security configuration for pod and container security contexts.
+        displayName: Security
+        path: security
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: TestFiles configuration for locustfile and library mounting.
+        displayName: Test Files
+        path: testFiles
+      - description: VolumeMounts for the locust container with target selection.
+        displayName: Volume Mounts
+        path: volumeMounts
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Volumes to add to pods.
+        displayName: Volumes
+        path: volumes
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Worker configuration for worker nodes.
+        displayName: Worker
+        path: worker
+      - description: Replicas is the number of worker pods to create.
+        displayName: Worker Replicas
+        path: worker.replicas
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+      statusDescriptors:
+      - description: CompletionTime is when the test completed.
+        displayName: Completion Time
+        path: completionTime
+        x-descriptors:
+        - urn:alm:descriptor:timestamp
+      - description: Conditions represent the latest available observations of the
+          test's state.
+        displayName: Conditions
+        path: conditions
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes.conditions
+      - description: |-
+          ConnectedWorkers is the approximate number of connected workers,
+          derived from the worker Job's Active pod count (Job.Status.Active).
+          This is an approximation as Kubernetes Job.Status.Active may lag behind
+          actual Locust worker connections.
+        displayName: Connected Workers
+        path: connectedWorkers
+        x-descriptors:
+        - urn:alm:descriptor:text
+      - description: ExpectedWorkers is the number of workers expected to connect.
+        displayName: Expected Workers
+        path: expectedWorkers
+        x-descriptors:
+        - urn:alm:descriptor:text
+      - description: Phase is the current lifecycle phase of the test.
+        displayName: Phase
+        path: phase
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes.phase
+      - description: StartTime is when the test started.
+        displayName: Start Time
+        path: startTime
+        x-descriptors:
+        - urn:alm:descriptor:timestamp
+      version: v2
+    - description: LocustTest is the Schema for the locusttests API (v1 - DEPRECATED).
+      displayName: Locust Test (v1, deprecated)
+      kind: LocustTest
+      name: locusttests.locust.io
+      resources:
+      - kind: Job
+        name: ""
+        version: v1
+      - kind: Pod
+        name: ""
+        version: v1
+      - kind: Service
+        name: ""
+        version: v1
+      version: v1
+  description: |
+    The Locust Kubernetes Operator runs distributed [Locust](https://locust.io) load tests on Kubernetes.
+    You describe a test as a `LocustTest` custom resource; the operator creates the Locust master and worker
+    pods, wires the workers to the master, reports progress in the resource's status, and cleans up when the
+    run finishes. Full documentation lives at https://abdelrhmanhamouda.github.io/locust-k8s-operator/.
+
+    ### Features
+
+    * **One resource per test.** Image, master and worker commands, worker count and resources all sit in a
+      single `LocustTest`. Tests run isolated from each other, so many can run at once.
+    * **CI friendly.** `autostart` and `autoquit` let a test start as soon as workers connect and exit when
+      it's done, and an optional Job TTL removes finished runs.
+    * **Observability.** Native OpenTelemetry export of Locust traces and metrics, or a Prometheus exporter
+      sidecar for setups that aren't on OTLP yet.
+    * **Placement control.** Node affinity, tolerations, node selectors and `runtimeClassName` for sandboxed
+      runtimes, with separate resource specs for master and workers.
+    * **Runtime inputs.** Inject Secrets and ConfigMaps as environment variables or file mounts, mount any
+      volume type on the master, the workers or both, and pull from private registries.
+    * **OpenShift friendly.** Neither the operator nor the pods it creates pin a UID, so the SCC can assign
+      one, and the `security` field sets pod and container security contexts to match your SCC.
+    * **API migration.** The deprecated `locust.io/v1` API keeps working through a conversion webhook while
+      you move to `locust.io/v2`.
+
+    ### Usage
+
+    1. Put your locustfile in a ConfigMap in the namespace where the test will run. The example in this
+       listing takes the URL to test from the locustfile (`host` on its User class):
+
+       ```
+       kubectl create configmap locust-scripts --from-file=locustfile.py
+       ```
+
+    2. Create a `LocustTest` that points at it (the example in this listing does exactly that), then follow
+       it with `kubectl get locusttest -w`.
+
+    See the [getting started guide](https://abdelrhmanhamouda.github.io/locust-k8s-operator/getting_started/)
+    and the [API reference](https://abdelrhmanhamouda.github.io/locust-k8s-operator/api_reference/) for every field.
+
+    ### Prerequisites
+
+    * Kubernetes 1.29 or newer (OpenShift 4.16 or newer). The metrics exporter runs as a native sidecar.
+    * The operator runs on linux/amd64 and linux/arm64. The default Prometheus exporter sidecar image
+      (`containersol/locust_exporter`) is amd64 only, so on arm64 nodes use the OpenTelemetry mode
+      (`spec.observability.openTelemetry`), which doesn't start the sidecar, or point
+      `METRICS_EXPORTER_IMAGE` at an arm64 build.
+    * The operator watches every namespace, so it installs in AllNamespaces mode only. OLM issues and rotates
+      the webhook certificates; cert-manager isn't needed.
+    * The operator settings from the Helm chart's `locustPods` section are environment variables on the
+      operator Deployment. Override them through the Subscription's `spec.config.env`, for example
+      `POD_CPU_LIMIT` or `JOB_TTL_SECONDS_AFTER_FINISHED`.
+  displayName: Locust Kubernetes Operator
+  icon:
+  - base64data: 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
+    mediatype: image/png
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - locust
+  - load testing
+  - performance testing
+  - stress testing
+  - distributed testing
+  - opentelemetry
+  links:
+  - name: Documentation
+    url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/
+  - name: Source Code
+    url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
+  - name: Helm Chart
+    url: https://artifacthub.io/packages/helm/locust-k8s-operator/locust-k8s-operator
+  - name: Locust
+    url: https://locust.io
+  maintainers:
+  - email: abdelrhman.ahmed@outlook.com
+    name: Abdelrhman Hamouda
+  maturity: stable
+  minKubeVersion: 1.29.0
+  provider:
+    name: Abdelrhman Hamouda
+    url: https://github.com/AbdelrhmanHamouda
+  version: 0.0.0

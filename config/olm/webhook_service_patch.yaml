@@ -1,0 +1,10 @@
+# OLM installs into a namespace shared with other operators (e.g. operators),
+# where control-plane: controller-manager alone also matches their pods.
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhook-service
+spec:
+  selector:
+    control-plane: controller-manager
+    app.kubernetes.io/name: locust-k8s-operator

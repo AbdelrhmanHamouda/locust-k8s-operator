@@ -1,0 +1,106 @@
+name: 📦 OLM Bundle
+
+# Generates the OLM bundle and runs the `operator-sdk bundle validate` suites
+# the OperatorHub.io and OpenShift community pipelines run. The bundle itself
+# isn't committed: the release workflow builds it from the release tag and
+# attaches it to the GitHub release. This job makes sure that build keeps
+# working and that the bundle stays valid.
+#
+# The path filter lists every input of `make bundle`: the Go sources (API
+# types, kubebuilder markers in internal/ and cmd/, the k8s.io/api version in
+# go.mod that shapes the CRD schema), config/, the Makefile, and the Helm
+# chart for the env check below. This is not a required status check, so a
+# pull request that doesn't touch these paths simply doesn't get it (unlike
+# the E2E job, see go-test-e2e.yml). If it is ever made required, drop the
+# filter for the same reason.
+on:
+  pull_request:
+    paths:
+      - 'api/**'
+      - 'cmd/**'
+      - 'internal/**'
+      - 'config/**'
+      - 'charts/locust-k8s-operator/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'PROJECT'
+      - 'Makefile'
+      - '.github/workflows/olm-bundle.yaml'
+  push:
+    branches:
+      - master
+    paths:
+      - 'api/**'
+      - 'cmd/**'
+      - 'internal/**'
+      - 'config/**'
+      - 'charts/locust-k8s-operator/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'PROJECT'
+      - 'Makefile'
+      - '.github/workflows/olm-bundle.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    name: 📦 Bundle builds and validates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: 📂 Checkout repo
+        uses: actions/checkout@v7
+
+      - name: 🔧 Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      # bin/ holds controller-gen, kustomize and operator-sdk. The key changes
+      # whenever one of their pinned versions in the Makefile does.
+      - name: 🔑 Tool cache key
+        id: tools
+        run: |
+          key="$(grep -E '^(KUSTOMIZE_VERSION|CONTROLLER_TOOLS_VERSION|OPERATOR_SDK_VERSION) \?=' Makefile | sha256sum | cut -c1-16)"
+          echo "key=olm-tools-${{ runner.os }}-${key}" >> "$GITHUB_OUTPUT"
+
+      - name: 💾 Cache tool binaries
+        uses: actions/cache@v6
+        with:
+          path: bin
+          key: ${{ steps.tools.outputs.key }}
+
+      # Also runs controller-gen (make manifests) and the bundle validate
+      # passes (make bundle-validate). The checkout has no tags, so the
+      # bundle is built for VERSION 0.0.1 (operator-sdk rejects 0.0.0 as unset);
+      # the version doesn't affect validation otherwise.
+      - name: 🛠️ Generate and validate bundle
+        run: make bundle
+
+      - name: 🌊 Install Helm
+        uses: azure/setup-helm@v5
+        with:
+          version: v3.22.0
+
+      # The OLM Deployment carries a copy of the env the chart renders by
+      # default. Image values are compared without a docker.io/ prefix,
+      # which the bundle spells out for registries that don't default to it.
+      - name: 🔍 OLM manager env matches the Helm chart defaults
+        run: |
+          to_lines='.env[] | .name + "=" + (.value | sub("^docker\.io/"; ""))'
+          helm template locust-k8s-operator charts/locust-k8s-operator \
+            | yq "select(.kind == \"Deployment\") | .spec.template.spec.containers[0] | ${to_lines}" \
+            | sort > "$RUNNER_TEMP/helm-env.txt"
+          yq ".spec.install.spec.deployments[].spec.template.spec.containers[] | select(.name == \"manager\") | ${to_lines}" \
+            bundle/manifests/locust-k8s-operator.clusterserviceversion.yaml \
+            | sort > "$RUNNER_TEMP/olm-env.txt"
+          if [ ! -s "$RUNNER_TEMP/helm-env.txt" ]; then
+            echo "::error::Couldn't read the operator env from the rendered Helm chart."
+            exit 1
+          fi
+          diff -u "$RUNNER_TEMP/helm-env.txt" "$RUNNER_TEMP/olm-env.txt" || {
+            echo "::error::The env in config/olm/manager_olm_patch.yaml differs from the Helm chart's defaults (- chart, + bundle). Update one to match the other."
+            exit 1
+          }

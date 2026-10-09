@@ -1,4 +1,7 @@
-## Append samples of your project ##
+## Samples bundled into the OLM CSV's alm-examples (see config/manifests).
+## The first one is what OperatorHub pre-fills in its "Create LocustTest" form,
+## so keep it small and runnable without cluster-specific settings. The other
+## samples in this directory are reference material for the docs.
 resources:
-- locust_v2_locusttest.yaml
+- locust_v2_locusttest_quickstart.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples

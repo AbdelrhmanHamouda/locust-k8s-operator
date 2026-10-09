@@ -1,4 +1,4 @@
-# This workflow publishes the Docker image and Helm chart when a new tag is pushed.
+# This workflow publishes the Docker image, the Helm chart and the OLM bundle when a new tag is pushed.
 name: 🚀 Publish image & helm
 
 # Triggered on a push event for any tag.
@@ -127,6 +127,46 @@ jobs:
             sbom-spdx.json
             sbom-cyclonedx.json
           fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================
+  # OLM bundle
+  # ============================================
+  # Generated from the release tag, so its CRD, RBAC and manager args match
+  # the image published above. Attached to the chart release as a tarball
+  # (bundle/ + bundle.Dockerfile) for OperatorHub submissions.
+  olm-bundle:
+    name: 📦 Attach OLM bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # The image must exist, and chart-releaser creates the GitHub release.
+    needs: [publish-image, helm-chart-release]
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ github.ref_name }}
+    steps:
+      - name: 📂 Checkout tag
+        uses: actions/checkout@v7
+
+      - name: 🔧 Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: 🛠️ Generate and validate bundle
+        run: make bundle VERSION="$VERSION"
+
+      - name: 📦 Package bundle
+        run: tar -czf "locust-k8s-operator-olm-bundle-${VERSION}.tar.gz" bundle bundle.Dockerfile
+
+      - name: 📤 Attach bundle to chart release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: locust-k8s-operator-${{ github.ref_name }}
+          files: locust-k8s-operator-olm-bundle-${{ github.ref_name }}.tar.gz
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

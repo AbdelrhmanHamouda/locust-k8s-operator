@@ -1,0 +1,76 @@
+# Manager settings for OLM installs, merged into config/manager/manager.yaml.
+# The extra args are in manager_args_patch.yaml. OLM adds the webhook cert
+# volume and mount itself.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: system
+spec:
+  # Two replicas behind leader election (--leader-elect is a base arg), so
+  # the webhooks keep serving while one pod is drained or restarting.
+  replicas: 2
+  template:
+    spec:
+      containers:
+      - name: manager
+        # Back to the placeholder that `images:` in kustomization.yaml rewrites.
+        # Without this, an image set in config/manager (make deploy IMG=...,
+        # make test-e2e) would end up in the bundle.
+        image: controller
+        # Read-only root filesystem, as in the Helm chart. /tmp stays writable
+        # for the webhook server; OLM mounts the serving cert below it.
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        ports:
+        - containerPort: 8443
+          name: metrics
+          protocol: TCP
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        # The env the Helm chart sets with its default values (see the
+        # locust-k8s-operator.envVars helper in charts/.../_helpers.tpl). CI
+        # checks the two stay the same. Users can override any of these
+        # through the Subscription's spec.config.env.
+        env:
+        - name: POD_CPU_REQUEST
+          value: 250m
+        - name: POD_MEM_REQUEST
+          value: 128Mi
+        - name: POD_EPHEMERAL_REQUEST
+          value: 30M
+        - name: POD_CPU_LIMIT
+          value: 1000m
+        - name: POD_MEM_LIMIT
+          value: 1024Mi
+        - name: POD_EPHEMERAL_LIMIT
+          value: 50M
+        - name: ENABLE_AFFINITY_CR_INJECTION
+          value: "true"
+        - name: ENABLE_TAINT_TOLERATIONS_CR_INJECTION
+          value: "true"
+        - name: METRICS_EXPORTER_IMAGE
+          value: docker.io/containersol/locust_exporter:v0.5.2
+        - name: METRICS_EXPORTER_PORT
+          value: "9646"
+        - name: METRICS_EXPORTER_IMAGE_PULL_POLICY
+          value: IfNotPresent
+        - name: METRICS_EXPORTER_CPU_REQUEST
+          value: 100m
+        - name: METRICS_EXPORTER_MEM_REQUEST
+          value: 64Mi
+        - name: METRICS_EXPORTER_EPHEMERAL_REQUEST
+          value: 30M
+        - name: METRICS_EXPORTER_CPU_LIMIT
+          value: 250m
+        - name: METRICS_EXPORTER_MEM_LIMIT
+          value: 128Mi
+        - name: METRICS_EXPORTER_EPHEMERAL_LIMIT
+          value: 50M
+      volumes:
+      - name: tmp
+        emptyDir: {}

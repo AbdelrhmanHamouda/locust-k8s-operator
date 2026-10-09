@@ -1,0 +1,12 @@
+# Manager flags for OLM installs, appended to the base args in
+# config/manager/manager.yaml so a flag added there carries over to the bundle.
+# OLM mounts the webhook serving cert at the path given here.
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: --metrics-bind-address=:8443
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: --enable-webhooks=true
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: --webhook-cert-path=/tmp/k8s-webhook-server/serving-certs
