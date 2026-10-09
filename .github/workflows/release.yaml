@@ -133,6 +133,17 @@ jobs:
   # ============================================
   # OLM bundle
   # ============================================
+  # Installs the bundle for this tag through OLM on kind, with the image
+  # published above, before it gets attached to the release.
+  olm-e2e:
+    name: 🧩 OLM install test
+    needs: [publish-image]
+    permissions:
+      contents: read
+    uses: ./.github/workflows/olm-e2e.yaml
+    with:
+      version: ${{ github.ref_name }}
+
   # Generated from the release tag, so its CRD, RBAC and manager args match
   # the image published above. Attached to the chart release as a tarball
   # (bundle/ + bundle.Dockerfile) for OperatorHub submissions.
@@ -140,8 +151,9 @@ jobs:
     name: 📦 Attach OLM bundle
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # The image must exist, and chart-releaser creates the GitHub release.
-    needs: [publish-image, helm-chart-release]
+    # The image must exist, chart-releaser creates the GitHub release, and
+    # a bundle that doesn't install through OLM isn't attached.
+    needs: [publish-image, helm-chart-release, olm-e2e]
     permissions:
       contents: write
     env:
