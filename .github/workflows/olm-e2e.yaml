@@ -1,0 +1,369 @@
+name: 🧩 OLM install test
+
+# Installs the operator through OLM on kind, the way an OperatorHub.io user
+# gets it (a Subscription in the operators namespace, AllNamespaces), and
+# checks that the install works: the CSV succeeds, the webhooks are served
+# with the certs OLM issues, and a LocustTest runs to completion.
+#
+# On pull requests and manual runs the operator image is built from the
+# checkout. When release.yaml calls this workflow with a release tag, it
+# installs the image that was just published for that tag instead, so a
+# bundle that fails here never gets attached to the release.
+#
+# The path filter lists the inputs of the bundle and of the install: the API
+# types, config/ (CRD, RBAC, webhooks, manager args, the OLM overlay, the
+# samples and the scorecard config), the Makefile and this file. This is not
+# a required status check, so a pull request that doesn't touch these paths
+# simply doesn't get it (unlike the E2E job, see go-test-e2e.yml). If it is
+# ever made required, drop the filter for the same reason.
+on:
+  pull_request:
+    paths:
+      - 'api/**'
+      - 'config/crd/**'
+      - 'config/manager/**'
+      - 'config/manifests/**'
+      - 'config/olm/**'
+      - 'config/rbac/**'
+      - 'config/samples/**'
+      - 'config/scorecard/**'
+      - 'config/webhook/**'
+      - 'Makefile'
+      - '.github/workflows/olm-e2e.yaml'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Bundle version (the operator image is still built from the checkout)
+        required: false
+        default: 0.0.1
+  workflow_call:
+    inputs:
+      version:
+        description: Release tag. The published lotest/locust-k8s-operator image with this tag is installed.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  olm-e2e:
+    name: 🧩 Install through OLM
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Only set when release.yaml calls this workflow (github.event_name is
+      # then the caller's push event, and inputs.version the release tag).
+      RELEASE_VERSION: ${{ github.event_name != 'workflow_dispatch' && inputs.version || '' }}
+      VERSION: ${{ inputs.version || '0.0.1' }}
+      # operator-sdk olm install fetches this OLM release from GitHub.
+      OLM_VERSION: v0.46.0
+      # Where OperatorHub.io's install manifest puts the Subscription. It
+      # already has an AllNamespaces OperatorGroup (global-operators) and is
+      # shared with other operators.
+      OPERATOR_NAMESPACE: operators
+      TEST_NAMESPACE: locust-olm-e2e
+      DEPLOYMENT: locust-k8s-operator-controller-manager
+      # kind-action's registry runs on localhost:5000 on the runner and is
+      # reachable as kind-registry:5000 from the runner (/etc/hosts) and from
+      # the cluster nodes (containerd hosts.toml, plain HTTP). Images are
+      # pushed through localhost and referenced as kind-registry everywhere
+      # else, so the same name works for operator-sdk on the runner and for
+      # the kubelet.
+      REGISTRY: kind-registry:5000
+    steps:
+      - name: 📂 Checkout repo
+        uses: actions/checkout@v7
+
+      - name: 🔧 Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      # bin/ holds controller-gen, kustomize and operator-sdk. The key changes
+      # whenever one of their pinned versions in the Makefile does.
+      - name: 🔑 Tool cache key
+        id: tools
+        run: |
+          key="$(grep -E '^(KUSTOMIZE_VERSION|CONTROLLER_TOOLS_VERSION|OPERATOR_SDK_VERSION) \?=' Makefile | sha256sum | cut -c1-16)"
+          echo "key=olm-tools-${{ runner.os }}-${key}" >> "$GITHUB_OUTPUT"
+
+      - name: 💾 Cache tool binaries
+        uses: actions/cache@v6
+        with:
+          path: bin
+          key: ${{ steps.tools.outputs.key }}
+
+      # Same pinned node image as the E2E job. kind-action only wires up its
+      # registry when it writes the kind config itself, so the image is
+      # passed on its own instead of through .github/kind-config.yaml.
+      - name: 🔎 Read kind node image
+        id: kind
+        run: echo "image=$(yq '.nodes[0].image' .github/kind-config.yaml)" >> "$GITHUB_OUTPUT"
+
+      # The registry image comes from Google's Docker Hub mirror: an
+      # unauthenticated pull from Docker Hub can hit its rate limit.
+      - name: ☸️ Create Kind cluster with a local registry
+        uses: helm/kind-action@v1.15.1
+        with:
+          cluster_name: locust-olm-e2e
+          node_image: ${{ steps.kind.outputs.image }}
+          registry: true
+          registry_image: mirror.gcr.io/library/registry:2
+          wait: 120s
+
+      # Same rate limit for the images the cluster pulls (Locust, and the
+      # released operator image on release runs): containerd tries the
+      # mirror first and falls back to Docker Hub for images it doesn't have.
+      - name: 🪞 Pull Docker Hub images through mirror.gcr.io
+        run: |
+          for node in $(kind get nodes --name locust-olm-e2e); do
+            docker exec "$node" mkdir -p /etc/containerd/certs.d/docker.io
+            docker exec -i "$node" cp /dev/stdin /etc/containerd/certs.d/docker.io/hosts.toml <<'EOF'
+          server = "https://registry-1.docker.io"
+
+          [host."https://mirror.gcr.io"]
+            capabilities = ["pull", "resolve"]
+          EOF
+          done
+
+      - name: 🛠️ Install operator-sdk
+        run: make operator-sdk
+
+      - name: 📦 Install OLM ${{ env.OLM_VERSION }}
+        run: bin/operator-sdk olm install --version "$OLM_VERSION" --timeout 5m
+
+      - name: 🔧 Setup ko
+        if: env.RELEASE_VERSION == ''
+        uses: ko-build/setup-ko@v0.10
+
+      - name: 🐳 Build operator image
+        if: env.RELEASE_VERSION == ''
+        env:
+          KO_DOCKER_REPO: localhost:5000/locust-k8s-operator
+        run: |
+          ko build ./cmd --platform=linux/amd64 --bare --tags=e2e
+          echo "OPERATOR_IMG=${REGISTRY}/locust-k8s-operator:e2e" >> "$GITHUB_ENV"
+
+      - name: 🛠️ Generate bundle
+        run: |
+          if [ -n "$RELEASE_VERSION" ]; then
+            make bundle VERSION="$VERSION"
+          else
+            make bundle VERSION="$VERSION" IMG="$OPERATOR_IMG"
+          fi
+          echo "CSV operator image:"
+          yq '.metadata.annotations.containerImage' bundle/manifests/locust-k8s-operator.clusterserviceversion.yaml
+
+      - name: 📤 Build and push bundle image
+        run: |
+          make bundle-build bundle-push BUNDLE_IMG="localhost:5000/locust-k8s-operator-bundle:v${VERSION}"
+          echo "BUNDLE_IMG=${REGISTRY}/locust-k8s-operator-bundle:v${VERSION}" >> "$GITHUB_ENV"
+
+      # run bundle wraps the bundle in a one-off catalog, then creates the
+      # Subscription and waits for the CSV. The default index image is kept:
+      # run bundle only treats it as a file-based catalog when it's exactly
+      # quay.io/operator-framework/opm:latest. --use-http is for reading the
+      # bundle from the local registry on the runner; OLM's unpack job pulls
+      # it through containerd, which already uses HTTP for kind-registry.
+      - name: 🚀 Install the bundle with OLM
+        run: |
+          bin/operator-sdk run bundle "$BUNDLE_IMG" \
+            --namespace "$OPERATOR_NAMESPACE" \
+            --install-mode AllNamespaces \
+            --use-http \
+            --timeout 5m
+
+      - name: ✅ CSV reaches Succeeded
+        run: |
+          csv="locust-k8s-operator.v${VERSION}"
+          kubectl wait csv "$csv" -n "$OPERATOR_NAMESPACE" \
+            --for=jsonpath='{.status.phase}'=Succeeded --timeout=3m
+          kubectl get csv "$csv" -n "$OPERATOR_NAMESPACE"
+
+      - name: ✅ Manager runs 2/2 replicas behind a PDB
+        run: |
+          kubectl rollout status deployment "$DEPLOYMENT" -n "$OPERATOR_NAMESPACE" --timeout=3m
+          ready="$(kubectl get deployment "$DEPLOYMENT" -n "$OPERATOR_NAMESPACE" -o jsonpath='{.status.readyReplicas}')"
+          if [ "$ready" != "2" ]; then
+            echo "::error::Expected 2 ready manager replicas, got '${ready}'."
+            exit 1
+          fi
+          kubectl get pdb "$DEPLOYMENT" -n "$OPERATOR_NAMESPACE"
+
+      - name: ✅ Leader election holds a Lease
+        run: |
+          lease=locust-k8s-operator.locust.io
+          pods="$(kubectl get pods -n "$OPERATOR_NAMESPACE" -l app.kubernetes.io/name=locust-k8s-operator -o name | sed 's|^pod/||')"
+          for _ in $(seq 1 30); do
+            holder="$(kubectl get lease "$lease" -n "$OPERATOR_NAMESPACE" -o jsonpath='{.spec.holderIdentity}' 2>/dev/null || true)"
+            for pod in $pods; do
+              if [[ "$holder" == "${pod}_"* ]]; then
+                echo "Lease ${lease} is held by ${holder}"
+                exit 0
+              fi
+            done
+            sleep 2
+          done
+          echo "::error::Lease ${lease} has no holder among the manager pods (holder: '${holder}', pods: ${pods//$'\n'/ })."
+          exit 1
+
+      - name: 🧪 Create test namespace
+        run: kubectl create namespace "$TEST_NAMESPACE"
+
+      # The secret mount below passes the CRD schema and is only rejected by
+      # the operator's validating webhook, so the request has to reach the
+      # manager over TLS with the cert OLM issued. It's a server-side dry run
+      # (the webhook still sees it), so nothing is stored if it gets through.
+      # An accepted request is retried for a short while, in case the API
+      # server hasn't picked up the new webhook configuration yet.
+      - name: ✅ Validating webhook rejects an invalid LocustTest
+        run: |
+          cat > "$RUNNER_TEMP/invalid.yaml" <<'EOF'
+          apiVersion: locust.io/v2
+          kind: LocustTest
+          metadata:
+            name: webhook-reject
+          spec:
+            image: locustio/locust:2.43.1
+            master:
+              command: "--locustfile /lotest/src/locustfile.py"
+            worker:
+              command: "--locustfile /lotest/src/locustfile.py"
+              replicas: 1
+            testFiles:
+              configMapRef: locust-scripts
+            env:
+              secretMounts:
+              - name: some-secret
+                mountPath: /lotest/src
+          EOF
+          for attempt in $(seq 1 6); do
+            if ! out="$(kubectl create --dry-run=server -n "$TEST_NAMESPACE" -f "$RUNNER_TEMP/invalid.yaml" 2>&1)"; then
+              break
+            fi
+            echo "Attempt ${attempt}: the invalid LocustTest was accepted, retrying."
+            out=
+            sleep 5
+          done
+          if [ -z "$out" ]; then
+            echo "::error::The invalid LocustTest was accepted."
+            exit 1
+          fi
+          echo "$out"
+          if ! grep -q 'admission webhook "vlocusttest-v2.kb.io" denied the request' <<<"$out" \
+             || ! grep -q 'conflicts with reserved path' <<<"$out"; then
+            echo "::error::The LocustTest was rejected, but not by the validating webhook."
+            exit 1
+          fi
+
+      # v2 is the storage version, so creating a v1 object and reading it
+      # back in both versions goes through the conversion webhook each way.
+      - name: ✅ Conversion webhook converts v1 to v2
+        run: |
+          kubectl apply -n "$TEST_NAMESPACE" -f - <<'EOF'
+          apiVersion: locust.io/v1
+          kind: LocustTest
+          metadata:
+            name: conversion-v1
+          spec:
+            image: locustio/locust:2.43.1
+            masterCommandSeed: "--locustfile /lotest/src/locustfile.py"
+            workerCommandSeed: "--locustfile /lotest/src/locustfile.py"
+            workerReplicas: 3
+            configMap: conversion-scripts
+          EOF
+          replicas="$(kubectl get locusttests.v2.locust.io conversion-v1 -n "$TEST_NAMESPACE" -o jsonpath='{.spec.worker.replicas}')"
+          command="$(kubectl get locusttests.v2.locust.io conversion-v1 -n "$TEST_NAMESPACE" -o jsonpath='{.spec.master.command}')"
+          configmap="$(kubectl get locusttests.v2.locust.io conversion-v1 -n "$TEST_NAMESPACE" -o jsonpath='{.spec.testFiles.configMapRef}')"
+          v1replicas="$(kubectl get locusttests.v1.locust.io conversion-v1 -n "$TEST_NAMESPACE" -o jsonpath='{.spec.workerReplicas}')"
+          echo "v2: worker.replicas=${replicas} master.command='${command}' testFiles.configMapRef=${configmap}"
+          echo "v1: workerReplicas=${v1replicas}"
+          kubectl delete locusttests.v2.locust.io conversion-v1 -n "$TEST_NAMESPACE" --wait=false
+          if [ "$replicas" != "3" ] || [ "$command" != "--locustfile /lotest/src/locustfile.py" ] \
+             || [ "$configmap" != "conversion-scripts" ] || [ "$v1replicas" != "3" ]; then
+            echo "::error::The v1 LocustTest didn't convert as expected."
+            exit 1
+          fi
+
+      # The locustfile targets the API server's /readyz, which answers
+      # anonymous requests, so the run needs nothing but the cluster itself.
+      # The quickstart sample runs for 1m and waits 60s before quitting;
+      # both are shortened here.
+      - name: ✅ Quickstart sample runs to completion
+        run: |
+          cat > "$RUNNER_TEMP/locustfile.py" <<'EOF'
+          import urllib3
+          from locust import HttpUser, constant, task
+
+          urllib3.disable_warnings()
+
+
+          class ApiServerUser(HttpUser):
+              host = "https://kubernetes.default.svc"
+              wait_time = constant(1)
+
+              def on_start(self):
+                  self.client.verify = False
+
+              @task
+              def readyz(self):
+                  self.client.get("/readyz")
+          EOF
+          kubectl create configmap locust-scripts -n "$TEST_NAMESPACE" --from-file="$RUNNER_TEMP/locustfile.py"
+          yq '.spec.master.command |= sub("--run-time [^ ]+"; "--run-time 20s") | .spec.master.autoquit.timeout = 5' \
+            config/samples/locust_v2_locusttest_quickstart.yaml | tee "$RUNNER_TEMP/quickstart.yaml"
+          kubectl apply -n "$TEST_NAMESPACE" -f "$RUNNER_TEMP/quickstart.yaml"
+
+          name=locusttest-sample
+          phase=
+          for _ in $(seq 1 120); do
+            phase="$(kubectl get locusttest "$name" -n "$TEST_NAMESPACE" -o jsonpath='{.status.phase}')"
+            case "$phase" in
+              Succeeded) break ;;
+              Failed)
+                echo "::error::LocustTest ${name} reached phase Failed."
+                kubectl logs -n "$TEST_NAMESPACE" "job/${name}-master" --all-containers --tail=100 || true
+                exit 1 ;;
+            esac
+            sleep 5
+          done
+          kubectl get locusttest "$name" -n "$TEST_NAMESPACE"
+          if [ "$phase" != "Succeeded" ]; then
+            echo "::error::LocustTest ${name} didn't succeed within 10 minutes (phase: '${phase}')."
+            exit 1
+          fi
+          kubectl get job "${name}-master" "${name}-worker" -n "$TEST_NAMESPACE"
+          kubectl logs -n "$TEST_NAMESPACE" "job/${name}-master" --all-containers --tail=30 || true
+
+      - name: ✅ Scorecard
+        run: |
+          kubectl create namespace locust-scorecard
+          bin/operator-sdk scorecard ./bundle --namespace locust-scorecard --wait-time 5m --output text
+
+      - name: 🩺 Dump cluster state
+        if: failure()
+        run: |
+          section() { echo "::group::$1"; shift; "$@" 2>&1 || true; echo "::endgroup::"; }
+          ns="$OPERATOR_NAMESPACE"
+          section "OLM resources" kubectl get catalogsource,subscription,installplan,operatorgroup,csv -n "$ns" -o wide
+          section "ClusterServiceVersion" kubectl get csv -n "$ns" -o yaml
+          section "Subscription" kubectl get subscription -n "$ns" -o yaml
+          section "InstallPlan" kubectl get installplan -n "$ns" -o yaml
+          section "Pods" kubectl get pods -A -o wide
+          section "Manager deployment" kubectl describe deployment "$DEPLOYMENT" -n "$ns"
+          for pod in $(kubectl get pods -n "$ns" -l app.kubernetes.io/name=locust-k8s-operator -o name 2>/dev/null); do
+            section "Logs ${pod}" kubectl logs -n "$ns" "$pod" --all-containers --tail=300
+            section "Previous logs ${pod}" kubectl logs -n "$ns" "$pod" --all-containers --previous --tail=100
+          done
+          section "OLM operator logs" kubectl logs -n olm deployment/olm-operator --tail=200
+          section "Catalog operator logs" kubectl logs -n olm deployment/catalog-operator --tail=200
+          section "LocustTests" kubectl get locusttests -n "$TEST_NAMESPACE" -o yaml
+          section "Jobs in ${TEST_NAMESPACE}" kubectl get jobs -n "$TEST_NAMESPACE" -o wide
+          section "Events in ${ns}" kubectl get events -n "$ns" --sort-by=.lastTimestamp
+          section "Events in ${TEST_NAMESPACE}" kubectl get events -n "$TEST_NAMESPACE" --sort-by=.lastTimestamp
+          section "Events in olm" kubectl get events -n olm --sort-by=.lastTimestamp
