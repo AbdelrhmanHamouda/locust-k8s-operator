@@ -77,6 +77,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [publish-image]
+    # The signing secrets are scoped to the `release` environment, restricted to
+    # tags, so jobs on branches can't read them. See docs/helm-chart-signing.md.
+    environment: release
     permissions:
       contents: write
     steps:
@@ -95,10 +98,10 @@ jobs:
         with:
           version: v3.22.0
 
-      # Signs the chart (writes <chart>.tgz.prov next to the .tgz) when the
-      # HELM_SIGNING_KEY secret is set; chart-releaser uploads the .prov to the
-      # GitHub release. Without the secret it logs a warning and packages unsigned.
-      # See docs/helm-chart-signing.md.
+      # Signs the chart (writes <chart>.tgz.prov next to the .tgz) and verifies
+      # it against the published key; chart-releaser uploads the .prov to the
+      # GitHub release. Without the secret it packages unsigned only until
+      # signing is set up, then fails. See docs/helm-chart-signing.md.
       - name: 📦 Package and sign chart
         env:
           VERSION: ${{ github.ref_name }}
