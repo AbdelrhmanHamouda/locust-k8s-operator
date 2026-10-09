@@ -37,6 +37,16 @@ helm install my-locust-operator locust-k8s-operator/locust-k8s-operator \
   --set otelCollector.enabled=true
 ```
 
+### Verifying the Chart
+
+Signed releases ship a `.prov` provenance file. To verify one:
+
+```bash
+curl -fsSL https://abdelrhmanhamouda.github.io/locust-k8s-operator/helm-signing-key.asc \
+  | gpg --dearmor > locust-k8s-operator.gpg
+helm pull locust-k8s-operator/locust-k8s-operator --verify --keyring locust-k8s-operator.gpg
+```
+
 ## ⚙️ Configuration
 
 ### Key Values

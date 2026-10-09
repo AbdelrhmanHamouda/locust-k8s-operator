@@ -77,6 +77,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [publish-image]
+    # The signing secrets are scoped to the `release` environment, restricted to
+    # tags, so jobs on branches can't read them. See docs/helm-chart-signing.md.
+    environment: release
     permissions:
       contents: write
     steps:
@@ -95,12 +98,16 @@ jobs:
         with:
           version: v3.22.0
 
-      - name: 📦 Custom packaging
-        run: |
-          VERSION=${{github.ref_name}}
-          rm -rf .cr-release-packages
-          mkdir -p .cr-release-packages
-          helm package charts/locust-k8s-operator --app-version=${VERSION} --version=${VERSION} --destination=.cr-release-packages
+      # Signs the chart (writes <chart>.tgz.prov next to the .tgz) and verifies
+      # it against the published key; chart-releaser uploads the .prov to the
+      # GitHub release. Without the secret it packages unsigned only until
+      # signing is set up, then fails. See docs/helm-chart-signing.md.
+      - name: 📦 Package and sign chart
+        env:
+          VERSION: ${{ github.ref_name }}
+          HELM_SIGNING_KEY: ${{ secrets.HELM_SIGNING_KEY }}
+          HELM_SIGNING_KEY_PASSPHRASE: ${{ secrets.HELM_SIGNING_KEY_PASSPHRASE }}
+        run: hack/package-helm-chart.sh
 
       # Pin to v1.5.0 - last stable version with skip_packaging before v1.6.0 bug
       # v1.6.0+ introduced latest_tag unbound-variable regression (cr.sh:111) that

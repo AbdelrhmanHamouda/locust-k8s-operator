@@ -100,6 +100,19 @@ helm install locust-operator locust-k8s-operator/locust-k8s-operator \
   -f my-values.yaml
 ```
 
+### :material-shield-check-outline: Optional: Verify the Chart Signature
+
+Chart releases are signed with the project's GPG key, and each signed release ships a provenance (`.prov`) file next to the chart archive. Releases published before signing was enabled don't have one. To check a chart before installing it, import the public key into a keyring file and pass `--verify`:
+
+```bash
+curl -fsSL https://abdelrhmanhamouda.github.io/locust-k8s-operator/helm-signing-key.asc \
+  | gpg --dearmor > locust-k8s-operator.gpg
+
+helm pull locust-k8s-operator/locust-k8s-operator --verify --keyring locust-k8s-operator.gpg
+```
+
+`helm install --verify --keyring locust-k8s-operator.gpg ...` does the same check as part of the install. The key's fingerprint is listed under `artifacthub.io/signKey` in the chart's `Chart.yaml` and on the chart's Artifact Hub page.
+
 ## :material-check-decagram-outline: Verifying the Installation
 
 After installation, you can verify that the operator is running correctly by checking the pods in the target namespace:

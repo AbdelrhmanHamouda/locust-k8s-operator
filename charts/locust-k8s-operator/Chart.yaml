@@ -27,7 +27,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 2.4.5
+version: 2.4.6
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
@@ -62,6 +62,8 @@ annotations:
     - name: GitHub Issues
       url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues
   artifacthub.io/changes: |
+    - kind: added
+      description: Released charts are signed with GPG (provenance files) once a signing key is configured; see the Helm chart signing docs
     - kind: security
       description: Operator image picks up google.golang.org/grpc 1.84.0 (CVE-2026-84304, CVE-2026-84445, CVE-2026-84303) and OpenTelemetry-Go 1.47.0 (CVE-2026-81870)
     - kind: security
