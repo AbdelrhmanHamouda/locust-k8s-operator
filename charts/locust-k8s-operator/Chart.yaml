@@ -27,7 +27,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 2.4.5
+version: 2.4.6
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
@@ -63,9 +63,9 @@ annotations:
       url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues
   artifacthub.io/changes: |
     - kind: security
-      description: Operator image picks up google.golang.org/grpc 1.84.0 (CVE-2026-84304, CVE-2026-84445, CVE-2026-84303) and OpenTelemetry-Go 1.47.0 (CVE-2026-81870)
+      description: Operator image picks up google.golang.org/grpc 1.84.0 (CVE-2026-84304, CVE-2026-84445, CVE-2026-84303), OpenTelemetry-Go 1.47.0 (CVE-2026-81870), and golang.org/x/net 0.60.0 (CVE-2026-78669)
     - kind: security
-      description: Operator image now builds on Go 1.26.8, picking up the Go 1.26.7 crypto/tls, net/http, html/template, encoding/asn1, and net/url standard library fixes
+      description: Operator image now builds on Go 1.26.9, resolving Go standard library vulnerabilities CVE-2026-78667 and CVE-2026-97031 and picking up the Go 1.26.7 crypto/tls, net/http, html/template, encoding/asn1, and net/url standard library fixes
     - kind: changed
       description: Operator built against Kubernetes 1.37 client libraries (k8s.io/* v0.37.1) and controller-runtime v0.25.2
     - kind: changed
