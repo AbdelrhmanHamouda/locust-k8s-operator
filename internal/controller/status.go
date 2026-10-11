@@ -106,11 +106,14 @@ func (r *LocustTestReconciler) updateStatusFromJobs(
 		// Emit event for significant transitions (CORE-26)
 		switch newPhase {
 		case locustv2.PhaseRunning:
-			r.Recorder.Event(lt, corev1.EventTypeNormal, "TestStarted", "Load test execution started")
+			r.Recorder.Eventf(lt, nil, corev1.EventTypeNormal, "TestStarted", eventActionStart,
+				"Load test execution started")
 		case locustv2.PhaseSucceeded:
-			r.Recorder.Event(lt, corev1.EventTypeNormal, "TestCompleted", "Load test completed successfully")
+			r.Recorder.Eventf(lt, nil, corev1.EventTypeNormal, "TestCompleted", eventActionComplete,
+				"Load test completed successfully")
 		case locustv2.PhaseFailed:
-			r.Recorder.Event(lt, corev1.EventTypeWarning, "TestFailed", "Load test execution failed")
+			r.Recorder.Eventf(lt, nil, corev1.EventTypeWarning, "TestFailed", eventActionFail,
+				"Load test execution failed")
 		case locustv2.PhasePending:
 			// No event for Pending - it's the initial state or recovery state
 		}
@@ -166,8 +169,11 @@ func (r *LocustTestReconciler) updateStatusFromJobs(
 		r.setCondition(lt, locustv2.ConditionTypePodsHealthy,
 			metav1.ConditionFalse, podHealth.Reason, podHealth.Message)
 
-		// Emit warning event
-		r.Recorder.Event(lt, corev1.EventTypeWarning, "PodFailure", podHealth.Message)
+		// Emit warning event. The message carries pod names and container
+		// error text, so it goes in as an argument rather than as the format
+		// string, and is cut to the events.k8s.io/v1 note limit.
+		r.Recorder.Eventf(lt, nil, corev1.EventTypeWarning, "PodFailure", eventActionCheckPodHealth,
+			"%s", truncateEventNote(podHealth.Message))
 
 		// Log for operator visibility
 		log.Info("Pod health check failed",

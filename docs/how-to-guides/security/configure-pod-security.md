@@ -110,7 +110,7 @@ The operator's service account needs permissions to manage LocustTest resources 
 | `secrets` | get, list, watch | Read credentials for env injection |
 | `services` | get, list, watch, create, delete | Master service for worker communication |
 | `pods` | get, list, watch | Monitor pod health for status reporting |
-| `events` | create, patch | Report status changes and errors |
+| `events` (core and `events.k8s.io`) | create, patch | Report status changes and errors |
 | `jobs` | get, list, watch, create, delete | Master and worker pods (immutable pattern) |
 
 !!! note "Read-only Secret access"

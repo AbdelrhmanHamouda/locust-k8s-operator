@@ -27,7 +27,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 2.4.5
+version: 2.4.6
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
@@ -74,6 +74,8 @@ annotations:
       description: Default metrics exporter image bumped to containersol/locust_exporter:v0.5.2
     - kind: changed
       description: Default OpenTelemetry collector image bumped to otel/opentelemetry-collector-contrib:0.162.0
+    - kind: changed
+      description: Operator events are now written through the events.k8s.io/v1 API; the operator's RBAC grants create/patch on events in both the core and events.k8s.io groups
     - kind: fixed
       description: Chart README now documents the correct replicaCount name and default, memory limit, cert-manager default, and standalone OpenTelemetry collector
     - kind: fixed

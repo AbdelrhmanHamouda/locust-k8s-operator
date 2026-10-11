@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"unicode/utf8"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -27,7 +28,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -48,12 +49,43 @@ const (
 	apiVersionBatchV1 = "batch/v1"
 )
 
+// Actions for the events.k8s.io/v1 Events this controller emits. The API
+// server rejects an Event whose action is empty or longer than 128 characters.
+const (
+	eventActionCreate         = "Create"
+	eventActionDelete         = "Delete"
+	eventActionRecreate       = "Recreate"
+	eventActionStart          = "Start"
+	eventActionComplete       = "Complete"
+	eventActionFail           = "Fail"
+	eventActionCheckPodHealth = "CheckPodHealth"
+)
+
+// maxEventNoteBytes is the events.k8s.io/v1 limit on an Event's note. The API
+// server rejects a longer note outright, so the Event would be lost.
+const maxEventNoteBytes = 1024
+
+// truncateEventNote shortens note to fit maxEventNoteBytes, cutting on a rune
+// boundary and marking the cut with "...". Notes that already fit are
+// returned unchanged.
+func truncateEventNote(note string) string {
+	if len(note) <= maxEventNoteBytes {
+		return note
+	}
+	const marker = "..."
+	cut := maxEventNoteBytes - len(marker)
+	for cut > 0 && !utf8.RuneStart(note[cut]) {
+		cut--
+	}
+	return note[:cut] + marker
+}
+
 // LocustTestReconciler reconciles a LocustTest object
 type LocustTestReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Config   *config.OperatorConfig
-	Recorder record.EventRecorder
+	Recorder events.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=locust.io,resources=locusttests,verbs=get;list;watch;update;patch
@@ -63,6 +95,7 @@ type LocustTestReconciler struct {
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;delete
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
+// +kubebuilder:rbac:groups=events.k8s.io,resources=events,verbs=create;patch
 
 // Reconcile handles LocustTest CR events.
 // On creation: Creates master Service, master Job, and worker Job.
@@ -89,7 +122,7 @@ func (r *LocustTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			log.Info("LocustTest deleted, cleaning up resources via owner references",
 				"name", locustTest.Name,
 				"namespace", locustTest.Namespace)
-			r.Recorder.Event(locustTest, corev1.EventTypeNormal, "Deleting",
+			r.Recorder.Eventf(locustTest, nil, corev1.EventTypeNormal, "Deleting", eventActionDelete,
 				"LocustTest and owned resources being cleaned up")
 			controllerutil.RemoveFinalizer(locustTest, finalizerName)
 			if err := r.Update(ctx, locustTest); err != nil {
@@ -251,9 +284,13 @@ func (r *LocustTestReconciler) createResource(ctx context.Context, lt *locustv2.
 		return err
 	}
 
-	// Record event for successful creation
-	r.Recorder.Event(lt, corev1.EventTypeNormal, "Created",
-		fmt.Sprintf("Created %s %s", kind, obj.GetName()))
+	// Record event for successful creation. The created object goes in as the
+	// related object. The events.k8s.io/v1 recorder folds Events that share
+	// type, reason, action, regarding and related object into one series that
+	// keeps the first note, so without it the Service and both Jobs would show
+	// up as a single event.
+	r.Recorder.Eventf(lt, obj, corev1.EventTypeNormal, "Created", eventActionCreate,
+		"Created %s %s", kind, obj.GetName())
 
 	log.Info("Created resource",
 		"kind", kind,
@@ -289,8 +326,8 @@ func (r *LocustTestReconciler) handleExternalResourceDeletion(
 			// Resource was externally deleted — transition to Pending for recovery
 			log.Info(fmt.Sprintf("%s externally deleted, transitioning to Pending for recovery", resourceKind),
 				resourceKind, resourceName)
-			r.Recorder.Event(lt, corev1.EventTypeWarning, "ResourceDeleted",
-				fmt.Sprintf("%s %s was deleted externally, will attempt recreation", resourceKind, resourceName))
+			r.Recorder.Eventf(lt, nil, corev1.EventTypeWarning, "ResourceDeleted", eventActionRecreate,
+				"%s %s was deleted externally, will attempt recreation", resourceKind, resourceName)
 
 			// Reset to Pending to trigger resource recreation on next reconcile
 			log.Info("Attempting to update status to Pending after external deletion",
