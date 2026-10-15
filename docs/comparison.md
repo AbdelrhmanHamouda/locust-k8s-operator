@@ -1,5 +1,5 @@
 ---
-title: Comparison - Locust on Kubernetes
+title: Locust operator comparison
 description: Compare the Locust Kubernetes Operator with alternatives for running Locust load tests on Kubernetes. Includes official Locust operator, k6 operator, and manual deployment. Feature comparison, performance benchmarks, decision guide, and migration paths.
 ---
 
@@ -8,11 +8,11 @@ description: Compare the Locust Kubernetes Operator with alternatives for runnin
 When running Locust load tests on Kubernetes, you have four main approaches to choose from:
 
 1. **Locust Kubernetes Operator** (this project) - Full lifecycle management via Custom Resource Definition (CRD)
-2. **Official Locust Operator** (locustio/k8s-operator) - Locust team operator
+2. **Official Locust Operator** ([locustio/k8s-operator](https://github.com/locustio/k8s-operator)) - Python operator from the Locust team
 3. **k6 Operator** (Grafana) - Distributed k6 testing on Kubernetes
 4. **Manual Deployment** - Raw Kubernetes manifests (Deployments, Services, ConfigMaps)
 
-This page helps you evaluate which approach fits your use case, with an objective feature comparison, performance benchmarks, decision guide, and migration paths.
+This page helps you evaluate which approach fits your use case, with an objective feature comparison, performance benchmarks, decision guide, and migration paths. For a walkthrough of how distributed Locust runs on Kubernetes in the first place, see [Locust on Kubernetes](locust-on-kubernetes.md).
 
 ## Feature Comparison
 
@@ -21,21 +21,31 @@ This page helps you evaluate which approach fits your use case, with an objectiv
 | Declarative CRD API | ✓ | ✓ | ✓ | ✗ |
 | Automated lifecycle | ✓ | ✓ | ✓ | ✗ |
 | Immutable test guarantee | ✓ | ✗ | ✗ | ✗ |
-| Validation webhooks | ✓ | Not documented | ✓ | ✗ |
-| CI/CD integration (autoQuit) | ✓ | Not documented | ✓ (cloud) | Manual |
+| Validation webhooks | ✓ | ✗ [^schema] | ✓ | ✗ |
+| CI/CD integration (autoQuit) | ✓ | ✗ [^ci] | ✓ (cloud) | Manual |
 | OpenTelemetry native | ✓ | ✗ | ✗ | ✗ |
-| Secret injection (envFrom) | ✓ | Not documented | ✓ | Manual |
+| Secret injection (envFrom) | ✓ | ✗ [^env] | ✓ | Manual |
 | Volume mounting | ✓ | ✓ (ConfigMap) | ✓ | ✓ |
 | Horizontal worker scaling | ✓ | ✓ | ✓ | ✓ |
-| Resource governance | ✓ (operator + CR) | Not documented | ✓ | ✓ |
-| Status monitoring (conditions) | ✓ | Not documented | ✓ | ✗ |
+| Resource governance | ✓ (operator + CR) | Per test only [^res] | ✓ | ✓ |
+| Status monitoring (conditions) | ✓ | ✗ [^status] | ✓ | ✗ |
 | Pod health detection | ✓ | ✗ | ✗ | ✗ |
-| Leader election (HA) | ✓ | Not documented | ✓ | N/A |
+| Leader election (HA) | ✓ | ✗ [^ha] | ✓ | N/A |
 | Helm chart | ✓ | ✓ | ✓ | ✗ |
 | API versions supported | v1 + v2 (conversion) | Single version | Single version | N/A |
 | Documentation pages | 20+ | 1 | Extensive | N/A |
 
-**Note:** "Not documented" indicates features that may exist but are not described in the official documentation. The Official Locust Operator is maintained by the Locust core team.
+The Official Locust Operator column was checked against the [locustio/k8s-operator source](https://github.com/locustio/k8s-operator/tree/ef9f2b7) (commit `ef9f2b7`, May 2026). Its latest release is 0.1.6, published on 14 January 2026.
+
+[^schema]: The CRD has OpenAPI schema validation (required `workers`, an enum for `imagePullPolicy`, either inline or ConfigMap locustfile), but there's no admission webhook.
+[^ci]: There's no autoquit setting and no finished/failed phase; the master Job is deleted as soon as it completes. Locust's own `--headless`, `--run-time` and `--autoquit` flags can still be passed through `spec.args`.
+[^env]: `spec.env` accepts plain `name`/`value` pairs only. There's no `envFrom` or `valueFrom`, so Secrets can't be referenced.
+[^res]: `spec.master.resources` and `spec.worker.resources` set requests and limits per test. There are no operator-wide defaults.
+[^status]: Status has a `state` string and live statistics (RPS, fail ratio, user and worker counts) polled from the master, but no `conditions`.
+[^ha]: The chart runs a single replica with the `Recreate` strategy and doesn't install Kopf's peering resources.
+
+!!! warning "The two operators can't share a cluster"
+    Both operators register the `locusttests.locust.io` CRD with incompatible schemas, so only one of them can be installed in a cluster. See the [FAQ](faq.md#can-i-install-this-operator-alongside-locustiok8s-operator) for how to tell which one is installed.
 
 ## Why Choose This Operator
 
@@ -132,7 +142,7 @@ spec:
 
 ### From Helm Chart to Operator
 
-If you're using the official Locust Helm chart, you can map your Helm values to LocustTest CR fields:
+If you're using the community Locust Helm chart ([deliveryhero/locust](https://github.com/deliveryhero/helm-charts/tree/master/stable/locust)), you can map your Helm values to LocustTest CR fields:
 
 - Helm `image` → CR `spec.image`
 - Helm `master.args` → CR `spec.master.command`

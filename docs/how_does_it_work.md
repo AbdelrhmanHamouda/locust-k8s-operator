@@ -1,6 +1,6 @@
 ---
 title: How Does It Work
-description: A high-level overview of the operator's architecture and workflow.
+description: How the Locust Kubernetes Operator works - the LocustTest reconcile loop, master and worker Jobs, validation webhooks, pod health checks and leader election.
 ---
 
 # How Does It Work

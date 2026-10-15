@@ -1,3 +1,8 @@
+---
+title: Pull Request Process
+description: How to propose a change to the Locust Kubernetes Operator - discussing it first, tests, commit messages, CI checks and review.
+---
+
 # Pull Request Process
 
 This document outlines the process for submitting pull requests to the Locust K8s Operator project. Following these guidelines helps maintain code quality and ensures a smooth review process.

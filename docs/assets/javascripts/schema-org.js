@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "Locust Kubernetes Operator",
-    "description": "Production-ready Kubernetes operator for Locust distributed load testing. Automate performance testing with cloud-native CI/CD integration, OpenTelemetry observability, and horizontal scaling.",
+    "description": "Kubernetes operator for Locust. Run distributed Locust load tests on Kubernetes as a LocustTest custom resource, installed with Helm and built for CI pipelines.",
     "applicationCategory": "DeveloperApplication",
     "applicationSubCategory": "Performance Testing",
     "operatingSystem": "Kubernetes",

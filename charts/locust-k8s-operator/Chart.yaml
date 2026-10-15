@@ -6,10 +6,13 @@ icon: https://raw.githubusercontent.com/AbdelrhmanHamouda/locust-k8s-operator/ma
 # Keywords for Artifact Hub search discoverability
 keywords:
   - locust
+  - locust-operator
+  - locusttest
   - load-testing
   - performance-testing
   - kubernetes-operator
   - distributed-testing
+  - ci-cd
   - opentelemetry
   - observability
   - stress-testing
@@ -27,7 +30,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 2.4.5
+version: 2.4.6
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
@@ -45,9 +48,42 @@ maintainers:
 
 annotations:
   # Artifact Hub specific metadata
+  # Load testing has no category of its own; it's mostly run from CI/CD
+  # pipelines, so integration-delivery is the closest fit.
+  artifacthub.io/category: integration-delivery
   artifacthub.io/license: Apache-2.0
   artifacthub.io/operator: "true"
   artifacthub.io/operatorCapabilities: Basic Install
+  artifacthub.io/crds: |
+    - kind: LocustTest
+      version: v2
+      name: locusttests.locust.io
+      displayName: Locust Test
+      description: A distributed Locust load test. The operator creates the master Job, worker Job and master Service, reports the run's phase and conditions, and cleans up when the test is deleted.
+  artifacthub.io/crdsExamples: |
+    - apiVersion: locust.io/v2
+      kind: LocustTest
+      metadata:
+        name: demo
+      spec:
+        image: locustio/locust:2.43.3
+        testFiles:
+          configMapRef: demo-test
+        master:
+          command: "--locustfile /lotest/src/demo_test.py --host https://example.com --users 100 --spawn-rate 10 --run-time 5m"
+          autoquit:
+            enabled: true
+            timeout: 60
+        worker:
+          command: "--locustfile /lotest/src/demo_test.py"
+          replicas: 4
+          resources:
+            requests:
+              cpu: 500m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
   artifacthub.io/prerelease: "false"
   artifacthub.io/containsSecurityUpdates: "true"
   artifacthub.io/links: |
@@ -55,13 +91,19 @@ annotations:
       url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/
     - name: Getting Started
       url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/getting_started/
+    - name: Locust on Kubernetes guide
+      url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/locust-on-kubernetes/
     - name: Migration Guide (v1→v2)
       url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/migration/
-    - name: GitHub Discussions
+    - name: Source
+      url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
+    - name: Support (GitHub Discussions)
       url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/discussions
     - name: GitHub Issues
       url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues
   artifacthub.io/changes: |
+    - kind: added
+      description: Artifact Hub metadata now lists the LocustTest CRD with an example resource, a category, and source and support links
     - kind: security
       description: Operator image picks up google.golang.org/grpc 1.84.0 (CVE-2026-84304, CVE-2026-84445, CVE-2026-84303) and OpenTelemetry-Go 1.47.0 (CVE-2026-81870)
     - kind: security

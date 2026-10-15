@@ -9,6 +9,7 @@ on:
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
+      - 'overrides/**'
       - '.github/workflows/docs-preview.yml'
 
 # Shared with docs-preview-cleanup.yml (same group string) so a build and the
@@ -105,6 +106,7 @@ jobs:
           pip install mkdocs-material
           pip install mkdocs-git-revision-date-localized-plugin
           pip install mkdocs-minify-plugin
+          pip install mkdocs-llmstxt
 
       - name: 🔧 Configure MkDocs for preview
         if: steps.pr.outputs.state == 'open'

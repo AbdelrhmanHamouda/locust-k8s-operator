@@ -3,13 +3,14 @@
 # Project information
 site_name: Locust Kubernetes Operator
 site_author: Abdelrhman Hamouda
-site_description: Production-ready Kubernetes operator for Locust distributed load testing. Automate performance testing with cloud-native CI/CD integration, OpenTelemetry observability, and horizontal scaling.
+site_description: Kubernetes operator for Locust. Run distributed Locust load tests on Kubernetes as a LocustTest custom resource, installed with Helm and built for CI pipelines.
 
 # Repository
 repo_name: locust-k8s-operator
 repo_url: https://github.com/AbdelrhmanHamouda/locust-k8s-operator
 
-# Site URL (required for instant navigation)
+# Site URL. Needed for instant navigation, canonical links, sitemap.xml and
+# the Open Graph tags in overrides/main.html. Keep the trailing slash.
 site_url: https://abdelrhmanhamouda.github.io/locust-k8s-operator/
 
 # Copyright
@@ -18,12 +19,35 @@ copyright: >
   <a href="#__consent">Change cookie settings</a>
 
 # Plugins
-# Note: mkdocs-minify-plugin is a pip dependency (see CI workflows)
+# Note: mkdocs-minify-plugin and mkdocs-llmstxt are pip dependencies (see CI workflows)
 plugins:
   - search
   - git-revision-date-localized
   - privacy
   - tags
+  # Generates /llms.txt and Markdown copies of the listed pages for LLM tools.
+  - llmstxt:
+      markdown_description: >-
+        The Locust Kubernetes Operator runs distributed Locust load tests on
+        Kubernetes. A test is a LocustTest custom resource (locust.io/v2); the
+        operator creates the master and worker Jobs and the master Service,
+        reports the phase (Pending, Running, Succeeded, Failed) and conditions,
+        and cleans up. Installed with Helm.
+      sections:
+        Getting started:
+          - locust-on-kubernetes.md: How distributed Locust works on Kubernetes, deployment options, a full walkthrough, CI usage and scaling
+          - getting_started/index.md: Five-minute quick start
+          - helm_deploy.md: Helm chart installation and values
+        Reference:
+          - api_reference.md: LocustTest field reference
+          - faq.md: Common questions and troubleshooting
+          - comparison.md: Comparison with locustio/k8s-operator, the k6 operator and plain manifests
+        Tutorials:
+          - tutorials/first-load-test.md: A realistic first load test
+          - tutorials/ci-cd-integration.md: Running load tests from GitHub Actions
+          - tutorials/production-deployment.md: Resources, scheduling and observability for larger runs
+        How-to guides:
+          - how-to-guides/*/*.md
   - minify:
       minify_html: true
       minify_js: true
@@ -36,6 +60,7 @@ plugins:
 # Configuration
 theme:
   name: material
+  custom_dir: overrides
   favicon: assets/images/favicon.png
 
   icon:
@@ -118,6 +143,30 @@ extra:
     Tutorial: tutorial
     Guide: guide
 
+  # Google Analytics 4. The measurement ID comes from the GOOGLE_ANALYTICS_KEY
+  # environment variable, which the docs release job sets from a repository
+  # variable. Local, CI and PR preview builds leave it empty, and
+  # overrides/main.html then skips the analytics script altogether.
+  # Nothing loads until the visitor accepts analytics cookies in the consent
+  # banner below.
+  analytics:
+    provider: google
+    property: !ENV [GOOGLE_ANALYTICS_KEY, ""]
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/thumb-up-outline
+          name: This page was helpful
+          data: 1
+          note: >-
+            Thanks for letting us know.
+        - icon: material/thumb-down-outline
+          name: This page could be improved
+          data: 0
+          note: >-
+            Thanks. If you've got a minute, tell us what was missing by
+            <a href="https://github.com/AbdelrhmanHamouda/locust-k8s-operator/issues/new?title=[Docs]+{title}&body={url}" target="_blank" rel="noopener">opening an issue</a>.
+
   consent:
     title: Cookie consent
     actions:
@@ -125,10 +174,9 @@ extra:
       - accept
       - reject
     description: >-
-      We use cookies to recognize your repeated visits and preferences, as well
-      as to measure the effectiveness of our documentation and whether users
-      find what they're searching for. With your consent, you're helping us to
-      make our documentation better.
+      With your consent we use Google Analytics to see which pages people read
+      and what they search for, so we know which parts of the docs need work.
+      Nothing is tracked if you reject.
 
   social:
 
@@ -197,6 +245,11 @@ markdown_extensions:
       custom_checkbox: true
   - pymdownx.tilde
 
+# Source files that aren't site pages. dockerhub.md is the Docker Hub
+# repository description, pushed by the release workflow.
+exclude_docs: |
+  dockerhub.md
+
 # Pages intentionally kept out of the nav (redirect stubs preserved for old inbound links)
 not_in_nav: |
   advanced_topics.md
@@ -206,6 +259,7 @@ nav:
   - Home: index.md
   - Getting Started:
       - Quick Start: getting_started/index.md
+      - Locust on Kubernetes guide: locust-on-kubernetes.md
       - Install the Operator: helm_deploy.md
   - Tutorials:
       - Overview: tutorials/index.md

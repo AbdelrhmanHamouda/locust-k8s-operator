@@ -1,3 +1,8 @@
+---
+title: Testing Guide
+description: How the Locust Kubernetes Operator is tested - Go unit tests, envtest integration tests against a real API server, and Ginkgo end-to-end tests on Kind.
+---
+
 # Testing Guide
 
 This document describes the comprehensive testing setup for the Locust K8s Operator, covering unit tests, integration tests (envtest), and end-to-end tests.

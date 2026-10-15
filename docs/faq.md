@@ -1,6 +1,6 @@
 ---
 title: Frequently Asked Questions
-description: Common questions and answers about the Locust Kubernetes Operator
+description: Common questions about running Locust on Kubernetes with the operator - updating tests, scaling workers, debugging pods, webhooks and CRD conflicts.
 tags:
   - faq
   - troubleshooting
@@ -171,6 +171,24 @@ kubectl create configmap my-test-scripts --from-file=test.py=./test.py
 ```
 
 The operator watches pod events and updates conditions when pod state changes, so it detects when ConfigMaps become available.
+
+## Installation
+
+### Can I install this operator alongside locustio/k8s-operator?
+
+No. [locustio/k8s-operator](https://github.com/locustio/k8s-operator) is a separate, Python-based operator from the Locust team. Both projects register a CRD with the same name, `locusttests.locust.io` (group `locust.io`, kind `LocustTest`), and a cluster can only hold one CRD with a given name.
+
+The schemas aren't compatible either. locustio/k8s-operator serves a single `locust.io/v1` version with fields such as `spec.workers`, `spec.args` and `spec.locustfile`. This operator stores `locust.io/v2` and also serves its own, different `v1` through the conversion webhook. Whichever operator you install second will either fail to install its CRD or end up running against the other project's schema, and both controllers would try to reconcile the same `LocustTest` objects.
+
+To check which one a cluster already has:
+
+```bash
+kubectl get crd locusttests.locust.io -o jsonpath='{.spec.versions[*].name}'
+# "v1 v2" -> this operator
+# "v1"    -> locustio/k8s-operator (or a very old release of this operator)
+```
+
+If you want to switch, use a separate cluster, or uninstall the current operator and delete its CRD first. Deleting the CRD also deletes every `LocustTest` in the cluster. [Compare alternatives](comparison.md) covers how the two operators differ.
 
 ## Migration
 
