@@ -42,7 +42,7 @@ jobs:
           go-version-file: go.mod
 
       - name: ☸️ Create Kind cluster
-        uses: helm/kind-action@v1.15.1
+        uses: helm/kind-action@v1.15.2
         with:
           cluster_name: locust-k8s-operator-test-e2e
           # The node image (Kubernetes version) is pinned in this file, not
